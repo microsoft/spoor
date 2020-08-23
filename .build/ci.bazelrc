@@ -1,0 +1,3 @@
+build:llvm_config --crosstool_top=//toolchain/crosstool:llvm_toolchain
+build --config=llvm_config
+build --output_filter='^external/*'
