@@ -1,5 +1,5 @@
 jobs:
-- job: test
+- job: build_and_test
   strategy:
     matrix:
       linux:
@@ -11,4 +11,8 @@ jobs:
   pool:
     vmImage: $(imageName)
   steps:
-    - script: echo "Test"
+  - template: ./templates/install-common.yml
+  - script: bazel build //...
+    displayName: Build
+  - script: bazel test //... --test_output=all
+    displayName: Test
