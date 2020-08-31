@@ -1,0 +1,4 @@
+steps:
+- script: git config --system core.longpaths true
+  displayName: Allow long file paths (Windows)
+  condition: eq(variables['Agent.OS'], 'Windows_NT')
