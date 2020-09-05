@@ -20,9 +20,9 @@ class Result final {
   // convenient and sensible to `return T{}` or `return E{}` when the return
   // type is `Result<T, E>`.
   // NOLINTNEXTLINE(google-explicit-constructor)
-  Result(const T&) requires(!std::is_same<T, E>::value);
+  Result(const T& value) requires(!std::is_same<T, E>::value);
   // NOLINTNEXTLINE(google-explicit-constructor)
-  Result(T&&) requires(!std::is_same<T, E>::value);
+  Result(T&& value) requires(!std::is_same<T, E>::value);
   template <class T2 = T>  // NOLINTNEXTLINE(google-explicit-constructor)
   Result(const E& error) requires(!std::is_same<T2, E>::value);
   template <class T2 = T>  // NOLINTNEXTLINE(google-explicit-constructor)

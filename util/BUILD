@@ -20,6 +20,25 @@ cc_test(
 )
 
 cc_library(
+    name = "memory",
+    hdrs = ["memory.h"],
+    copts = ["-Werror"],
+    visibility = ["//visibility:public"],
+)
+
+cc_test(
+    name = "memory_test",
+    size = "small",
+    srcs = ["memory_test.cc"],
+    copts = ["-Werror"],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":result",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "numeric",
     hdrs = ["numeric.h"],
     copts = ["-Werror"],

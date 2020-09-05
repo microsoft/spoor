@@ -10,6 +10,9 @@
 #   Conflicts with the desired modernize-use-trailing-return-type check.
 # llvm-header-guard
 #   The check does not support configuration from the project root.
+# readability-magic-numbers
+#   These warnings are generally unhelpful because the "magic numbers" are
+#   self-explanatory in the context of the code).
 # Other checks are aliases which are disable so only one NOLINT is required.
 #   https://clang.llvm.org/extra/clang-tidy/checks/list.html#id117
 Checks: '
@@ -20,6 +23,7 @@ Checks: '
   -fuchsia-overloaded-operator,
   -fuchsia-trailing-return,
   -llvm-header-guard,
+  -readability-magic-numbers,
 
   -cert-con36-c,
   -cert-con54-cpp,
@@ -84,6 +88,8 @@ CheckOptions:
     value: 2  # Match clang-format
   - key: readability-identifier-naming.ClassCase
     value: CamelCase
+  - key: readability-identifier-naming.ClassMemberSuffix
+    value: _
   - key: readability-identifier-naming.ClassMethodCase
     value: CamelCase
   - key: readability-identifier-naming.EnumConstantCase
@@ -98,8 +104,6 @@ CheckOptions:
     value: k
   - key: readability-identifier-naming.IgnoreMainLikeFunctions
     value: 1
-  - key: readability-identifier-naming.MemberSuffix
-    value: _
   - key: readability-identifier-naming.NamespaceCase
     value: lower_case
   - key: readability-identifier-naming.StructCase

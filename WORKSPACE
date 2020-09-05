@@ -13,6 +13,13 @@ load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 
 protobuf_deps()
 
+git_repository(  # TODO
+    name = "com_microsoft_gsl",
+    commit = "0f6dbc9e2915ef5c16830f3fa3565738de2a9230",  # v3.1.0
+    remote = "https://github.com/microsoft/gsl.git",
+    shallow_since = "1591290604 -0700",
+)
+
 git_repository(
     name = "com_gflags_gflags",
     commit = "f7388c6655e699f777a5a74a3c9880b9cfaabe59",  # 2020-06-16 (>v2.2.2)

@@ -16,7 +16,7 @@ static_assert(
     sizeof(float) == 4,
     "This platform does not define `float` as a 32-bit floating-point value.");
 static_assert(
-    sizeof(double) == 8,  // NOLINT(readability-magic-numbers)
+    sizeof(double) == 8,
     "This platform does not define `double` as a 64-bit floating-point value.");
 
 #endif
