@@ -24,6 +24,7 @@ cc_library(
     hdrs = ["memory.h"],
     copts = ["-Werror"],
     visibility = ["//visibility:public"],
+    deps = ["//gsl:pointers"],
 )
 
 cc_test(

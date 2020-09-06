@@ -47,8 +47,8 @@ class BufferSlice {
   BufferSlice(const Options& options, T* buffer_);
   ~BufferSlice();
 
-  Options options_;
-  bool owns_buffer_;
+  const Options options_;
+  const bool owns_buffer_;
   ValueType* buffer_;
   SizeType insertion_index_;
   SizeType size_;

@@ -7,7 +7,7 @@
 
 namespace util::result {
 
-// Use `Void` to indicate an empty ok or err.
+// Use `Void` to indicate an empty Ok or Err.
 struct Void {};
 
 template <class T, class E>

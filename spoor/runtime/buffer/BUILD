@@ -5,6 +5,7 @@ cc_library(
     hdrs = [
         "buffer_slice.h",
         "buffer_slice_pool.h",
+        "buffer_slice_pool_ownership_info.h",
         "circular_slice_buffer.h",
         "contiguous_memory.h",
     ],

@@ -1,9 +1,11 @@
 #ifndef SPOOR_UTIL_MEMORY_H_
 #define SPOOR_UTIL_MEMORY_H_
 
-#include <type_traits>
 #include <functional>
+#include <iostream>  // todo
+#include <type_traits>
 
+#include "gsl/pointers.h"
 #include "util/result.h"
 
 namespace util::memory {
@@ -11,29 +13,37 @@ namespace util::memory {
 using util::result::Result;
 using util::result::Void;
 
-template <class T>
+template <class T, class OwnershipInfoType>
 class OwnedPtr;
 
-template <class T>
+template <class T, class OwnershipInfo>
 class PtrOwner {
  public:
+  using OwnedPtr = OwnedPtr<T, OwnershipInfo>;
   enum class Error {
     kDoesNotOwnPtr,
   };
 
+  PtrOwner() = default;
+  PtrOwner(const PtrOwner&) = default;
+  PtrOwner(PtrOwner&&) noexcept = default;
+  auto operator=(const PtrOwner&) -> PtrOwner& = default;
+  auto operator=(PtrOwner&&) noexcept -> PtrOwner& = default;
   virtual ~PtrOwner() = default;
 
-  virtual auto Owns(const OwnedPtr<T>& owned_ptr) const -> bool = 0;
-  virtual auto Borrow() -> OwnedPtr<T> = 0;
-  virtual auto Return(T* ptr) -> Result<Void, Error> = 0;
-  virtual auto Return(OwnedPtr<T>&& ptr) -> Result<Void, Error> = 0;
+  virtual auto Owns(const OwnedPtr& owned_ptr) const -> bool = 0;
+  virtual auto Return(gsl::owner<T*> t, const OwnershipInfo& ownership_info)
+      -> Result<Void, Error> = 0;
+  virtual auto Return(OwnedPtr&& ptr) -> Result<Void, Error> = 0;
 };
 
-template <class T>
+template <class T, class OwnershipInfoType>
 class OwnedPtr {
  public:
+  using PtrOwner = PtrOwner<T, OwnershipInfoType>;
+
   OwnedPtr() = delete;
-  OwnedPtr(T* ptr, PtrOwner<T>* owner);
+  OwnedPtr(T* ptr, PtrOwner* owner, OwnershipInfoType ownership_info);
   OwnedPtr(const OwnedPtr&) = delete;
   OwnedPtr(OwnedPtr&& other) noexcept;
   auto operator=(const OwnedPtr&) -> OwnedPtr& = delete;
@@ -41,92 +51,84 @@ class OwnedPtr {
   ~OwnedPtr();
 
   [[nodiscard]] auto Ptr() const -> T*;
-  [[nodiscard]] auto Owner() const -> PtrOwner<T>*;
-  [[nodiscard]] auto Take() -> T*;
+  [[nodiscard]] auto Take() -> gsl::owner<T*>;
+  [[nodiscard]] auto Owner() const -> const PtrOwner*;
+  [[nodiscard]] auto OwnershipInfo() const -> const OwnershipInfoType&;
 
   auto operator*() const -> typename ::std::add_lvalue_reference<T>::type;
   auto operator->() const noexcept -> T*;
 
  private:
-  T* ptr_;
-  PtrOwner<T>* owner_;
+  gsl::owner<T*> ptr_;
+  PtrOwner* owner_;
+  OwnershipInfoType ownership_info_;
 };
 
-template <class T>
-OwnedPtr<T>::OwnedPtr(T* ptr, PtrOwner<T>* owner) : ptr_{ptr}, owner_{owner} {}
+template <class T, class OwnershipInfoType>
+OwnedPtr<T, OwnershipInfoType>::OwnedPtr(T* ptr, PtrOwner* owner,
+                                         OwnershipInfoType ownership_info)
+    : ptr_{ptr}, owner_{owner}, ownership_info_{ownership_info} {}
 
-template <class T>
-OwnedPtr<T>::OwnedPtr(OwnedPtr&& other) noexcept {
-  ptr_ = other.ptr_;
-  owner_ = other.owner_;
+template <class T, class OwnershipInfoType>
+OwnedPtr<T, OwnershipInfoType>::OwnedPtr(OwnedPtr&& other) noexcept
+    : ptr_{other.ptr_},
+      owner_{other.owner_},
+      ownership_info_{std::move(other.ownership_info_)} {
   other.ptr_ = nullptr;
   other.owner_ = nullptr;
 }
 
-template <class T>
-auto OwnedPtr<T>::operator=(OwnedPtr&& other) noexcept -> OwnedPtr& {
+template <class T, class OwnershipInfoType>
+auto OwnedPtr<T, OwnershipInfoType>::operator=(OwnedPtr&& other) noexcept
+    -> OwnedPtr& {
   ptr_ = other.ptr_;
   owner_ = other.owner_;
+  ownership_info_ = std::move(other.ownership_info_);
   other.ptr_ = nullptr;
   other.owner_ = nullptr;
 }
 
-template <class T>
-OwnedPtr<T>::~OwnedPtr() {
-  if (owner_ != nullptr) owner_->Return(ptr_);
+template <class T, class OwnershipInfoType>
+OwnedPtr<T, OwnershipInfoType>::~OwnedPtr() {
+  if (owner_ != nullptr) owner_->Return(Take(), ownership_info_);
 }
 
-template <class T>
-auto OwnedPtr<T>::Ptr() const -> T* {
+template <class T, class OwnershipInfoType>
+auto OwnedPtr<T, OwnershipInfoType>::Ptr() const -> T* {
   return ptr_;
 }
 
-template <class T>
-auto OwnedPtr<T>::Owner() const -> PtrOwner<T>* {
-  return owner_;
-}
-
-template <class T>
-auto OwnedPtr<T>::Take() -> T* {
+template <class T, class OwnershipInfoType>
+auto OwnedPtr<T, OwnershipInfoType>::Take() -> T* {
   auto ptr = ptr_;
   ptr_ = nullptr;
   owner_ = nullptr;
+  ownership_info_ = {};
   return ptr;
 }
 
-template <class T>
-auto OwnedPtr<T>::operator*() const -> typename ::std::add_lvalue_reference<T>::type {
+template <class T, class OwnershipInfoType>
+auto OwnedPtr<T, OwnershipInfoType>::Owner() const -> const PtrOwner* {
+  return owner_;
+}
+
+template <class T, class OwnershipInfoType>
+auto OwnedPtr<T, OwnershipInfoType>::OwnershipInfo() const
+    -> const OwnershipInfoType& {
+  return ownership_info_;
+}
+
+template <class T, class OwnershipInfoType>
+auto OwnedPtr<T, OwnershipInfoType>::operator*() const ->
+    typename std::add_lvalue_reference<T>::type {
   return *ptr_;
 }
 
-template <class T>
-auto OwnedPtr<T>::operator->() const noexcept -> T* {
+template <class T, class OwnershipInfoType>
+auto OwnedPtr<T, OwnershipInfoType>::operator->() const noexcept -> T* {
   return ptr_;
 }
 
 }  // namespace util::memory
-
-// namespace std {
-// 
-// template <class T>
-// struct hash<util::memory::OwnedPtr<T>> {
-//   std::size_t operator()(const util::memory::OwnedPtr<T>& owned_ptr) const noexcept {
-//     std::size_t h1 = std::hash<T>{}(owned_ptr.Ptr());
-//     std::size_t h2 = std::hash<T>{}(owned_ptr.Owner());
-//     return h1 ^ (h2 << 1);
-//   }
-// };
-// 
-// }  // namespace std
-// 
-// namespace util::memory {
-// 
-// template <class T>
-// auto operator==(const OwnedPtr<T>& lhs, const OwnedPtr<T>& rhs) -> bool {
-//   return std::hash<OwnedPtr<T>>{}(lhs) == std::hash<OwnedPtr<T>>{}(rhs);
-// }
-// 
-// }  // namespace util::memory
-
 
 #endif
