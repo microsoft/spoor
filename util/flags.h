@@ -5,10 +5,10 @@
 
 namespace util::flags {
 
-auto ValidateInputFilePath(const char* /* flag_name */, const std::string& path)
+auto ValidateInputFilePath(const char* /*flag_name*/, const std::string& path)
     -> bool;
-auto ValidateOutputFilePath(const char* /* flag_name */,
-                            const std::string& path) -> bool;
+auto ValidateOutputFilePath(const char* /*flag_name*/, const std::string& path)
+    -> bool;
 
 }  // namespace util::flags
 

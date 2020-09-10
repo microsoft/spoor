@@ -67,7 +67,7 @@ auto main(int argc, char** argv) -> int {
   const auto result = ParseExtraActionInfo(
       toolchain::compilation_database::FLAGS_extra_action_file);
   if (!result.IsOk()) return EXIT_FAILURE;
-  const auto& compile_command = result.Ok().value();
+  const auto& compile_command = result.Ok();
 
   std::ofstream output_stream{
       toolchain::compilation_database::FLAGS_output,

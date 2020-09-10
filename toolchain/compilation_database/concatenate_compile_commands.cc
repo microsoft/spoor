@@ -61,7 +61,7 @@ auto main(int argc, char** argv) -> int {
   std::string json{};
   google::protobuf::util::JsonPrintOptions options{};
   const auto status = google::protobuf::util::MessageToJsonString(
-      compile_commands.Ok().value(), &json, options);
+      compile_commands.Ok(), &json, options);
   if (!status.ok()) return EXIT_FAILURE;
 
   // Hack: Isolate the array from the protobuf's JSON output to produce the

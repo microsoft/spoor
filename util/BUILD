@@ -1,10 +1,11 @@
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
 cc_library(
     name = "flags",
     srcs = ["flags.cc"],
     hdrs = ["flags.h"],
     copts = ["-Werror"],
     visibility = ["//visibility:public"],
-    deps = [],
 )
 
 cc_test(
@@ -15,26 +16,6 @@ cc_test(
     visibility = ["//visibility:private"],
     deps = [
         ":flags",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
-
-cc_library(
-    name = "memory",
-    hdrs = ["memory.h"],
-    copts = ["-Werror"],
-    visibility = ["//visibility:public"],
-    deps = ["//gsl:pointers"],
-)
-
-cc_test(
-    name = "memory_test",
-    size = "small",
-    srcs = ["memory_test.cc"],
-    copts = ["-Werror"],
-    visibility = ["//visibility:private"],
-    deps = [
-        ":result",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -83,7 +64,6 @@ cc_library(
     hdrs = ["strings.h"],
     copts = ["-Werror"],
     visibility = ["//visibility:public"],
-    deps = [],
 )
 
 cc_test(
@@ -93,6 +73,7 @@ cc_test(
     copts = ["-Werror"],
     visibility = ["//visibility:private"],
     deps = [
+        ":numeric",
         ":strings",
         "@com_google_googletest//:gtest_main",
     ],

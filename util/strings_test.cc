@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+#include "util/numeric.h"
+
 namespace {
 
 using util::strings::Join;
@@ -27,7 +29,7 @@ TEST(Join, Delimiter) {  // NOLINT
 }
 
 TEST(Join, EmptyListProducesEmptyString) {  // NOLINT
-  ASSERT_EQ(Join(std::vector<int>{}, ""), "");
+  ASSERT_EQ(Join(std::vector<int64>{}, ""), "");
   ASSERT_EQ(Join(std::set<std::string>{}, ""), "");
 }
 

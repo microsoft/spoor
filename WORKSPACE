@@ -1,6 +1,18 @@
 workspace(name = "spoor")
 
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+load(
+    "@bazel_tools//tools/build_defs/repo:git.bzl",
+    "git_repository",
+    "new_git_repository"
+)
+
+new_git_repository(
+    name = "com_microsoft_gsl",
+    build_file = "@//toolchain:gsl.BUILD",
+    commit = "bd803cc7cf75cf57f6c74692df636fc9f019245b",  # 2020-09-14 (>v3.1.0)
+    shallow_since = "1600127498 -0700",
+    remote = "https://github.com/microsoft/gsl.git",
+)
 
 git_repository(
     name = "com_google_protobuf",
@@ -12,13 +24,6 @@ git_repository(
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 
 protobuf_deps()
-
-git_repository(  # TODO
-    name = "com_microsoft_gsl",
-    commit = "0f6dbc9e2915ef5c16830f3fa3565738de2a9230",  # v3.1.0
-    remote = "https://github.com/microsoft/gsl.git",
-    shallow_since = "1591290604 -0700",
-)
 
 git_repository(
     name = "com_gflags_gflags",

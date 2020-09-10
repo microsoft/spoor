@@ -10,8 +10,10 @@ namespace util::result {
 // Use `Void` to indicate an empty Ok or Err.
 struct Void {};
 
+// `Result<T, E>` is the type used to return and propagate errors. It stores
+// either the return value `T` representing a success or an error `E`.
 template <class T, class E>
-class Result final {
+class Result {
  public:
   Result() = delete;
   // Construct `Result` when T != E. Single-argument constructors are
@@ -20,62 +22,80 @@ class Result final {
   // convenient and sensible to `return T{}` or `return E{}` when the return
   // type is `Result<T, E>`.
   // NOLINTNEXTLINE(google-explicit-constructor)
-  Result(const T& value) requires(!std::is_same<T, E>::value);
+  constexpr Result(const T& value) requires(!std::is_same<T, E>::value);
   // NOLINTNEXTLINE(google-explicit-constructor)
-  Result(T&& value) requires(!std::is_same<T, E>::value);
+  constexpr Result(T&& value) requires(!std::is_same<T, E>::value);
   template <class T2 = T>  // NOLINTNEXTLINE(google-explicit-constructor)
-  Result(const E& error) requires(!std::is_same<T2, E>::value);
+  constexpr Result(const E& error) requires(!std::is_same<T2, E>::value);
   template <class T2 = T>  // NOLINTNEXTLINE(google-explicit-constructor)
-  Result(E&& error) requires(!std::is_same<T2, E>::value);
+  constexpr Result(E&& error) requires(!std::is_same<T2, E>::value);
 
   // Construct `Result` when T == E or to aid readability.
-  constexpr static auto Ok(const T& value) -> Result<T, E>;
-  constexpr static auto Ok(T&& value) -> Result<T, E>;
-  constexpr static auto Err(const E& error) -> Result<T, E>;
-  constexpr static auto Err(E&& error) -> Result<T, E>;
-
-  // `Result` is intended to be immutable. Additionally, only providing `const`
-  // accessors ensures that it cannot be corrupted by assigning `std::nullopt`
-  // to `Ok()` or `Err()`.
-  constexpr auto Ok() const& -> const std::optional<T>&;
-  constexpr auto Ok() const&& -> const std::optional<T>&&;
-  constexpr auto Err() const& -> const std::optional<E>&;
-  constexpr auto Err() const&& -> const std::optional<E>&&;
+  [[nodiscard]] constexpr static auto Ok(const T& value) -> Result<T, E>;
+  [[nodiscard]] constexpr static auto Ok(T&& value) -> Result<T, E>;
+  [[nodiscard]] constexpr static auto Err(const E& error) -> Result<T, E>;
+  [[nodiscard]] constexpr static auto Err(E&& error) -> Result<T, E>;
 
   [[nodiscard]] constexpr auto IsOk() const -> bool;
   [[nodiscard]] constexpr auto IsErr() const -> bool;
 
-  template <class T2, class E2>
-  constexpr auto operator==(const Result<T2, E2>& other) const -> bool;
+  [[nodiscard]] constexpr auto Ok() const& -> const T&;
+  [[nodiscard]] constexpr auto Ok() & -> T&;
+  [[nodiscard]] constexpr auto Ok() const&& -> const T&&;
+  [[nodiscard]] constexpr auto Ok() && -> T&&;
+  [[nodiscard]] constexpr auto Err() const& -> const E&;
+  [[nodiscard]] constexpr auto Err() & -> E&;
+  [[nodiscard]] constexpr auto Err() const&& -> const E&&;
+  [[nodiscard]] constexpr auto Err() && -> E&&;
+
+  template <class U>
+  [[nodiscard]] constexpr auto OkOr(U&& default_value) const& -> T;
+  template <class U>
+  [[nodiscard]] constexpr auto OkOr(U&& default_value) && -> T;
+  template <class U>
+  [[nodiscard]] constexpr auto ErrOr(U&& default_value) const& -> E;
+  template <class U>
+  [[nodiscard]] constexpr auto ErrOr(U&& default_value) && -> E;
 
  private:
-  Result(std::optional<T>&& value, std::optional<E>&& error);
+  template <class T1, class T2, class E1, class E2>
+  friend constexpr auto operator==(const Result<T1, E1>& lhs,
+                                   const Result<T2, E2>& rhs) -> bool;
+
+  constexpr Result(std::optional<T>&& value, std::optional<E>&& error);
 
   std::optional<T> value_;
   std::optional<E> err_;
 };
 
+static_assert(std::is_constructible_v<Result<char, double>, char>);
+static_assert(std::is_constructible_v<Result<char, double>, double>);
+static_assert(!std::is_constructible_v<Result<char, char>, char>);
+
 template <class T, class E>
-Result<T, E>::Result(const T& value) requires(!std::is_same<T, E>::value)
+constexpr Result<T, E>::Result(const T& value) requires(
+    !std::is_same<T, E>::value)
     : value_{value}, err_{std::nullopt} {}
 
 template <class T, class E>
-Result<T, E>::Result(T&& value) requires(!std::is_same<T, E>::value)
-    : value_{value}, err_{std::nullopt} {}
+constexpr Result<T, E>::Result(T&& value) requires(!std::is_same<T, E>::value)
+    : value_{std::move(value)}, err_{std::nullopt} {}
 
 template <class T, class E>
 template <class T2>
-Result<T, E>::Result(const E& error) requires(!std::is_same<T2, E>::value)
+constexpr Result<T, E>::Result(const E& error) requires(
+    !std::is_same<T2, E>::value)
     : value_{std::nullopt}, err_{error} {}
 
 template <class T, class E>
 template <class T2>
-Result<T, E>::Result(E&& error) requires(!std::is_same<T2, E>::value)
-    : value_{std::nullopt}, err_{error} {}
+constexpr Result<T, E>::Result(E&& error) requires(!std::is_same<T2, E>::value)
+    : value_{std::nullopt}, err_{std::move(error)} {}
 
 template <class T, class E>
-Result<T, E>::Result(std::optional<T>&& value, std::optional<E>&& error)
-    : value_{value}, err_{error} {}
+constexpr Result<T, E>::Result(std::optional<T>&& value,
+                               std::optional<E>&& error)
+    : value_{std::move(value)}, err_{std::move(error)} {}
 
 template <class T, class E>
 constexpr auto Result<T, E>::Ok(const T& value) -> Result<T, E> {
@@ -84,7 +104,7 @@ constexpr auto Result<T, E>::Ok(const T& value) -> Result<T, E> {
 
 template <class T, class E>
 constexpr auto Result<T, E>::Ok(T&& value) -> Result<T, E> {
-  return Result{value, std::nullopt};
+  return Result{std::move(value), std::nullopt};
 }
 
 template <class T, class E>
@@ -94,27 +114,7 @@ constexpr auto Result<T, E>::Err(const E& error) -> Result<T, E> {
 
 template <class T, class E>
 constexpr auto Result<T, E>::Err(E&& error) -> Result<T, E> {
-  return Result{std::nullopt, error};
-}
-
-template <class T, class E>
-constexpr auto Result<T, E>::Ok() const& -> const std::optional<T>& {
-  return value_;
-}
-
-template <class T, class E>
-constexpr auto Result<T, E>::Ok() const&& -> const std::optional<T>&& {
-  return std::move(value_);
-}
-
-template <class T, class E>
-constexpr auto Result<T, E>::Err() const& -> const std::optional<E>& {
-  return err_;
-}
-
-template <class T, class E>
-constexpr auto Result<T, E>::Err() const&& -> const std::optional<E>&& {
-  return std::move(err_);
+  return Result{std::nullopt, std::move(error)};
 }
 
 template <class T, class E>
@@ -128,10 +128,73 @@ constexpr auto Result<T, E>::IsErr() const -> bool {
 }
 
 template <class T, class E>
-template <class T2, class E2>
-constexpr auto Result<T, E>::operator==(const Result<T2, E2>& other) const
+constexpr auto Result<T, E>::Ok() const& -> const T& {
+  return value_.value();
+}
+
+template <class T, class E>
+constexpr auto Result<T, E>::Ok() & -> T& {
+  return value_.value();
+}
+
+template <class T, class E>
+constexpr auto Result<T, E>::Ok() const&& -> const T&& {
+  return std::move(value_.value());
+}
+
+template <class T, class E>
+constexpr auto Result<T, E>::Ok() && -> T&& {
+  return std::move(value_.value());
+}
+
+template <class T, class E>
+constexpr auto Result<T, E>::Err() const& -> const E& {
+  return err_.value();
+}
+
+template <class T, class E>
+constexpr auto Result<T, E>::Err() & -> E& {
+  return err_.value();
+}
+
+template <class T, class E>
+constexpr auto Result<T, E>::Err() const&& -> const E&& {
+  return std::move(err_.value());
+}
+
+template <class T, class E>
+constexpr auto Result<T, E>::Err() && -> E&& {
+  return std::move(err_.value());
+}
+
+template <class T, class E>
+template <class U>
+constexpr auto Result<T, E>::OkOr(U&& default_value) const& -> T {
+  return value_.value_or(default_value);
+}
+
+template <class T, class E>
+template <class U>
+constexpr auto Result<T, E>::OkOr(U&& default_value) && -> T {
+  return value_.value_or(default_value);
+}
+
+template <class T, class E>
+template <class U>
+constexpr auto Result<T, E>::ErrOr(U&& default_value) const& -> E {
+  return err_.value_or(default_value);
+}
+
+template <class T, class E>
+template <class U>
+constexpr auto Result<T, E>::ErrOr(U&& default_value) && -> E {
+  return err_.value_or(default_value);
+}
+
+template <class T1, class T2, class E1, class E2>
+constexpr auto operator==(const Result<T1, E1>& lhs, const Result<T2, E2>& rhs)
     -> bool {
-  return value_ == other.value_ && err_ == other.err_;
+  return lhs.value_ == rhs.value_ && lhs.err_ == rhs.err_;
 }
 
 }  // namespace util::result

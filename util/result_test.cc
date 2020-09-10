@@ -2,8 +2,6 @@
 
 #include <gtest/gtest.h>
 
-#include <type_traits>
-
 #include "util/numeric.h"
 
 namespace {
@@ -11,179 +9,85 @@ namespace {
 using util::result::Result;
 
 enum class OkType { kOk };
-
 enum class ErrType { kErr };
-
-TEST(Result, DefaultConstructorAvailability) {  // NOLINT
-  ASSERT_FALSE((std::is_default_constructible_v<Result<OkType, ErrType>>));
-}
-
-TEST(Result, ParameterizedSingleArgumentConstructorAvailability) {  // NOLINT
-  using util::result::Void;
-  ASSERT_TRUE((std::is_constructible_v<Result<OkType, ErrType>, OkType>));
-  ASSERT_TRUE((std::is_constructible_v<Result<OkType, ErrType>, ErrType>));
-  ASSERT_FALSE((std::is_constructible_v<Result<Void, Void>, Void>));
-}
-
-TEST(Result, ParameterizedTwoArgumentConstructorAvailability) {  // NOLINT
-  ASSERT_FALSE(
-      (std::is_constructible_v<Result<OkType, ErrType>, OkType, ErrType>));
-}
-
-TEST(Result, CopyConstructorAvailability) {  // NOLINT
-  ASSERT_TRUE((std::is_copy_constructible_v<Result<OkType, ErrType>>));
-}
-
-TEST(Result, MoveConstructorAvailability) {  // NOLINT
-  ASSERT_TRUE((std::is_move_constructible_v<Result<OkType, ErrType>>));
-}
-
-TEST(Result, CopyAssignmentAvailability) {  // NOLINT
-  ASSERT_TRUE((std::is_copy_assignable_v<Result<OkType, ErrType>>));
-}
-
-TEST(Result, MoveAssignmentAvailability) {  // NOLINT
-  ASSERT_TRUE((std::is_move_assignable_v<Result<OkType, ErrType>>));
-}
-
-TEST(Result, DestructorAvailability) {  // NOLINT
-  ASSERT_TRUE((std::is_destructible_v<Result<OkType, ErrType>>));
-  ASSERT_FALSE((std::has_virtual_destructor_v<Result<OkType, ErrType>>));
-}
-
-TEST(Result, Swappable) {  // NOLINT
-  ASSERT_TRUE((std::is_swappable_v<Result<OkType, ErrType>>));
-}
-
-TEST(Result, Polymorphism) {  // NOLINT
-  ASSERT_FALSE((std::is_polymorphic_v<Result<OkType, ErrType>>));
-}
-
-TEST(Result, Final) {  // NOLINT
-  ASSERT_TRUE((std::is_final_v<Result<OkType, ErrType>>));
-}
 
 TEST(Result, OkExplicitLvalueConstructor) {  // NOLINT
   const auto ok = OkType::kOk;
   const Result<OkType, ErrType> result{ok};
-  ASSERT_EQ(result.Ok().value(), ok);
-  ASSERT_FALSE(result.Err().has_value());
+  ASSERT_EQ(result.Ok(), ok);
+  ASSERT_FALSE(result.IsErr());
 }
 
 TEST(Result, OkImplicitLvalueConstructor) {  // NOLINT
   const auto ok = OkType::kOk;
   const Result<OkType, ErrType> result = ok;
-  ASSERT_EQ(result.Ok().value(), ok);
-  ASSERT_FALSE(result.Err().has_value());
+  ASSERT_EQ(result.Ok(), ok);
+  ASSERT_FALSE(result.IsErr());
 }
 
 TEST(Result, OkExplicitRvalueConstructor) {  // NOLINT
   const Result<OkType, ErrType> result{OkType::kOk};
-  ASSERT_EQ(result.Ok().value(), OkType::kOk);
-  ASSERT_FALSE(result.Err().has_value());
+  ASSERT_EQ(result.Ok(), OkType::kOk);
+  ASSERT_FALSE(result.IsErr());
 }
 
 TEST(Result, OkImplicitRvalueConstructor) {  // NOLINT
   const Result<OkType, ErrType> result = OkType::kOk;
-  ASSERT_EQ(result.Ok().value(), OkType::kOk);
-  ASSERT_FALSE(result.Err().has_value());
+  ASSERT_EQ(result.Ok(), OkType::kOk);
+  ASSERT_FALSE(result.IsErr());
 }
 
 TEST(Result, ErrorExplicitLvalueConstructor) {  // NOLINT
   const auto err = ErrType::kErr;
   const Result<OkType, ErrType> result{err};
-  ASSERT_FALSE(result.Ok().has_value());
-  ASSERT_EQ(result.Err().value(), err);
+  ASSERT_FALSE(result.IsOk());
+  ASSERT_EQ(result.Err(), err);
 }
 
 TEST(Result, ErrorImplicitLvalueConstructor) {  // NOLINT
   const auto err = ErrType::kErr;
   const Result<OkType, ErrType> result = err;
-  ASSERT_FALSE(result.Ok().has_value());
-  ASSERT_EQ(result.Err().value(), err);
+  ASSERT_FALSE(result.IsOk());
+  ASSERT_EQ(result.Err(), err);
 }
 
 TEST(Result, ErrorExplicitRvalueConstructor) {  // NOLINT
   const Result<OkType, ErrType> result{ErrType::kErr};
-  ASSERT_FALSE(result.Ok().has_value());
-  ASSERT_EQ(result.Err().value(), ErrType::kErr);
+  ASSERT_FALSE(result.IsOk());
+  ASSERT_EQ(result.Err(), ErrType::kErr);
 }
 
 TEST(Result, ErrorImplicitRvalueConstructor) {  // NOLINT
   const auto err = ErrType::kErr;
   const Result<OkType, ErrType> result = err;
-  ASSERT_FALSE(result.Ok().has_value());
-  ASSERT_EQ(result.Err().value(), err);
+  ASSERT_FALSE(result.IsOk());
+  ASSERT_EQ(result.Err(), err);
 }
 
 TEST(Result, OkStaticLvalueConstructor) {  // NOLINT
-  const int32 ok{42};
-  const auto result = Result<int32, int32>::Ok(ok);
-  ASSERT_EQ(result.Ok().value(), ok);
-  ASSERT_FALSE(result.Err().has_value());
+  const int64 ok{42};
+  const auto result = Result<int64, int64>::Ok(ok);
+  ASSERT_EQ(result.Ok(), ok);
+  ASSERT_FALSE(result.IsErr());
 }
 
 TEST(Result, OkStaticRvalueConstructor) {  // NOLINT
-  const auto result = Result<int32, int32>::Ok(42);
-  ASSERT_EQ(result.Ok().value(), 42);
-  ASSERT_FALSE(result.Err().has_value());
+  const auto result = Result<int64, int64>::Ok(42);
+  ASSERT_EQ(result.Ok(), 42);
+  ASSERT_FALSE(result.IsErr());
 }
 
 TEST(Result, ErrStaticLvalueConstructor) {  // NOLINT
-  const int32 err{42};
-  const auto result = Result<int32, int32>::Err(err);
-  ASSERT_FALSE(result.Ok().has_value());
-  ASSERT_EQ(result.Err().value(), err);
+  const int64 err{42};
+  const auto result = Result<int64, int64>::Err(err);
+  ASSERT_FALSE(result.IsOk());
+  ASSERT_EQ(result.Err(), err);
 }
 
 TEST(Result, ErrStaticRvalueConstructor) {  // NOLINT
-  const auto result = Result<int32, int32>::Err(42);
-  ASSERT_FALSE(result.Ok().has_value());
-  ASSERT_EQ(result.Err().value(), 42);
-}
-
-TEST(Result, OkLvalue) {  // NOLINT
-  Result<OkType, ErrType> result{OkType::kOk};
-  ASSERT_FALSE((std::is_assignable_v<decltype(result.Ok()), std::nullopt_t>));
-  ASSERT_FALSE((std::is_assignable_v<decltype(result.Ok().value()), OkType>));
-}
-
-TEST(Result, OkConstLvalue) {  // NOLINT
-  const Result<OkType, ErrType> result{OkType::kOk};
-  ASSERT_EQ(result.Ok().value(), OkType::kOk);
-}
-
-TEST(Result, OkRvalue) {  // NOLINT
-  ASSERT_FALSE((std::is_assignable_v<
-                decltype(Result<OkType, ErrType>{OkType::kOk}.Ok().value()),
-                OkType>));
-}
-
-TEST(Result, OkConstRvalue) {  // NOLINT
-  const auto ok = OkType::kOk;
-  ASSERT_EQ((Result<OkType, ErrType>{ok}.Ok().value()), ok);
-}
-
-TEST(Result, ErrLvalue) {  // NOLINT
-  Result<OkType, ErrType> result{ErrType::kErr};
-  ASSERT_FALSE((std::is_assignable_v<decltype(result.Err()), std::nullopt_t>));
-  ASSERT_FALSE((std::is_assignable_v<decltype(result.Err().value()), ErrType>));
-}
-
-TEST(Result, ErrConstLvalue) {  // NOLINT
-  const Result<OkType, ErrType> result{ErrType::kErr};
-  ASSERT_EQ(result.Err().value(), ErrType::kErr);
-}
-
-TEST(Result, ErrRvalue) {  // NOLINT
-  ASSERT_FALSE((std::is_assignable_v<
-                decltype(Result<OkType, ErrType>{ErrType::kErr}.Err().value()),
-                ErrType>));
-}
-
-TEST(Result, ErrConstRvalue) {  // NOLINT
-  const auto err = ErrType::kErr;
-  ASSERT_EQ((Result<OkType, ErrType>{err}.Err().value()), err);
+  const auto result = Result<int64, int64>::Err(42);
+  ASSERT_FALSE(result.IsOk());
+  ASSERT_EQ(result.Err(), 42);
 }
 
 TEST(Result, IsOk) {  // NOLINT
@@ -200,18 +104,87 @@ TEST(Result, IsErr) {  // NOLINT
   ASSERT_TRUE(err_result.IsErr());
 }
 
+TEST(Result, OkConstLvalue) {  // NOLINT
+  const Result<OkType, ErrType> result{OkType::kOk};
+  ASSERT_EQ(result.Ok(), OkType::kOk);
+}
+
+TEST(Result, OkLvalue) {  // NOLINT
+  Result<int64, ErrType> result{42};
+  ASSERT_EQ(result.Ok(), 42);
+  result.Ok() += 1;
+  ASSERT_EQ(result.Ok(), 43);
+}
+
+TEST(Result, OkConstRvalue) {  // NOLINT
+  Result<int64, ErrType> result{42};
+  // NOLINTNEXTLINE(performance-move-const-arg)
+  ASSERT_EQ(std::move(result).Ok(), 42);
+}
+
+TEST(Result, OkRvalue) {  // NOLINT
+  const Result<int64, ErrType> result{42};
+  // NOLINTNEXTLINE(performance-move-const-arg)
+  ASSERT_EQ(std::move(result).Ok(), 42);
+}
+
+TEST(Result, ErrConstLvalue) {  // NOLINT
+  const Result<OkType, ErrType> result{ErrType::kErr};
+  ASSERT_EQ(result.Err(), ErrType::kErr);
+}
+
+TEST(Result, ErrLvalue) {  // NOLINT
+  Result<OkType, int64> result{42};
+  ASSERT_EQ(result.Err(), 42);
+  result.Err() += 1;
+  ASSERT_EQ(result.Err(), 43);
+}
+
+TEST(Result, ErrConstRvalue) {  // NOLINT
+  const Result<OkType, int64> result{42};
+  // NOLINTNEXTLINE(performance-move-const-arg)
+  ASSERT_EQ(std::move(result).Err(), 42);
+}
+
+TEST(Result, ErrRvalue) {  // NOLINT
+  Result<OkType, int64> result{42};
+  // NOLINTNEXTLINE(performance-move-const-arg)
+  ASSERT_EQ(std::move(result).Err(), 42);
+}
+
+TEST(Result, OkOrLvalue) {  // NOLINT
+  const Result<int64, ErrType> result{ErrType::kErr};
+  const auto x = result.OkOr(42);
+  ASSERT_EQ(x, 42);
+}
+
+TEST(Result, OkOrRvalue) {  // NOLINT
+  Result<int64, ErrType> result{ErrType::kErr};
+  // NOLINTNEXTLINE(performance-move-const-arg)
+  const auto x = std::move(result).OkOr(42);
+  ASSERT_EQ(x, 42);
+}
+
+TEST(Result, ErrOrLvalue) {  // NOLINT
+  const Result<OkType, int64> result{OkType::kOk};
+  const auto x = result.ErrOr(42);
+  ASSERT_EQ(x, 42);
+}
+
+TEST(Result, ErrOrRvalue) {  // NOLINT
+  Result<OkType, int64> result{OkType::kOk};
+  // NOLINTNEXTLINE(performance-move-const-arg)
+  const auto x = std::move(result).ErrOr(42);
+  ASSERT_EQ(x, 42);
+}
+
 TEST(Result, EqualityOperator) {  // NOLINT
-  const auto ok_result_0_a = Result<int32, int32>::Ok(0);
-  const auto ok_result_0_b = Result<int32, int32>::Ok(0);
-  ASSERT_EQ(ok_result_0_a, ok_result_0_b);
-  const auto ok_result_1 = Result<int32, int32>::Ok(1);
-  ASSERT_NE(ok_result_0_a, ok_result_1);
-  const auto err_result_0_a = Result<int32, int32>::Err(0);
-  const auto err_result_0_b = Result<int32, int32>::Err(0);
-  ASSERT_EQ(err_result_0_a, err_result_0_b);
-  const auto err_result_1 = Result<int32, int32>::Err(1);
-  ASSERT_NE(err_result_0_a, err_result_1);
-  ASSERT_NE(ok_result_0_a, err_result_0_a);
+  using Result = Result<int64, int64>;
+  ASSERT_EQ(Result::Ok(0), Result::Ok(0));
+  ASSERT_NE(Result::Ok(0), Result::Ok(1));
+  ASSERT_EQ(Result::Err(0), Result::Err(0));
+  ASSERT_NE(Result::Err(0), Result::Err(1));
+  ASSERT_NE(Result::Ok(0), Result::Err(0));
 }
 
 }  // namespace

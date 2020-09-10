@@ -5,15 +5,18 @@
 #include <array>
 #include <cstddef>
 #include <iterator>
-#include <vector>
 #include <memory>
+#include <vector>
 
 #include "spoor/runtime/buffer/contiguous_memory.h"
 
 namespace spoor::runtime::buffer {
 
 template <class T>
-class BufferSlicePool;
+class ReservedBufferSlicePool;
+
+template <class T>
+class DynamicBufferSlicePool;
 
 template <class T>
 class BufferSlice {
@@ -21,66 +24,107 @@ class BufferSlice {
   using SizeType = std::size_t;
   using ValueType = T;
 
-  struct Options {
-    SizeType capacity;
-  };
-
   BufferSlice() = delete;
+  explicit constexpr BufferSlice(SizeType capacity);
+  constexpr BufferSlice(T* buffer, SizeType capacity);
   BufferSlice(const BufferSlice&) = delete;
-  BufferSlice(BufferSlice&&) noexcept = delete;
+  constexpr BufferSlice(BufferSlice&& other) noexcept;
+  ~BufferSlice();
   auto operator=(const BufferSlice&) -> BufferSlice& = delete;
-  auto operator=(BufferSlice&& other) noexcept -> BufferSlice& = delete;
+  auto operator=(BufferSlice&&) noexcept -> BufferSlice& = delete;
 
-  auto Push(const T& item) -> void;
-  auto Clear() -> void;
+  constexpr auto Push(const T& item) -> void;
+  // auto Push(T&& item) -> void;  // TODO
+  constexpr auto Clear() -> void;
 
-  [[nodiscard]] constexpr auto Size() -> SizeType;
-  [[nodiscard]] constexpr auto Capacity() -> SizeType;
-  [[nodiscard]] constexpr auto Empty() -> bool;
-  [[nodiscard]] auto ContiguousMemoryChunks()
+  [[nodiscard]] constexpr auto Size() const -> SizeType;
+  [[nodiscard]] constexpr auto Capacity() const -> SizeType;
+  [[nodiscard]] constexpr auto Empty() const -> bool;
+  [[nodiscard]] constexpr auto Full() const -> bool;
+  [[nodiscard]] constexpr auto WillWrapOnNextPush() const -> bool;
+  [[nodiscard]] constexpr auto ContiguousMemoryChunks() const
       -> std::vector<ContiguousMemory<T>>;
 
  private:
-  friend class BufferSlicePool<T>;
+  // friend class ReservedBufferSlicePool<T>;
+  // friend class DynamicBufferSlicePool<T>;
+  // friend class BufferSlicePoolAllocator<T>;
 
-  explicit BufferSlice(const Options& options);
-  BufferSlice(const Options& options, T* buffer_);
-  ~BufferSlice();
+  // using Allocator = BufferSlicePoolAllocator<T>;
+  // friend auto std::allocator_traits<Allocator>::allocate(Allocator&,
+  //                                                        std::size_t) -> T*;
+  // friend auto std::allocator_traits<Allocator>::deallocate(Allocator&, T*,
+  //                                                          std::size_t)
+  //                                                          noexcept
+  //     -> void;
+  // template <class... Args>
+  // friend auto std::allocator_traits<Allocator>::construct(Allocator&, T*,
+  //                                                         Args...) -> T*;
+  // friend auto std::allocator_traits<Allocator>::destroy(Allocator&, T*) ->
+  // void;
 
-  const Options options_;
-  const bool owns_buffer_;
+  // explicit BufferSlice(SizeType capacity);
+  // BufferSlice(SizeType capacity, T* buffer_);
+  // ~BufferSlice();
+
+  SizeType capacity_;
+  bool owns_buffer_;
   ValueType* buffer_;
   SizeType insertion_index_;
   SizeType size_;
 };
 
-static_assert(
-    !std::is_constructible_v<BufferSlice<char>>,
-    "`BufferSlice` should only be constructible from inside its object pool.");
+// static_assert(
+//     !std::is_constructible_v<BufferSlice<char>>,
+//     "`BufferSlice` should only be constructible from inside its object
+//     pool.");
+
+// template <class T>
+// BufferSlice<T>::BufferSlice()
+//     : capacity_{0},
+//       owns_buffer_{true},
+//       buffer_{nullptr},
+//       insertion_index_{0},
+//       size_{0} {}
 
 template <class T>
-BufferSlice<T>::BufferSlice(const Options& options)
-    : options_{options},
+constexpr BufferSlice<T>::BufferSlice(const SizeType capacity)
+    : capacity_{capacity},
       owns_buffer_{true},
-      buffer_{new ValueType[options.capacity]},
+      buffer_{new ValueType[capacity]},
       insertion_index_{0},
       size_{0} {}
 
 template <class T>
-BufferSlice<T>::BufferSlice(const Options& options, T* buffer)
-    : options_{options},
+constexpr BufferSlice<T>::BufferSlice(T* buffer, const SizeType capacity)
+    : capacity_{buffer == nullptr ? 0 : capacity},
       owns_buffer_{false},
       buffer_{buffer},
       insertion_index_{0},
       size_{0} {}
 
+template <class T>
+constexpr BufferSlice<T>::BufferSlice(BufferSlice&& other) noexcept
+    : capacity_{std::move(other.capacity_)},
+      owns_buffer_{std::move(other.owns_buffer_)},
+      buffer_{other.buffer_},
+      insertion_index_{std::move(other.insertion_index_)},
+      size_{std::move(other.size_)} {
+  other.capacity_ = 0;
+  other.owns_buffer_ = false;
+  other.buffer_ = nullptr;
+  other.insertion_index_ = 0;
+  other.size_ = 0;
+}
+
 // template <class T>
-// auto BufferSlice<T>::operator=(BufferSlice&& other) noexcept -> BufferSlice& {
+// auto BufferSlice<T>::operator=(BufferSlice&& other) noexcept -> BufferSlice&
+// {
 //   if (this != &other) {
 //     delete[] buffer_;
 //     buffer_ = other.buffer_;
 //     other.buffer_ = nullptr;
-// 
+//
 //     options_ = std::move(other.options_);
 //     insertion_index_ = std::move(other.insertion_index_);
 //     size_ = std::move(other.size_);
@@ -92,64 +136,58 @@ template <class T>
 BufferSlice<T>::~BufferSlice() {
   if (owns_buffer_) {
     delete[] buffer_;
-  } else  {
-    for (SizeType i{0}; i < size_; ++i) {
-      auto* item = std::next(buffer_, i);
+  } else {
+    for (SizeType offset{0}; offset < size_; ++offset) {
+      auto* item = std::next(buffer_, offset);
       item->~T();
     }
   }
 }
 
 template <class T>
-auto BufferSlice<T>::Push(const T& item) -> void {
+constexpr auto BufferSlice<T>::Push(const T& item) -> void {
+  if (buffer_ == nullptr) return;
   buffer_[insertion_index_] = item;
   insertion_index_ = (insertion_index_ + 1) % Capacity();
   size_ = std::min(size_ + 1, Capacity());
-
-  // if (buffer_.size() < buffer_.capacity()) {
-  //   buffer_.push_back(item);
-  // } else {
-  //   *insertion_iterator_ = item;
-  // }
-  // ++insertion_iterator_;
-  // if (insertion_iterator_ == buffer_.end() &&
-  //     buffer_.size() == buffer_.capacity()) {
-  //   insertion_iterator_ = buffer_.begin();
-  //}
 }
 
 template <class T>
-auto BufferSlice<T>::Clear() -> void {
+constexpr auto BufferSlice<T>::Clear() -> void {
   insertion_index_ = 0;
   size_ = 0;
-
-  // buffer_.clear();
-  // insertion_iterator_ = buffer_.begin();
 }
 
 template <class T>
-constexpr auto BufferSlice<T>::Size() -> SizeType {
+constexpr auto BufferSlice<T>::Size() const -> SizeType {
   return size_;
-  // return buffer_.size();
 }
 
 template <class T>
-constexpr auto BufferSlice<T>::Capacity() -> SizeType {
-  return options_.capacity;
-  // return buffer_.capacity();
+constexpr auto BufferSlice<T>::Capacity() const -> SizeType {
+  return capacity_;
 }
 
 template <class T>
-constexpr auto BufferSlice<T>::Empty() -> bool {
+constexpr auto BufferSlice<T>::Empty() const -> bool {
   return Size() == 0;
-  // return buffer_.empty();
 }
 
 template <class T>
-auto BufferSlice<T>::ContiguousMemoryChunks()
+constexpr auto BufferSlice<T>::Full() const -> bool {
+  return Size() == Capacity();
+}
+
+template <class T>
+constexpr auto BufferSlice<T>::WillWrapOnNextPush() const -> bool {
+  return (Capacity() == 0) || (insertion_index_ + 1) == Capacity();
+}
+
+template <class T>
+constexpr auto BufferSlice<T>::ContiguousMemoryChunks() const
     -> std::vector<ContiguousMemory<T>> {
   if (Empty()) return {};
-  const auto value_type_size = sizeof(ValueType);
+  const auto value_type_size = sizeof(T);
   if (insertion_index_ == 0 || insertion_index_ == Size()) {
     return {{buffer_, Size() * value_type_size}};
   }
@@ -158,17 +196,6 @@ auto BufferSlice<T>::ContiguousMemoryChunks()
       (Capacity() - insertion_index_) * value_type_size};
   ContiguousMemory<T> second_chunk{buffer_, (insertion_index_)*value_type_size};
   return {first_chunk, second_chunk};
-  // if (insertion_iterator_ == buffer_.begin() ||
-  //     insertion_iterator_ == buffer_.end()) {
-  //   return {{&(*(buffer_.begin())), buffer_.size() * type_size}};
-  // }
-  // ContiguousMemory<T> first_chunk{
-  //     &(*insertion_iterator_),
-  //     std::distance(insertion_iterator_, buffer_.end()) * type_size};
-  // ContiguousMemory<T> second_chunk{
-  //     &(*(buffer_.begin())),
-  //     std::distance(buffer_.begin(), insertion_iterator_) * type_size};
-  // return {first_chunk, second_chunk};
 }
 
 }  // namespace spoor::runtime::buffer
