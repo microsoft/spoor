@@ -19,6 +19,8 @@ $ bazel test //... --test_output=all
 
 # Contributing
 
+Please review Spoor's [style guide][style-guide].
+
 This project welcomes contributions and suggestions.  Most contributions require
 you to agree to a Contributor License Agreement (CLA) declaring that you have
 the right to, and actually do, grant us the rights to use your contribution. For
@@ -42,3 +44,4 @@ comments.
 [code-of-conduct-faq]: https://opensource.microsoft.com/codeofconduct/faq/
 [code-of-conduct]: https://opensource.microsoft.com/codeofconduct/
 [opencode-email]: mailto:opencode@microsoft.com
+[style-guide]: STYLE_GUIDE.md
