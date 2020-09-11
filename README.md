@@ -19,7 +19,7 @@ $ bazel test //... --test_output=all
 
 # Contributing
 
-Please review Spoor's [style guide][style-guide].
+Please review Spoor's [Style Guide][style-guide].
 
 This project welcomes contributions and suggestions.  Most contributions require
 you to agree to a Contributor License Agreement (CLA) declaring that you have

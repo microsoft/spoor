@@ -106,14 +106,54 @@ Follow [Starlark's Style Guide][starlark-style-guide].
 
 Use [Buildifier][buildifier] to style and lint Starlark files.
 
-## Bash
+## Shell
 
-Do your best. Try to keep lines at most 80 characters in length.
+Follow [Google's Shell Style Guide][google-shell-style-guide].
+
+### Shebang
+
+Exception: Use the shebang `#!/usr/bin/env bash` which is more portable.
+
+```bash
+# ✅ Do this
+#!/usr/bin/env bash
+
+# ❌ Not this
+#!/bin/bash
+```
+
+## Markdown
+
+Follow [Google's Markdown Style Guide][google-markdown-style-guide].
+
+### Character line limit
+
+Each line should be at most 80 characters long.
+
+Exception: URLs and tables which cannot be wrapped.
+
+### Links
+
+Use reference-style links for long URLs. Use `kebab-case` for reference names,
+place references at the end of the file, and alphabetize the list.
+
+```markdown
+✅ Do this
+Follow [Google's Markdown Style Guide][google-markdown-style-guide].
+
+[google-markdown-style-guide]: https://google.github.io/styleguide/docguide/style.html#document-layout
+
+❌ Not this
+Follow
+[Google's Markdown Style Guide](https://google.github.io/styleguide/docguide/style.html#document-layout).
+```
 
 [buildifier]: https://github.com/bazelbuild/buildtools/blob/master/buildifier/README.md
 [clang-format]: https://clang.llvm.org/docs/ClangFormat.html
 [clang-tidy]: https://clang.llvm.org/extra/clang-tidy/
 [google-cpp-style-guide]: https://google.github.io/styleguide/cppguide.html
+[google-markdown-style-guide]: https://google.github.io/styleguide/docguide/style.html#document-layout
+[google-shell-style-guide]: https://google.github.io/styleguide/shellguide.html 
 [microsoft-writing-style-guide]: https://docs.microsoft.com/en-us/style-guide/welcome/
 [rust-result]: https://doc.rust-lang.org/std/result/
 [starlark-style-guide]: https://docs.bazel.build/versions/master/skylark/bzl-style.html
