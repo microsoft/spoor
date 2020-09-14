@@ -1,0 +1,116 @@
+# cppcoreguidelines-init-variables
+#   Appears not to support the {} default initializer.
+# fuchsia-default-arguments
+#   Default arguments are permitted.
+# fuchsia-default-arguments-calls
+#   Function calls with default argument calls are permitted.
+# fuchsia-overloaded-operator
+#   Operator overloading is permitted.
+# fuchsia-trailing-return
+#   Conflicts with the desired modernize-use-trailing-return-type check.
+# llvm-header-guard
+#   The check does not support configuration from the project root.
+# Other checks are aliases which are disable so only one NOLINT is required.
+#   https://clang.llvm.org/extra/clang-tidy/checks/list.html#id117
+Checks: '
+  *,
+  -cppcoreguidelines-init-variables,
+  -fuchsia-default-arguments,
+  -fuchsia-default-arguments-calls,
+  -fuchsia-overloaded-operator,
+  -fuchsia-trailing-return,
+  -llvm-header-guard,
+
+  -cert-con36-c,
+  -cert-con54-cpp,
+  -cert-dcl03-c,
+  -cert-dcl16-c,
+  -cert-dcl37-c,
+  -cert-dcl51-cpp,
+  -cert-dcl54-cpp,
+  -cert-dcl59-cpp,
+  -cert-err09-cpp,
+  -cert-err61-cpp,
+  -cert-fio38-c,
+  -cert-msc30-c,
+  -cert-msc32-c,
+  -cert-oop11-cpp,
+  -cert-oop54-cpp,
+  -cert-pos44-c,
+  -cert-str34-c,
+  -cppcoreguidelines-avoid-c-arrays,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-c-copy-assignment-signature,
+  -cppcoreguidelines-explicit-virtual-functions,
+  -cppcoreguidelines-non-private-member-variables-in-classes,
+  -fuchsia-header-anon-namespaces,
+  -google-readability-braces-around-statements,
+  -google-readability-function-size,
+  -google-readability-namespace-comments,
+  -hicpp-avoid-c-arrays,
+  -hicpp-braces-around-statements,
+  -hicpp-deprecated-headers,
+  -hicpp-explicit-conversions,
+  -hicpp-function-size,
+  -hicpp-invalid-access-moved,
+  -hicpp-member-init,
+  -hicpp-move-const-arg,
+  -hicpp-named-parameter,
+  -hicpp-new-delete-operators,
+  -hicpp-no-array-decay,
+  -hicpp-no-malloc,
+  -hicpp-noexcept-move,
+  -hicpp-special-member-functions,
+  -hicpp-static-assert,
+  -hicpp-undelegated-constructor,
+  -hicpp-uppercase-literal-suffix,
+  -hicpp-use-auto,
+  -hicpp-use-emplace,
+  -hicpp-use-equals-default,
+  -hicpp-use-equals-delete,
+  -hicpp-use-noexcept,
+  -hicpp-use-nullptr,
+  -hicpp-use-override,
+  -hicpp-vararg,
+  -llvm-else-after-return,
+  -llvm-qualified-auto,
+  '
+WarningsAsErrors: '*'
+FormatStyle: file
+CheckOptions:
+  - key: readability-braces-around-statements.ShortStatementLines
+    value: 1
+  - key: llvm-namespace-comment.SpacesBeforeComments
+    value: 2  # Match clang-format
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.ClassMethodCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumConstantPrefix
+    value: k
+  - key: readability-identifier-naming.FunctionCase
+    value: CamelCase
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.GlobalConstantPrefix
+    value: k
+  - key: readability-identifier-naming.IgnoreMainLikeFunctions
+    value: 1
+  - key: readability-identifier-naming.MemberSuffix
+    value: _
+  - key: readability-identifier-naming.NamespaceCase
+    value: lower_case
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  - key: readability-identifier-naming.TemplateParameterCase
+    value: CamelCase
+  - key: readability-identifier-naming.TypeAliasCase
+    value: CamelCase
+  - key: readability-identifier-naming.TypedefCase
+    value: CamelCase
+  - key: readability-identifier-naming.UnionCase
+    value: CamelCase
+  - key: readability-identifier-naming.VariableCase
+    value: lower_case
