@@ -6,13 +6,11 @@ jobs:
         imageName: 'ubuntu-18.04'
       mac:
         imageName: 'macos-10.15'
-      windows:
-        imageName: 'windows-2019'
   pool:
     vmImage: $(imageName)
   steps:
   - template: ./templates/install-common.yml
   - script: bazel build //...
     displayName: Build
-  - script: bazel test //... --test_output=all
+  - script: bazel test //...
     displayName: Test
