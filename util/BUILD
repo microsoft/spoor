@@ -26,22 +26,3 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
-
-cc_library(
-    name = "strings",
-    hdrs = ["strings.h"],
-    copts = ["-Werror"],
-    visibility = ["//visibility:public"],
-)
-
-cc_test(
-    name = "strings_test",
-    size = "small",
-    srcs = ["strings_test.cc"],
-    copts = ["-Werror"],
-    visibility = ["//visibility:private"],
-    deps = [
-        ":strings",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
