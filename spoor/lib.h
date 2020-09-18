@@ -1,12 +1,12 @@
 #ifndef SPOOR_SPOOR_LIB_H_
 #define SPOOR_SPOOR_LIB_H_
 
-namespace spoor {
-namespace lib {
+#include "util/numeric.h"
 
-auto Add(int a, int b) -> int;
+namespace spoor::lib {
 
-}  // namespace lib
-}  // namespace spoor
+auto Add(int64 a, int64 b) -> int64;
+
+}  // namespace spoor::lib
 
 #endif

@@ -4,6 +4,7 @@ cc_library(
     name = "lib",
     srcs = ["lib.cc"],
     hdrs = ["lib.h"],
+    deps = ["//util:numeric"],
     visibility = ["//visibility:public"],
 )
 
@@ -22,5 +23,8 @@ cc_binary(
     name = "bin",
     srcs = ["main.cc"],
     visibility = ["//visibility:public"],
-    deps = [":lib"],
+    deps = [
+        ":lib",
+        "//util:numeric",
+    ],
 )
