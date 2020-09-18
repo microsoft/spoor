@@ -8,16 +8,28 @@
 #include <numeric>
 #include <type_traits>
 #include <utility>
+#include <span>
 
-#include "spoor/runtime/buffer/contiguous_memory.h"
+#include "spoor/runtime/buffer/owned_buffer_slice.h"
+#include "spoor/runtime/buffer/unowned_buffer_slice.h"
 #include "util/numeric.h"
 
 namespace {
 
 using BufferSlice = spoor::runtime::buffer::BufferSlice<int64>;
 using ValueType = BufferSlice::ValueType;
+using OwnedBufferSlice = spoor::runtime::buffer::OwnedBufferSlice<ValueType>;
+using UnownedBufferSlice = spoor::runtime::buffer::UnownedBufferSlice<ValueType>;
 using SizeType = BufferSlice::SizeType;
 using ContiguousMemory = spoor::runtime::buffer::ContiguousMemory<ValueType>;
+
+auto Slices(std::span<ValueType> buffer)
+    -> std::vector<std::unique_ptr<BufferSlice>> {
+  std::vector<std::unique_ptr<BufferSlice>> slices{};
+  slices.push_back(std::make_unique<UnownedBufferSlice>(buffer));
+  slices.push_back(std::make_unique<OwnedBufferSlice>(buffer.size()));
+  return slices;
+}
 
 TEST(BufferSlice, UnownedConstructor) {  // NOLINT
   for (const SizeType capacity : {0, 1, 2, 10}) {

@@ -6,10 +6,7 @@ cc_library(
     ],
     copts = ["-Werror"],
     visibility = ["//visibility:public"],
-    deps = [
-        "//util:result",
-        "@com_microsoft_gsl//:gsl",
-    ],
+    deps = ["//util:result"],
 )
 
 cc_test(

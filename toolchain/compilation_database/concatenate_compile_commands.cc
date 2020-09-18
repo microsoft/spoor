@@ -13,7 +13,6 @@
 
 #include "toolchain/compilation_database/compile_commands.pb.h"
 #include "util/result.h"
-#include "util/strings.h"
 
 namespace {
 

@@ -88,8 +88,9 @@ TEST(BufferSlicePool, ReturnSlicePointer) {  // NOLINT
     ASSERT_TRUE(borrow_result.IsOk());
     ASSERT_EQ(pool->Size(), pool->Capacity() - capacity);
     auto slice = std::move(borrow_result.Ok());
-    auto* slice_ptr = slice.Take();
-    auto return_result = pool->Return(slice_ptr);
+    // auto* slice_ptr = slice.Take();
+    // auto return_result = pool->Return(slice_ptr);
+    auto return_result = pool->Return(std::move(slice));
     ASSERT_TRUE(return_result.IsOk());
     ASSERT_EQ(pool->Size(), capacity);
   };

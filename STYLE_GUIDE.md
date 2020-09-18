@@ -17,6 +17,9 @@ Prefer using the `<` `<=>` or operators over `<=`, `>`, and `>=`.
 
 Follow [Google's C++ Style Guide][google-cpp-style-guide].
 
+Additionally, please follow the
+[C++ and Bazel Best Practices][c++-bazel-best-practices].
+
 ### Function declarations
 
 Exception: Use trailing return types for all function, method, and labmda
@@ -99,6 +102,7 @@ Just do your best.
 
 [clang-format]: https://clang.llvm.org/docs/ClangFormat.html
 [clang-tidy]: https://clang.llvm.org/extra/clang-tidy/
+[c++-bazel-best-practices]: https://docs.bazel.build/versions/master/bazel-and-cpp.html#best-practices
 [google-cpp-style-guide]: https://google.github.io/styleguide/cppguide.html
 [microsoft-writing-style-guide]: https://docs.microsoft.com/en-us/style-guide/welcome/
 [rust-result]: https://doc.rust-lang.org/std/result/

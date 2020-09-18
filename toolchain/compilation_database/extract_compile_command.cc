@@ -1,8 +1,5 @@
-#include "toolchain/compilation_database/extract_compile_command.h"
 
-#include <gflags/gflags.h>
-#include <google/protobuf/stubs/common.h>
-
+// TODO: Do we need all these headers?
 #include <cstdlib>
 #include <fstream>
 #include <numeric>
@@ -10,10 +7,27 @@
 #include <tuple>
 #include <vector>
 
+#include "absl/flags/flag.h"
+#include "absl/flags/parse.h"
+#include "absl/strings/str_join.h"
 #include "external/com_bazelbuild_bazel/src/main/protobuf/extra_actions_base.pb.h"
+#include "google/protobuf/stubs/common.h"
 #include "toolchain/compilation_database/compile_commands.pb.h"
 #include "util/result.h"
-#include "util/strings.h"
+
+ABSL_FLAG(
+    std::string, extra_action_file_path, "",
+    "Path to an extra action file provided by the Bazel action listener.");
+
+// DEFINE_validator(  // NOLINT
+//     extra_action_file, &util::flags::ValidateInputFilePath);
+
+ABSL_FLAG(
+    std::string, output_path, "",
+    "Path where the generated compile command should be saved.");
+
+// DEFINE_validator(  // NOLINT
+//     output, &util::flags::ValidateOutputFilePath);
 
 namespace {
 
@@ -23,6 +37,11 @@ enum class ParseExtraActionInfoError {
   kParsingError,
   kExtraActionInfoMissingExtension,
 };
+
+// const char* const kExtractCompileCommandVersion = "1.0.0";
+// const char* const kUsage =
+//     "Extract the command to compile each C++ source file from its `CppCompile` "
+//     "build mnemonic.";
 
 auto ParseExtraActionInfo(const std::string& path)
     -> util::result::Result<CompileCommand, ParseExtraActionInfoError> {
@@ -48,7 +67,7 @@ auto ParseExtraActionInfo(const std::string& path)
   arguments.insert(arguments.end(), compile_info.compiler_option().begin(),
                    compile_info.compiler_option().end());
 
-  const auto command = util::strings::Join(arguments, " ");
+  const auto command = absl::StrJoin(arguments, " ");
   compile_command.set_command(command);
 
   return compile_command;
@@ -59,18 +78,17 @@ auto ParseExtraActionInfo(const std::string& path)
 auto main(int argc, char** argv) -> int {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-  gflags::SetVersionString(
-      toolchain::compilation_database::kExtractCompileCommandVersion);
-  gflags::SetUsageMessage(toolchain::compilation_database::kUsage);
-  gflags::ParseCommandLineFlags(&argc, &argv, true);
+  // absl::SetVersionString(kExtractCompileCommandVersion);
+  // absl::SetUsageMessage(kUsage);
+  absl::ParseCommandLine(argc, argv);
 
   const auto result = ParseExtraActionInfo(
-      toolchain::compilation_database::FLAGS_extra_action_file);
+      absl::GetFlag(FLAGS_extra_action_file_path));
   if (!result.IsOk()) return EXIT_FAILURE;
   const auto& compile_command = result.Ok();
 
   std::ofstream output_stream{
-      toolchain::compilation_database::FLAGS_output,
+      absl::GetFlag(FLAGS_output_path),
       std::ios::out | std::ios::trunc | std::ios::binary};
   const auto success = compile_command.SerializeToOstream(&output_stream);
   if (!success) return EXIT_FAILURE;

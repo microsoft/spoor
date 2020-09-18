@@ -1,8 +1,6 @@
 #ifndef SPOOR_UTIL_MEMORY_OWNED_PTR_H_
 #define SPOOR_UTIL_MEMORY_OWNED_PTR_H_
 
-#include <gsl/pointers>
-
 #include "util/memory/ptr_owner.h"
 #include "util/result.h"
 
@@ -22,14 +20,14 @@ class OwnedPtr {
   ~OwnedPtr();
 
   [[nodiscard]] auto Ptr() const -> T*;
-  [[nodiscard]] auto Take() -> gsl::owner<T*>;
+  [[nodiscard]] auto Take() -> T*;
   [[nodiscard]] constexpr auto Owner() const -> PtrOwner*;
 
   auto operator*() const -> typename ::std::add_lvalue_reference<T>::type;
   auto operator->() const noexcept -> T*;
 
  private:
-  gsl::owner<T*> ptr_;
+  T* ptr_;
   PtrOwner* owner_;
 };
 

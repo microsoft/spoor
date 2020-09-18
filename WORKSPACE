@@ -15,6 +15,13 @@ new_git_repository(
 )
 
 git_repository(
+    name = "com_google_absl",
+    commit = "c51510d1d87ebce8615ae1752fd5aca912f6cf4c",  # v20200225.2
+    remote = "https://github.com/abseil/abseil-cpp.git",
+    shallow_since = "1587584588 -0400",
+)
+
+git_repository(
     name = "com_google_protobuf",
     commit = "fde7cf7358ec7cd69e8db9be4f1fa6a5c431386a",  # v3.13.0
     remote = "https://github.com/protocolbuffers/protobuf.git",
@@ -24,13 +31,6 @@ git_repository(
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 
 protobuf_deps()
-
-git_repository(
-    name = "com_gflags_gflags",
-    commit = "f7388c6655e699f777a5a74a3c9880b9cfaabe59",  # 2020-06-16 (>v2.2.2)
-    remote = "https://github.com/gflags/gflags.git",
-    shallow_since = "1592341863 +0100",
-)
 
 git_repository(
     name = "com_google_googletest",

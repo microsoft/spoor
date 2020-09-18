@@ -1,8 +1,6 @@
 #ifndef SPOOR_UTIL_MEMORY_PTR_OWNER_H_
 #define SPOOR_UTIL_MEMORY_PTR_OWNER_H_
 
-#include <gsl/pointers>
-
 #include "util/result.h"
 
 namespace util::memory {
@@ -15,10 +13,9 @@ class PtrOwner {
  public:
   enum class Error;
 
-  using OwnedPtr = OwnedPtr<T>;
   using Result = util::result::Result<util::result::Void, Error>;
 
-  // TODO do we need to assert that Ptr owner is not copyable or movable
+  // TODO do we need to assert that Ptr owner is not movable
   // if they are, the ownership will be messed up
 
   enum class Error {
@@ -27,13 +24,17 @@ class PtrOwner {
 
   PtrOwner() = default;
   PtrOwner(const PtrOwner&) = default;
-  PtrOwner(PtrOwner&&) noexcept = default;
+  PtrOwner(PtrOwner&&) noexcept = delete;
   auto operator=(const PtrOwner&) -> PtrOwner& = default;
-  auto operator=(PtrOwner&&) noexcept -> PtrOwner& = default;
+  auto operator=(PtrOwner&&) noexcept -> PtrOwner& = delete;
   virtual ~PtrOwner() = default;
 
-  virtual auto Return(gsl::owner<T*> t) -> Result = 0;
-  virtual auto Return(OwnedPtr&& ptr) -> Result = 0;
+  virtual auto Return(OwnedPtr<T>&& ptr) -> Result = 0;
+
+ protected:
+  friend class OwnedPtr<T>;
+
+  virtual auto Return(T* t) -> Result = 0;
 };
 
 }  // namespace util::memory

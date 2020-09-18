@@ -148,6 +148,7 @@ def darwin_llvm_toolchain_impl(ctx):
             "/usr/local/opt/llvm/include/c++/v1",
             "/usr/local/Cellar/llvm/10.0.1/lib/clang/10.0.1/include",
             "/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/include",
+            "/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/System/Library/Frameworks",
         ],
         toolchain_identifier = "darwin-llvm-toolchain",
         host_system_name = "local",

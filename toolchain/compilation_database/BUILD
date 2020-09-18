@@ -21,7 +21,6 @@ cc_binary(
     name = "extract_compile_command",
     srcs = [
         "extract_compile_command.cc",
-        "extract_compile_command.h",
     ],
     copts = ["-Werror"],
     deps = [
@@ -29,8 +28,9 @@ cc_binary(
         ":extra_actions_base_cc_proto",
         "//util:flags",
         "//util:result",
-        "//util:strings",
-        "@com_gflags_gflags//:gflags",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/strings",
         "@com_google_protobuf//:protobuf",
     ],
 )
@@ -48,7 +48,6 @@ cc_binary(
         ":extra_actions_base_cc_proto",
         "//util:flags",
         "//util:result",
-        "//util:strings",
         "@com_gflags_gflags//:gflags",
         "@com_google_protobuf//:protobuf",
     ],
