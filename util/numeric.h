@@ -2,7 +2,6 @@
 #define SPOOR_UTIL_NUMERIC_H_
 
 #include <cstdint>
-#include <type_traits>
 
 using int8 = int8_t;      // NOLINT(readability-identifier-naming)
 using uint8 = uint8_t;    // NOLINT(readability-identifier-naming)
