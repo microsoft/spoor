@@ -1,14 +1,50 @@
 #ifndef SPOOR_UTIL_FLAGS_H_
 #define SPOOR_UTIL_FLAGS_H_
 
+#include <fstream>
 #include <string>
+
+#include "absl/flags/flag.h"
+#include "absl/flags/marshalling.h"
+#include "absl/flags/parse.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 namespace util::flags {
 
-auto ValidateInputFilePath(const char* /*flag_name*/, const std::string& path)
-    -> bool;
-auto ValidateOutputFilePath(const char* /*flag_name*/, const std::string& path)
-    -> bool;
+struct InputFilePath {
+  explicit InputFilePath(absl::string_view path = {}) : input_path{path} {}
+
+  std::string input_path;
+};
+
+struct OutputPath {
+  std::string output_path;
+};
+
+template <class Ifstream = std::ifstream>
+auto AbslParseFlag(absl::string_view text, InputFilePath* input_file_path,
+                   std::string* error) -> bool;
+auto AbslUnparseFlag(const InputFilePath& input_file_path) -> std::string;
+
+auto AbslParseFlag(absl::string_view text, OutputPath* output_path,
+                   std::string* error) -> bool;
+auto AbslUnparseFlag(const OutputPath& output_path) -> std::string;
+
+template <class Ifstream>  // NOLINT(readability-identifier-naming)
+auto AbslParseFlag(absl::string_view text, InputFilePath* input_file_path,
+                   std::string* error) -> bool {
+  auto& path = input_file_path->input_path;
+  const auto success = absl::ParseFlag(text, &path, error);
+  if (!success) return false;
+  const Ifstream file{path};
+  // Prefer this technique over `std::filesystem::exists` for platform
+  // portability.
+  const auto exists = !file.fail();
+  if (exists) return true;
+  *error = absl::StrCat("The input file `", path, "` does not exist.");
+  return false;
+}
 
 }  // namespace util::flags
 

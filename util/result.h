@@ -7,8 +7,8 @@
 
 namespace util::result {
 
-// Use `Void` to indicate an empty Ok or Err.
-struct Void {};
+// Use `None` to indicate an empty Ok or Err.
+struct None {};
 
 // `Result<T, E>` is the type used to return and propagate errors. It stores
 // either the return value `T` representing a success or an error `E`.

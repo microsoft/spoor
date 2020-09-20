@@ -6,6 +6,11 @@ cc_library(
     hdrs = ["flags.h"],
     copts = ["-Werror"],
     visibility = ["//visibility:public"],
+    deps = [
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/strings",
+    ],
 )
 
 cc_test(
@@ -16,6 +21,7 @@ cc_test(
     visibility = ["//visibility:private"],
     deps = [
         ":flags",
+        "//util/mock:ifstream",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -55,26 +61,6 @@ cc_test(
     deps = [
         ":numeric",
         ":result",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
-
-cc_library(
-    name = "strings",
-    hdrs = ["strings.h"],
-    copts = ["-Werror"],
-    visibility = ["//visibility:public"],
-)
-
-cc_test(
-    name = "strings_test",
-    size = "small",
-    srcs = ["strings_test.cc"],
-    copts = ["-Werror"],
-    visibility = ["//visibility:private"],
-    deps = [
-        ":numeric",
-        ":strings",
         "@com_google_googletest//:gtest_main",
     ],
 )

@@ -1,13 +1,12 @@
 #include "spoor/runtime/buffer/buffer_slice_pool.h"
 
-#include <gtest/gtest.h>
-
 #include <future>
 #include <limits>
 #include <memory>
 #include <thread>
 #include <vector>
 
+#include "gtest/gtest.h"
 #include "spoor/runtime/buffer/amalgamated_buffer_slice_pool.h"
 #include "spoor/runtime/buffer/buffer_slice.h"
 #include "spoor/runtime/buffer/dynamic_buffer_slice_pool.h"
@@ -68,7 +67,7 @@ auto Pools(const Options options)
             .borrow_cas_attempts = options.borrow_cas_attempts}},
   };
   std::vector<std::unique_ptr<BufferSlicePool>> pools{};
-  pools.reserve(3 + amalgamated_pool_options.size());
+  pools.reserve(2 + amalgamated_pool_options.size());
   pools.push_back(std::make_unique<DynamicPool>(dynamic_pool_options));
   pools.push_back(std::make_unique<ReservedPool>(reserved_pool_options));
   for (const auto options : amalgamated_pool_options) {
@@ -140,7 +139,8 @@ TEST(BufferSlicePool, Size) {  // NOLINT
         for (auto& slice : retained_slices) {
           ASSERT_EQ(pool->Size(), expected_size);
           expected_size += slice->Capacity();
-          pool->Return(std::move(slice));
+          const auto result = pool->Return(std::move(slice));
+          ASSERT_TRUE(result.IsOk());
           ASSERT_EQ(pool->Size(), expected_size);
         }
       }
@@ -257,6 +257,7 @@ TEST(BufferSlicePool, Full) {  // NOLINT
 }
 
 TEST(BufferSlicePool, MultithreadedBorrow) {  // NOLINT
+  // Note: This test might produce a false-positive.
   const SizeType slice_capacity{1};
   const SizeType thread_size{100};
   const SizeType extra_threads_size{2};

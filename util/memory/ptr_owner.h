@@ -13,7 +13,7 @@ class PtrOwner {
  public:
   enum class Error;
 
-  using Result = util::result::Result<util::result::Void, Error>;
+  using Result = util::result::Result<util::result::None, Error>;
 
   // TODO do we need to assert that Ptr owner is not movable
   // if they are, the ownership will be messed up

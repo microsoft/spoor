@@ -1,10 +1,9 @@
 #include "spoor/runtime/buffer/amalgamated_buffer_slice_pool.h"
 
-#include <gtest/gtest.h>
-
 #include <unordered_set>
 #include <vector>
 
+#include "gtest/gtest.h"
 #include "spoor/runtime/buffer/buffer_slice.h"
 #include "spoor/runtime/buffer/dynamic_buffer_slice_pool.h"
 #include "spoor/runtime/buffer/reserved_buffer_slice_pool.h"
@@ -84,7 +83,7 @@ using ReservedPool = spoor::runtime::buffer::ReservedBufferSlicePool<ValueType>;
 //     }
 //   }
 // }
-// 
+//
 // TEST(BufferSlicePool, BorrowSliceFromDynamicPool) {  // NOLINT
 //   const SizeType reserved_pool_capacity{0};
 //   for (const SizeType dynamic_pool_capacity : {0, 1, 2, 5}) {

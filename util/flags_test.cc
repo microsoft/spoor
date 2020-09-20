@@ -1,27 +1,55 @@
 #include "util/flags.h"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
+#include "util/mock/ifstream.h"
 
 namespace {
 
-using util::flags::ValidateInputFilePath;
-using util::flags::ValidateOutputFilePath;
+using util::flags::AbslParseFlag;
+using util::flags::AbslUnparseFlag;
+using util::flags::InputFilePath;
+using util::flags::OutputPath;
 
-TEST(ValidateInputFilePath, ExistentePathsAreValid) {  // NOLINT
-  // Naughty test: This test actually hits the file system.
-  // Dependency injection with gMock is not an option because the function
-  // interface must be compatible with gflags.
-  ASSERT_FALSE(ValidateInputFilePath("", ""));
-  ASSERT_FALSE(ValidateInputFilePath("", "/does-not-exist"));
-  ASSERT_FALSE(ValidateInputFilePath("", "does-not-exist"));
-  ASSERT_TRUE(ValidateInputFilePath("", "/"));
+TEST(AbslParseFlagInputFilePath, SetsTypeOnSuccess) {  // NOLINT
+  const std::string path{"path"};
+  InputFilePath input_file_path{};
+  std::string error{};
+  const auto success =
+      AbslParseFlag<util::mock::Ifstream<true>>(path, &input_file_path, &error);
+  ASSERT_TRUE(success);
+  ASSERT_EQ(input_file_path.input_file_path, path);
+  ASSERT_EQ(error, "");
 }
 
-TEST(ValidateOutputFilePath, NonEmptyPathsAreValid) {  // NOLINT
-  ASSERT_FALSE(ValidateOutputFilePath("", ""));
-  ASSERT_TRUE(ValidateOutputFilePath("", "/"));
-  ASSERT_TRUE(ValidateOutputFilePath("", "/foo/bar/baz"));
-  ASSERT_TRUE(ValidateOutputFilePath("", "foo"));
+TEST(AbslUnparseFlagInputFilePath, ReturnsErrorMessageOnFailure) {  // NOLINT
+  const std::string path{"path"};
+  InputFilePath input_file_path{};
+  std::string error{};
+  const auto success = AbslParseFlag<util::mock::Ifstream<false>>(
+      path, &input_file_path, &error);
+  ASSERT_FALSE(success);
+  ASSERT_EQ(input_file_path.input_file_path, path);
+  ASSERT_EQ(error, "The input file `path` does not exist.");
+}
+
+TEST(AbslParseFlagOutputPath, SetsTypeOnSuccess) {  // NOLINT
+  const std::string path{"/foo/bar"};
+  OutputPath output_path{};
+  std::string error{};
+  const auto success = AbslParseFlag(path, &output_path, &error);
+  ASSERT_TRUE(success);
+  ASSERT_EQ(output_path.output_path, path);
+  ASSERT_EQ(error, "");
+}
+
+TEST(AbslUnparseFlagOutputPath, ReturnsErrorMessageOnFailure) {  // NOLINT
+  const std::string path{};
+  OutputPath output_path{};
+  std::string error{};
+  const auto success = AbslParseFlag(path, &output_path, &error);
+  ASSERT_FALSE(success);
+  ASSERT_EQ(output_path.output_path, path);
+  ASSERT_EQ(error, "The output path must not be empty.");
 }
 
 }  // namespace

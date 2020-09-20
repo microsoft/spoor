@@ -5,7 +5,7 @@
 #include <cassert>
 #include <memory>
 
-#include "spoor/runtime/buffer/buffer_slice.h"
+#include "spoor/runtime/buffer/owned_buffer_slice.h"
 #include "spoor/runtime/buffer/buffer_slice_pool.h"
 #include "util/memory/owned_ptr.h"
 #include "util/memory/ptr_owner.h"
@@ -18,12 +18,13 @@ class DynamicBufferSlicePool final : public BufferSlicePool<T> {
  public:
   using ValueType = T;
   using Slice = BufferSlice<T>;
+  using OwnedSlice = OwnedBufferSlice<T>;
   using SizeType = typename Slice::SizeType;
   using OwnedSlicePtr = util::memory::OwnedPtr<Slice>;
   using PtrOwnerError = typename util::memory::PtrOwner<Slice>::Error;
   using BorrowError = typename BufferSlicePool<T>::BorrowError;
   using BorrowResult = util::result::Result<OwnedSlicePtr, BorrowError>;
-  using ReturnResult = util::result::Result<util::result::Void, PtrOwnerError>;
+  using ReturnResult = util::result::Result<util::result::None, PtrOwnerError>;
 
   struct Options {
     SizeType max_slice_capacity;
@@ -47,13 +48,15 @@ class DynamicBufferSlicePool final : public BufferSlicePool<T> {
   // - The remaining dynamic slices size.
   [[nodiscard]] auto Borrow(SizeType preferred_slice_capacity)
       -> BorrowResult override;
-  auto Return(gsl::owner<Slice*> slice) -> ReturnResult override;
   auto Return(OwnedSlicePtr&& owned_ptr) -> ReturnResult override;
 
   [[nodiscard]] constexpr auto Size() const -> SizeType override;
   [[nodiscard]] constexpr auto Capacity() const -> SizeType override;
   [[nodiscard]] constexpr auto Empty() const -> bool override;
   [[nodiscard]] constexpr auto Full() const -> bool override;
+
+ protected:
+  auto Return(BufferSlice<T>* slice) -> ReturnResult override;
 
  private:
   const Options options_;
@@ -92,7 +95,7 @@ auto DynamicBufferSlicePool<T>::Borrow(SizeType preferred_slice_capacity)
         borrowed_items_size, new_borrowed_items_size);
     if (exchanged) {
       if (buffer_size < 1) return BorrowError::kNoSlicesAvailable;
-      auto* slice = new Slice{buffer_size};
+      auto* slice = new OwnedSlice{buffer_size};
       return OwnedSlicePtr{slice, this};
     }
   }
@@ -123,7 +126,7 @@ auto DynamicBufferSlicePool<T>::Borrow(SizeType preferred_slice_capacity)
 }
 
 template <class T>
-auto DynamicBufferSlicePool<T>::Return(gsl::owner<Slice*> slice)
+auto DynamicBufferSlicePool<T>::Return(BufferSlice<T>* slice)
     -> ReturnResult {
   // allocator_.destroy(slice);
   // allocator_.deallocate(slice, 1);

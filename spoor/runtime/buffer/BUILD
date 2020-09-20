@@ -15,9 +15,9 @@ cc_library(
     copts = ["-Werror"],
     visibility = ["//visibility:public"],
     deps = [
-        "//util/memory",
         "//util:numeric",
         "//util:result",
+        "//util/memory",
         "@com_microsoft_gsl//:gsl",
     ],
 )
@@ -30,8 +30,8 @@ cc_test(
     visibility = ["//visibility:private"],
     deps = [
         ":buffer",
-        "//util/memory",
         "//util:numeric",
+        "//util/memory",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -44,9 +44,9 @@ cc_test(
     visibility = ["//visibility:private"],
     deps = [
         ":buffer",
-        "//util/memory",
         "//util:numeric",
         "//util:result",
+        "//util/memory",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -59,8 +59,8 @@ cc_test(
     visibility = ["//visibility:private"],
     deps = [
         ":buffer",
-        "//util/memory",
         "//util:numeric",
+        "//util/memory",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -73,8 +73,8 @@ cc_test(
     visibility = ["//visibility:private"],
     deps = [
         ":buffer",
-        "//util/memory",
         "//util:numeric",
+        "//util/memory",
         "@com_google_googletest//:gtest_main",
     ],
 )
@@ -87,9 +87,9 @@ cc_test(
     visibility = ["//visibility:private"],
     deps = [
         ":buffer",
-        "//util/memory",
         "//util:numeric",
         "//util:result",
+        "//util/memory",
         "@com_google_googletest//:gtest_main",
     ],
 )

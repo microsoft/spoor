@@ -3,11 +3,11 @@
 
 #include <algorithm>
 #include <functional>
+#include <span>
 #include <vector>
 
+#include "spoor/runtime/buffer/amalgamated_buffer_slice_pool.h"
 #include "spoor/runtime/buffer/buffer_slice.h"
-#include "spoor/runtime/buffer/buffer_slice_pool.h"
-#include "spoor/runtime/buffer/contiguous_memory.h"
 #include "util/memory/owned_ptr.h"
 
 namespace spoor::runtime::buffer {
@@ -17,8 +17,8 @@ class CircularSliceBuffer {
  public:
   using Slice = BufferSlice<T>;
   using OwnedSlicePtr = util::memory::OwnedPtr<Slice>;
-  using SlicePool = BufferSlicePool<T>;
-  using SizeType = typename SlicePool::SizeType;
+  using SlicePool = AmalgamatedBufferSlicePool<T>;
+  using SizeType = typename BufferSlicePool<T>::SizeType;
   using SlicesType = std::vector<OwnedSlicePtr>;
   using ValueType = T;
 
@@ -41,16 +41,15 @@ class CircularSliceBuffer {
   auto Push(T&& item) -> void;
   auto Flush() -> void;
   auto Clear() -> void;
+  [[nodiscard]] constexpr auto ContiguousMemoryChunks() -> std::vector<std::span<T>>;
 
   [[nodiscard]] constexpr auto Size() -> SizeType;
   [[nodiscard]] constexpr auto Capacity() -> SizeType;
   [[nodiscard]] constexpr auto Empty() -> bool;
   [[nodiscard]] constexpr auto Full() -> bool;
-  [[nodiscard]] auto ContiguousMemoryChunks() const
-      -> std::vector<ContiguousMemory<T>>;
 
  private:
-  const Options options_;
+  Options options_;
   SlicesType slices_;
   SizeType size_;
   typename SlicesType::iterator insertion_iterator_;
@@ -70,7 +69,7 @@ CircularSliceBuffer<T>::~CircularSliceBuffer() {
 
 template <class T>
 auto CircularSliceBuffer<T>::Push(const T& item) -> void {
-  Push(std::move(item));
+  Push(std::move(item));  // TODO is this kosher?
 }
 
 template <class T>
@@ -137,10 +136,10 @@ constexpr auto CircularSliceBuffer<T>::Full() -> bool {
 }
 
 template <class T>
-auto CircularSliceBuffer<T>::ContiguousMemoryChunks() const
-    -> std::vector<ContiguousMemory<T>> {
+constexpr auto CircularSliceBuffer<T>::ContiguousMemoryChunks()
+    -> std::vector<std::span<T>> {
   if (Empty()) return {};
-  std::vector<ContiguousMemory<T>> chunks{};
+  std::vector<std::span<T>> chunks{};
   // Over allocating by one is preferable to performing several unnecessary heap
   // allocations and possible over allocating by more than one.
   chunks.reserve(2 * slices_.size());

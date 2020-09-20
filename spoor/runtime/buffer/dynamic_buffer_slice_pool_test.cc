@@ -1,12 +1,11 @@
 #include "spoor/runtime/buffer/dynamic_buffer_slice_pool.h"
 
-#include <gtest/gtest.h>
-
 #include <future>
 #include <limits>
 #include <thread>
 #include <vector>
 
+#include "gtest/gtest.h"
 #include "spoor/runtime/buffer/buffer_slice.h"
 #include "util/memory/owned_ptr.h"
 #include "util/numeric.h"
@@ -78,7 +77,8 @@ TEST(DynamicBufferSlicePool, BorrowsRemainingSlicesCapacity) {  // NOLINT
 
 TEST(DynamicBufferSlicePool, BorrowReturnsErrWhenNoSlicesAvailable) {  // NOLINT
   for (const SizeType capacity : {1, 10, 100, 1'000}) {
-    const Options options{.max_slice_capacity = capacity, .capacity = 0,
+    const Options options{.max_slice_capacity = capacity,
+                          .capacity = 0,
                           .borrow_cas_attempts = 1};
     Pool pool{options};
     auto result = pool.Borrow(capacity);

@@ -1,4 +1,10 @@
-load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_proto_library")
+load(
+    "@rules_cc//cc:defs.bzl",
+    "cc_binary",
+    "cc_library",
+    "cc_proto_library",
+    "cc_test"
+)
 
 cc_proto_library(
     name = "extra_actions_base_cc_proto",
@@ -17,6 +23,35 @@ cc_proto_library(
     deps = [":compile_commands_proto"],
 )
 
+cc_library(
+    name = "compilation_database_util",
+    srcs = ["compilation_database_util.cc"],
+    hdrs = ["compilation_database_util.h"],
+    copts = ["-Werror"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":compile_commands_cc_proto",
+        ":extra_actions_base_cc_proto",
+        "//util:result",
+        "@com_google_absl//absl/strings",
+        "@com_google_protobuf//:protobuf",
+        "@com_microsoft_gsl//:gsl",
+    ],
+)
+
+cc_test(
+    name = "compilation_database_util_test",
+    size = "small",
+    srcs = ["compilation_database_util_test.cc"],
+    copts = ["-Werror"],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":compilation_database_util",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_binary(
     name = "extract_compile_command",
     srcs = [
@@ -24,32 +59,20 @@ cc_binary(
     ],
     copts = ["-Werror"],
     deps = [
-        ":compile_commands_cc_proto",
-        ":extra_actions_base_cc_proto",
+        ":compilation_database_util",
         "//util:flags",
-        "//util:result",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/flags:parse",
-        "@com_google_absl//absl/strings",
-        "@com_google_protobuf//:protobuf",
     ],
 )
 
 cc_binary(
     name = "concatenate_compile_commands",
-    srcs = [
-        "concatenate_compile_commands.cc",
-        "concatenate_compile_commands.h",
-        "extract_compile_command.h",
-    ],
+    srcs = ["concatenate_compile_commands.cc"],
     copts = ["-Werror"],
     deps = [
-        ":compile_commands_cc_proto",
-        ":extra_actions_base_cc_proto",
+        ":compilation_database_util",
         "//util:flags",
-        "//util:result",
-        "@com_gflags_gflags//:gflags",
-        "@com_google_protobuf//:protobuf",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 

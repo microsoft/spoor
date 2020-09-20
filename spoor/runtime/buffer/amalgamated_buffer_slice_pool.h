@@ -27,7 +27,7 @@ class AmalgamatedBufferSlicePool final : public BufferSlicePool<T> {
   using PtrOwnerError = typename util::memory::PtrOwner<Slice>::Error;
   using BorrowError = typename BufferSlicePool<T>::BorrowError;
   using BorrowResult = util::result::Result<OwnedSlicePtr, BorrowError>;
-  using ReturnResult = util::result::Result<util::result::Void, PtrOwnerError>;
+  using ReturnResult = util::result::Result<util::result::None, PtrOwnerError>;
   using ReservedPool = ReservedBufferSlicePool<T>;
   using DynamicPool = DynamicBufferSlicePool<T>;
 
@@ -50,7 +50,6 @@ class AmalgamatedBufferSlicePool final : public BufferSlicePool<T> {
   // buffer from the dynamic pool.
   [[nodiscard]] auto Borrow(SizeType preferred_slice_capacity)
       -> BorrowResult override;
-  auto Return(gsl::owner<Slice*> slice) -> ReturnResult override;
   auto Return(OwnedSlicePtr&& slice) -> ReturnResult override;
   template <class Collection>
   auto Return(Collection&& slices) -> std::vector<OwnedSlicePtr>;
@@ -67,6 +66,9 @@ class AmalgamatedBufferSlicePool final : public BufferSlicePool<T> {
   [[nodiscard]] constexpr auto ReservedPoolFull() const -> bool;
   [[nodiscard]] constexpr auto DynamicPoolFull() const -> bool;
   [[nodiscard]] constexpr auto Full() const -> bool override;
+
+ protected:
+  auto Return(Slice* slice) -> ReturnResult override;
 
  private:
   const Options options_;
@@ -100,11 +102,11 @@ auto AmalgamatedBufferSlicePool<T>::Borrow(
 }
 
 template <class T>
-auto AmalgamatedBufferSlicePool<T>::Return(gsl::owner<Slice*> slice)
-    -> ReturnResult {
-  auto result = reserved_pool_.Return(slice);
-  if (result.IsOk()) return ReturnResult::Ok({});
-  return dynamic_pool_.Return(slice);
+auto AmalgamatedBufferSlicePool<T>::Return(Slice* /* slice */) -> ReturnResult {
+  // auto result = reserved_pool_.Return(slice);
+  // if (result.IsOk()) return ReturnResult::Ok({});
+  // return dynamic_pool_.Return(slice);
+  return PtrOwnerError::kDoesNotOwnPtr;
 }
 
 template <class T>

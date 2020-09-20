@@ -1,6 +1,6 @@
 #include "spoor/runtime/trace/trace.h"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 namespace {
 

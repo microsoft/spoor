@@ -19,6 +19,7 @@
 #ifndef SPOOR_SPOOR_RUNTIME_BUFFER_UNOWNED_BUFFER_SLICE_H_
 #define SPOOR_SPOOR_RUNTIME_BUFFER_UNOWNED_BUFFER_SLICE_H_
 
+#include <iostream>  // TODO
 #include <span>
 #include <vector>
 
@@ -43,14 +44,14 @@ class UnownedBufferSlice final : public BufferSlice<T> {
   constexpr auto Push(const T& item) -> void override;
   constexpr auto Push(T&& item) -> void override;
   constexpr auto Clear() -> void override;
+  [[nodiscard]] auto ContiguousMemoryChunks()
+      -> std::vector<std::span<T>> override;
 
   [[nodiscard]] constexpr auto Size() const -> SizeType override;
   [[nodiscard]] constexpr auto Capacity() const -> SizeType override;
   [[nodiscard]] constexpr auto Empty() const -> bool override;
   [[nodiscard]] constexpr auto Full() const -> bool override;
   [[nodiscard]] constexpr auto WillWrapOnNextPush() const -> bool override;
-  [[nodiscard]] constexpr auto ContiguousMemoryChunks() const
-      -> std::vector<std::span<T>> override;
 
  private:
   std::span<T> buffer_;
@@ -66,22 +67,42 @@ template <class T>
 constexpr auto UnownedBufferSlice<T>::Push(const T& item) -> void {
   *insertion_iterator_ = item;
   ++insertion_iterator_;
-  if (Full()) insertion_iterator_ = buffer_.begin();
-  size_ = std::max(size_ + 1, Capacity());
+  if (insertion_iterator_ == buffer_.end()) {
+    insertion_iterator_ = buffer_.begin();
+  }
+  size_ = std::min(size_ + 1, Capacity());
 }
 
 template <class T>
 constexpr auto UnownedBufferSlice<T>::Push(T&& item) -> void {
   *insertion_iterator_ = std::move(item);
   ++insertion_iterator_;
-  if (Full()) insertion_iterator_ = buffer_.begin();
-  size_ = std::max(size_ + 1, Capacity());
+  if (insertion_iterator_ == buffer_.end()) {
+    insertion_iterator_ = buffer_.begin();
+  }
+  size_ = std::min(size_ + 1, Capacity());
 }
 
 template <class T>
 constexpr auto UnownedBufferSlice<T>::Clear() -> void {
   insertion_iterator_ = buffer_.begin();
   size_ = 0;
+}
+
+template <class T>
+auto UnownedBufferSlice<T>::ContiguousMemoryChunks()
+    -> std::vector<std::span<T>> {
+  if (Empty()) return {};
+  const auto begin = buffer_.begin();
+  const auto end = buffer_.end();
+  if (!Full() || insertion_iterator_ == begin) return {{&(*begin), Size()}};
+  const std::span<T> first_chunk{
+      &(*insertion_iterator_),
+      static_cast<SizeType>(std::distance(insertion_iterator_, end))};
+  const std::span<T> second_chunk{
+      &(*begin),
+      static_cast<SizeType>(std::distance(begin, insertion_iterator_))};
+  return {first_chunk, second_chunk};
 }
 
 template <class T>
@@ -106,16 +127,7 @@ constexpr auto UnownedBufferSlice<T>::Full() const -> bool {
 
 template <class T>
 constexpr auto UnownedBufferSlice<T>::WillWrapOnNextPush() const -> bool {
-  return std::next(insertion_iterator_) == buffer_.end();
-}
-
-template <class T>
-constexpr auto UnownedBufferSlice<T>::ContiguousMemoryChunks() const
-    -> std::vector<std::span<T>> {
-  if (Empty()) return {};
-  if (!Full()) return {{buffer_.begin(), buffer_.end()}};
-  return {{insertion_iterator_, buffer_.end()},
-          {buffer_.begin(), insertion_iterator_}};
+  return Capacity() == 0 || next(insertion_iterator_) == buffer_.end();
 }
 
 }  // namespace spoor::runtime::buffer

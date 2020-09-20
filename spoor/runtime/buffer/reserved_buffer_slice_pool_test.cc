@@ -1,9 +1,8 @@
 #include "spoor/runtime/buffer/reserved_buffer_slice_pool.h"
 
-#include <gtest/gtest.h>
-
 #include <vector>
 
+#include "gtest/gtest.h"
 #include "spoor/runtime/buffer/buffer_slice.h"
 #include "util/memory/owned_ptr.h"
 #include "util/numeric.h"
@@ -43,14 +42,18 @@ TEST(ReservedBufferSlicePool, BorrowsRemainingSliceCapacity) {  // NOLINT
   for (const SizeType capacity : {1, 10, 100, 1'000}) {
     for (const SizeType extra_capacity : {1, 10, 100, 1'000}) {
       if (capacity < extra_capacity) continue;
+std::cerr << "capacity = " << capacity << ", extra_capacity = " << extra_capacity << '\n';
       const Options options{.max_slice_capacity = capacity,
                             .capacity = capacity + extra_capacity};
       Pool pool{options};
+      ASSERT_EQ(pool.Capacity(), capacity + extra_capacity);
+      ASSERT_EQ(pool.Size(), pool.Capacity());
       auto full_capacity_result = pool.Borrow(kIgnore);
       ASSERT_TRUE(full_capacity_result.IsOk());
       auto full_capacity_slice = std::move(full_capacity_result.Ok());
       ASSERT_EQ(full_capacity_slice->Capacity(), capacity);
       auto remaining_capacity_result = pool.Borrow(kIgnore);
+      ASSERT_EQ(pool.Size(), 0);
       ASSERT_TRUE(remaining_capacity_result.IsOk());
       auto remaining_capacity_slice = std::move(remaining_capacity_result.Ok());
       ASSERT_EQ(remaining_capacity_slice->Capacity(), extra_capacity);
@@ -58,8 +61,8 @@ TEST(ReservedBufferSlicePool, BorrowsRemainingSliceCapacity) {  // NOLINT
   }
 }
 
-TEST(ReservedBufferSlicePool,
-     BorrowReturnsErrWhenNoSlicesAvailable) {  // NOLINT
+// NOLINTNEXTLINE
+TEST(ReservedBufferSlicePool, BorrowReturnsErrWhenNoSlicesAvailable) {
   for (const SizeType capacity : {1, 10, 100, 1'000}) {
     const Options options{.max_slice_capacity = capacity, .capacity = 0};
     Pool pool{options};
