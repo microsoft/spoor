@@ -1,9 +1,9 @@
 #include "spoor/lib.h"
 
-namespace spoor {
-namespace lib {
+#include "util/numeric.h"
 
-auto Add(const int a, const int b) -> int { return a + b; }
+namespace spoor::lib {
 
-}  // namespace lib
-}  // namespace spoor
+auto Add(const int64 a, const int64 b) -> int64 { return a + b; }
+
+}  // namespace spoor::lib
