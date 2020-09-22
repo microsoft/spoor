@@ -16,6 +16,8 @@ cc_test(
     copts = ["-Werror"],
     visibility = ["//visibility:private"],
     deps = [
+        ":memory",
+        "//util:numeric",
         "//util:result",
         "@com_google_googletest//:gtest_main",
     ],

@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <string>
+#include <iostream>  // TODO
 
 #include "absl/flags/flag.h"
 #include "absl/flags/marshalling.h"
@@ -13,7 +14,7 @@
 namespace util::flags {
 
 struct InputFilePath {
-  explicit InputFilePath(absl::string_view path = {}) : input_path{path} {}
+  explicit InputFilePath(std::string path = {}) : input_path(std::move(path)) {}
 
   std::string input_path;
 };
@@ -23,7 +24,7 @@ struct OutputPath {
 };
 
 template <class Ifstream = std::ifstream>
-auto AbslParseFlag(absl::string_view text, InputFilePath* input_file_path,
+auto AbslParseFlag(absl::string_view text, InputFilePath* input_path,
                    std::string* error) -> bool;
 auto AbslUnparseFlag(const InputFilePath& input_file_path) -> std::string;
 
@@ -34,9 +35,11 @@ auto AbslUnparseFlag(const OutputPath& output_path) -> std::string;
 template <class Ifstream>  // NOLINT(readability-identifier-naming)
 auto AbslParseFlag(absl::string_view text, InputFilePath* input_file_path,
                    std::string* error) -> bool {
+std::cerr << "text = " << text << '\n';
   auto& path = input_file_path->input_path;
   const auto success = absl::ParseFlag(text, &path, error);
   if (!success) return false;
+  if (text.empty()) return true;
   const Ifstream file{path};
   // Prefer this technique over `std::filesystem::exists` for platform
   // portability.

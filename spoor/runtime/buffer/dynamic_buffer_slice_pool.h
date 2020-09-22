@@ -5,8 +5,9 @@
 #include <cassert>
 #include <memory>
 
-#include "spoor/runtime/buffer/owned_buffer_slice.h"
+#include "spoor/runtime/buffer/circular_buffer.h"
 #include "spoor/runtime/buffer/buffer_slice_pool.h"
+#include "spoor/runtime/buffer/owned_buffer_slice.h"
 #include "util/memory/owned_ptr.h"
 #include "util/memory/ptr_owner.h"
 #include "util/result.h"
@@ -17,7 +18,7 @@ template <class T>
 class DynamicBufferSlicePool final : public BufferSlicePool<T> {
  public:
   using ValueType = T;
-  using Slice = BufferSlice<T>;
+  using Slice = CircularBuffer<T>;
   using OwnedSlice = OwnedBufferSlice<T>;
   using SizeType = typename Slice::SizeType;
   using OwnedSlicePtr = util::memory::OwnedPtr<Slice>;
@@ -56,7 +57,7 @@ class DynamicBufferSlicePool final : public BufferSlicePool<T> {
   [[nodiscard]] constexpr auto Full() const -> bool override;
 
  protected:
-  auto Return(BufferSlice<T>* slice) -> ReturnResult override;
+  auto Return(Slice* slice) -> ReturnResult override;
 
  private:
   const Options options_;
@@ -126,8 +127,7 @@ auto DynamicBufferSlicePool<T>::Borrow(SizeType preferred_slice_capacity)
 }
 
 template <class T>
-auto DynamicBufferSlicePool<T>::Return(BufferSlice<T>* slice)
-    -> ReturnResult {
+auto DynamicBufferSlicePool<T>::Return(Slice* slice) -> ReturnResult {
   // allocator_.destroy(slice);
   // allocator_.deallocate(slice, 1);
   // std::allocator_traits<Allocator>::destroy(allocator_, slice);

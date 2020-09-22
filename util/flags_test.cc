@@ -12,23 +12,23 @@ using util::flags::OutputPath;
 
 TEST(AbslParseFlagInputFilePath, SetsTypeOnSuccess) {  // NOLINT
   const std::string path{"path"};
-  InputFilePath input_file_path{};
+  InputFilePath input_file_path{""};
   std::string error{};
   const auto success =
       AbslParseFlag<util::mock::Ifstream<true>>(path, &input_file_path, &error);
   ASSERT_TRUE(success);
-  ASSERT_EQ(input_file_path.input_file_path, path);
+  ASSERT_EQ(input_file_path.input_path, path);
   ASSERT_EQ(error, "");
 }
 
 TEST(AbslUnparseFlagInputFilePath, ReturnsErrorMessageOnFailure) {  // NOLINT
   const std::string path{"path"};
-  InputFilePath input_file_path{};
+  InputFilePath input_file_path{""};
   std::string error{};
   const auto success = AbslParseFlag<util::mock::Ifstream<false>>(
       path, &input_file_path, &error);
   ASSERT_FALSE(success);
-  ASSERT_EQ(input_file_path.input_file_path, path);
+  ASSERT_EQ(input_file_path.input_path, path);
   ASSERT_EQ(error, "The input file `path` does not exist.");
 }
 

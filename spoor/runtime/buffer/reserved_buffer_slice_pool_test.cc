@@ -3,13 +3,13 @@
 #include <vector>
 
 #include "gtest/gtest.h"
-#include "spoor/runtime/buffer/buffer_slice.h"
+#include "spoor/runtime/buffer/circular_buffer.h"
 #include "util/memory/owned_ptr.h"
 #include "util/numeric.h"
 
 namespace {
 
-using Slice = spoor::runtime::buffer::BufferSlice<int64>;
+using Slice = spoor::runtime::buffer::CircularBuffer<int64>;
 using ValueType = Slice::ValueType;
 using SizeType = Slice::SizeType;
 using Pool = spoor::runtime::buffer::ReservedBufferSlicePool<ValueType>;
@@ -42,7 +42,8 @@ TEST(ReservedBufferSlicePool, BorrowsRemainingSliceCapacity) {  // NOLINT
   for (const SizeType capacity : {1, 10, 100, 1'000}) {
     for (const SizeType extra_capacity : {1, 10, 100, 1'000}) {
       if (capacity < extra_capacity) continue;
-std::cerr << "capacity = " << capacity << ", extra_capacity = " << extra_capacity << '\n';
+      std::cerr << "capacity = " << capacity
+                << ", extra_capacity = " << extra_capacity << '\n';
       const Options options{.max_slice_capacity = capacity,
                             .capacity = capacity + extra_capacity};
       Pool pool{options};

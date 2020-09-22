@@ -3,7 +3,7 @@
 
 #include <cstddef>
 
-#include "spoor/runtime/buffer/buffer_slice.h"
+#include "spoor/runtime/buffer/circular_buffer.h"
 #include "util/memory/owned_ptr.h"
 #include "util/memory/ptr_owner.h"
 #include "util/result.h"
@@ -11,13 +11,13 @@
 namespace spoor::runtime::buffer {
 
 template <class T>
-class BufferSlicePool : public util::memory::PtrOwner<BufferSlice<T>> {
+class BufferSlicePool : public util::memory::PtrOwner<CircularBuffer<T>> {
  public:
   enum class BorrowError;
 
-  using Slice = BufferSlice<T>;
-  using SizeType = typename Slice::SizeType;
-  using OwnedSlicePtr = util::memory::OwnedPtr<Slice>;
+  using Buffer = CircularBuffer<T>;
+  using SizeType = typename Buffer::SizeType;
+  using OwnedSlicePtr = util::memory::OwnedPtr<Buffer>;
   using BorrowResult = util::result::Result<OwnedSlicePtr, BorrowError>;
 
   enum class BorrowError {

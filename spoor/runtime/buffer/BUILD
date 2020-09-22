@@ -4,7 +4,7 @@ cc_library(
     name = "buffer",
     hdrs = [
         "amalgamated_buffer_slice_pool.h",
-        "buffer_slice.h",
+        "circular_buffer.h",
         "buffer_slice_pool.h",
         "circular_slice_buffer.h",
         "dynamic_buffer_slice_pool.h",
@@ -18,6 +18,21 @@ cc_library(
         "//util:numeric",
         "//util:result",
         "//util/memory",
+        "@com_microsoft_gsl//:gsl",
+    ],
+)
+
+cc_test(
+    name = "circular_buffer_test",
+    size = "small",
+    srcs = ["circular_buffer_test.cc"],
+    copts = ["-Werror"],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":buffer",
+        "//util:numeric",
+        "//util/memory",
+        "@com_google_googletest//:gtest_main",
         "@com_microsoft_gsl//:gsl",
     ],
 )

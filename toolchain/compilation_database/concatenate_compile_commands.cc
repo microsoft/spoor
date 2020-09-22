@@ -8,18 +8,18 @@
 #include <variant>
 
 #include "absl/flags/flag.h"
+#include "absl/flags/parse.h"
 #include "absl/flags/usage.h"
 #include "google/protobuf/stubs/common.h"
 #include "gsl/gsl"
 #include "toolchain/compilation_database/compilation_database_util.h"
 #include "toolchain/compilation_database/compile_commands.pb.h"
-#include "util/flags.h"
 #include "util/result.h"
 
-ABSL_FLAG(util::flags::OutputPath, compile_command_directory, {},
+ABSL_FLAG(std::string, compile_command_directory, {},
           "Directory for each compile command.");
 
-ABSL_FLAG(util::flags::OutputPath, output_compilation_database, {},
+ABSL_FLAG(std::string, output_compilation_database, {},
           "Path to the output compile_commands.json file.");
 
 namespace {
@@ -46,7 +46,7 @@ auto main(int argc, char** argv) -> int {
             std::istream_iterator<std::string>(),
             std::back_inserter(input_files));
   const auto compile_command_directory =
-      absl::GetFlag(FLAGS_compile_command_directory).output_path;
+      absl::GetFlag(FLAGS_compile_command_directory);
   const auto make_input_stream = [](const std::string_view input_file)
       -> std::variant<std::ifstream, std::istringstream> {
     return std::ifstream{input_file, std::ios::in | std::ios::binary};
@@ -65,7 +65,7 @@ auto main(int argc, char** argv) -> int {
   const auto& compile_commands = compile_commands_result.Ok();
 
   const auto output_compilation_database =
-      absl::GetFlag(FLAGS_output_compilation_database).output_path;
+      absl::GetFlag(FLAGS_output_compilation_database);
   std::ofstream output_stream{
       output_compilation_database,
       std::ios::out | std::ios::trunc | std::ios::binary};

@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "gsl/gsl"
+#include "spoor/runtime/buffer/circular_buffer.h"
 #include "spoor/runtime/buffer/buffer_slice_pool.h"
 #include "spoor/runtime/buffer/unowned_buffer_slice.h"
 #include "util/memory/owned_ptr.h"
@@ -18,7 +19,7 @@ template <class T>
 class ReservedBufferSlicePool final : public BufferSlicePool<T> {
  public:
   using ValueType = T;
-  using Slice = BufferSlice<T>;
+  using Slice = CircularBuffer<T>;
   using UnownedSlice = UnownedBufferSlice<T>;
   using SizeType = typename Slice::SizeType;
   using OwnedSlicePtr = util::memory::OwnedPtr<Slice>;

@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "gtest/gtest.h"
-#include "spoor/runtime/buffer/buffer_slice.h"
+#include "spoor/runtime/buffer/circular_buffer.h"
 #include "spoor/runtime/buffer/dynamic_buffer_slice_pool.h"
 #include "spoor/runtime/buffer/reserved_buffer_slice_pool.h"
 #include "util/memory/owned_ptr.h"
@@ -12,7 +12,7 @@
 
 namespace {
 
-using Slice = spoor::runtime::buffer::BufferSlice<int64>;
+using Slice = spoor::runtime::buffer::CircularBuffer<int64>;
 using ValueType = Slice::ValueType;
 using SizeType = Slice::SizeType;
 using BufferSlicePool = spoor::runtime::buffer::BufferSlicePool<ValueType>;

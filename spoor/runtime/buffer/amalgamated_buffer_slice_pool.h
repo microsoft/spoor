@@ -8,7 +8,7 @@
 #include <new>
 #include <optional>
 
-#include "spoor/runtime/buffer/buffer_slice.h"
+#include "spoor/runtime/buffer/circular_buffer.h"
 #include "spoor/runtime/buffer/buffer_slice_pool.h"
 #include "spoor/runtime/buffer/dynamic_buffer_slice_pool.h"
 #include "spoor/runtime/buffer/reserved_buffer_slice_pool.h"
@@ -21,7 +21,7 @@ template <class T>
 class AmalgamatedBufferSlicePool final : public BufferSlicePool<T> {
  public:
   using ValueType = T;
-  using Slice = BufferSlice<T>;
+  using Slice = CircularBuffer<T>;
   using SizeType = typename Slice::SizeType;
   using OwnedSlicePtr = util::memory::OwnedPtr<Slice>;
   using PtrOwnerError = typename util::memory::PtrOwner<Slice>::Error;
@@ -102,7 +102,8 @@ auto AmalgamatedBufferSlicePool<T>::Borrow(
 }
 
 template <class T>
-auto AmalgamatedBufferSlicePool<T>::Return(Slice* /* slice */) -> ReturnResult {
+auto AmalgamatedBufferSlicePool<T>::Return(Slice * /* slice */)
+    -> ReturnResult {
   // auto result = reserved_pool_.Return(slice);
   // if (result.IsOk()) return ReturnResult::Ok({});
   // return dynamic_pool_.Return(slice);

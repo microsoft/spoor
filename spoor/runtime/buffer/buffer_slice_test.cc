@@ -1,10 +1,7 @@
-#include "spoor/runtime/buffer/buffer_slice.h"
+#include "spoor/runtime/buffer/circular_buffer.h"
 
-#include <algorithm>
-#include <memory>
+#include <vector>
 #include <numeric>
-#include <span>
-#include <utility>
 
 #include "gtest/gtest.h"
 #include "spoor/runtime/buffer/owned_buffer_slice.h"
@@ -13,7 +10,7 @@
 
 namespace {
 
-using BufferSlice = spoor::runtime::buffer::BufferSlice<int64>;
+using BufferSlice = spoor::runtime::buffer::CircularBuffer<int64>;
 using ValueType = BufferSlice::ValueType;
 using OwnedBufferSlice = spoor::runtime::buffer::OwnedBufferSlice<ValueType>;
 using UnownedBufferSlice =
@@ -27,87 +24,6 @@ auto Slices(std::span<ValueType> buffer)
   slices.push_back(std::make_unique<UnownedBufferSlice>(buffer));
   slices.push_back(std::make_unique<OwnedBufferSlice>(buffer.size()));
   return slices;
-}
-
-TEST(BufferSlice, Clear) {  // NOLINT
-  for (const SizeType capacity : {0, 1, 2, 10}) {
-    std::vector<ValueType> buffer(capacity);
-    for (auto& slice : Slices(buffer)) {
-      for (SizeType i{0}; i < capacity; ++i) {
-        slice->Push(i);
-      }
-      slice->Clear();
-      ASSERT_EQ(slice->Size(), 0);
-    }
-  }
-}
-
-TEST(BufferSlice, Size) {  // NOLINT
-  for (const SizeType capacity : {0, 1, 2, 10}) {
-    std::vector<ValueType> buffer(capacity);
-    for (auto& slice : Slices(buffer)) {
-      for (SizeType i{0}; i < 2 * capacity; ++i) {
-        slice->Push(i);
-        ASSERT_EQ(slice->Size(), std::min(i + 1, capacity));
-      }
-    }
-  }
-}
-
-TEST(BufferSlice, Capacity) {  // NOLINT
-  for (const SizeType capacity : {0, 1, 2, 10}) {
-    std::vector<ValueType> buffer(capacity);
-    for (auto& slice : Slices(buffer)) {
-      for (SizeType i{0}; i < 2 * capacity; ++i) {
-        slice->Push(i);
-        ASSERT_EQ(slice->Capacity(), capacity);
-      }
-    }
-  }
-}
-
-TEST(BufferSlice, Empty) {  // NOLINT
-  for (const SizeType capacity : {0, 1, 2, 10}) {
-    std::vector<ValueType> buffer(capacity);
-    for (auto& slice : Slices(buffer)) {
-      ASSERT_TRUE(slice->Empty());
-      for (SizeType i{0}; i < capacity; ++i) {
-        slice->Push(i);
-        ASSERT_FALSE(slice->Empty());
-      }
-    }
-  }
-}
-
-TEST(BufferSlice, WillWrapOnNextPush) {  // NOLINT
-  for (const SizeType capacity : {0, 1, 2, 10}) {
-    std::vector<ValueType> buffer(capacity);
-    for (auto& slice : Slices(buffer)) {
-      std::cerr << "capacity = " << capacity << '\n';
-      std::cerr << "size = " << slice->Size() << '\n';
-      if (capacity == 0) ASSERT_TRUE(slice->WillWrapOnNextPush());
-      for (SizeType i{0}; i < 5 * capacity; ++i) {
-        if ((i + 1) % capacity == 0) {
-          ASSERT_TRUE(slice->WillWrapOnNextPush());
-        } else {
-          ASSERT_FALSE(slice->WillWrapOnNextPush());
-        }
-        slice->Push(i);
-        if ((i + 1) % capacity != 0 && capacity < i + 1) {
-          ASSERT_EQ(slice->ContiguousMemoryChunks().size(), 2);
-        } else {
-          ASSERT_EQ(slice->ContiguousMemoryChunks().size(), 1);
-        }
-      }
-    }
-  }
-}
-
-TEST(BufferSlice, ContiguousMemoryChunksEmpty) {  // NOLINT
-  std::vector<ValueType> buffer(0);
-  for (auto& slice : Slices(buffer)) {
-    ASSERT_TRUE(slice->ContiguousMemoryChunks().empty());
-  }
 }
 
 TEST(BufferSlice, ContiguousMemoryChunksOneChunk) {  // NOLINT

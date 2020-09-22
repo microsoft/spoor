@@ -1,3 +1,9 @@
+#ifndef SPOOR_SPOOR_RUNTIME_BUFFER_UNOWNED_BUFFER_SLICE_H_
+#define SPOOR_SPOOR_RUNTIME_BUFFER_UNOWNED_BUFFER_SLICE_H_
+
+#include <span>
+#include <vector>
+
 // TODO decide if we need to call each items' destructor on clear and
 // destruction
 // #include <iterator>
@@ -16,21 +22,14 @@
 //      it->~T();
 //    }
 //  }
-#ifndef SPOOR_SPOOR_RUNTIME_BUFFER_UNOWNED_BUFFER_SLICE_H_
-#define SPOOR_SPOOR_RUNTIME_BUFFER_UNOWNED_BUFFER_SLICE_H_
-
-#include <iostream>  // TODO
-#include <span>
-#include <vector>
-
-#include "spoor/runtime/buffer/buffer_slice.h"
+#include "spoor/runtime/buffer/circular_buffer.h"
 
 namespace spoor::runtime::buffer {
 
 template <class T>
-class UnownedBufferSlice final : public BufferSlice<T> {
+class UnownedBufferSlice final : public CircularBuffer<T> {
  public:
-  using SizeType = typename BufferSlice<T>::SizeType;
+  using SizeType = typename CircularBuffer<T>::SizeType;
 
   UnownedBufferSlice() = delete;
   explicit constexpr UnownedBufferSlice(std::span<T> buffer);

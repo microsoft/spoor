@@ -6,14 +6,14 @@
 #include <vector>
 
 #include "gtest/gtest.h"
-#include "spoor/runtime/buffer/buffer_slice.h"
+#include "spoor/runtime/buffer/circular_buffer.h"
 #include "util/memory/owned_ptr.h"
 #include "util/numeric.h"
 #include "util/result.h"
 
 namespace {
 
-using Slice = spoor::runtime::buffer::BufferSlice<int64>;
+using Slice = spoor::runtime::buffer::CircularBuffer<int64>;
 using ValueType = Slice::ValueType;
 using SizeType = Slice::SizeType;
 using Pool = spoor::runtime::buffer::DynamicBufferSlicePool<ValueType>;

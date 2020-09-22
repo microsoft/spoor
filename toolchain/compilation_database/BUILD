@@ -60,8 +60,10 @@ cc_binary(
     copts = ["-Werror"],
     deps = [
         ":compilation_database_util",
-        "//util:flags",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/flags:usage",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -71,8 +73,9 @@ cc_binary(
     copts = ["-Werror"],
     deps = [
         ":compilation_database_util",
-        "//util:flags",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/flags:usage",
     ],
 )
 
@@ -87,7 +90,7 @@ extra_action(
     name = "extract_compile_command_action",
     cmd = "$(location :extract_compile_command) \
         --extra_action_file=$(EXTRA_ACTION_FILE) \
-        --output=$(output $(ACTION_ID).compile_command.pb)",
+        --output_file=$(output $(ACTION_ID).compile_command.pb)",
     out_templates = ["$(ACTION_ID).compile_command.pb"],
     tools = [":extract_compile_command"],
 )

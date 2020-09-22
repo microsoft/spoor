@@ -6,20 +6,20 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/flags/parse.h"
 #include "absl/flags/usage.h"
 #include "absl/strings/str_join.h"
 #include "external/com_bazelbuild_bazel/src/main/protobuf/extra_actions_base.pb.h"
 #include "google/protobuf/stubs/common.h"
 #include "toolchain/compilation_database/compilation_database_util.h"
 #include "toolchain/compilation_database/compile_commands.pb.h"
-#include "util/flags.h"
 #include "util/result.h"
 
 ABSL_FLAG(
-    util::flags::InputFilePath, extra_action_file, {},
+    std::string, extra_action_file, {},
     "Path to an extra action file provided by the Bazel action listener.");
 
-ABSL_FLAG(util::flags::OutputPath, output_file, {},
+ABSL_FLAG(std::string, output_file, {},
           "Path where the generated compile command should be saved.");
 
 namespace {
@@ -34,33 +34,38 @@ const char kUsage[] =
 
 auto main(int argc, char** argv) -> int {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
-  auto _ = gsl::finally([] { google::protobuf::ShutdownProtobufLibrary(); });
+  const auto _ =
+      gsl::finally([] { google::protobuf::ShutdownProtobufLibrary(); });
+
+  for (int arg{0}; arg < argc; ++arg) {
+    std::cout << "arg[" << arg << "] = " << argv[arg] << '\n';
+  }
 
   absl::SetProgramUsageMessage(kUsage);
   absl::ParseCommandLine(argc, argv);
 
-  const auto extra_actions_file =
-      absl::GetFlag(FLAGS_extra_action_file).input_path;
-  std::ifstream input_stream{extra_actions_file,
+  const auto extra_action_file = absl::GetFlag(FLAGS_extra_action_file);
+  std::ifstream input_stream{extra_action_file,
                              std::ios::in | std::ios::binary};
   const auto parse_result =
       toolchain::compilation_database::ParseExtraActionInfo(&input_stream);
   if (parse_result.IsErr()) {
     switch (parse_result.Err()) {
       case ParseExtraActionInfoError::kParsingError:
-        std::cerr << "Failed to parse the extra action file: "
-                  << extra_actions_file << '\n';
+        std::cerr << "Failed to parse the extra action file `"
+                  << extra_action_file << "`.\n";
         break;
       case ParseExtraActionInfoError::kExtraActionInfoMissingExtension:
-        std::cerr << "Failed to parse the extra action file because it is "
-                     "missing the CppCompileInfo extension.\n";
+        std::cerr << "Failed to parse the extra action file `"
+                  << extra_action_file
+                  << "` because it is missing the CppCompileInfo extension.\n";
         break;
     }
     return EXIT_FAILURE;
   }
   const auto& compile_command = parse_result.Ok();
 
-  const auto output_path = absl::GetFlag(FLAGS_output_file).output_path;
+  const auto output_path = absl::GetFlag(FLAGS_output_file);
   std::ofstream output_stream{
       output_path, std::ios::out | std::ios::trunc | std::ios::binary};
   const auto output_result =

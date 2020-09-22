@@ -1,20 +1,19 @@
-// TODO decide if we need to call each items' destructor on clear and
-// destruction
 #ifndef SPOOR_SPOOR_RUNTIME_BUFFER_OWNED_BUFFER_SLICE_H_
 #define SPOOR_SPOOR_RUNTIME_BUFFER_OWNED_BUFFER_SLICE_H_
 
 #include <span>
 #include <vector>
-#include <iostream>  // # TODO
 
-#include "spoor/runtime/buffer/buffer_slice.h"
+#include "spoor/runtime/buffer/circular_buffer.h"
 
 namespace spoor::runtime::buffer {
 
+// TODO decide if we need to call each items' destructor on clear and
+// destruction
 template <class T>
-class OwnedBufferSlice final : public BufferSlice<T> {
+class OwnedBufferSlice final : public CircularBuffer<T> {
  public:
-  using SizeType = typename BufferSlice<T>::SizeType;
+  using SizeType = typename CircularBuffer<T>::SizeType;
 
   OwnedBufferSlice() = delete;
   explicit constexpr OwnedBufferSlice(SizeType capacity);
