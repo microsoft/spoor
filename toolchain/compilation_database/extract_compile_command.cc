@@ -26,7 +26,7 @@ namespace {
 
 using toolchain::compilation_database::ParseExtraActionInfoError;
 
-const char kUsage[] =
+constexpr std::string_view kUsage =
     "Extract the command to compile each C++ source file from its `CppCompile` "
     "build mnemonic.";
 
