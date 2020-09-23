@@ -1,5 +1,4 @@
-#ifndef SPOOR_UTIL_RESULT_H_
-#define SPOOR_UTIL_RESULT_H_
+#pragma once
 
 #include <optional>
 #include <type_traits>
@@ -196,5 +195,3 @@ constexpr auto operator==(const Result<T1, E1>& lhs, const Result<T2, E2>& rhs)
 }
 
 }  // namespace util::result
-
-#endif

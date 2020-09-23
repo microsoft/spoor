@@ -1,5 +1,4 @@
-#ifndef SPOOR_UTIL_NUMERIC_H_
-#define SPOOR_UTIL_NUMERIC_H_
+#pragma once
 
 #include <cstdint>
 
@@ -18,5 +17,3 @@ static_assert(
 static_assert(
     sizeof(double) == 8,
     "This platform does not define `double` as a 64-bit floating-point value.");
-
-#endif
