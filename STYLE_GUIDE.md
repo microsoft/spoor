@@ -30,6 +30,26 @@ auto Add(const int64 a, const int64 b) -> int64;
 int64 Add(const int64 a, const int64 b);
 ```
 
+### Header guard
+
+Exception: Use `#pragma once` instead of `#define` guard for header files. This
+project's tooling does not support automatically enforcing the header guard
+convention where the `#define` guard's identifier mirrors the file's path to
+guarantee uniqueness. Despite being non-standard, `#pragma once` carries
+advantages such as reducing the maintenance burden when renaming and moving
+files, and in some cases improves compilation speed.
+
+```c++
+// ✅ Do this
+#pragma once
+
+// ❌ Not this
+#ifndef SPOOR_PATH_TO_HEADER_H_
+#define SPOOR_PATH_TO_HEADER_H_
+...
+#endif
+```
+
 ### Initialization
 
 Prefer list (curly brace) initialization over other forms. List initialization
