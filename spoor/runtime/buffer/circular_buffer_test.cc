@@ -28,8 +28,9 @@ using Pool = spoor::runtime::buffer::ReservedBufferSlicePool<ValueType>;
 using OwnedSlicePtr = util::memory::OwnedPtr<CircularBuffer>;
 
 auto MakePool(const SizeType capacity) -> std::unique_ptr<Pool> {
-  const typename Pool::Options options{.max_slice_capacity = capacity,
-                                       .capacity = capacity};
+  const typename Pool::Options options{
+      .max_slice_capacity = std::max(static_cast<SizeType>(1), capacity / 2),
+      .capacity = capacity};
   auto pool = std::make_unique<Pool>(options);
   return pool;
 }
@@ -39,8 +40,8 @@ auto MakeBuffers(std::span<ValueType> buffer, gsl::not_null<Pool*> pool)
   const auto capacity = buffer.size();
   std::vector<std::unique_ptr<CircularBuffer>> circular_buffers{};
   circular_buffers.reserve(3);
-  // circular_buffers.push_back(std::make_unique<UnownedBufferSlice>(buffer));
-  // circular_buffers.push_back(std::make_unique<OwnedBufferSlice>(capacity));
+  circular_buffers.push_back(std::make_unique<UnownedBufferSlice>(buffer));
+  circular_buffers.push_back(std::make_unique<OwnedBufferSlice>(capacity));
   const auto flush_handler = [](std::vector<OwnedSlicePtr>&&) {};
   const typename CircularSliceBuffer::Options circular_slice_buffer_options{
       .flush_handler = flush_handler,
@@ -111,19 +112,13 @@ TEST(CircularBuffer, WillWrapOnNextPush) {  // NOLINT
     std::vector<ValueType> buffer(capacity);
     auto pool = MakePool(capacity);
     for (auto& circular_buffer : MakeBuffers(buffer, pool.get())) {
-      if (capacity == 0) ASSERT_TRUE(circular_buffer->WillWrapOnNextPush());
-      for (SizeType i{0}; i < 5 * capacity; ++i) {
-        if ((i + 1) % capacity == 0) {
+      for (SizeType i{0}; i < 5 * capacity + 5; ++i) {
+        if (capacity == 0 || (i != 0 && i % capacity == 0)) {
           ASSERT_TRUE(circular_buffer->WillWrapOnNextPush());
         } else {
           ASSERT_FALSE(circular_buffer->WillWrapOnNextPush());
         }
         circular_buffer->Push(i);
-        if ((i + 1) % capacity != 0 && capacity < i + 1) {
-          ASSERT_EQ(circular_buffer->ContiguousMemoryChunks().size(), 2);
-        } else {
-          ASSERT_EQ(circular_buffer->ContiguousMemoryChunks().size(), 1);
-        }
       }
     }
   }

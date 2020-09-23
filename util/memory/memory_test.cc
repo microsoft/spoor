@@ -1,8 +1,8 @@
 #include <utility>
 
+#include "gtest/gtest.h"
 #include "util/memory/owned_ptr.h"
 #include "util/memory/ptr_owner.h"
-#include "gtest/gtest.h"
 #include "util/numeric.h"
 
 namespace {
@@ -38,9 +38,7 @@ class Owner : public PtrOwner {
 
 Value::Value(const int64 value) : value_{value} {}
 
-auto Value::Get() const -> int64 {
-  return value_;
-};
+auto Value::Get() const -> int64 { return value_; };
 
 Owner::Owner(const int64 value) : borrowed_size_{0}, value_{value} {}
 
@@ -57,9 +55,7 @@ auto Owner::Return(OwnedPtr&& owned_ptr) -> PtrOwner::Result {
   return PtrOwner::Result::Ok({});
 }
 
-auto Owner::BorrowedSize() const -> uint64 {
-  return borrowed_size_;
-}
+auto Owner::BorrowedSize() const -> uint64 { return borrowed_size_; }
 
 auto Owner::Return(Value* value) -> PtrOwner::Result {
   if (value != &value_) {
@@ -80,7 +76,6 @@ TEST(OwnedPtr, MoveConstructor) {  // NOLINT
   ASSERT_EQ(new_owned_ptr.Owner(), &owner);
   ASSERT_EQ(owned_ptr.Ptr(), nullptr);
   ASSERT_EQ(owned_ptr.Owner(), nullptr);
-
 }
 
 TEST(OwnedPtr, MoveAssignmentOperator) {  // NOLINT
@@ -94,7 +89,6 @@ TEST(OwnedPtr, MoveAssignmentOperator) {  // NOLINT
   ASSERT_EQ(new_owned_ptr.Owner(), &owner);
   ASSERT_EQ(owned_ptr.Ptr(), nullptr);
   ASSERT_EQ(owned_ptr.Owner(), nullptr);
-
 }
 
 TEST(OwnedPtr, ManualReturnToPool) {  // NOLINT

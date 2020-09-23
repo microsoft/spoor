@@ -60,31 +60,33 @@ class UnownedBufferSlice final : public CircularBuffer<T> {
 
 template <class T>
 constexpr UnownedBufferSlice<T>::UnownedBufferSlice(std::span<T> buffer)
-    : buffer_{buffer}, insertion_iterator_{buffer_.begin()}, size_{0} {}
+    : buffer_{buffer}, insertion_iterator_{std::begin(buffer_)}, size_{0} {}
 
 template <class T>
 constexpr auto UnownedBufferSlice<T>::Push(const T& item) -> void {
-  *insertion_iterator_ = item;
-  ++insertion_iterator_;
-  if (insertion_iterator_ == buffer_.end()) {
-    insertion_iterator_ = buffer_.begin();
+  if (Capacity() == 0) return;
+  if (insertion_iterator_ == std::end(buffer_)) {
+    insertion_iterator_ = std::begin(buffer_);
   }
+  *insertion_iterator_ = item;
   size_ = std::min(size_ + 1, Capacity());
+  ++insertion_iterator_;
 }
 
 template <class T>
 constexpr auto UnownedBufferSlice<T>::Push(T&& item) -> void {
-  *insertion_iterator_ = std::move(item);
-  ++insertion_iterator_;
-  if (insertion_iterator_ == buffer_.end()) {
-    insertion_iterator_ = buffer_.begin();
+  if (Capacity() == 0) return;
+  if (insertion_iterator_ == std::end(buffer_)) {
+    insertion_iterator_ = std::begin(buffer_);
   }
+  *insertion_iterator_ = std::move(item);
   size_ = std::min(size_ + 1, Capacity());
+  ++insertion_iterator_;
 }
 
 template <class T>
 constexpr auto UnownedBufferSlice<T>::Clear() -> void {
-  insertion_iterator_ = buffer_.begin();
+  insertion_iterator_ = std::begin(buffer_);
   size_ = 0;
 }
 
@@ -92,9 +94,9 @@ template <class T>
 auto UnownedBufferSlice<T>::ContiguousMemoryChunks()
     -> std::vector<std::span<T>> {
   if (Empty()) return {};
-  const auto begin = buffer_.begin();
-  const auto end = buffer_.end();
-  if (!Full() || insertion_iterator_ == begin) return {{&(*begin), Size()}};
+  const auto begin = std::begin(buffer_);
+  const auto end = std::end(buffer_);
+  if (!Full() || insertion_iterator_ == end) return {{&(*begin), Size()}};
   const std::span<T> first_chunk{
       &(*insertion_iterator_),
       static_cast<SizeType>(std::distance(insertion_iterator_, end))};
@@ -126,7 +128,7 @@ constexpr auto UnownedBufferSlice<T>::Full() const -> bool {
 
 template <class T>
 constexpr auto UnownedBufferSlice<T>::WillWrapOnNextPush() const -> bool {
-  return Capacity() == 0 || next(insertion_iterator_) == buffer_.end();
+  return insertion_iterator_ == std::end(buffer_);
 }
 
 }  // namespace spoor::runtime::buffer

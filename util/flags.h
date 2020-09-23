@@ -2,8 +2,8 @@
 #define SPOOR_UTIL_FLAGS_H_
 
 #include <fstream>
-#include <string>
 #include <iostream>  // TODO
+#include <string>
 
 #include "absl/flags/flag.h"
 #include "absl/flags/marshalling.h"
@@ -35,7 +35,7 @@ auto AbslUnparseFlag(const OutputPath& output_path) -> std::string;
 template <class Ifstream>  // NOLINT(readability-identifier-naming)
 auto AbslParseFlag(absl::string_view text, InputFilePath* input_file_path,
                    std::string* error) -> bool {
-std::cerr << "text = " << text << '\n';
+  std::cerr << "text = " << text << '\n';
   auto& path = input_file_path->input_path;
   const auto success = absl::ParseFlag(text, &path, error);
   if (!success) return false;

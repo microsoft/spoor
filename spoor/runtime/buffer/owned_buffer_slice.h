@@ -44,12 +44,16 @@ class OwnedBufferSlice final : public CircularBuffer<T> {
 
 template <class T>
 constexpr OwnedBufferSlice<T>::OwnedBufferSlice(SizeType capacity)
-    : capacity_{capacity}, buffer_{}, insertion_iterator_{buffer_.begin()} {
+    : capacity_{capacity}, buffer_{}, insertion_iterator_{std::begin(buffer_)} {
   buffer_.reserve(capacity);
 }
 
 template <class T>
 constexpr auto OwnedBufferSlice<T>::Push(const T& item) -> void {
+  if (Capacity() == 0) return;
+  if (Full() && insertion_iterator_ == std::end(buffer_)) {
+    insertion_iterator_ = std::begin(buffer_);
+  }
   if (Full()) {
     *insertion_iterator_ = item;
     ++insertion_iterator_;
@@ -57,13 +61,14 @@ constexpr auto OwnedBufferSlice<T>::Push(const T& item) -> void {
     buffer_.push_back(item);
     insertion_iterator_ = buffer_.end();
   }
-  if (Full() && insertion_iterator_ == buffer_.end()) {
-    insertion_iterator_ = buffer_.begin();
-  }
 }
 
 template <class T>
 constexpr auto OwnedBufferSlice<T>::Push(T&& item) -> void {
+  if (Capacity() == 0) return;
+  if (Full() && insertion_iterator_ == std::end(buffer_)) {
+    insertion_iterator_ = std::begin(buffer_);
+  }
   if (Full()) {
     *insertion_iterator_ = std::move(item);
     ++insertion_iterator_;
@@ -71,24 +76,21 @@ constexpr auto OwnedBufferSlice<T>::Push(T&& item) -> void {
     buffer_.push_back(std::move(item));
     insertion_iterator_ = buffer_.end();
   }
-  if (Full() && insertion_iterator_ == buffer_.end()) {
-    insertion_iterator_ = buffer_.begin();
-  }
 }
 
 template <class T>
 constexpr auto OwnedBufferSlice<T>::Clear() -> void {
   buffer_.clear();
-  insertion_iterator_ = buffer_.begin();
+  insertion_iterator_ = std::begin(buffer_);
 }
 
 template <class T>
 constexpr auto OwnedBufferSlice<T>::ContiguousMemoryChunks()
     -> std::vector<std::span<T>> {
   if (Empty()) return {};
-  if (!Full() || insertion_iterator_ == buffer_.begin()) return {buffer_};
-  const auto begin = buffer_.begin();
-  const auto end = buffer_.end();
+  if (!Full() || insertion_iterator_ == std::end(buffer_)) return {buffer_};
+  const auto begin = std::begin(buffer_);
+  const auto end = std::end(buffer_);
   const std::span<T> first_chunk{
       &(*insertion_iterator_),
       static_cast<SizeType>(std::distance(insertion_iterator_, end))};
@@ -120,9 +122,8 @@ constexpr auto OwnedBufferSlice<T>::Full() const -> bool {
 
 template <class T>
 constexpr auto OwnedBufferSlice<T>::WillWrapOnNextPush() const -> bool {
-  if (Capacity() == 0) return true;
-  if (Full()) return std::next(insertion_iterator_) == buffer_.end();
-  return Capacity() <= Size() + 1;
+  if (!Full()) return false;
+  return insertion_iterator_ == std::end(buffer_);
 }
 
 }  // namespace spoor::runtime::buffer

@@ -5,8 +5,8 @@
 #include <cassert>
 #include <memory>
 
-#include "spoor/runtime/buffer/circular_buffer.h"
 #include "spoor/runtime/buffer/buffer_slice_pool.h"
+#include "spoor/runtime/buffer/circular_buffer.h"
 #include "spoor/runtime/buffer/owned_buffer_slice.h"
 #include "util/memory/owned_ptr.h"
 #include "util/memory/ptr_owner.h"
@@ -60,7 +60,7 @@ class DynamicBufferSlicePool final : public BufferSlicePool<T> {
   auto Return(Slice* slice) -> ReturnResult override;
 
  private:
-  const Options options_;
+  Options options_;
   std::atomic_size_t borrowed_items_size_;
 };
 

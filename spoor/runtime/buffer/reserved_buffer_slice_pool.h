@@ -6,8 +6,8 @@
 #include <vector>
 
 #include "gsl/gsl"
-#include "spoor/runtime/buffer/circular_buffer.h"
 #include "spoor/runtime/buffer/buffer_slice_pool.h"
+#include "spoor/runtime/buffer/circular_buffer.h"
 #include "spoor/runtime/buffer/unowned_buffer_slice.h"
 #include "util/memory/owned_ptr.h"
 #include "util/memory/ptr_owner.h"
@@ -57,7 +57,7 @@ class ReservedBufferSlicePool final : public BufferSlicePool<T> {
   auto Return(Slice* slice) -> ReturnResult override;
 
  private:
-  const Options options_;
+  Options options_;
   std::vector<T> buffer_;
   std::vector<UnownedSlice> pool_;
   std::vector<std::atomic_bool> borrowed_;

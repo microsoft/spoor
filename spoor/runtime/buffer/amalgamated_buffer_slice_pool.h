@@ -8,8 +8,8 @@
 #include <new>
 #include <optional>
 
-#include "spoor/runtime/buffer/circular_buffer.h"
 #include "spoor/runtime/buffer/buffer_slice_pool.h"
+#include "spoor/runtime/buffer/circular_buffer.h"
 #include "spoor/runtime/buffer/dynamic_buffer_slice_pool.h"
 #include "spoor/runtime/buffer/reserved_buffer_slice_pool.h"
 #include "util/memory/owned_ptr.h"
@@ -71,7 +71,7 @@ class AmalgamatedBufferSlicePool final : public BufferSlicePool<T> {
   auto Return(Slice* slice) -> ReturnResult override;
 
  private:
-  const Options options_;
+  Options options_;
   ReservedPool reserved_pool_;
   DynamicPool dynamic_pool_;
 

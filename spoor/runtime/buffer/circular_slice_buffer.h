@@ -3,9 +3,10 @@
 
 #include <algorithm>
 #include <functional>
+#include <iostream>  // TODO
+#include <iterator>
 #include <span>
 #include <vector>
-#include <iostream> // TODO
 
 #include "spoor/runtime/buffer/buffer_slice_pool.h"
 #include "spoor/runtime/buffer/circular_buffer.h"
@@ -56,9 +57,10 @@ class CircularSliceBuffer final : public CircularBuffer<T> {
   Options options_;
   SlicesType slices_;
   SizeType size_;
+  SizeType acquired_slices_capacity_;
   typename SlicesType::iterator insertion_iterator_;
 
-  auto PrepareToPush() -> void; // TODO constexpr?
+  constexpr auto PrepareToPush() -> void;  // TODO constexpr?
 };
 
 template <class T>
@@ -66,7 +68,8 @@ CircularSliceBuffer<T>::CircularSliceBuffer(const Options& options)
     : options_{options},
       slices_{},
       size_{0},
-      insertion_iterator_{slices_.begin()} {}
+      acquired_slices_capacity_{0},
+      insertion_iterator_{std::begin(slices_)} {}
 
 template <class T>
 CircularSliceBuffer<T>::~CircularSliceBuffer() {
@@ -76,21 +79,23 @@ CircularSliceBuffer<T>::~CircularSliceBuffer() {
 
 template <class T>
 constexpr auto CircularSliceBuffer<T>::Push(const T& item) -> void {
+  if (Capacity() == 0) return;
   PrepareToPush();
   (*insertion_iterator_)->Push(item);
+  size_ = std::min(size_ + 1, acquired_slices_capacity_);
 }
 
 template <class T>
 constexpr auto CircularSliceBuffer<T>::Push(T&& item) -> void {
+  if (Capacity() == 0) return;
   PrepareToPush();
   (*insertion_iterator_)->Push(std::move(item));
+  size_ = std::min(size_ + 1, acquired_slices_capacity_);
 }
 
 template <class T>
 constexpr auto CircularSliceBuffer<T>::Flush() -> void {
-  if (!slices_.empty()) {
-    options_.flush_handler(std::move(slices_));
-  }
+  if (!slices_.empty()) options_.flush_handler(std::move(slices_));
   Clear();
 }
 
@@ -106,7 +111,8 @@ constexpr auto CircularSliceBuffer<T>::Clear() -> void {
     // assert(unowned_slices.size() == 0);
   }
   size_ = 0;
-  insertion_iterator_ = slices_.begin();
+  acquired_slices_capacity_ = 0;
+  insertion_iterator_ = std::begin(slices_);
 }
 
 template <class T>
@@ -126,12 +132,15 @@ constexpr auto CircularSliceBuffer<T>::Empty() const -> bool {
 
 template <class T>
 constexpr auto CircularSliceBuffer<T>::Full() const -> bool {
-  return Capacity() <= Size() && (*insertion_iterator_)->Full();
+  return Capacity() <= Size();
 }
 
 template <class T>
 constexpr auto CircularSliceBuffer<T>::WillWrapOnNextPush() const -> bool {
-  return false; // TODO
+  return (Capacity() == 0) ||
+         (Capacity() <= acquired_slices_capacity_ &&
+          insertion_iterator_ == std::prev(std::end(slices_)) &&
+          (*insertion_iterator_)->WillWrapOnNextPush());
 }
 
 template <class T>
@@ -142,37 +151,40 @@ constexpr auto CircularSliceBuffer<T>::ContiguousMemoryChunks()
   // Over allocating by one is preferable to performing several unnecessary heap
   // allocations and possible over allocating by more than one.
   // chunks.reserve(2 * slices_.size()); // TODO
-  for (auto iterator = insertion_iterator_; iterator != slices_.end();
+  for (auto iterator = insertion_iterator_; iterator != std::end(slices_);
        ++iterator) {
     const auto slice_chunks = (*iterator)->ContiguousMemoryChunks();
-    chunks.insert(chunks.end(), slice_chunks.begin(), slice_chunks.end());
+    chunks.insert(std::end(chunks), std::cbegin(slice_chunks),
+                  std::cend(slice_chunks));
   }
-  for (auto iterator = slices_.begin(); iterator != insertion_iterator_;
+  for (auto iterator = std::begin(slices_); iterator != insertion_iterator_;
        ++iterator) {
     const auto slice_chunks = (*iterator)->ContiguousMemoryChunks();
-    chunks.insert(chunks.end(), slice_chunks.cbegin(), slice_chunks.cend());
+    chunks.insert(std::end(chunks), std::cbegin(slice_chunks),
+                  std::cbegin(slice_chunks));
   }
   return chunks;
 }
 
 template <class T>
-auto CircularSliceBuffer<T>::PrepareToPush() -> void {
-  if (insertion_iterator_ != slices_.end() && (*insertion_iterator_)->WillWrapOnNextPush()) {
-    if (Full()) {
-      if (options_.flush_when_full) Flush();
-      insertion_iterator_ = slices_.begin();
+constexpr auto CircularSliceBuffer<T>::PrepareToPush() -> void {
+  if (insertion_iterator_ != std::end(slices_) &&
+      (*insertion_iterator_)->WillWrapOnNextPush()) {
+    ++insertion_iterator_;
+  }
+  if (insertion_iterator_ == std::end(slices_)) {
+    if (Capacity() <= acquired_slices_capacity_) {
+      insertion_iterator_ = std::begin(slices_);
     } else {
-      if (std::next(insertion_iterator_) == slices_.end()) {
-        auto result = options_.buffer_slice_pool->Borrow(Capacity() - Size());
-        if (result.IsOk()) {
-          slices_.push_back(std::move(result.Ok()));
-        } else {
-          Flush();
-          return;
-        }
+      auto result = options_.buffer_slice_pool->Borrow(Capacity() - Size());
+      if (result.IsOk()) {
+        auto buffer_slice = std::move(result.Ok());
+        acquired_slices_capacity_ += buffer_slice->Capacity();
+        slices_.push_back(std::move(buffer_slice));
+        insertion_iterator_ = std::prev(std::end(slices_));
+      } else {
+        Flush();
       }
-      ++insertion_iterator_;
-      ++size_;
     }
   }
 }

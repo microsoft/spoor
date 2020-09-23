@@ -38,8 +38,9 @@ auto ParseExtraActionInfo(gsl::not_null<std::istream*> input_stream)
   std::vector<std::string> arguments{};
   arguments.reserve(1 + compile_info.compiler_option().size());
   arguments.push_back(compile_info.tool());
-  arguments.insert(arguments.end(), compile_info.compiler_option().begin(),
-                   compile_info.compiler_option().end());
+  arguments.insert(std::end(arguments),
+                   std::cbegin(compile_info.compiler_option()),
+                   std::cend(compile_info.compiler_option()));
 
   const auto command = absl::StrJoin(arguments, " ");
   compile_command.set_command(command);
@@ -92,8 +93,8 @@ auto SerializeCompileCommandsToOutputStream(
   // Hack: Isolate the array from the protobuf's JSON output to produce the
   // correct `compile_commands.json` format.
   std::ostream_iterator<char> output_iterator{*output_stream};
-  const auto begin = json.cbegin() + json.find('[');
-  const auto end = json.cbegin() + json.rfind(']') + 1;
+  const auto begin = std::cbegin(json) + json.find('[');
+  const auto end = std::cbegin(json) + json.rfind(']') + 1;
   std::copy(begin, end, output_iterator);
 
   return Result::Ok({});

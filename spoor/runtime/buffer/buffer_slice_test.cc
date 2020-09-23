@@ -1,9 +1,8 @@
-#include "spoor/runtime/buffer/circular_buffer.h"
-
-#include <vector>
 #include <numeric>
+#include <vector>
 
 #include "gtest/gtest.h"
+#include "spoor/runtime/buffer/circular_buffer.h"
 #include "spoor/runtime/buffer/owned_buffer_slice.h"
 #include "spoor/runtime/buffer/unowned_buffer_slice.h"
 #include "util/numeric.h"
@@ -40,7 +39,8 @@ TEST(BufferSlice, ContiguousMemoryChunksOneChunk) {  // NOLINT
       ASSERT_EQ(chunks.size(), 1);
       auto chunk = chunks.front();
       ASSERT_EQ(chunk.size(), expected.size());
-      ASSERT_TRUE(std::equal(chunk.cbegin(), chunk.cend(), expected.cbegin()));
+      ASSERT_TRUE(std::equal(std::cbegin(chunk), std::cend(chunk),
+                             std::cbegin(expected)));
     }
     for (SizeType i{capacity}; i < 5 * capacity; ++i) {
       slice->Push(i);
@@ -50,9 +50,9 @@ TEST(BufferSlice, ContiguousMemoryChunksOneChunk) {  // NOLINT
         const auto chunk = chunks.front();
         ASSERT_EQ(chunk.size(), capacity);
         std::vector<ValueType> expected(capacity);
-        std::iota(expected.begin(), expected.end(), i - capacity + 1);
-        ASSERT_TRUE(
-            std::equal(chunk.cbegin(), chunk.cend(), expected.cbegin()));
+        std::iota(std::begin(expected), std::end(expected), i - capacity + 1);
+        ASSERT_TRUE(std::equal(std::cbegin(chunk), std::cend(chunk),
+                               std::cbegin(expected)));
       }
     }
   }
@@ -66,7 +66,7 @@ TEST(BufferSlice, ContiguousMemoryChunksTwoChunks) {  // NOLINT
     for (SizeType i{0}; i < capacity; ++i) {
       slice->Push(i);
     }
-    for (SizeType i{capacity}; i < 5 * capacity; ++i) {
+    for (SizeType i{capacity}; i < 3 * capacity; ++i) {
       slice->Push(i);
       if ((i + 1) % capacity != 0) {
         const auto chunks = slice->ContiguousMemoryChunks();
@@ -76,20 +76,22 @@ TEST(BufferSlice, ContiguousMemoryChunksTwoChunks) {  // NOLINT
         const auto expected_first_chunk_size = (capacity - (i + 1) % capacity);
         ASSERT_EQ(first_chunk.size(), expected_first_chunk_size);
         std::vector<ValueType> expected_first_chunk(expected_first_chunk_size);
-        std::iota(expected_first_chunk.begin(), expected_first_chunk.end(),
-                  i - capacity + 1);
-        ASSERT_TRUE(std::equal(first_chunk.cbegin(), first_chunk.cend(),
-                               expected_first_chunk.cbegin()));
+        std::iota(std::begin(expected_first_chunk),
+                  std::end(expected_first_chunk), i - capacity + 1);
+        ASSERT_TRUE(std::equal(std::cbegin(first_chunk), std::cend(first_chunk),
+                               std::cbegin(expected_first_chunk)));
 
         const auto second_chunk = chunks.back();
         const auto expected_second_chunk_size = ((i + 1) % capacity);
         ASSERT_EQ(second_chunk.size(), expected_second_chunk_size);
         std::vector<ValueType> expected_second_chunk(
             expected_second_chunk_size);
-        std::iota(expected_second_chunk.begin(), expected_second_chunk.end(),
+        std::iota(std::begin(expected_second_chunk),
+                  std::end(expected_second_chunk),
                   i - capacity + 1 + expected_first_chunk_size);
-        ASSERT_TRUE(std::equal(second_chunk.cbegin(), second_chunk.cend(),
-                               expected_second_chunk.cbegin()));
+        ASSERT_TRUE(std::equal(std::cbegin(second_chunk),
+                               std::cend(second_chunk),
+                               std::cbegin(expected_second_chunk)));
       }
     }
   }
