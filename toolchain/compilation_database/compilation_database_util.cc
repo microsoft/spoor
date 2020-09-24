@@ -1,7 +1,9 @@
 #include "toolchain/compilation_database/compilation_database_util.h"
 
+#include <filesystem>
 #include <istream>
 #include <ostream>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -58,10 +60,10 @@ auto SerializeCompileCommandToOutputStream(
 }
 
 auto ConcatenateCompileCommands(
-    const std::vector<std::string>& individual_compile_command_files,
-    const std::string& compile_command_directory,
-    const std::function<
-        std::variant<std::ifstream, std::istringstream>(const std::string_view)>
+    const std::vector<std::filesystem::path>& individual_compile_command_files,
+    const std::filesystem::path& compile_command_directory,
+    const std::function<std::variant<std::ifstream, std::istringstream>(
+        const std::filesystem::path&)>
         make_input_stream)
     -> util::result::Result<CompileCommands, ConcatenateCompileCommandsError> {
   CompileCommands compile_commands{};
