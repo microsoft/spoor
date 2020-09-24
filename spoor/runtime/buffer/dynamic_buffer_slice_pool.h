@@ -1,5 +1,4 @@
-#ifndef SPOOR_SPOOR_RUNTIME_BUFFER_DYNAMIC_BUFFER_SLICE_POOL_H_
-#define SPOOR_SPOOR_RUNTIME_BUFFER_DYNAMIC_BUFFER_SLICE_POOL_H_
+#pragma once
 
 #include <atomic>
 #include <cassert>
@@ -22,10 +21,9 @@ class DynamicBufferSlicePool final : public BufferSlicePool<T> {
   using OwnedSlice = OwnedBufferSlice<T>;
   using SizeType = typename Slice::SizeType;
   using OwnedSlicePtr = util::memory::OwnedPtr<Slice>;
-  using PtrOwnerError = typename util::memory::PtrOwner<Slice>::Error;
   using BorrowError = typename BufferSlicePool<T>::BorrowError;
   using BorrowResult = util::result::Result<OwnedSlicePtr, BorrowError>;
-  using ReturnResult = util::result::Result<util::result::None, PtrOwnerError>;
+  using ReturnResult = typename util::memory::PtrOwner<Slice>::Result;
 
   struct Options {
     SizeType max_slice_capacity;
@@ -47,6 +45,9 @@ class DynamicBufferSlicePool final : public BufferSlicePool<T> {
   // - The preferred slice size.
   // - The maximum allowed dynamic slice size.
   // - The remaining dynamic slices size.
+  // Complexity:
+  // - O(borrow_cas_attempts) worst case.
+  // - O(1) with no thread contention.
   [[nodiscard]] auto Borrow(SizeType preferred_slice_capacity)
       -> BorrowResult override;
   auto Return(OwnedSlicePtr&& owned_ptr) -> ReturnResult override;
@@ -57,7 +58,10 @@ class DynamicBufferSlicePool final : public BufferSlicePool<T> {
   [[nodiscard]] constexpr auto Full() const -> bool override;
 
  protected:
-  auto Return(Slice* slice) -> ReturnResult override;
+  using ReturnRawPtrResult =
+      typename util::memory::PtrOwner<Slice>::ReturnRawPtrResult;
+
+  auto Return(Slice* slice) -> ReturnRawPtrResult override;
 
  private:
   Options options_;
@@ -77,15 +81,6 @@ DynamicBufferSlicePool<T>::~DynamicBufferSlicePool() {
 template <class T>
 auto DynamicBufferSlicePool<T>::Borrow(SizeType preferred_slice_capacity)
     -> BorrowResult {
-  // const auto buffer_size = std::min({
-  //     preferred_slice_capacity,
-  //     Capacity(),
-  //     options_.max_slice_capacity,
-  //     Capacity() - borrowed_items_size_,
-  // });
-  // if (buffer_size < 1) return Result::Err({});
-  // borrowed_items_size_ += buffer_size;
-
   for (SizeType attempt{0}; attempt < options_.borrow_cas_attempts; ++attempt) {
     auto borrowed_items_size = borrowed_items_size_.load();
     const auto buffer_size =
@@ -101,49 +96,22 @@ auto DynamicBufferSlicePool<T>::Borrow(SizeType preferred_slice_capacity)
     }
   }
   return BorrowError::kCasAttemptsExhausted;
-
-  // if (preferred_slice_capacity < 1) return Result::Err({});
-  // const auto capacity = Capacity();
-  // const auto try_buffer_size = std::min(
-  //     {preferred_slice_capacity, capacity, options_.max_slice_capacity});
-  // const auto previous_size = borrowed_items_size_.fetch_add(try_buffer_size);
-  // if (capacity < previous_size) return Result::Err({});
-  // const auto new_size = previous_size + try_buffer_size;
-  // if (new_size < 1) return Result::Err({});
-  // if (capacity < new_size) {
-  //   borrowed_items_size_.store(capacity);
-  // }
-  // const auto buffer_size = std::min(try_buffer_size, capacity -
-  // previous_size);
-
-  // auto* slice = allocator_.allocate(1);
-  // allocator_.construct(slice, buffer_size);
-  // auto* slice = std::allocator_traits<Allocator>::allocate(allocator_, 1);
-  // std::allocator_traits<Allocator>::construct(allocator_, slice,
-  // buffer_size); auto* buffer = static_cast<T*>(::operator new(sizeof(T)));
-  // auto* slice = ::new(buffer) Slice{buffer_size};
-  // auto* slice = new Slice{buffer_size};
-  // return OwnedSlicePtr{slice, this};
 }
 
 template <class T>
-auto DynamicBufferSlicePool<T>::Return(Slice* slice) -> ReturnResult {
-  // allocator_.destroy(slice);
-  // allocator_.deallocate(slice, 1);
-  // std::allocator_traits<Allocator>::destroy(allocator_, slice);
-  // std::allocator_traits<Allocator>::deallocate(allocator_, slice, 1);
-  // slice->~Slice();
-  // ::operator delete(slice);
+auto DynamicBufferSlicePool<T>::Return(Slice* slice) -> ReturnRawPtrResult {
   borrowed_items_size_ -= slice->Capacity();
   delete slice;
-  return ReturnResult::Ok({});
+  return ReturnRawPtrResult::Ok({});
 }
 
 template <class T>
 auto DynamicBufferSlicePool<T>::Return(OwnedSlicePtr&& owned_ptr)
     -> ReturnResult {
-  if (owned_ptr.Owner() != this) return PtrOwnerError::kDoesNotOwnPtr;
-  return Return(owned_ptr.Take());
+  if (owned_ptr.Owner() != this) return std::move(owned_ptr);
+  const auto result = Return(owned_ptr.Take());
+  if (result.IsOk()) return ReturnResult::Ok({});
+  return std::move(owned_ptr);
 }
 
 template <class T>
@@ -167,5 +135,3 @@ constexpr auto DynamicBufferSlicePool<T>::Full() const -> bool {
 }
 
 }  // namespace spoor::runtime::buffer
-
-#endif

@@ -9,13 +9,14 @@ namespace {
 
 class Value;
 
+using util::result::None;
 using PtrOwner = util::memory::PtrOwner<Value>;
 using OwnedPtr = util::memory::OwnedPtr<Value>;
 
 class Value {
  public:
   explicit Value(int64 value);
-  auto Get() const -> int64;
+  [[nodiscard]] auto Get() const -> int64;
 
  private:
   int64 value_;
@@ -25,11 +26,11 @@ class Owner : public PtrOwner {
  public:
   explicit Owner(int64 value);
   auto Borrow() -> OwnedPtr;
-  virtual auto Return(OwnedPtr&& owned_ptr) -> PtrOwner::Result override;
-  auto BorrowedSize() const -> uint64;
+  auto Return(OwnedPtr&& owned_ptr) -> PtrOwner::Result override;
+  [[nodiscard]] auto BorrowedSize() const -> uint64;
 
  protected:
-  virtual auto Return(Value* value) -> PtrOwner::Result override;
+  auto Return(Value* value) -> PtrOwner::ReturnRawPtrResult override;
 
  private:
   uint64 borrowed_size_;
@@ -49,7 +50,7 @@ auto Owner::Borrow() -> OwnedPtr {
 
 auto Owner::Return(OwnedPtr&& owned_ptr) -> PtrOwner::Result {
   if (owned_ptr.Owner() != this || owned_ptr.Ptr() != &value_) {
-    return PtrOwner::Error::kDoesNotOwnPtr;
+    return std::move(owned_ptr);
   }
   --borrowed_size_;
   return PtrOwner::Result::Ok({});
@@ -57,12 +58,10 @@ auto Owner::Return(OwnedPtr&& owned_ptr) -> PtrOwner::Result {
 
 auto Owner::BorrowedSize() const -> uint64 { return borrowed_size_; }
 
-auto Owner::Return(Value* value) -> PtrOwner::Result {
-  if (value != &value_) {
-    return PtrOwner::Error::kDoesNotOwnPtr;
-  }
+auto Owner::Return(Value* value) -> PtrOwner::ReturnRawPtrResult {
+  if (value != &value_) return PtrOwner::ReturnRawPtrResult::Err({});
   --borrowed_size_;
-  return PtrOwner::Result::Ok({});
+  return PtrOwner::ReturnRawPtrResult::Ok({});
 }
 
 TEST(OwnedPtr, MoveConstructor) {  // NOLINT
@@ -74,7 +73,9 @@ TEST(OwnedPtr, MoveConstructor) {  // NOLINT
   OwnedPtr new_owned_ptr{std::move(owned_ptr)};
   ASSERT_EQ(new_owned_ptr.Ptr(), value);
   ASSERT_EQ(new_owned_ptr.Owner(), &owner);
+  // NOLINTNEXTLINE(bugprone-use-after-move, clang-analyzer-cplusplus.Move)
   ASSERT_EQ(owned_ptr.Ptr(), nullptr);
+  // NOLINTNEXTLINE(bugprone-use-after-move, clang-analyzer-cplusplus.Move)
   ASSERT_EQ(owned_ptr.Owner(), nullptr);
 }
 
@@ -87,7 +88,9 @@ TEST(OwnedPtr, MoveAssignmentOperator) {  // NOLINT
   auto new_owned_ptr = std::move(owned_ptr);
   ASSERT_EQ(new_owned_ptr.Ptr(), value);
   ASSERT_EQ(new_owned_ptr.Owner(), &owner);
+  // NOLINTNEXTLINE(bugprone-use-after-move, clang-analyzer-cplusplus.Move)
   ASSERT_EQ(owned_ptr.Ptr(), nullptr);
+  // NOLINTNEXTLINE(bugprone-use-after-move, clang-analyzer-cplusplus.Move)
   ASSERT_EQ(owned_ptr.Owner(), nullptr);
 }
 
@@ -115,7 +118,7 @@ TEST(OwnedPtr, Take) {  // NOLINT
   Owner owner{42};
   ASSERT_EQ(owner.BorrowedSize(), 0);
   auto owned_ptr = owner.Borrow();
-  auto ptr = owned_ptr.Ptr();
+  auto* ptr = owned_ptr.Ptr();
   ASSERT_NE(ptr, nullptr);
   ASSERT_EQ(owned_ptr.Owner(), &owner);
   auto* unowned_ptr = owned_ptr.Take();

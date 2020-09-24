@@ -10,6 +10,8 @@
 #   Conflicts with the desired modernize-use-trailing-return-type check.
 # llvm-header-guard
 #   The check does not support configuration from the project root.
+# llvm-include-order
+#   Enforced by Clang Format.
 # readability-magic-numbers
 #   These warnings are generally unhelpful because the "magic numbers" are
 #   self-explanatory in the context of the code).
@@ -23,6 +25,7 @@ Checks: '
   -fuchsia-overloaded-operator,
   -fuchsia-trailing-return,
   -llvm-header-guard,
+  -llvm-include-order,
   -readability-magic-numbers,
 
   -cert-con36-c,

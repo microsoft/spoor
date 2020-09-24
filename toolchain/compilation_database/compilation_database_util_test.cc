@@ -54,7 +54,7 @@ TEST(ParseExtraActionInfo, ParsesFromInputStream) {  // NOLINT
 
   const auto result = ParseExtraActionInfo(&buffer);
   ASSERT_TRUE(result.IsOk());
-  const auto compile_command = result.Ok();
+  const auto& compile_command = result.Ok();
   ASSERT_TRUE(
       MessageDifferencer::Equals(compile_command, expected_compile_command));
 }
@@ -117,8 +117,8 @@ TEST(SerializeCompileCommandToOutputStream, FailsToSerializesCompileCommand) {
 
 TEST(ConcatenateCompileCommands, ConcatenatesCompileCommands) {  // NOLINT
   const std::string compile_command_directory{"/path"};
-  const std::vector<std::string> compile_command_files{"a.compile_command.pb",
-                                                       "b.compile_command.pb"};
+  const std::vector<std::filesystem::path> compile_command_files{
+      "a.compile_command.pb", "b.compile_command.pb"};
   const CompileCommand compile_command_a = [&]() {
     CompileCommand compile_command{};
     compile_command.set_directory(compile_command_directory);
@@ -139,7 +139,7 @@ TEST(ConcatenateCompileCommands, ConcatenatesCompileCommands) {  // NOLINT
     *compile_commands.add_compile_commands() = compile_command_b;
     return compile_commands;
   }();
-  const auto make_input_stream = [&](const std::string_view input_file)
+  const auto make_input_stream = [&](const std::filesystem::path& input_file)
       -> std::variant<std::ifstream, std::istringstream> {
     std::ostringstream buffer{};
     if (input_file == "a.compile_command.pb") {
@@ -159,9 +159,9 @@ TEST(ConcatenateCompileCommands, ConcatenatesCompileCommands) {  // NOLINT
 }
 
 TEST(ConcatenateCompileCommands, FailsToParseInput) {  // NOLINT
-  const std::vector<std::string> compile_command_files{"compile_command_a.pb",
-                                                       "compile_command_b.pb"};
-  const auto make_input_stream = [&](const std::string_view)
+  const std::vector<std::filesystem::path> compile_command_files{
+      "compile_command_a.pb", "compile_command_b.pb"};
+  const auto make_input_stream = [&](const std::filesystem::path&)
       -> std::variant<std::ifstream, std::istringstream> {
     return std::istringstream{"bad data"};
   };

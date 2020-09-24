@@ -1,5 +1,4 @@
-#ifndef SPOOR_SPOOR_RUNTIME_BUFFER_BUFFER_SLICE_POOL_H_
-#define SPOOR_SPOOR_RUNTIME_BUFFER_BUFFER_SLICE_POOL_H_
+#pragma once
 
 #include <cstddef>
 
@@ -25,7 +24,6 @@ class BufferSlicePool : public util::memory::PtrOwner<CircularBuffer<T>> {
     kCasAttemptsExhausted,
   };
 
-  // TODO is it correct for all the constructors to be default?
   BufferSlicePool() = default;
   BufferSlicePool(const BufferSlicePool&) = default;
   BufferSlicePool(BufferSlicePool&&) noexcept = default;
@@ -43,5 +41,3 @@ class BufferSlicePool : public util::memory::PtrOwner<CircularBuffer<T>> {
 };
 
 }  // namespace spoor::runtime::buffer
-
-#endif

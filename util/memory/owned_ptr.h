@@ -1,5 +1,4 @@
-#ifndef SPOOR_UTIL_MEMORY_OWNED_PTR_H_
-#define SPOOR_UTIL_MEMORY_OWNED_PTR_H_
+#pragma once
 
 #include "util/memory/ptr_owner.h"
 #include "util/result.h"
@@ -88,5 +87,3 @@ auto OwnedPtr<T>::operator->() const noexcept -> T* {
 }
 
 }  // namespace util::memory
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef SPOOR_SPOOR_RUNTIME_BUFFER_OWNED_BUFFER_SLICE_H_
-#define SPOOR_SPOOR_RUNTIME_BUFFER_OWNED_BUFFER_SLICE_H_
+#pragma once
 
 #include <span>
 #include <vector>
@@ -37,7 +36,7 @@ class OwnedBufferSlice final : public CircularBuffer<T> {
   [[nodiscard]] constexpr auto WillWrapOnNextPush() const -> bool override;
 
  private:
-  SizeType capacity_;  // TODO const?
+  SizeType capacity_;
   std::vector<T> buffer_;
   typename std::vector<T>::iterator insertion_iterator_;
 };
@@ -127,5 +126,3 @@ constexpr auto OwnedBufferSlice<T>::WillWrapOnNextPush() const -> bool {
 }
 
 }  // namespace spoor::runtime::buffer
-
-#endif

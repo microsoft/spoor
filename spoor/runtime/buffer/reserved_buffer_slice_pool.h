@@ -1,5 +1,4 @@
-#ifndef SPOOR_SPOOR_RUNTIME_BUFFER_RESERVED_BUFFER_SLICE_POOL_H_
-#define SPOOR_SPOOR_RUNTIME_BUFFER_RESERVED_BUFFER_SLICE_POOL_H_
+#pragma once
 
 #include <atomic>
 #include <cassert>
@@ -23,10 +22,9 @@ class ReservedBufferSlicePool final : public BufferSlicePool<T> {
   using UnownedSlice = UnownedBufferSlice<T>;
   using SizeType = typename Slice::SizeType;
   using OwnedSlicePtr = util::memory::OwnedPtr<Slice>;
-  using PtrOwnerError = typename util::memory::PtrOwner<Slice>::Error;
   using BorrowError = typename BufferSlicePool<T>::BorrowError;
   using BorrowResult = util::result::Result<OwnedSlicePtr, BorrowError>;
-  using ReturnResult = util::result::Result<util::result::None, PtrOwnerError>;
+  using ReturnResult = typename util::memory::PtrOwner<Slice>::Result;
 
   struct Options {
     SizeType max_slice_capacity;
@@ -45,7 +43,9 @@ class ReservedBufferSlicePool final : public BufferSlicePool<T> {
 
   // Returns a buffer slice with its intrinsic capacity (i.e. ignores the
   // preferred slice capacity).
-  [[nodiscard]] auto Borrow(SizeType) -> BorrowResult override;
+  // Complexity: O(ceil(capacity / max_slice_capacity))
+  [[nodiscard]] auto Borrow(SizeType preferred_slice_capacity)
+      -> BorrowResult override;
   auto Return(OwnedSlicePtr&& owned_ptr) -> ReturnResult override;
 
   [[nodiscard]] constexpr auto Size() const -> SizeType override;
@@ -54,7 +54,10 @@ class ReservedBufferSlicePool final : public BufferSlicePool<T> {
   [[nodiscard]] constexpr auto Full() const -> bool override;
 
  protected:
-  auto Return(Slice* slice) -> ReturnResult override;
+  using ReturnRawPtrResult =
+      typename util::memory::PtrOwner<Slice>::ReturnRawPtrResult;
+
+  auto Return(Slice* slice) -> ReturnRawPtrResult override;
 
  private:
   Options options_;
@@ -114,22 +117,24 @@ auto ReservedBufferSlicePool<T>::Borrow(SizeType /*unused*/) -> BorrowResult {
 }
 
 template <class T>
-auto ReservedBufferSlicePool<T>::Return(Slice* slice) -> ReturnResult {
+auto ReservedBufferSlicePool<T>::Return(Slice* slice) -> ReturnRawPtrResult {
   auto* unowned_slice = static_cast<UnownedSlice*>(slice);
   const auto index = std::distance(pool_.data(), unowned_slice);
   if (index < 0 || Capacity() <= gsl::narrow_cast<SizeType>(index)) {
-    return PtrOwnerError::kDoesNotOwnPtr;
+    return ReturnRawPtrResult::Err({});
   }
   size_ += slice->Capacity();
   borrowed_.at(index).store(false);
-  return ReturnResult::Ok({});
+  return ReturnRawPtrResult::Ok({});
 }
 
 template <class T>
 auto ReservedBufferSlicePool<T>::Return(OwnedSlicePtr&& owned_ptr)
     -> ReturnResult {
-  if (owned_ptr.Owner() != this) return PtrOwnerError::kDoesNotOwnPtr;
-  return Return(owned_ptr.Take());
+  if (owned_ptr.Owner() != this) return std::move(owned_ptr);
+  const auto result = Return(owned_ptr.Take());
+  if (result.IsOk()) return ReturnResult::Ok({});
+  return std::move(owned_ptr);
 }
 
 template <class T>
@@ -153,5 +158,3 @@ constexpr auto ReservedBufferSlicePool<T>::Full() const -> bool {
 }
 
 }  // namespace spoor::runtime::buffer
-
-#endif

@@ -1,5 +1,7 @@
 #include "spoor/runtime/trace/trace.h"
 
+#include "gsl/gsl"
+
 namespace spoor::runtime::trace {
 
 Event::Event(const Type type, const FunctionId function_id,
@@ -26,7 +28,7 @@ auto Event::MakeTypeAndTimestamp(const Type type,
   //                              .count();
   auto type_and_timestamp = static_cast<uint64>(type) << uint64{63};
   type_and_timestamp |=
-      static_cast<uint64>(timestamp) & uint64{0x7fffffffffffffff};
+      gsl::narrow_cast<uint64>(timestamp) & uint64{0x7fffffffffffffff};
   return type_and_timestamp;
 }
 

@@ -6,7 +6,10 @@ cc_library(
     hdrs = ["trace.h"],
     copts = ["-Werror"],
     visibility = ["//visibility:public"],
-    deps = ["//util:numeric"],
+    deps = [
+        "//util:numeric",
+        "@com_microsoft_gsl//:gsl",
+    ],
 )
 
 cc_test(

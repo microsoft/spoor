@@ -1,11 +1,6 @@
-#ifndef SPOOR_SPOOR_RUNTIME_BUFFER_BUFFER_SLICE_H_
-#define SPOOR_SPOOR_RUNTIME_BUFFER_BUFFER_SLICE_H_
+#pragma once
 
-#include <algorithm>
-#include <array>
 #include <cstddef>
-#include <iterator>
-#include <memory>
 #include <span>
 #include <vector>
 
@@ -39,5 +34,3 @@ class CircularBuffer {
 };
 
 }  // namespace spoor::runtime::buffer
-
-#endif

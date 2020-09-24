@@ -76,6 +76,18 @@ auto Pools(const Options options)
   return pools;
 }
 
+TEST(BufferSlicePool, ConstructsPoolWithEmptyCapacity) {  // NOLINT
+  const Options options{
+      .max_slice_capacity = 1, .capacity = 0, .borrow_cas_attempts = 1};
+  for (const auto& pool : Pools(options)) {
+    for (SizeType size : {0, 1, 2, 5, 10}) {
+      const auto result = pool->Borrow(size);
+      ASSERT_TRUE(result.IsErr());
+      ASSERT_EQ(result.Err(), BorrowError::kNoSlicesAvailable);
+    }
+  }
+}
+
 TEST(BufferSlicePool, ReturnSlicePointer) {  // NOLINT
   const SizeType capacity{1};
   const Options options{.max_slice_capacity = capacity,
@@ -109,6 +121,25 @@ TEST(BufferSlicePool, ReturnOwnedSlicePtr) {  // NOLINT
     auto return_result = pool->Return(std::move(slice));
     ASSERT_TRUE(return_result.IsOk());
     ASSERT_EQ(pool->Size(), capacity);
+  }
+}
+
+TEST(BufferSlicePool, BorrowReturnsErrForSlicesItDoesNotOwn) {  // NOLINT
+  const Options options{
+      .max_slice_capacity = 1, .capacity = 1, .borrow_cas_attempts = 1};
+  for (const auto& pool_a : Pools(options)) {
+    for (const auto& pool_b : Pools(options)) {
+      auto borrow_result_a = pool_a->Borrow(1);
+      auto slice_a = std::move(borrow_result_a.Ok());
+      const auto* slice_a_ptr = slice_a.Ptr();
+      ASSERT_TRUE(borrow_result_a.IsOk());
+      auto result_b = pool_b->Return(std::move(slice_a));
+      ASSERT_TRUE(result_b.IsErr());
+      auto returned_slice = std::move(result_b.Err());
+      ASSERT_EQ(returned_slice.Ptr(), slice_a_ptr);
+      const auto return_result_a = pool_a->Return(std::move(returned_slice));
+      ASSERT_TRUE(return_result_a.IsOk());
+    }
   }
 }
 

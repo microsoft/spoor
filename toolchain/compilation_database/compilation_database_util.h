@@ -1,6 +1,6 @@
-#ifndef SPOOR_TOOLCHAIN_COMPILATION_DATABASE_COMPILATION_DATABASE_UTIL_H_
-#define SPOOR_TOOLCHAIN_COMPILATION_DATABASE_COMPILATION_DATABASE_UTIL_H_
+#pragma once
 
+#include <filesystem>
 #include <fstream>
 #include <istream>
 #include <ostream>
@@ -32,10 +32,10 @@ auto SerializeCompileCommandToOutputStream(
     gsl::not_null<std::ostream*> output_stream)
     -> util::result::Result<util::result::None, util::result::None>;
 auto ConcatenateCompileCommands(
-    const std::vector<std::string>& individual_compile_command_files,
+    const std::vector<std::filesystem::path>& individual_compile_command_files,
     const std::string& compile_command_directory,
-    std::function<
-        std::variant<std::ifstream, std::istringstream>(const std::string_view)>
+    std::function<std::variant<std::ifstream, std::istringstream>(
+        const std::filesystem::path&)>
         make_input_stream)
     -> util::result::Result<CompileCommands, ConcatenateCompileCommandsError>;
 auto SerializeCompileCommandsToOutputStream(
@@ -44,5 +44,3 @@ auto SerializeCompileCommandsToOutputStream(
     -> util::result::Result<util::result::None, google::protobuf::util::Status>;
 
 }  // namespace toolchain::compilation_database
-
-#endif

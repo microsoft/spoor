@@ -1,9 +1,7 @@
-#ifndef SPOOR_SPOOR_RUNTIME_BUFFER_CIRCULAR_SLICE_BUFFER_H_
-#define SPOOR_SPOOR_RUNTIME_BUFFER_CIRCULAR_SLICE_BUFFER_H_
+#pragma once
 
 #include <algorithm>
 #include <functional>
-#include <iostream>  // TODO
 #include <iterator>
 #include <span>
 #include <vector>
@@ -60,7 +58,7 @@ class CircularSliceBuffer final : public CircularBuffer<T> {
   SizeType acquired_slices_capacity_;
   typename SlicesType::iterator insertion_iterator_;
 
-  constexpr auto PrepareToPush() -> void;  // TODO constexpr?
+  constexpr auto PrepareToPush() -> void;
 };
 
 template <class T>
@@ -150,7 +148,7 @@ constexpr auto CircularSliceBuffer<T>::ContiguousMemoryChunks()
   std::vector<std::span<T>> chunks{};
   // Over allocating by one is preferable to performing several unnecessary heap
   // allocations and possible over allocating by more than one.
-  // chunks.reserve(2 * slices_.size()); // TODO
+  chunks.reserve(slices_.size() + 1);
   for (auto iterator = insertion_iterator_; iterator != std::end(slices_);
        ++iterator) {
     const auto slice_chunks = (*iterator)->ContiguousMemoryChunks();
@@ -190,5 +188,3 @@ constexpr auto CircularSliceBuffer<T>::PrepareToPush() -> void {
 }
 
 }  // namespace spoor::runtime::buffer
-
-#endif

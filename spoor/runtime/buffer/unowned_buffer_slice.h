@@ -1,27 +1,9 @@
-#ifndef SPOOR_SPOOR_RUNTIME_BUFFER_UNOWNED_BUFFER_SLICE_H_
-#define SPOOR_SPOOR_RUNTIME_BUFFER_UNOWNED_BUFFER_SLICE_H_
+#pragma once
 
 #include <span>
 #include <vector>
 
 // TODO decide if we need to call each items' destructor on clear and
-// destruction
-// #include <iterator>
-// std::for_each(vec.begin(), vec.end(), std::default_delete<Base>());
-//  if (!Full() || insertion_iterator_ == buffer_.begin()) {
-//    for (auto it = buffer_.rbegin(); it != buffer_.rend(); ++it) {
-//      it->~T();
-//    }
-//  } else {
-//    auto rinsertion_iterator =
-//        std::next(std::make_reverse_iterator(insertion_iterator_));
-//    for (auto it = rinsertion_iterator; it != buffer_.rend(); ++it) {
-//      it->~T();
-//    }
-//    for (auto it = buffer_.rbegin(); it != rinsertion_iterator; ++it) {
-//      it->~T();
-//    }
-//  }
 #include "spoor/runtime/buffer/circular_buffer.h"
 
 namespace spoor::runtime::buffer {
@@ -132,5 +114,3 @@ constexpr auto UnownedBufferSlice<T>::WillWrapOnNextPush() const -> bool {
 }
 
 }  // namespace spoor::runtime::buffer
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef SPOOR_SPOOR_RUNTIME_TRACE_TRACE_H_
-#define SPOOR_SPOOR_RUNTIME_TRACE_TRACE_H_
+#pragma once
 
 #include <chrono>
 #include <vector>
@@ -28,7 +27,7 @@ using TraceFileVersion = uint64;
 // structure changes.
 const TraceFileVersion kTraceFileVersion{0};
 
-struct Header final {
+struct Header {
   // IMPORTANT: Keep `version` as the first property.
   TraceFileVersion version;
   SessionId session_id;
@@ -41,7 +40,7 @@ struct Header final {
 
 static_assert(sizeof(Header) == 56);
 
-class Event final {
+class Event {
  public:
   enum class Type : bool {
     kFunctionExit = false,
@@ -69,18 +68,16 @@ class Event final {
 
 static_assert(sizeof(Event) == 16);
 
-struct Footer final {
+struct Footer {
   const Crc checksum;
 };
 
 static_assert(sizeof(Footer) == 4);
 
-struct File final {
+struct File {
   Header header;
   std::vector<Event> events;
   Footer footer;
 };
 
 }  // namespace spoor::runtime::trace
-
-#endif

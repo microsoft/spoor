@@ -1,5 +1,4 @@
-#ifndef SPOOR_UTIL_NUMERIC_H_
-#define SPOOR_UTIL_NUMERIC_H_
+#pragma once
 
 #include <cstdint>
 #include <type_traits>
@@ -51,5 +50,3 @@ static_assert(sizeof(int64) == 8);
 static_assert(std::is_integral_v<uint64>);
 static_assert(!std::is_signed_v<uint64>);
 static_assert(sizeof(uint64) == 8);
-
-#endif

@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <filesystem>
 #include <fstream>
 #include <ios>
 #include <iostream>
@@ -41,13 +42,13 @@ auto main(int argc, char** argv) -> int {
   absl::SetProgramUsageMessage(kUsage);
   absl::ParseCommandLine(argc, argv);
 
-  std::vector<std::string> input_files{};
+  std::vector<std::filesystem::path> input_files{};
   std::copy(std::istream_iterator<std::string>(std::cin),
             std::istream_iterator<std::string>(),
             std::back_inserter(input_files));
   const auto compile_command_directory =
       absl::GetFlag(FLAGS_compile_command_directory);
-  const auto make_input_stream = [](const std::string_view input_file)
+  const auto make_input_stream = [](const std::filesystem::path& input_file)
       -> std::variant<std::ifstream, std::istringstream> {
     return std::ifstream{input_file, std::ios::in | std::ios::binary};
   };

@@ -1,5 +1,4 @@
-#ifndef SPOOR_UTIL_MEMORY_PTR_OWNER_H_
-#define SPOOR_UTIL_MEMORY_PTR_OWNER_H_
+#pragma once
 
 #include "util/result.h"
 
@@ -8,19 +7,13 @@ namespace util::memory {
 template <class T>
 class OwnedPtr;
 
+// TODO do we need to assert that Ptr owner is not movable
+// if they are, the ownership will be messed up
+
 template <class T>
 class PtrOwner {
  public:
-  enum class Error;
-
-  using Result = util::result::Result<util::result::None, Error>;
-
-  // TODO do we need to assert that Ptr owner is not movable
-  // if they are, the ownership will be messed up
-
-  enum class Error {
-    kDoesNotOwnPtr,
-  };
+  using Result = util::result::Result<util::result::None, OwnedPtr<T>>;
 
   PtrOwner() = default;
   PtrOwner(const PtrOwner&) = default;
@@ -34,9 +27,10 @@ class PtrOwner {
  protected:
   friend class OwnedPtr<T>;
 
-  virtual auto Return(T* t) -> Result = 0;
+  using ReturnRawPtrResult =
+      util::result::Result<util::result::None, util::result::None>;
+
+  virtual auto Return(T* t) -> ReturnRawPtrResult = 0;
 };
 
 }  // namespace util::memory
-
-#endif

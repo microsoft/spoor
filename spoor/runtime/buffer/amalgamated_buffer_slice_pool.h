@@ -1,5 +1,4 @@
-#ifndef SPOOR_SPOOR_RUNTIME_BUFFER_AMALGAMATED_BUFFER_SLICE_POOL_H_
-#define SPOOR_SPOOR_RUNTIME_BUFFER_AMALGAMATED_BUFFER_SLICE_POOL_H_
+#pragma once
 
 #include <algorithm>
 #include <atomic>
@@ -24,10 +23,9 @@ class AmalgamatedBufferSlicePool final : public BufferSlicePool<T> {
   using Slice = CircularBuffer<T>;
   using SizeType = typename Slice::SizeType;
   using OwnedSlicePtr = util::memory::OwnedPtr<Slice>;
-  using PtrOwnerError = typename util::memory::PtrOwner<Slice>::Error;
   using BorrowError = typename BufferSlicePool<T>::BorrowError;
   using BorrowResult = util::result::Result<OwnedSlicePtr, BorrowError>;
-  using ReturnResult = util::result::Result<util::result::None, PtrOwnerError>;
+  using ReturnResult = typename util::memory::PtrOwner<Slice>::Result;
   using ReservedPool = ReservedBufferSlicePool<T>;
   using DynamicPool = DynamicBufferSlicePool<T>;
 
@@ -68,25 +66,23 @@ class AmalgamatedBufferSlicePool final : public BufferSlicePool<T> {
   [[nodiscard]] constexpr auto Full() const -> bool override;
 
  protected:
-  auto Return(Slice* slice) -> ReturnResult override;
+  using ReturnRawPtrResult =
+      typename util::memory::PtrOwner<Slice>::ReturnRawPtrResult;
+
+  auto Return(Slice* slice) -> ReturnRawPtrResult override;
 
  private:
   Options options_;
   ReservedPool reserved_pool_;
   DynamicPool dynamic_pool_;
-
-  // static_assert(std::pointer_traits<decltype(reserved_slice_borrowed_)>::
-  //                   element_type::is_always_lock_free);
-  // static_assert(decltype(reserved_pool_size_)::is_always_lock_free);
-  // static_assert(decltype(dynamic_pool_size_)::is_always_lock_free);
 };
 
 template <class T>
 AmalgamatedBufferSlicePool<T>::AmalgamatedBufferSlicePool(
     const Options& options)
     : options_{options},
-      reserved_pool_{ReservedPool{options_.reserved_pool_options}},
-      dynamic_pool_{DynamicPool{options_.dynamic_pool_options}} {}
+      reserved_pool_{ReservedPool{options.reserved_pool_options}},
+      dynamic_pool_{DynamicPool{options.dynamic_pool_options}} {}
 
 template <class T>
 auto AmalgamatedBufferSlicePool<T>::Borrow(
@@ -102,33 +98,34 @@ auto AmalgamatedBufferSlicePool<T>::Borrow(
 }
 
 template <class T>
-auto AmalgamatedBufferSlicePool<T>::Return(Slice * /* slice */)
-    -> ReturnResult {
-  // auto result = reserved_pool_.Return(slice);
-  // if (result.IsOk()) return ReturnResult::Ok({});
-  // return dynamic_pool_.Return(slice);
-  return PtrOwnerError::kDoesNotOwnPtr;
+auto AmalgamatedBufferSlicePool<T>::Return(Slice * /*unused*/) -> ReturnRawPtrResult {
+  return ReturnRawPtrResult::Err({});
 }
 
 template <class T>
 auto AmalgamatedBufferSlicePool<T>::Return(OwnedSlicePtr&& slice)
     -> ReturnResult {
   auto owner = slice.Owner();
-  return owner->Return(std::move(slice));
+  if (owner != &reserved_pool_ && owner != &dynamic_pool_) {
+    return std::move(slice);
+  }
+  auto result = owner->Return(std::move(slice));
+  if (result.IsOk()) return ReturnResult::Ok({});
+  return std::move(result.Err());
 }
 
 template <class T>
 template <class Collection>
 auto AmalgamatedBufferSlicePool<T>::Return(Collection&& slices)
     -> std::vector<OwnedSlicePtr> {
-  std::vector<OwnedSlicePtr> corrupt_slices{};
-  for (auto slice : slices) {
-    const auto owner = slice.Owner();
-    auto result = owner->Return(slice.Ptr());
-    if (result.IsOk()) continue;
-    corrupt_slices.push_back(std::move(slice));
+  std::vector<OwnedSlicePtr> slices_owned_by_other_pools{};
+  for (auto& slice : slices) {
+    auto result = Return(std::move(slice));
+    if (result.IsErr()) {
+      slices_owned_by_other_pools.push_back(std::move(result.Err()));
+    }
   }
-  return corrupt_slices;
+  return slices_owned_by_other_pools;
 }
 
 template <class T>
@@ -197,5 +194,3 @@ constexpr auto AmalgamatedBufferSlicePool<T>::Full() const -> bool {
 }
 
 }  // namespace spoor::runtime::buffer
-
-#endif

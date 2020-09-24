@@ -4,24 +4,25 @@
 
 #include "gtest/gtest.h"
 #include "spoor/runtime/buffer/circular_buffer.h"
+#include "spoor/runtime/buffer/owned_buffer_slice.h"
 #include "util/memory/owned_ptr.h"
 #include "util/numeric.h"
 
 namespace {
 
 using Slice = spoor::runtime::buffer::CircularBuffer<int64>;
+using OwnedBufferSlice = spoor::runtime::buffer::OwnedBufferSlice<int64>;
 using ValueType = Slice::ValueType;
 using SizeType = Slice::SizeType;
 using Pool = spoor::runtime::buffer::ReservedBufferSlicePool<ValueType>;
 using Options = typename Pool::Options;
 using OwnedSlicePtr = util::memory::OwnedPtr<Slice>;
+using PtrOwner = util::memory::PtrOwner<Slice>;
 
 const SizeType kIgnore = 0;
 
-// TODO test constructor with max_slice_capacity == 0
-
 TEST(ReservedBufferSlicePool, BorrowsMaxSliceCapacity) {  // NOLINT
-  const SizeType slices_size{10};
+  const SizeType slices_size{1'000};
   for (SizeType capacity : {1, 2, 5, 10}) {
     const Options options{.max_slice_capacity = capacity,
                           .capacity = slices_size * capacity};
@@ -42,8 +43,6 @@ TEST(ReservedBufferSlicePool, BorrowsRemainingSliceCapacity) {  // NOLINT
   for (const SizeType capacity : {1, 10, 100, 1'000}) {
     for (const SizeType extra_capacity : {1, 10, 100, 1'000}) {
       if (capacity < extra_capacity) continue;
-      std::cerr << "capacity = " << capacity
-                << ", extra_capacity = " << extra_capacity << '\n';
       const Options options{.max_slice_capacity = capacity,
                             .capacity = capacity + extra_capacity};
       Pool pool{options};
