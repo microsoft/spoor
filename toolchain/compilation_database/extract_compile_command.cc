@@ -37,10 +37,6 @@ auto main(int argc, char** argv) -> int {
   const auto _ =
       gsl::finally([] { google::protobuf::ShutdownProtobufLibrary(); });
 
-  for (int arg{0}; arg < argc; ++arg) {
-    std::cout << "arg[" << arg << "] = " << argv[arg] << '\n';
-  }
-
   absl::SetProgramUsageMessage(kUsage);
   absl::ParseCommandLine(argc, argv);
 
