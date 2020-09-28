@@ -2,6 +2,9 @@
 .bazelrc
 bazel-*
 
+# Compilation database
+compile_commands.json
+
 # Vim
 [._]*.s[a-v][a-z]
 [._]*.sw[a-p]
@@ -11,6 +14,9 @@ bazel-*
 
 # macOS
 .DS_Store
+
+# Python
+venv
 
 # Prerequisites
 *.d

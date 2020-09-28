@@ -17,6 +17,15 @@ $ bazel build //...
 $ bazel test //... --test_output=all
 ```
 
+## Compilation database
+Generate a `compile_commands.json` compilation database used by Clang Tidy for
+linting and by some IDEs to offer code completion.
+[Details][compilation-database-readme].
+
+```
+$ ./toolchain/compilation_database/generate_compilation_database.sh
+```
+
 # Contributing
 
 Please review Spoor's [Style Guide][style-guide].
@@ -43,5 +52,6 @@ comments.
 [c++20-compiler]: https://en.cppreference.com/w/cpp/compiler_support
 [code-of-conduct-faq]: https://opensource.microsoft.com/codeofconduct/faq/
 [code-of-conduct]: https://opensource.microsoft.com/codeofconduct/
+[compilation-database-readme]: toolchain/compilation_database/README.md
 [opencode-email]: mailto:opencode@microsoft.com
 [style-guide]: STYLE_GUIDE.md

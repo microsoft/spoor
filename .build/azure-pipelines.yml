@@ -14,3 +14,5 @@ jobs:
     displayName: Build
   - script: bazel test //...
     displayName: Test
+  - script: ./toolchain/compilation_database/generate_compilation_database.sh
+    displayName: Generate compilation database

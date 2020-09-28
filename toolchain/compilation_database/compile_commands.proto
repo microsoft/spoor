@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package toolchain.compilation_database;
+
+// JSON Compilation Database Format Specification
+// https://clang.llvm.org/docs/JSONCompilationDatabase.html
+
+message CompileCommand {
+  string directory = 1;
+  string file = 2;
+  string command = 3;
+  string arguments = 4;
+  string output = 5;
+}
+
+message CompileCommands {
+  repeated CompileCommand compile_commands = 1;
+}
