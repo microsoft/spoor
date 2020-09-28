@@ -5,6 +5,7 @@
 #include <iterator>
 #include <span>
 #include <vector>
+#include <iostream> // TODO
 
 #include "spoor/runtime/buffer/buffer_slice_pool.h"
 #include "spoor/runtime/buffer/circular_buffer.h"
@@ -25,7 +26,6 @@ class CircularSliceBuffer final : public CircularBuffer<T> {
   struct Options {
     std::function<void(SlicesType&&)> flush_handler;
     SlicePool* buffer_slice_pool;
-    SizeType capacity;
     bool flush_when_full;
   };
 
@@ -81,6 +81,7 @@ constexpr auto CircularSliceBuffer<T>::Push(const T& item) -> void {
   PrepareToPush();
   (*insertion_iterator_)->Push(item);
   size_ = std::min(size_ + 1, acquired_slices_capacity_);
+  if (options_.flush_when_full && Full()) Flush();
 }
 
 template <class T>
@@ -89,11 +90,12 @@ constexpr auto CircularSliceBuffer<T>::Push(T&& item) -> void {
   PrepareToPush();
   (*insertion_iterator_)->Push(std::move(item));
   size_ = std::min(size_ + 1, acquired_slices_capacity_);
+  if (options_.flush_when_full && Full()) Flush();
 }
 
 template <class T>
 constexpr auto CircularSliceBuffer<T>::Flush() -> void {
-  if (!slices_.empty()) options_.flush_handler(std::move(slices_));
+  if (!Empty()) options_.flush_handler(std::move(slices_));
   Clear();
 }
 
@@ -108,6 +110,7 @@ constexpr auto CircularSliceBuffer<T>::Clear() -> void {
     //     options_.buffer_slice_pool->Return(std::move(slices_));
     // assert(unowned_slices.size() == 0);
   }
+  slices_.clear();
   size_ = 0;
   acquired_slices_capacity_ = 0;
   insertion_iterator_ = std::begin(slices_);
@@ -120,7 +123,7 @@ constexpr auto CircularSliceBuffer<T>::Size() const -> SizeType {
 
 template <class T>
 constexpr auto CircularSliceBuffer<T>::Capacity() const -> SizeType {
-  return options_.capacity;
+  return options_.buffer_slice_pool->Capacity();
 }
 
 template <class T>
@@ -147,7 +150,7 @@ constexpr auto CircularSliceBuffer<T>::ContiguousMemoryChunks()
   if (Empty()) return {};
   std::vector<std::span<T>> chunks{};
   // Over allocating by one is preferable to performing several unnecessary heap
-  // allocations and possible over allocating by more than one.
+  // allocations and possibly over allocating by more than one.
   chunks.reserve(slices_.size() + 1);
   for (auto iterator = insertion_iterator_; iterator != std::end(slices_);
        ++iterator) {
@@ -159,7 +162,7 @@ constexpr auto CircularSliceBuffer<T>::ContiguousMemoryChunks()
        ++iterator) {
     const auto slice_chunks = (*iterator)->ContiguousMemoryChunks();
     chunks.insert(std::end(chunks), std::cbegin(slice_chunks),
-                  std::cbegin(slice_chunks));
+                  std::cend(slice_chunks));
   }
   return chunks;
 }

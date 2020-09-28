@@ -1,37 +1,20 @@
 #include "spoor/runtime/buffer/unowned_buffer_slice.h"
 
+#include "util/numeric.h"
+
 #include "gtest/gtest.h"
 
 namespace {
 
-// TEST(UnownedBufferSlice, UnownedConstructor) {  // NOLINT
-//   for (const SizeType capacity : {0, 1, 2, 10}) {
-//     std::vector<int64> data(capacity);
-//     {
-//       BufferSlice slice{data.data(), capacity};
-//       for (SizeType i{0}; i < capacity; ++i) {
-//         slice.Push(i);
-//       }
-//     }
-//     std::vector<int64> expected(capacity);
-//     std::iota(expected.begin(), expected.end(), 0);
-//     ASSERT_EQ(data, expected);
-//   }
-// }
-//
-// TEST(UnownedBufferSlice, UnownedConstructorNullptr) {  // NOLINT
-//   for (const SizeType capacity : {0, 1, 2, 10}) {
-//     BufferSlice slice{nullptr, capacity};
-//     ASSERT_EQ(slice.Capacity(), 0);
-//     ASSERT_TRUE(slice.Empty());
-//     ASSERT_TRUE(slice.Full());
-//     for (SizeType i{0}; i < 2 * capacity; ++i) {
-//       slice.Push(i);
-//       ASSERT_EQ(slice.Capacity(), 0);
-//       ASSERT_TRUE(slice.Empty());
-//       ASSERT_TRUE(slice.Full());
-//     }
-//   }
-// }
+using BufferSlice = spoor::runtime::buffer::CircularBuffer<int64>;
+using ValueType = BufferSlice::ValueType;
+using UnownedBufferSlice =
+    spoor::runtime::buffer::UnownedBufferSlice<ValueType>;
+using SizeType = BufferSlice::SizeType;
+
+TEST(UnownedBufferSlice, Movable) {  // NOLINT
+  std::vector<int64> buffer(10);
+  UnownedBufferSlice buffer_slice{{buffer.data(), buffer.size()}};
+}
 
 }  // namespace

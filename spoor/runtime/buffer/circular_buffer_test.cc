@@ -37,16 +37,14 @@ auto MakePool(const SizeType capacity) -> std::unique_ptr<Pool> {
 
 auto MakeBuffers(std::span<ValueType> buffer, gsl::not_null<Pool*> pool)
     -> std::vector<std::unique_ptr<CircularBuffer>> {
-  const auto capacity = buffer.size();
   std::vector<std::unique_ptr<CircularBuffer>> circular_buffers{};
   circular_buffers.reserve(3);
   circular_buffers.push_back(std::make_unique<UnownedBufferSlice>(buffer));
-  circular_buffers.push_back(std::make_unique<OwnedBufferSlice>(capacity));
-  const auto flush_handler = [](std::vector<OwnedSlicePtr>&&) {};
+  circular_buffers.push_back(std::make_unique<OwnedBufferSlice>(buffer.size()));
+  const auto flush_handler = [](std::vector<OwnedSlicePtr>&& /*unused*/) {};
   const typename CircularSliceBuffer::Options circular_slice_buffer_options{
       .flush_handler = flush_handler,
       .buffer_slice_pool = pool,
-      .capacity = capacity,
       .flush_when_full = false};
   circular_buffers.push_back(
       std::make_unique<CircularSliceBuffer>(circular_slice_buffer_options));

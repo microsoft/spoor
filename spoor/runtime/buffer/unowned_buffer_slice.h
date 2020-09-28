@@ -16,7 +16,6 @@ class UnownedBufferSlice final : public CircularBuffer<T> {
   UnownedBufferSlice() = delete;
   explicit constexpr UnownedBufferSlice(std::span<T> buffer);
   UnownedBufferSlice(const UnownedBufferSlice&) = delete;
-  // TODO is the default sufficient?
   constexpr UnownedBufferSlice(UnownedBufferSlice&& other) noexcept = default;
   auto operator=(const UnownedBufferSlice&) -> UnownedBufferSlice& = delete;
   auto operator=(UnownedBufferSlice&&) noexcept -> UnownedBufferSlice& = delete;

@@ -2,4 +2,10 @@
 
 #include "gtest/gtest.h"
 
-namespace {}  // namespace
+namespace {
+
+// TODO implement this test
+// constructors
+// copy/move semantics
+
+}  // namespace

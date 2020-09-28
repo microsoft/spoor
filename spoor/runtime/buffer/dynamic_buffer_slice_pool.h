@@ -46,8 +46,8 @@ class DynamicBufferSlicePool final : public BufferSlicePool<T> {
   // - The maximum allowed dynamic slice size.
   // - The remaining dynamic slices size.
   // Complexity:
-  // - O(borrow_cas_attempts) worst case.
-  // - O(1) with no thread contention.
+  // - Lock-free O(borrow_cas_attempts) worst case.
+  // - Lock-free O(1) with no thread contention.
   [[nodiscard]] auto Borrow(SizeType preferred_slice_capacity)
       -> BorrowResult override;
   auto Return(OwnedSlicePtr&& owned_ptr) -> ReturnResult override;

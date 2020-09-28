@@ -43,7 +43,7 @@ class ReservedBufferSlicePool final : public BufferSlicePool<T> {
 
   // Returns a buffer slice with its intrinsic capacity (i.e. ignores the
   // preferred slice capacity).
-  // Complexity: O(ceil(capacity / max_slice_capacity))
+  // Complexity: Lock-free O(ceil(capacity / max_slice_capacity))
   [[nodiscard]] auto Borrow(SizeType preferred_slice_capacity)
       -> BorrowResult override;
   auto Return(OwnedSlicePtr&& owned_ptr) -> ReturnResult override;
