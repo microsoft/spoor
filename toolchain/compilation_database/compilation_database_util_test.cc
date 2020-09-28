@@ -175,7 +175,7 @@ TEST(ConcatenateCompileCommands, FailsToParseInput) {  // NOLINT
 
 // NOLINTNEXTLINE
 TEST(SerializeCompileCommandsToOutputStream, SerializesCompileCommands) {
-  const CompileCommands compile_commands = [&]() {
+  const CompileCommands compile_commands = []() {
     CompileCommand compile_command{};
     compile_command.set_directory("d");
     compile_command.set_file("f");
