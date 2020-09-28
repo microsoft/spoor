@@ -26,9 +26,9 @@ namespace {
 
 using toolchain::compilation_database::ParseExtraActionInfoError;
 
-constexpr std::string_view kUsage =
+constexpr std::string_view kUsage{
     "Extract the command to compile each C++ source file from its `CppCompile` "
-    "build mnemonic.";
+    "build mnemonic."};
 
 }  // namespace
 
