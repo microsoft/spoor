@@ -1,7 +1,7 @@
 load(
     ":cc_toolchain_config.bzl",
     "cc_toolchain_config_darwin",
-    "cc_toolchain_config_linux"
+    "cc_toolchain_config_linux",
 )
 
 cc_toolchain_suite(

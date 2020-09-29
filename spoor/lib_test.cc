@@ -6,7 +6,7 @@ namespace {
 
 using spoor::lib::Add;
 
-TEST(Add, SumsTwoNumbers) {
+TEST(Add, SumsTwoNumbers) {  // NOLINT
   ASSERT_EQ(Add(1, 2), 3);
 }
 

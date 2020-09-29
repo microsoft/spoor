@@ -10,6 +10,11 @@
 #   Conflicts with the desired modernize-use-trailing-return-type check.
 # llvm-header-guard
 #   The check does not support configuration from the project root.
+# llvm-include-order
+#   Enforced by Clang Format.
+# readability-magic-numbers
+#   These warnings are generally unhelpful because the "magic numbers" are
+#   self-explanatory in the context of the code).
 # Other checks are aliases which are disable so only one NOLINT is required.
 #   https://clang.llvm.org/extra/clang-tidy/checks/list.html#id117
 Checks: '
@@ -20,6 +25,8 @@ Checks: '
   -fuchsia-overloaded-operator,
   -fuchsia-trailing-return,
   -llvm-header-guard,
+  -llvm-include-order,
+  -readability-magic-numbers,
 
   -cert-con36-c,
   -cert-con54-cpp,

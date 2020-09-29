@@ -11,7 +11,7 @@ new_git_repository(
     build_file = "@//toolchain:gsl.BUILD",
     commit = "5de956aaf0c80f58b1326591cd59bad72be79556",  # 2020-09-23 (>v3.1.0)
     remote = "https://github.com/microsoft/gsl.git",
-     shallow_since = "1600896232 -0700",
+    shallow_since = "1600896232 -0700",
 )
 
 git_repository(
@@ -46,3 +46,32 @@ git_repository(
     shallow_since = "1594707848 +0200",
 )
 
+git_repository(
+    # Dependencies require deviating from the naming convention.
+    name = "io_bazel_rules_go",
+    commit = "13c17d4aa8c8407049f5644e13c9ace1275d200e",  # v0.23.8
+    remote = "https://github.com/bazelbuild/rules_go.git",
+    shallow_since = "1597238923 -0400",
+)
+
+git_repository(
+    # Dependencies require deviating from the naming convention.
+    name = "bazel_gazelle",
+    commit = "c00612418c4dbc9f3cd35fe71fe1147748048b69",  # v0.21.1
+    remote = "https://github.com/bazelbuild/bazel-gazelle",
+    shallow_since = "1590680880 -0400",
+)
+
+load(
+    "@io_bazel_rules_go//go:deps.bzl",
+    "go_register_toolchains",
+    "go_rules_dependencies",
+)
+
+go_rules_dependencies()
+
+go_register_toolchains()
+
+load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
+
+gazelle_dependencies()

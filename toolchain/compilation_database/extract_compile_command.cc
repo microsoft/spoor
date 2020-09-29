@@ -15,12 +15,13 @@
 #include "toolchain/compilation_database/compile_commands.pb.h"
 #include "util/result.h"
 
-ABSL_FLAG(
+ABSL_FLAG(  // NOLINT
     std::string, extra_action_file, {},
     "Path to an extra action file provided by the Bazel action listener.");
 
-ABSL_FLAG(std::string, output_file, {},
-          "Path where the generated compile command should be saved.");
+ABSL_FLAG(  // NOLINT
+    std::string, output_file, {},
+    "Path where the generated compile command should be saved.");
 
 namespace {
 
