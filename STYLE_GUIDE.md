@@ -117,7 +117,7 @@ TEST(Foo, Bar) { // NOLINT
 
 // ✅ Okay
 ABSL_FLAG(  // NOLINT
-  std::string, my_flag, {}, "Description...");
+    std::string, my_flag, {}, "Description...");
 ```
 
 ## Starlark (Bazel)
