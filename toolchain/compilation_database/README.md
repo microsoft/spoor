@@ -22,8 +22,8 @@ Some build systems offer built-in compilation database generation functionality
 such as CMake with its `CMAKE_EXPORT_COMPILE_COMMANDS` flag. Bazel has no such
 feature meaning that Spoor must generate its own.
 
-Spoor's strategy uses a [Bazel action listener][bazel-extra-action] that listens
-to build events and outputs an intermediate Protocol Buffer for each
+Spoor's strategy uses a [Bazel action listener][bazel-action-listener] that
+listens to build events and outputs an intermediate Protocol Buffer for each
 `CppCompile` mnemonic. Each intermediate file contains the command to compile a
 single source file. Next, we aggregate the intermediate files and inject the
 execution directory which was not available during the previous step. Finally,
