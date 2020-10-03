@@ -16,7 +16,7 @@ bazel build \
   --noshow_progress \
   --noshow_loading_progress \
   --output_groups=compilation_outputs \
-  $(bazel query 'kind(cc_.*, //...)') # > /dev/null
+  $(bazel query 'kind(cc_.*, //...)') > /dev/null
 
 find "$BAZEL_ROOT" -type f -name "$COMPILE_COMMAND_GLOB" |
   bazel run //toolchain/compilation_database:concatenate_compile_commands -- \

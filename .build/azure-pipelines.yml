@@ -27,6 +27,12 @@ jobs:
     displayName: Thread sanitizer
   - script: bazel test --config=ubsan //...
     displayName: Undefined behavior sanitizer
+- job: benchmarks
+  pool:
+    vmImage: 'ubuntu-18.04'
+  - template: ./templates/install-common.yml
+  - script: ./toolchain/benchmarks/run_benchmarks.sh
+    displayName: Run benchmarks
 - job: style_and_lint
   pool:
     vmImage: 'ubuntu-18.04'

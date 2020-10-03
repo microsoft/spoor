@@ -74,6 +74,7 @@ template <class T>
 constexpr auto CircularSliceBuffer<T>::Push(const T& item) -> void {
   if (Capacity() == 0) return;
   PrepareToPush();
+  if (insertion_iterator_ == std::end(slices_)) return;
   (*insertion_iterator_)->Push(item);
   size_ = std::min(size_ + 1, acquired_slices_capacity_);
 }
@@ -82,6 +83,7 @@ template <class T>
 constexpr auto CircularSliceBuffer<T>::Push(T&& item) -> void {
   if (Capacity() == 0) return;
   PrepareToPush();
+  if (insertion_iterator_ == std::end(slices_)) return;
   (*insertion_iterator_)->Push(std::move(item));
   size_ = std::min(size_ + 1, acquired_slices_capacity_);
 }

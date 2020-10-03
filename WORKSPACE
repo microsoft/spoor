@@ -40,6 +40,13 @@ git_repository(
 )
 
 git_repository(
+    name = "com_google_benchmark",
+    commit = "73d4d5e8d6d449fc8663765a42aa8aeeee844489",  # v1.5.2
+    remote = "https://github.com/google/benchmark.git",
+    shallow_since = "1599818118 +0100",
+)
+
+git_repository(
     name = "com_bazelbuild_bazel",
     commit = "7cfe416c5b702967b63cb2d9e2a2a2aefb8d2cac",  # v3.4.1
     remote = "https://github.com/bazelbuild/bazel.git",
