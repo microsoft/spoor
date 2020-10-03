@@ -1,6 +1,7 @@
 #include <numeric>
 #include <vector>
 
+#include "gsl/gsl"
 #include "gtest/gtest.h"
 #include "spoor/runtime/buffer/circular_buffer.h"
 #include "spoor/runtime/buffer/owned_buffer_slice.h"
@@ -16,7 +17,7 @@ using UnownedBufferSlice =
     spoor::runtime::buffer::UnownedBufferSlice<ValueType>;
 using SizeType = BufferSlice::SizeType;
 
-auto Slices(std::span<ValueType> buffer)
+auto Slices(gsl::span<ValueType> buffer)
     -> std::vector<std::unique_ptr<BufferSlice>> {
   std::vector<std::unique_ptr<BufferSlice>> slices{};
   slices.reserve(2);

@@ -161,8 +161,9 @@ TEST(ConcatenateCompileCommands, ConcatenatesCompileCommands) {  // NOLINT
 TEST(ConcatenateCompileCommands, FailsToParseInput) {  // NOLINT
   const std::vector<std::filesystem::path> compile_command_files{
       "compile_command_a.pb", "compile_command_b.pb"};
-  const auto make_input_stream = [&](const std::filesystem::path& /*unused*/)
-      -> std::variant<std::ifstream, std::istringstream> {
+  const auto make_input_stream =
+      [&](const std::filesystem::path &
+          /*unused*/) -> std::variant<std::ifstream, std::istringstream> {
     return std::istringstream{"bad data"};
   };
   const auto result = ConcatenateCompileCommands(compile_command_files, "/path",

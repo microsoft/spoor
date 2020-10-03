@@ -98,7 +98,8 @@ auto AmalgamatedBufferSlicePool<T>::Borrow(
 }
 
 template <class T>
-auto AmalgamatedBufferSlicePool<T>::Return(Slice * /*unused*/) -> ReturnRawPtrResult {
+auto AmalgamatedBufferSlicePool<T>::Return(Slice * /*unused*/)
+    -> ReturnRawPtrResult {
   return ReturnRawPtrResult::Err({});
 }
 

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <span>
 #include <vector>
 
+#include "gsl/gsl"
 #include "spoor/runtime/buffer/circular_buffer.h"
 
 namespace spoor::runtime::buffer {
@@ -27,7 +27,7 @@ class OwnedBufferSlice final : public CircularBuffer<T> {
   constexpr auto Push(T&& item) -> void override;
   constexpr auto Clear() -> void override;
   [[nodiscard]] constexpr auto ContiguousMemoryChunks()
-      -> std::vector<std::span<T>> override;
+      -> std::vector<gsl::span<T>> override;
 
   [[nodiscard]] constexpr auto Size() const -> SizeType override;
   [[nodiscard]] constexpr auto Capacity() const -> SizeType override;
@@ -85,15 +85,15 @@ constexpr auto OwnedBufferSlice<T>::Clear() -> void {
 
 template <class T>
 constexpr auto OwnedBufferSlice<T>::ContiguousMemoryChunks()
-    -> std::vector<std::span<T>> {
+    -> std::vector<gsl::span<T>> {
   if (Empty()) return {};
   if (!Full() || insertion_iterator_ == std::end(buffer_)) return {buffer_};
   const auto begin = std::begin(buffer_);
   const auto end = std::end(buffer_);
-  const std::span<T> first_chunk{
+  const gsl::span<T> first_chunk{
       &(*insertion_iterator_),
       static_cast<SizeType>(std::distance(insertion_iterator_, end))};
-  const std::span<T> second_chunk{
+  const gsl::span<T> second_chunk{
       &(*begin),
       static_cast<SizeType>(std::distance(begin, insertion_iterator_))};
   return {first_chunk, second_chunk};

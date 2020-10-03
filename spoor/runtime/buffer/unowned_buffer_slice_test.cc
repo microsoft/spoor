@@ -1,8 +1,7 @@
 #include "spoor/runtime/buffer/unowned_buffer_slice.h"
 
-#include "util/numeric.h"
-
 #include "gtest/gtest.h"
+#include "util/numeric.h"
 
 namespace {
 

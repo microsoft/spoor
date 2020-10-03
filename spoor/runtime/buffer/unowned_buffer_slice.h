@@ -1,10 +1,11 @@
 #pragma once
 
-#include <span>
 #include <vector>
 
-// TODO decide if we need to call each items' destructor on clear and
+#include "gsl/gsl"
 #include "spoor/runtime/buffer/circular_buffer.h"
+
+// TODO decide if we need to call each items' destructor on clear and
 
 namespace spoor::runtime::buffer {
 
@@ -14,7 +15,7 @@ class UnownedBufferSlice final : public CircularBuffer<T> {
   using SizeType = typename CircularBuffer<T>::SizeType;
 
   UnownedBufferSlice() = delete;
-  explicit constexpr UnownedBufferSlice(std::span<T> buffer);
+  explicit constexpr UnownedBufferSlice(gsl::span<T> buffer);
   UnownedBufferSlice(const UnownedBufferSlice&) = delete;
   constexpr UnownedBufferSlice(UnownedBufferSlice&& other) noexcept = default;
   auto operator=(const UnownedBufferSlice&) -> UnownedBufferSlice& = delete;
@@ -25,7 +26,7 @@ class UnownedBufferSlice final : public CircularBuffer<T> {
   constexpr auto Push(T&& item) -> void override;
   constexpr auto Clear() -> void override;
   [[nodiscard]] auto ContiguousMemoryChunks()
-      -> std::vector<std::span<T>> override;
+      -> std::vector<gsl::span<T>> override;
 
   [[nodiscard]] constexpr auto Size() const -> SizeType override;
   [[nodiscard]] constexpr auto Capacity() const -> SizeType override;
@@ -34,13 +35,13 @@ class UnownedBufferSlice final : public CircularBuffer<T> {
   [[nodiscard]] constexpr auto WillWrapOnNextPush() const -> bool override;
 
  private:
-  std::span<T> buffer_;
-  typename std::span<T>::iterator insertion_iterator_;
+  gsl::span<T> buffer_;
+  typename gsl::span<T>::iterator insertion_iterator_;
   SizeType size_;
 };
 
 template <class T>
-constexpr UnownedBufferSlice<T>::UnownedBufferSlice(std::span<T> buffer)
+constexpr UnownedBufferSlice<T>::UnownedBufferSlice(gsl::span<T> buffer)
     : buffer_{buffer}, insertion_iterator_{std::begin(buffer_)}, size_{0} {}
 
 template <class T>
@@ -73,15 +74,15 @@ constexpr auto UnownedBufferSlice<T>::Clear() -> void {
 
 template <class T>
 auto UnownedBufferSlice<T>::ContiguousMemoryChunks()
-    -> std::vector<std::span<T>> {
+    -> std::vector<gsl::span<T>> {
   if (Empty()) return {};
   const auto begin = std::begin(buffer_);
   const auto end = std::end(buffer_);
   if (!Full() || insertion_iterator_ == end) return {{&(*begin), Size()}};
-  const std::span<T> first_chunk{
+  const gsl::span<T> first_chunk{
       &(*insertion_iterator_),
       static_cast<SizeType>(std::distance(insertion_iterator_, end))};
-  const std::span<T> second_chunk{
+  const gsl::span<T> second_chunk{
       &(*begin),
       static_cast<SizeType>(std::distance(begin, insertion_iterator_))};
   return {first_chunk, second_chunk};

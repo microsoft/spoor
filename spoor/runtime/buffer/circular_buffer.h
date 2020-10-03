@@ -1,8 +1,9 @@
 #pragma once
 
 #include <cstddef>
-#include <span>
 #include <vector>
+
+#include "gsl/gsl"
 
 namespace spoor::runtime::buffer {
 
@@ -24,7 +25,7 @@ class CircularBuffer {
   virtual constexpr auto Push(T&& item) -> void = 0;
   virtual constexpr auto Clear() -> void = 0;
   [[nodiscard]] virtual constexpr auto ContiguousMemoryChunks()
-      -> std::vector<std::span<T>> = 0;
+      -> std::vector<gsl::span<T>> = 0;
 
   [[nodiscard]] virtual constexpr auto Size() const -> SizeType = 0;
   [[nodiscard]] virtual constexpr auto Capacity() const -> SizeType = 0;

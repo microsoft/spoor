@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <iterator>
 #include <memory>
-#include <span>
 #include <string>
 #include <utility>
 #include <vector>
@@ -34,7 +33,7 @@ auto MakePool(const SizeType capacity) -> std::unique_ptr<Pool> {
 
 template <class T>
 auto MakeBuffers(
-    std::span<T> buffer,
+    gsl::span<T> buffer,
     gsl::not_null<spoor::runtime::buffer::ReservedBufferSlicePool<T>*> pool)
     -> std::vector<std::unique_ptr<spoor::runtime::buffer::CircularBuffer<T>>> {
   using CircularBuffer = spoor::runtime::buffer::CircularBuffer<T>;
@@ -55,7 +54,7 @@ auto MakeBuffers(
 TEST(CircularBuffer, PushCopyValue) {  // NOLINT
   using Pool = spoor::runtime::buffer::ReservedBufferSlicePool<std::string>;
   const auto assert_chunks_equal_to_expected =
-      [](const std::vector<std::span<Pool::ValueType>>& chunks,
+      [](const std::vector<gsl::span<Pool::ValueType>>& chunks,
          const Pool::SizeType capacity, const int64 start_value) {
         ASSERT_EQ(chunks.size(), 1);
         std::vector<int64> expected_chunk_numbers(capacity);
@@ -99,12 +98,12 @@ TEST(CircularBuffer, PushCopyValue) {  // NOLINT
 
 TEST(CircularBuffer, PushMoveValue) {  // NOLINT
   const auto assert_chunks_equal_to_expected =
-      [](const std::vector<std::span<ValueType>>& chunks,
+      [](const std::vector<gsl::span<ValueType>>& chunks,
          const Pool::SizeType capacity, const ValueType start_value) {
         ASSERT_EQ(chunks.size(), 1);
         std::vector<int64> expected_chunk(capacity);
-        std::iota(std::begin(expected_chunk),
-                  std::end(expected_chunk), start_value);
+        std::iota(std::begin(expected_chunk), std::end(expected_chunk),
+                  start_value);
         const auto& chunk = chunks.front();
         ASSERT_EQ(chunk.size(), expected_chunk.size());
         ASSERT_TRUE(std::equal(std::cbegin(chunk), std::cend(chunk),
