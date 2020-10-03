@@ -41,11 +41,13 @@ class ReservedBufferSlicePool final : public BufferSlicePool<T> {
       -> ReservedBufferSlicePool& = delete;
   ~ReservedBufferSlicePool();
 
-  // Returns a buffer slice with its intrinsic capacity (i.e. ignores the
-  // preferred slice capacity).
+  // Borrow a buffer slice from the object pool with its intrinsic capacity
+  // (i.e. ignores the preferred slice capacity).
   // Complexity: Lock-free O(ceil(capacity / max_slice_capacity))
   [[nodiscard]] auto Borrow(SizeType preferred_slice_capacity)
       -> BorrowResult override;
+  // Return a buffer slice to the object pool.
+  // Complexity: Lock-free O(1)
   auto Return(OwnedSlicePtr&& owned_ptr) -> ReturnResult override;
 
   [[nodiscard]] constexpr auto Size() const -> SizeType override;
@@ -123,6 +125,7 @@ auto ReservedBufferSlicePool<T>::Return(Slice* slice) -> ReturnRawPtrResult {
   if (index < 0 || Capacity() <= gsl::narrow_cast<SizeType>(index)) {
     return ReturnRawPtrResult::Err({});
   }
+  slice->Clear();
   size_ += slice->Capacity();
   borrowed_.at(index).store(false);
   return ReturnRawPtrResult::Ok({});

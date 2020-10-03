@@ -79,17 +79,13 @@ int32_t a[] = {1, 2, 3};  // NOLINT(modernize-avoid-c-arrays)
 int32_t a[] = {1, 2, 3};  // NOLINT
 ```
 
-Exception: Google Test and Gflags library macros.
+Exception: Google Test library macros.
 
 ```c++
 // ✅ Okay
-TEST(Foo, Bar) { // NOLINT
+TEST(Foo, Bar) {  // NOLINT
   ...
 }
-
-// ✅ Okay
-DEFINE_string(  // NOLINT
-    my_flag, "", "Description...");
 ```
 
 ## Starlark (Bazel)

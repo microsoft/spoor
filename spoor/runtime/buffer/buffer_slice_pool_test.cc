@@ -143,6 +143,32 @@ TEST(BufferSlicePool, BorrowReturnsErrForSlicesItDoesNotOwn) {  // NOLINT
   }
 }
 
+TEST(BufferSlicePool, ClearsSliceOnReturn) {  // NOLINT
+  const Options options{
+      .max_slice_capacity = 3, .capacity = 9, .borrow_cas_attempts = 1};
+  for (const auto& pool : Pools(options)) {
+    for (SizeType trial{0}; trial < 2; ++trial) {
+      std::vector<OwnedSlicePtr> retained_slices{};
+      retained_slices.reserve(options.capacity / options.max_slice_capacity);
+      ASSERT_TRUE(pool->Full());
+      for (SizeType slice_number{0};
+           slice_number < options.capacity / options.max_slice_capacity;
+           ++slice_number) {
+        auto result = pool->Borrow(options.capacity);
+        ASSERT_TRUE(result.IsOk());
+        auto slice = std::move(result.Ok());
+        ASSERT_TRUE(slice->Empty());
+        for (SizeType value{0}; value < options.max_slice_capacity; ++value) {
+          slice->Push(value);
+        }
+        ASSERT_TRUE(slice->Full());
+        retained_slices.push_back(std::move(slice));
+      }
+      ASSERT_TRUE(pool->Empty());
+    }
+  }
+}
+
 TEST(BufferSlicePool, Size) {  // NOLINT
   for (const SizeType slices_size : {0, 1, 2, 5, 10}) {
     for (const SizeType slice_capacity : {1, 2, 5, 10}) {

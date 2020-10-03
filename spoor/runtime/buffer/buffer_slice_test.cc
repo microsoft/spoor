@@ -78,6 +78,7 @@ TEST(BufferSlice, ContiguousMemoryChunksTwoChunks) {  // NOLINT
         std::vector<ValueType> expected_first_chunk(expected_first_chunk_size);
         std::iota(std::begin(expected_first_chunk),
                   std::end(expected_first_chunk), i - capacity + 1);
+        ASSERT_EQ(first_chunk.size(), expected_first_chunk.size());
         ASSERT_TRUE(std::equal(std::cbegin(first_chunk), std::cend(first_chunk),
                                std::cbegin(expected_first_chunk)));
 
@@ -89,6 +90,7 @@ TEST(BufferSlice, ContiguousMemoryChunksTwoChunks) {  // NOLINT
         std::iota(std::begin(expected_second_chunk),
                   std::end(expected_second_chunk),
                   i - capacity + 1 + expected_first_chunk_size);
+        ASSERT_EQ(second_chunk.size(), expected_second_chunk.size());
         ASSERT_TRUE(std::equal(std::cbegin(second_chunk),
                                std::cend(second_chunk),
                                std::cbegin(expected_second_chunk)));

@@ -11,6 +11,7 @@ new_git_repository(
     build_file = "@//toolchain:gsl.BUILD",
     commit = "5de956aaf0c80f58b1326591cd59bad72be79556",  # 2020-09-24 (>v3.1.0)
     remote = "https://github.com/microsoft/gsl.git",
+    shallow_since = "1600896232 -0700",
 )
 
 git_repository(

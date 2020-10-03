@@ -153,7 +153,7 @@ TEST(ConcatenateCompileCommands, ConcatenatesCompileCommands) {  // NOLINT
   const auto result = ConcatenateCompileCommands(
       compile_command_files, compile_command_directory, make_input_stream);
   ASSERT_TRUE(result.IsOk());
-  const auto compile_commands = result.Ok();
+  const auto& compile_commands = result.Ok();
   ASSERT_TRUE(
       MessageDifferencer::Equals(compile_commands, expected_compile_commands));
 }
@@ -161,7 +161,7 @@ TEST(ConcatenateCompileCommands, ConcatenatesCompileCommands) {  // NOLINT
 TEST(ConcatenateCompileCommands, FailsToParseInput) {  // NOLINT
   const std::vector<std::filesystem::path> compile_command_files{
       "compile_command_a.pb", "compile_command_b.pb"};
-  const auto make_input_stream = [&](const std::filesystem::path&)
+  const auto make_input_stream = [&](const std::filesystem::path& /*unused*/)
       -> std::variant<std::ifstream, std::istringstream> {
     return std::istringstream{"bad data"};
   };

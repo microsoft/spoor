@@ -41,7 +41,7 @@ class DynamicBufferSlicePool final : public BufferSlicePool<T> {
       -> DynamicBufferSlicePool& = delete;
   ~DynamicBufferSlicePool();
 
-  // Returns a buffer slice whose size is the minimum of:
+  // Borrow a buffer slice from the object pool whose size is the minimum of:
   // - The preferred slice size.
   // - The maximum allowed dynamic slice size.
   // - The remaining dynamic slices size.
@@ -50,6 +50,8 @@ class DynamicBufferSlicePool final : public BufferSlicePool<T> {
   // - Lock-free O(1) with no thread contention.
   [[nodiscard]] auto Borrow(SizeType preferred_slice_capacity)
       -> BorrowResult override;
+  // Return a buffer slice to the object pool.
+  // Complexity: Lock-free O(1)
   auto Return(OwnedSlicePtr&& owned_ptr) -> ReturnResult override;
 
   [[nodiscard]] constexpr auto Size() const -> SizeType override;
@@ -100,6 +102,9 @@ auto DynamicBufferSlicePool<T>::Borrow(SizeType preferred_slice_capacity)
 
 template <class T>
 auto DynamicBufferSlicePool<T>::Return(Slice* slice) -> ReturnRawPtrResult {
+  // The dynamic buffer pool does not store a table of borrowed slices,
+  // therefore, this method deletes a slice regardless if it is owned by the
+  // pool or not.
   borrowed_items_size_ -= slice->Capacity();
   delete slice;
   return ReturnRawPtrResult::Ok({});

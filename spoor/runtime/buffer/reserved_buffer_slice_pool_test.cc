@@ -19,7 +19,7 @@ using Options = typename Pool::Options;
 using OwnedSlicePtr = util::memory::OwnedPtr<Slice>;
 using PtrOwner = util::memory::PtrOwner<Slice>;
 
-const SizeType kIgnore = 0;
+const SizeType kIgnore{0};
 
 TEST(ReservedBufferSlicePool, BorrowsMaxSliceCapacity) {  // NOLINT
   const SizeType slices_size{1'000};

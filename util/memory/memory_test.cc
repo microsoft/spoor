@@ -9,7 +9,6 @@ namespace {
 
 class Value;
 
-using util::result::None;
 using PtrOwner = util::memory::PtrOwner<Value>;
 using OwnedPtr = util::memory::OwnedPtr<Value>;
 

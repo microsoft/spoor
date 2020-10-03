@@ -34,9 +34,8 @@ auto SerializeCompileCommandToOutputStream(
 auto ConcatenateCompileCommands(
     const std::vector<std::filesystem::path>& individual_compile_command_files,
     const std::string& compile_command_directory,
-    std::function<std::variant<std::ifstream, std::istringstream>(
-        const std::filesystem::path&)>
-        make_input_stream)
+    const std::function<std::variant<std::ifstream, std::istringstream>(
+        const std::filesystem::path&)>& make_input_stream)
     -> util::result::Result<CompileCommands, ConcatenateCompileCommandsError>;
 auto SerializeCompileCommandsToOutputStream(
     const CompileCommands& compile_commands,
