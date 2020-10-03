@@ -11,7 +11,7 @@ load(
 # Tip: Determine the compiler's include paths with the incantation
 # `clang++ -E -xc++ - -v`.
 
-features = [
+FEATURES = [
     feature(
         name = "default_linker_flags",
         enabled = True,
@@ -89,9 +89,10 @@ def linux_llvm_toolchain_impl(ctx):
     ]
     return cc_common.create_cc_toolchain_config_info(
         ctx = ctx,
-        features = features,
+        features = FEATURES,
         cxx_builtin_include_directories = [
             "/usr/lib/llvm-10/lib/clang/10.0.1/include",
+            "/usr/lib/llvm-10/lib/clang/10.0.1/share",
             "/usr/include",
         ],
         toolchain_identifier = "linux-llvm-toolchain",
@@ -143,10 +144,11 @@ def darwin_llvm_toolchain_impl(ctx):
     ]
     return cc_common.create_cc_toolchain_config_info(
         ctx = ctx,
-        features = features,
+        features = FEATURES,
         cxx_builtin_include_directories = [
             "/usr/local/opt/llvm/include/c++/v1",
             "/usr/local/Cellar/llvm/10.0.1_1/lib/clang/10.0.1/include",
+            "/usr/local/Cellar/llvm/10.0.1_1/lib/clang/10.0.1/share",
             "/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/include",
             "/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/System/Library/Frameworks",
         ],
@@ -154,60 +156,6 @@ def darwin_llvm_toolchain_impl(ctx):
         host_system_name = "local",
         target_system_name = "local",
         target_cpu = "darwin",
-        target_libc = "unknown",
-        compiler = "clang",
-        abi_version = "unknown",
-        abi_libc_version = "unknown",
-        tool_paths = tool_paths,
-    )
-
-def windows_llvm_toolchain_impl(ctx):
-    # Default paths on Windows for the MSVC LLVM tools.
-    tool_paths = [
-        tool_path(
-            name = "gcc",
-            path = "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/bin/clang.exe",
-        ),
-        tool_path(
-            name = "ld",
-            path = "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/bin/lld.exe",
-        ),
-        tool_path(
-            name = "ar",
-            path = "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/bin/llvm-ar.exe",
-        ),
-        tool_path(
-            name = "cpp",
-            path = "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/bin/clang++.exe",
-        ),
-        tool_path(
-            name = "gcov",
-            path = "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/bin/llvm-cov.exe",
-        ),
-        tool_path(
-            name = "nm",
-            path = "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/bin/llvm-nm.exe",
-        ),
-        tool_path(
-            name = "objdump",
-            path = "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/bin/llvm-objdump.exe",
-        ),
-        tool_path(
-            name = "strip",
-            path = "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/bin/llvm-strip.exe",
-        ),
-    ]
-    return cc_common.create_cc_toolchain_config_info(
-        ctx = ctx,
-        features = features,
-        cxx_builtin_include_directories = [
-            "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/lib/clang/10.0.0/include",
-            "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Tools/MSVC/14.27.29110/include",
-        ],
-        toolchain_identifier = "windows-llvm-toolchain",
-        host_system_name = "local",
-        target_system_name = "local",
-        target_cpu = "x64_windows",
         target_libc = "unknown",
         compiler = "clang",
         abi_version = "unknown",
@@ -223,12 +171,6 @@ cc_toolchain_config_linux = rule(
 
 cc_toolchain_config_darwin = rule(
     implementation = darwin_llvm_toolchain_impl,
-    attrs = {},
-    provides = [CcToolchainConfigInfo],
-)
-
-cc_toolchain_config_windows = rule(
-    implementation = windows_llvm_toolchain_impl,
     attrs = {},
     provides = [CcToolchainConfigInfo],
 )

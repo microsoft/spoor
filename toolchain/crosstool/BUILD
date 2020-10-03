@@ -1,11 +1,14 @@
-load(":cc_toolchain_config.bzl", "cc_toolchain_config_darwin", "cc_toolchain_config_linux", "cc_toolchain_config_windows")
+load(
+    ":cc_toolchain_config.bzl",
+    "cc_toolchain_config_darwin",
+    "cc_toolchain_config_linux"
+)
 
 cc_toolchain_suite(
     name = "llvm_toolchain",
     toolchains = {
         "k8": ":linux_llvm_toolchain",
         "darwin": ":darwin_llvm_toolchain",
-        "x64_windows": ":windows_llvm_toolchain",
     },
     visibility = ["//visibility:public"],
 )
@@ -41,18 +44,3 @@ cc_toolchain(
 )
 
 cc_toolchain_config_darwin(name = "darwin_llvm_toolchain_config")
-
-cc_toolchain(
-    name = "windows_llvm_toolchain",
-    all_files = ":empty",
-    compiler_files = ":empty",
-    dwp_files = ":empty",
-    linker_files = ":empty",
-    objcopy_files = ":empty",
-    strip_files = ":empty",
-    supports_param_files = False,
-    toolchain_config = ":windows_llvm_toolchain_config",
-    toolchain_identifier = "windows-llvm-toolchain",
-)
-
-cc_toolchain_config_windows(name = "windows_llvm_toolchain_config")
