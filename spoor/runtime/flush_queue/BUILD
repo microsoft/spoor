@@ -1,0 +1,40 @@
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
+cc_library(
+    name = "flush_queue",
+    srcs = [
+        "flush_queue.cc",
+    ],
+    hdrs = [
+        "flush_queue.h",
+    ],
+    copts = ["-Werror"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//spoor/runtime/buffer",
+        "//spoor/runtime/trace",
+        "//util:numeric",
+        "//util/time:clock",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_microsoft_gsl//:gsl",
+    ],
+)
+
+cc_test(
+    name = "flush_queue_test",
+    size = "small",
+    srcs = ["flush_queue_test.cc"],
+    copts = ["-Werror"],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":flush_queue",
+        "//spoor/runtime/buffer",
+        "//spoor/runtime/trace:trace",
+        "//spoor/runtime/trace:trace_writer_mock",
+        "//util/time:clock_mock",
+        "//util:numeric",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_googletest//:gtest_main",
+        "@com_microsoft_gsl//:gsl",
+    ],
+)

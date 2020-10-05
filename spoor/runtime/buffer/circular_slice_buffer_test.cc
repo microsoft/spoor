@@ -36,6 +36,7 @@ auto operator==(const std::vector<gsl::span<ValueType>>& result_chunks,
   }
   return true;
 }
+
 TEST(CircularSliceBuffer, ContiguousMemoryChunks) {  // NOLINT
   const typename Pool::Options options{.max_slice_capacity = 2,
                                        .capacity = kCapacity};

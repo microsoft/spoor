@@ -22,7 +22,7 @@ TEST(Event, StoresProperties) {  // NOLINT
 
 TEST(Event, DropsMostSignificantTimestampBit) {
   const FunctionId function_id{0xffffffffffffffff};
-  const TimestampNanoseconds timestamp{0xffffffffffffffff};
+  const auto timestamp = static_cast<TimestampNanoseconds>(0xffffffffffffffff);
   const TimestampNanoseconds expected_timestamp{0x7fffffffffffffff};
   for (const auto type : {Type::kFunctionEntry, Type::kFunctionExit}) {
     const Event event{type, function_id, timestamp};

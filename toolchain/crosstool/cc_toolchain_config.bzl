@@ -38,11 +38,15 @@ FEATURES = [
                     flag_group(
                         flags = [
                             "-std=c++20",
-                            "-Wall",
-                            "-Wextra",
-                            "-Wpedantic",
                             "-fno-exceptions",
                             "-fno-rtti",
+                            # Turn warnings up to 11.
+                            "-Wall",
+                            "-Wextra",
+                            "-pedantic",
+                            # Emitted by gMock.
+                            "-Wno-gnu-zero-variadic-macro-arguments",
+                            "-Wno-gcc-compat",  # Emitted by absl::StrFormat.
                         ],
                     ),
                 ]),

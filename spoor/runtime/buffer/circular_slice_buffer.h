@@ -30,9 +30,10 @@ class CircularSliceBuffer final : public CircularBuffer<T> {
   CircularSliceBuffer() = delete;
   explicit CircularSliceBuffer(const Options& options);
   CircularSliceBuffer(const CircularSliceBuffer&) = delete;
-  CircularSliceBuffer(CircularSliceBuffer&&) noexcept;
+  CircularSliceBuffer(CircularSliceBuffer&&) noexcept = default;
   auto operator=(const CircularSliceBuffer&) -> CircularSliceBuffer& = delete;
-  auto operator=(CircularSliceBuffer&&) noexcept -> CircularSliceBuffer&;
+  auto operator=(CircularSliceBuffer&&) noexcept
+      -> CircularSliceBuffer& = default;
   ~CircularSliceBuffer();
 
   constexpr auto Push(const T& item) -> void override;

@@ -19,7 +19,7 @@ cc_test(
     size = "small",
     srcs = ["result_test.cc"],
     copts = ["-Werror"],
-    visibility = ["//visibility:public"],
+    visibility = ["//visibility:private"],
     deps = [
         ":numeric",
         ":result",

@@ -4,8 +4,8 @@ cc_library(
     name = "buffer",
     hdrs = [
         "amalgamated_buffer_slice_pool.h",
-        "circular_buffer.h",
         "buffer_slice_pool.h",
+        "circular_buffer.h",
         "circular_slice_buffer.h",
         "dynamic_buffer_slice_pool.h",
         "owned_buffer_slice.h",

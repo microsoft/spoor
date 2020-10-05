@@ -41,7 +41,7 @@ does not allow type narrowing making it safer than its alternatives.
 ```c++
 MyClass::MyClass(const int64 value) : value_{value} {...}
 
-const int64 x{42};
+constexpr int64 x{42};
 const MyClass my_class{x};
 ```
 
