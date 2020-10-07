@@ -14,5 +14,18 @@ jobs:
     displayName: Build
   - script: bazel test //...
     displayName: Test
-  - script: ./toolchain/compilation_database/generate_compilation_database.sh
-    displayName: Generate compilation database
+- job: style_and_lint
+  pool:
+    vmImage: 'ubuntu-18.04'
+  steps:
+  - template: ./templates/install-common.yml
+  - script: |
+      ./toolchain/style/clang_format.sh
+      git diff --exit-code
+    displayName: Clang Format
+  - script: |
+      bazel run //toolchain/style:buildifier
+      git diff --exit-code
+    displayName: Buildifier
+  - script: ./toolchain/style/clang_tidy.sh
+    displayName: Clang Tidy

@@ -6,6 +6,8 @@
 ## Requirements
 * A C++ compiler that supports [C++20][c++20-compiler] such as Clang 10.
 * [Bazel][bazel].
+* [Clang Format][clang-format] and [Clang Tidy][clang-tidy] to style and lint
+  code.
 
 ## Build
 ```
@@ -17,6 +19,12 @@ $ bazel build //...
 $ bazel test //... --test_output=all
 ```
 
+## Style and lint
+```
+$ bazel run //toolchain/style:buildifier  # Format Starlark files
+$ ./toolchain/style/clang_format.sh       # Format C++ and Protobuf files
+$ ./toolchain/style/clang_tidy.sh         # Lint C++ files
+```
 ## Compilation database
 Generate a `compile_commands.json` compilation database used by Clang Tidy for
 linting and by some IDEs to offer code completion.
@@ -50,6 +58,8 @@ comments.
 [build-status-badge]: https://outlookmobile.visualstudio.com/Github/_apis/build/status/microsoft.spoor
 [build-status]: https://outlookmobile.visualstudio.com/Github/_build?definitionId=89
 [c++20-compiler]: https://en.cppreference.com/w/cpp/compiler_support
+[clang-format]: https://clang.llvm.org/docs/ClangFormat.html
+[clang-tidy]: https://clang.llvm.org/extra/clang-tidy/
 [code-of-conduct-faq]: https://opensource.microsoft.com/codeofconduct/faq/
 [code-of-conduct]: https://opensource.microsoft.com/codeofconduct/
 [compilation-database-readme]: toolchain/compilation_database/README.md

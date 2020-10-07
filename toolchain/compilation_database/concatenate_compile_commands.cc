@@ -18,11 +18,13 @@
 #include "toolchain/compilation_database/compile_commands.pb.h"
 #include "util/result.h"
 
-ABSL_FLAG(std::string, compile_command_directory, {},
-          "Directory for each compile command.");
+ABSL_FLAG(  // NOLINT
+    std::string, compile_command_directory, {},
+    "Directory for each compile command.");
 
-ABSL_FLAG(std::string, output_compilation_database, {},
-          "Path to the output compile_commands.json file.");
+ABSL_FLAG(  // NOLINT
+    std::string, output_compilation_database, {},
+    "Path to the output compile_commands.json file.");
 
 namespace {
 

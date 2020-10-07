@@ -3,7 +3,7 @@ load(
     "cc_binary",
     "cc_library",
     "cc_proto_library",
-    "cc_test"
+    "cc_test",
 )
 
 cc_proto_library(

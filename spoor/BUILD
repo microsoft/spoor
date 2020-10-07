@@ -4,8 +4,8 @@ cc_library(
     name = "lib",
     srcs = ["lib.cc"],
     hdrs = ["lib.h"],
-    deps = ["//util:numeric"],
     visibility = ["//visibility:public"],
+    deps = ["//util:numeric"],
 )
 
 cc_test(
