@@ -38,11 +38,14 @@ FEATURES = [
                     flag_group(
                         flags = [
                             "-std=c++20",
-                            "-Wall",
-                            "-Wextra",
-                            "-Wpedantic",
+                            "-pthread",
                             "-fno-exceptions",
                             "-fno-rtti",
+                            "-Wall",
+                            "-Wextra",
+                            "-pedantic",
+                            "-Wno-gnu-zero-variadic-macro-arguments",  # gMock
+                            "-Wno-gcc-compat",  # absl::StrFormat.
                         ],
                     ),
                 ]),
@@ -91,7 +94,8 @@ def linux_llvm_toolchain_impl(ctx):
         ctx = ctx,
         features = FEATURES,
         cxx_builtin_include_directories = [
-            "/usr/lib/llvm-10/lib/clang/10.0.1/include",
+            "/usr/lib/llvm-10/lib/clang/10.0.0/include",
+            "/usr/lib/llvm-10/lib/clang/10.0.0/share",
             "/usr/include",
         ],
         toolchain_identifier = "linux-llvm-toolchain",
@@ -147,6 +151,7 @@ def darwin_llvm_toolchain_impl(ctx):
         cxx_builtin_include_directories = [
             "/usr/local/opt/llvm/include/c++/v1",
             "/usr/local/Cellar/llvm/10.0.1_1/lib/clang/10.0.1/include",
+            "/usr/local/Cellar/llvm/10.0.1_1/lib/clang/10.0.1/share",
             "/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/include",
             "/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/System/Library/Frameworks",
         ],
