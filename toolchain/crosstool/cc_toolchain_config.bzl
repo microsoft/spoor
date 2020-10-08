@@ -38,6 +38,7 @@ FEATURES = [
                     flag_group(
                         flags = [
                             "-std=c++20",
+                            "-pthread",
                             "-fno-exceptions",
                             "-fno-rtti",
                             # Turn warnings up to 11.

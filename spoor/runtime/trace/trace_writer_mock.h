@@ -3,7 +3,7 @@
 #include "gmock/gmock.h"
 #include "spoor/runtime/trace/trace_writer.h"
 
-namespace spoor::runtime::trace {
+namespace spoor::runtime::trace::testing {
 
 class TraceWriterMock final : public TraceWriter {
  public:
@@ -13,4 +13,4 @@ class TraceWriterMock final : public TraceWriter {
               (const, override));
 };
 
-}  // namespace spoor::runtime::trace
+}  // namespace spoor::runtime::trace::testing

@@ -23,11 +23,11 @@ class TraceWriter {
   using Events = spoor::runtime::buffer::CircularSliceBuffer<Event>;
   using Result = util::result::Result<util::result::None, util::result::None>;
 
-  TraceWriter() = default;
-  TraceWriter(const TraceWriter&) = default;
-  TraceWriter(TraceWriter&&) = default;
-  auto operator=(const TraceWriter&) -> TraceWriter& = default;
-  auto operator=(TraceWriter &&) -> TraceWriter& = default;
+  constexpr TraceWriter() = default;
+  constexpr TraceWriter(const TraceWriter&) = default;
+  constexpr TraceWriter(TraceWriter&&) = default;
+  constexpr auto operator=(const TraceWriter&) -> TraceWriter& = default;
+  constexpr auto operator=(TraceWriter &&) -> TraceWriter& = default;
   virtual ~TraceWriter() = default;
 
   virtual auto Write(const std::filesystem::path& file, const Header& header,

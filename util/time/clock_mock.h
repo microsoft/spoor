@@ -3,7 +3,7 @@
 #include "gmock/gmock.h"
 #include "util/time/clock.h"
 
-namespace util::time {
+namespace util::time::testing {
 
 template <class ChronoClock>
 class ClockMock;
@@ -17,4 +17,4 @@ class ClockMock final : public Clock<ChronoClock> {
   MOCK_METHOD(std::chrono::time_point<ChronoClock>, Now, (), (const, override));
 };
 
-}  // namespace util::time
+}  // namespace util::time::testing

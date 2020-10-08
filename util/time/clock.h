@@ -13,11 +13,11 @@ using SteadyClock = Clock<std::chrono::steady_clock>;
 template <class ChronoClock>
 class Clock {
  public:
-  Clock() = default;
-  Clock(const Clock&) = default;
-  Clock(Clock&&) noexcept = default;
-  auto operator=(const Clock&) -> Clock& = default;
-  auto operator=(Clock&&) noexcept -> Clock& = default;
+  constexpr Clock() = default;
+  constexpr Clock(const Clock&) = default;
+  constexpr Clock(Clock&&) noexcept = default;
+  constexpr auto operator=(const Clock&) -> Clock& = default;
+  constexpr auto operator=(Clock&&) noexcept -> Clock& = default;
   virtual ~Clock() = default;
 
   [[nodiscard]] virtual auto Now() const

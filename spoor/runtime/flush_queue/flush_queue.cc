@@ -14,12 +14,15 @@
 
 namespace spoor::runtime::flush_queue {
 
-FlushQueue::FlushQueue(const Options& options)
-    : options_{options},
+using std::literals::chrono_literals::operator""ns;
+
+FlushQueue::FlushQueue(Options options)
+    : options_{std::move(options)},
       flush_thread_{},
       lock_{},
       queue_{},
-      flush_timestamp_{options.steady_clock->Now()},
+      flush_timestamp_{std::chrono::time_point<std::chrono::steady_clock>{0ns}},
+      queue_size_{0},
       running_{false},
       draining_{false} {}
 
@@ -29,7 +32,7 @@ auto FlushQueue::Run() -> void {
   if (running_.exchange(true)) return;
   draining_ = false;
   flush_thread_ = std::thread{[&]() {
-    while (!draining_.load() || !Empty()) {
+    while (!draining_ || !Empty()) {
       auto flush_info_optional = [&]() -> std::optional<FlushInfo> {
         std::unique_lock lock{lock_};
         if (queue_.empty()) return {};
@@ -45,8 +48,16 @@ auto FlushQueue::Run() -> void {
       const bool retain{options_.steady_clock->Now() <
                         flush_info.flush_timestamp +
                             options_.buffer_retention_duration};
-      const bool flush{flush_info.flush_timestamp <= flush_timestamp_};
-      if (retain && !flush) {
+      if (!options_.flush_immediately && !retain) {
+        --queue_size_;
+        continue;
+      }
+      const auto flush = [&]() {
+        if (options_.flush_immediately) return true;
+        std::shared_lock lock{lock_};
+        return flush_info.flush_timestamp <= flush_timestamp_;
+      }();
+      if (!flush) {
         std::unique_lock lock{lock_};
         queue_.emplace(std::move(flush_info));
         continue;
@@ -54,25 +65,27 @@ auto FlushQueue::Run() -> void {
       const auto result = options_.trace_writer->Write(
           TraceFilePath(flush_info), TraceFileHeader(flush_info),
           flush_info.buffer, trace::Footer{});
+      --flush_info.remaining_flush_attempts;
       if (result.IsErr() && 0 < flush_info.remaining_flush_attempts) {
-        --flush_info.remaining_flush_attempts;
         std::unique_lock lock{lock_};
         queue_.emplace(std::move(flush_info));
+      } else {
+        --queue_size_;
       }
     }
     draining_ = false;
+    running_ = false;
   }};
 }
 
 auto FlushQueue::DrainAndStop() -> void {
-  if (!running_.load() || draining_.exchange(true)) return;
+  if (!running_ || draining_.exchange(true)) return;
   if (flush_thread_.joinable()) flush_thread_.join();
-  running_ = false;
 }
 
 auto FlushQueue::Enqueue(Buffer&& buffer) -> void {
   const auto flush_timestamp = options_.steady_clock->Now();
-  if (!running_.load() || draining_.load()) return;
+  if (!running_ || draining_) return;
   const auto thread_id = static_cast<trace::ThreadId>(
       std::hash<std::thread::id>{}(std::this_thread::get_id()));
   FlushInfo flush_info{
@@ -82,34 +95,25 @@ auto FlushQueue::Enqueue(Buffer&& buffer) -> void {
       .remaining_flush_attempts = options_.max_buffer_flush_attempts};
   std::unique_lock lock{lock_};
   queue_.emplace(std::move(flush_info));
+  ++queue_size_;
 }
 
 auto FlushQueue::Flush() -> void {
+  const auto now = options_.steady_clock->Now();
   std::unique_lock lock{lock_};
-  flush_timestamp_ = options_.steady_clock->Now();
+  flush_timestamp_ = now;
 }
 
 auto FlushQueue::Clear() -> void {
   std::queue<FlushInfo> empty{};
   std::unique_lock lock{lock_};
   std::swap(queue_, empty);
+  queue_size_ = 0;
 }
 
-auto FlushQueue::GetState() const -> State {
-  if (!running_.load()) return State::kStopped;
-  if (draining_.load()) return State::kDraining;
-  return State::kRunning;
-}
+auto FlushQueue::Size() const -> SizeType { return queue_size_; }
 
-auto FlushQueue::Size() const -> SizeType {
-  std::shared_lock lock{lock_};
-  return queue_.size();
-}
-
-auto FlushQueue::Empty() const -> bool {
-  std::shared_lock lock{lock_};
-  return queue_.empty();
-}
+auto FlushQueue::Empty() const -> bool { return queue_size_ == 0; }
 
 auto FlushQueue::TraceFilePath(const FlushInfo& flush_info) const
     -> std::filesystem::path {
