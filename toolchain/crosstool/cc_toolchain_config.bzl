@@ -41,13 +41,11 @@ FEATURES = [
                             "-pthread",
                             "-fno-exceptions",
                             "-fno-rtti",
-                            # Turn warnings up to 11.
                             "-Wall",
                             "-Wextra",
                             "-pedantic",
-                            # Emitted by gMock.
-                            "-Wno-gnu-zero-variadic-macro-arguments",
-                            "-Wno-gcc-compat",  # Emitted by absl::StrFormat.
+                            "-Wno-gnu-zero-variadic-macro-arguments",  # gMock
+                            "-Wno-gcc-compat",  # absl::StrFormat.
                         ],
                     ),
                 ]),
@@ -96,8 +94,8 @@ def linux_llvm_toolchain_impl(ctx):
         ctx = ctx,
         features = FEATURES,
         cxx_builtin_include_directories = [
-            "/usr/lib/llvm-10/lib/clang/10.0.1/include",
-            "/usr/lib/llvm-10/lib/clang/10.0.1/share",
+            "/usr/lib/llvm-10/lib/clang/10.0.0/include",
+            "/usr/lib/llvm-10/lib/clang/10.0.0/share",
             "/usr/include",
         ],
         toolchain_identifier = "linux-llvm-toolchain",
