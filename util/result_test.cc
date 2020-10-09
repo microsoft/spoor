@@ -1,7 +1,6 @@
 #include "util/result.h"
 
-#include <gtest/gtest.h>
-
+#include "gtest/gtest.h"
 #include "util/numeric.h"
 
 namespace {
@@ -118,14 +117,12 @@ TEST(Result, OkLvalue) {  // NOLINT
 
 TEST(Result, OkConstRvalue) {  // NOLINT
   Result<int64, ErrType> result{42};
-  // NOLINTNEXTLINE(performance-move-const-arg)
-  ASSERT_EQ(std::move(result).Ok(), 42);
+  ASSERT_EQ(std::move(result).Ok(), 42);  // NOLINT(performance-move-const-arg)
 }
 
 TEST(Result, OkRvalue) {  // NOLINT
   const Result<int64, ErrType> result{42};
-  // NOLINTNEXTLINE(performance-move-const-arg)
-  ASSERT_EQ(std::move(result).Ok(), 42);
+  ASSERT_EQ(std::move(result).Ok(), 42);  // NOLINT(performance-move-const-arg)
 }
 
 TEST(Result, ErrConstLvalue) {  // NOLINT
@@ -142,14 +139,12 @@ TEST(Result, ErrLvalue) {  // NOLINT
 
 TEST(Result, ErrConstRvalue) {  // NOLINT
   const Result<OkType, int64> result{42};
-  // NOLINTNEXTLINE(performance-move-const-arg)
-  ASSERT_EQ(std::move(result).Err(), 42);
+  ASSERT_EQ(std::move(result).Err(), 42);  // NOLINT(performance-move-const-arg)
 }
 
 TEST(Result, ErrRvalue) {  // NOLINT
   Result<OkType, int64> result{42};
-  // NOLINTNEXTLINE(performance-move-const-arg)
-  ASSERT_EQ(std::move(result).Err(), 42);
+  ASSERT_EQ(std::move(result).Err(), 42);  // NOLINT(performance-move-const-arg)
 }
 
 TEST(Result, OkOrLvalue) {  // NOLINT

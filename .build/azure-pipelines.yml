@@ -3,7 +3,7 @@ jobs:
   strategy:
     matrix:
       linux:
-        imageName: 'ubuntu-18.04'
+        imageName: 'ubuntu-20.04'
       mac:
         imageName: 'macos-10.15'
   pool:
@@ -16,9 +16,11 @@ jobs:
     displayName: Test
 - job: style_and_lint
   pool:
-    vmImage: 'ubuntu-18.04'
+    vmImage: 'ubuntu-20.04'
   steps:
   - template: ./templates/install-common.yml
+  - script: sudo apt-get install clang-format clang-tidy
+    displayName: Install Clang Format and Clang Tidy
   - script: |
       ./toolchain/style/clang_format.sh
       git diff --exit-code
@@ -29,3 +31,5 @@ jobs:
     displayName: Buildifier
   - script: ./toolchain/style/clang_tidy.sh
     displayName: Clang Tidy
+    env:
+      AZURE_PIPELINES_OS: $(Agent.OS)
