@@ -4,6 +4,7 @@
 #include <functional>
 #include <iterator>
 #include <vector>
+#include <iostream> // TODO
 
 #include "gsl/gsl"
 #include "spoor/runtime/buffer/buffer_slice_pool.h"
@@ -11,6 +12,13 @@
 #include "util/memory/owned_ptr.h"
 
 namespace spoor::runtime::buffer {
+
+template <class T>
+class CircularSliceBuffer;
+
+template <class T>
+auto operator==(const CircularSliceBuffer<T>& lhs,
+                const CircularSliceBuffer<T>& rhs) -> bool;
 
 template <class T>
 class CircularSliceBuffer final : public CircularBuffer<T> {
@@ -49,6 +57,9 @@ class CircularSliceBuffer final : public CircularBuffer<T> {
   [[nodiscard]] constexpr auto WillWrapOnNextPush() const -> bool override;
 
  private:
+  friend auto operator==<>(const CircularSliceBuffer<T>& lhs,
+                           const CircularSliceBuffer<T>& rhs) -> bool;
+
   Options options_;
   SlicesType slices_;
   SizeType size_;
@@ -178,6 +189,23 @@ constexpr auto CircularSliceBuffer<T>::PrepareToPush() -> void {
       }
     }
   }
+}
+
+template <class T>
+auto operator==(const CircularSliceBuffer<T>& lhs,
+                const CircularSliceBuffer<T>& rhs) -> bool {
+  using SizeType = typename CircularSliceBuffer<T>::SizeType;
+  if (lhs.Size() != rhs.Size()) return false;
+  for (SizeType index{0}; index < lhs.slices_.size(); ++index) {
+    const auto lhs_chunks = lhs.slices_.at(index)->ContiguousMemoryChunks();
+    const auto rhs_chunks = rhs.slices_.at(index)->ContiguousMemoryChunks();
+    if (lhs_chunks.size() != rhs_chunks.size()) return false;
+    const auto equals =
+        std::equal(std::cbegin(lhs_chunks), std::cend(lhs_chunks),
+                   std::cbegin(rhs_chunks));
+    if (!equals) return false;
+  }
+  return true;
 }
 
 }  // namespace spoor::runtime::buffer

@@ -9,15 +9,6 @@
 
 namespace spoor::runtime::trace {
 
-struct Info {
-  std::filesystem::path trace_file_path;
-  TimestampNanoseconds flush_timestamp;
-  TraceFileVersion version;
-  SessionId session_id;
-  ProcessId process_id;
-  ThreadId thread_id;
-};
-
 class TraceWriter {
  public:
   using Events = spoor::runtime::buffer::CircularSliceBuffer<Event>;
@@ -30,14 +21,14 @@ class TraceWriter {
   constexpr auto operator=(TraceWriter &&) -> TraceWriter& = default;
   virtual ~TraceWriter() = default;
 
-  virtual auto Write(const std::filesystem::path& file, const Header& header,
-                     Events& events, const Footer& footer) const -> Result = 0;
+  virtual auto Write(const std::filesystem::path& file, Header header,
+                     Events* events, Footer footer) const -> Result = 0;
 };
 
 class TraceFileWriter final : public TraceWriter {
  public:
-  auto Write(const std::filesystem::path& file, const Header& header,
-             Events& events, const Footer& footer) const -> Result override;
+  auto Write(const std::filesystem::path& file, Header header, Events* events,
+             Footer footer) const -> Result override;
 };
 
 }  // namespace spoor::runtime::trace

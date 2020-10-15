@@ -3,14 +3,11 @@
 #include <type_traits>
 #include <vector>
 
+#include "absl/base/internal/endian.h"
 #include "gsl/gsl"
 #include "util/numeric.h"
 
 namespace spoor::runtime::trace {
-
-#if __WORDSIZE != 64
-#error "Trace types are designed for 64-bit architectures."
-#endif
 
 using DurationNanoseconds = int64;
 using EventCount = int32;
@@ -34,11 +31,8 @@ struct Header {
   TimestampNanoseconds system_clock_timestamp;
   TimestampNanoseconds steady_clock_timestamp;
   EventCount event_count;
-
- private:
-  friend constexpr auto operator==(const Header& lhs, const Header& rhs)
-      -> bool;
-};
+  std::array<char, 4> padding;
+} __attribute__((aligned(8)));
 
 static_assert(sizeof(Header) == 56);
 
@@ -59,6 +53,8 @@ class Event {
 
  private:
   friend constexpr auto operator==(const Event& lhs, const Event& rhs) -> bool;
+  friend inline auto Serialize(Event event) -> std::array<char, 16>;
+  friend inline auto Deserialize(std::array<char, 16> serialized) -> Event;
 
   FunctionId function_id_;
   // Use the most significant bit for the event and the least significant 63
@@ -70,7 +66,7 @@ class Event {
   static constexpr auto MakeTypeAndTimestamp(Type type,
                                              TimestampNanoseconds timestamp)
       -> uint64;
-};
+} __attribute__((aligned(8)));
 
 static_assert(sizeof(Event) == 16);
 
@@ -78,7 +74,7 @@ struct Footer {
  private:
   friend constexpr auto operator==(const Footer& lhs, const Footer& rhs)
       -> bool;
-};
+} __attribute__((aligned(1)));
 
 static_assert(sizeof(Footer) == 1);
 
@@ -108,7 +104,7 @@ constexpr auto Event::MakeTypeAndTimestamp(const Type type,
   return type_and_timestamp;
 }
 
-auto constexpr operator==(const Header& lhs, const Header& rhs) -> bool {
+constexpr auto operator==(const Header& lhs, const Header& rhs) -> bool {
   return lhs.version == rhs.version && lhs.session_id == rhs.session_id &&
          lhs.process_id == rhs.process_id && lhs.thread_id == rhs.thread_id &&
          lhs.system_clock_timestamp == rhs.system_clock_timestamp &&
@@ -116,11 +112,73 @@ auto constexpr operator==(const Header& lhs, const Header& rhs) -> bool {
          lhs.event_count == rhs.event_count;
 }
 
-auto constexpr operator==(const Event& lhs, const Event& rhs) -> bool {
+constexpr auto operator==(const Event& lhs, const Event& rhs) -> bool {
   return lhs.function_id_ == rhs.function_id_ &&
          lhs.type_and_timestamp_ == rhs.type_and_timestamp_;
 }
 
-auto constexpr operator==(const Footer&, const Footer&) -> bool { return true; }
+constexpr auto operator==(const Footer& /*unused*/, const Footer & /*unused*/)
+    -> bool {
+  return true;
+}
+
+inline auto Serialize(const Header header) -> std::array<char, sizeof(Header)> {
+  std::array<char, sizeof(Header)> serialized{};
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast
+  auto* serialized_header = reinterpret_cast<Header*>(serialized.data());
+  serialized_header->version = absl::ghtonll(header.version);
+  serialized_header->session_id = absl::ghtonll(header.session_id);
+  serialized_header->process_id = absl::ghtonll(header.process_id);
+  serialized_header->thread_id = absl::ghtonll(header.thread_id);
+  serialized_header->system_clock_timestamp =
+      absl::ghtonll(header.system_clock_timestamp);
+  serialized_header->steady_clock_timestamp =
+      absl::ghtonll(header.steady_clock_timestamp);
+  serialized_header->event_count = absl::ghtonll(header.event_count);
+  return serialized;
+}
+
+inline auto Deserialize(std::array<char, sizeof(Header)> serialized) -> Header {
+  auto* serialized_header = reinterpret_cast<Header*>(serialized.data());
+  Header header{};
+  header.version = absl::gntohll(serialized_header->version);
+  header.session_id = absl::gntohll(serialized_header->session_id);
+  header.process_id = absl::gntohll(serialized_header->process_id);
+  header.thread_id = absl::gntohll(serialized_header->thread_id);
+  header.system_clock_timestamp =
+      absl::gntohll(serialized_header->system_clock_timestamp);
+  header.steady_clock_timestamp =
+      absl::gntohll(serialized_header->steady_clock_timestamp);
+  header.event_count = absl::gntohl(serialized_header->event_count);
+  return header;
+}
+
+inline auto Serialize(const Event event) -> std::array<char, sizeof(Event)> {
+  std::array<char, sizeof(Event)> serialized{};
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast
+  auto* serialized_event = reinterpret_cast<Event*>(serialized.data());
+  serialized_event->function_id_ = absl::ghtonll(event.function_id_);
+  serialized_event->type_and_timestamp_ =
+      absl::ghtonll(event.type_and_timestamp_);
+  return serialized;
+}
+
+inline auto Deserialize(std::array<char, sizeof(Event)> serialized) -> Event {
+  auto* serialized_event = reinterpret_cast<Event*>(serialized.data());
+  Event event{};
+  event.function_id_ = absl::gntohll(serialized_event->function_id_);
+  event.type_and_timestamp_ =
+      absl::gntohll(serialized_event->type_and_timestamp_);
+  return event;
+}
+
+inline auto Serialize(const Footer /*unused*/)
+    -> std::array<char, sizeof(Footer)> {
+  return std::array<char, sizeof(Footer)>{};
+}
+
+inline auto Deserialize(std::array<char, sizeof(Footer)> /*unused*/) -> Footer {
+  return {};
+}
 
 }  // namespace spoor::runtime::trace

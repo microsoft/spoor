@@ -1,0 +1,84 @@
+#include "spoor/runtime/event_logger/event_logger.h"
+
+#include <chrono>
+
+#include "util/memory/owned_ptr.h"
+
+namespace spoor::runtime::event_logger {
+
+EventLogger::EventLogger(const Options options)
+    : options_{options}, pool_{nullptr}, buffer_{} {
+  options_.event_logger_notifier->Subscribe(this);
+}
+
+EventLogger::~EventLogger() {
+  Flush();
+  options_.event_logger_notifier->Unsubscribe(this);
+}
+
+auto EventLogger::SetPool(Pool* pool) -> void {
+  if (pool == nullptr) Flush();
+  pool_ = pool;
+  buffer_ = Buffer{{.buffer_slice_pool = pool_, .capacity = options_.capacity}};
+}
+
+auto EventLogger::LogFunctionEntry(trace::FunctionId function_id) -> void {
+  const auto now = options_.steady_clock->Now();
+  const auto now_nanoseconds =
+      std::chrono::duration_cast<std::chrono::nanoseconds>(
+          now.time_since_epoch())
+          .count();
+  const trace::Event event{trace::Event::Type::kFunctionEntry, function_id,
+                           now_nanoseconds};
+  Log(event);
+}
+
+auto EventLogger::LogFunctionExit(trace::FunctionId function_id) -> void {
+  const auto now = options_.steady_clock->Now();
+  const auto now_nanoseconds =
+      std::chrono::duration_cast<std::chrono::nanoseconds>(
+          now.time_since_epoch())
+          .count();
+  const trace::Event event{trace::Event::Type::kFunctionExit, function_id,
+                           now_nanoseconds};
+  Log(event);
+}
+
+auto EventLogger::Flush() -> void {
+  if (!buffer_.has_value() || buffer_.value().Empty()) return;
+  options_.flush_queue->Enqueue(std::move(buffer_.value()));
+  buffer_ = Buffer{{.buffer_slice_pool = pool_, .capacity = options_.capacity}};
+}
+
+auto EventLogger::Clear() -> void {
+  if (!buffer_.has_value()) return;
+  buffer_->Clear();
+}
+
+auto EventLogger::Size() const -> SizeType {
+  if (!buffer_.has_value()) return 0;
+  return buffer_->Size();
+}
+
+auto EventLogger::Capacity() const -> SizeType {
+  if (!buffer_.has_value()) return 0;
+  return buffer_->Capacity();
+}
+
+auto EventLogger::Empty() const -> bool {
+  if (!buffer_.has_value()) return true;
+  return buffer_->Empty();
+}
+
+auto EventLogger::Full() const -> bool {
+  if (!buffer_.has_value()) return true;
+  return buffer_->Full();
+}
+
+auto EventLogger::Log(trace::Event event) -> void {
+  if (pool_ == nullptr || !buffer_.has_value()) return;
+  buffer_->Push(event);
+  if (options_.flush_buffer_when_full && buffer_->WillWrapOnNextPush()) Flush();
+}
+
+}  // namespace spoor::runtime::event_logger

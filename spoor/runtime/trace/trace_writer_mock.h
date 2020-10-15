@@ -8,8 +8,8 @@ namespace spoor::runtime::trace::testing {
 class TraceWriterMock final : public TraceWriter {
  public:
   MOCK_METHOD(Result, Write,
-              (const std::filesystem::path& file, const Header& header,
-               Events& events, const Footer& footer),
+              (const std::filesystem::path& file, Header header, Events* events,
+               Footer footer),
               (const, override));
 };
 

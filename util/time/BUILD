@@ -24,6 +24,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":clock",
+        "//util:numeric",
         "@com_google_googletest//:gtest_main",  # TODO gmock?
     ],
 )

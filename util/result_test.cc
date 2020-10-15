@@ -1,7 +1,6 @@
 #include "util/result.h"
 
-#include <gtest/gtest.h>
-
+#include "gtest/gtest.h"
 #include "util/numeric.h"
 
 namespace {

@@ -1,4 +1,4 @@
-#include "spoor/runtime/flush_queue/flush_queue.h"
+#include "spoor/runtime/flush_queue/disk_flush_queue.h"
 
 #include <chrono>
 #include <filesystem>
@@ -16,7 +16,7 @@ namespace spoor::runtime::flush_queue {
 
 using std::literals::chrono_literals::operator""ns;
 
-FlushQueue::FlushQueue(Options options)
+DiskFlushQueue::DiskFlushQueue(Options options)
     : options_{std::move(options)},
       flush_thread_{},
       lock_{},
@@ -26,9 +26,9 @@ FlushQueue::FlushQueue(Options options)
       running_{false},
       draining_{false} {}
 
-FlushQueue::~FlushQueue() { DrainAndStop(); }
+DiskFlushQueue::~DiskFlushQueue() { DrainAndStop(); }
 
-auto FlushQueue::Run() -> void {
+auto DiskFlushQueue::Run() -> void {
   if (running_.exchange(true)) return;
   draining_ = false;
   flush_thread_ = std::thread{[&]() {
@@ -64,7 +64,7 @@ auto FlushQueue::Run() -> void {
       }
       const auto result = options_.trace_writer->Write(
           TraceFilePath(flush_info), TraceFileHeader(flush_info),
-          flush_info.buffer, trace::Footer{});
+          &flush_info.buffer, trace::Footer{});
       --flush_info.remaining_flush_attempts;
       if (result.IsErr() && 0 < flush_info.remaining_flush_attempts) {
         std::unique_lock lock{lock_};
@@ -78,12 +78,12 @@ auto FlushQueue::Run() -> void {
   }};
 }
 
-auto FlushQueue::DrainAndStop() -> void {
+auto DiskFlushQueue::DrainAndStop() -> void {
   if (!running_ || draining_.exchange(true)) return;
   if (flush_thread_.joinable()) flush_thread_.join();
 }
 
-auto FlushQueue::Enqueue(Buffer&& buffer) -> void {
+auto DiskFlushQueue::Enqueue(Buffer&& buffer) -> void {
   const auto flush_timestamp = options_.steady_clock->Now();
   if (!running_ || draining_) return;
   const auto thread_id = static_cast<trace::ThreadId>(
@@ -98,24 +98,26 @@ auto FlushQueue::Enqueue(Buffer&& buffer) -> void {
   ++queue_size_;
 }
 
-auto FlushQueue::Flush() -> void {
+auto DiskFlushQueue::Flush() -> void {
   const auto now = options_.steady_clock->Now();
   std::unique_lock lock{lock_};
   flush_timestamp_ = now;
 }
 
-auto FlushQueue::Clear() -> void {
+auto DiskFlushQueue::Clear() -> void {
   std::queue<FlushInfo> empty{};
   std::unique_lock lock{lock_};
   std::swap(queue_, empty);
   queue_size_ = 0;
 }
 
-auto FlushQueue::Size() const -> SizeType { return queue_size_; }
+auto DiskFlushQueue::Size() const -> DiskFlushQueue::SizeType {
+  return queue_size_;
+}
 
-auto FlushQueue::Empty() const -> bool { return queue_size_ == 0; }
+auto DiskFlushQueue::Empty() const -> bool { return queue_size_ == 0; }
 
-auto FlushQueue::TraceFilePath(const FlushInfo& flush_info) const
+auto DiskFlushQueue::TraceFilePath(const FlushInfo& flush_info) const
     -> std::filesystem::path {
   const auto timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(
                              flush_info.flush_timestamp.time_since_epoch())
@@ -126,7 +128,7 @@ auto FlushQueue::TraceFilePath(const FlushInfo& flush_info) const
   return options_.trace_file_path / file_name;
 }
 
-auto FlushQueue::TraceFileHeader(const FlushInfo& flush_info) const
+auto DiskFlushQueue::TraceFileHeader(const FlushInfo& flush_info) const
     -> trace::Header {
   const auto system_clock_now = options_.system_clock->Now();
   const auto steady_clock_now = options_.steady_clock->Now();

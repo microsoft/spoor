@@ -2,10 +2,9 @@ load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 cc_library(
     name = "flush_queue",
-    srcs = [
-        "flush_queue.cc",
-    ],
+    srcs = ["disk_flush_queue.cc"],
     hdrs = [
+        "disk_flush_queue.h",
         "flush_queue.h",
     ],
     copts = ["-Werror"],
@@ -21,9 +20,9 @@ cc_library(
 )
 
 cc_test(
-    name = "flush_queue_test",
+    name = "disk_flush_queue_test",
     size = "small",
-    srcs = ["flush_queue_test.cc"],
+    srcs = ["disk_flush_queue_test.cc"],
     copts = ["-Werror"],
     visibility = ["//visibility:private"],
     deps = [
@@ -38,3 +37,15 @@ cc_test(
         "@com_microsoft_gsl//:gsl",
     ],
 )
+
+cc_library(
+    name = "flush_queue_mock",
+    hdrs = ["flush_queue_mock.h"],
+    copts = ["-Werror"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":flush_queue",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+

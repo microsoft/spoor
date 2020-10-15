@@ -9,17 +9,21 @@
 namespace spoor::runtime::trace {
 
 auto TraceFileWriter::Write(const std::filesystem::path& file_path,
-                            const Header& header, Events& events,
-                            const Footer& footer) const -> Result {
+                            const Header header, Events* events,
+                            const Footer footer) const -> Result {
   std::ofstream file{file_path,
                      std::ios::out | std::ios::trunc | std::ios::binary};
-  // TODO network byte order
   if (!file.is_open()) return Result::Err({});
-  file.write(reinterpret_cast<const char*>(&header), sizeof(header));
-  for (auto& chunk : events.ContiguousMemoryChunks()) {
-    file.write(reinterpret_cast<const char*>(chunk.data()), chunk.size_bytes());
+  const auto serialized_header = Serialize(header);
+  file.write(serialized_header.data(), serialized_header.size());
+  for (auto& chunk : events->ContiguousMemoryChunks()) {
+    for (auto event : chunk) {
+      auto serialized_event = Serialize(event);
+      file.write(serialized_event.data(), serialized_event.size());
+    }
   }
-  file.write(reinterpret_cast<const char*>(&footer), sizeof(footer));
+  const auto serialized_footer = Serialize(footer);
+  file.write(serialized_footer.data(), serialized_footer.size());
   return Result::Ok({});
 }
 

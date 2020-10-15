@@ -13,12 +13,6 @@ class CircularBuffer {
   using ValueType = T;
   using SizeType = std::size_t;
 
-  constexpr CircularBuffer() = default;
-  constexpr CircularBuffer(const CircularBuffer&) = default;
-  constexpr CircularBuffer(CircularBuffer&&) noexcept = default;
-  constexpr auto operator=(const CircularBuffer&) -> CircularBuffer& = default;
-  constexpr auto operator=(CircularBuffer&&) noexcept
-      -> CircularBuffer& = default;
   virtual ~CircularBuffer() = default;
 
   virtual constexpr auto Push(const T& item) -> void = 0;
@@ -32,6 +26,14 @@ class CircularBuffer {
   [[nodiscard]] virtual constexpr auto Empty() const -> bool = 0;
   [[nodiscard]] virtual constexpr auto Full() const -> bool = 0;
   [[nodiscard]] virtual constexpr auto WillWrapOnNextPush() const -> bool = 0;
+
+ protected:
+  constexpr CircularBuffer() = default;
+  constexpr CircularBuffer(const CircularBuffer&) = default;
+  constexpr CircularBuffer(CircularBuffer&&) noexcept = default;
+  constexpr auto operator=(const CircularBuffer&) -> CircularBuffer& = default;
+  constexpr auto operator=(CircularBuffer&&) noexcept
+      -> CircularBuffer& = default;
 };
 
 }  // namespace spoor::runtime::buffer

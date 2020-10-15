@@ -1,0 +1,33 @@
+#include "util/env.h"
+
+#include <functional>
+#include <string>
+
+#include "util/numeric.h"
+
+namespace util::env {
+
+template <>
+auto GetEnvOrDefault<std::string>(
+    const char* key, const std::string default_value,
+    const std::function<const char*(const char*)>& get_env) -> std::string {
+  const auto* user_value = get_env(key);
+  if (user_value == nullptr) return default_value;
+  return std::string{user_value};
+}
+
+template <>
+auto GetEnvOrDefault<bool>(
+    const char* key, const bool default_value,
+    const std::function<const char*(const char*)>& get_env) -> bool {
+  const auto* user_value = get_env(key);
+  if (user_value == nullptr) return default_value;
+  std::string value{user_value};
+  std::transform(value.begin(), value.end(), value.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  if (value == "0" || value == "no" || value == "false") return false;
+  if (value == "1" || value == "yes" || value == "true") return true;
+  return default_value;
+}
+
+}  // namespace util::env

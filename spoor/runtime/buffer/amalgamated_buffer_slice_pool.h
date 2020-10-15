@@ -37,10 +37,10 @@ class AmalgamatedBufferSlicePool final : public BufferSlicePool<T> {
   AmalgamatedBufferSlicePool() = delete;
   explicit AmalgamatedBufferSlicePool(const Options& options);
   AmalgamatedBufferSlicePool(const AmalgamatedBufferSlicePool&) = delete;
-  AmalgamatedBufferSlicePool(AmalgamatedBufferSlicePool&&) = delete;
+  AmalgamatedBufferSlicePool(AmalgamatedBufferSlicePool&&) noexcept = delete;
   auto operator=(const AmalgamatedBufferSlicePool&)
       -> AmalgamatedBufferSlicePool& = delete;
-  auto operator=(AmalgamatedBufferSlicePool &&)
+  auto operator=(AmalgamatedBufferSlicePool&&) noexcept
       -> AmalgamatedBufferSlicePool& = delete;
   ~AmalgamatedBufferSlicePool() = default;
 

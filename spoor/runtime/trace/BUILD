@@ -15,6 +15,7 @@ cc_library(
         "//spoor/runtime/buffer",
         "//util:numeric",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/base:endian",
         "@com_microsoft_gsl//:gsl",
     ],
 )
@@ -43,4 +44,3 @@ cc_library(
         "@com_google_googletest//:gtest_main",
     ],
 )
-
