@@ -15,7 +15,7 @@ namespace spoor::runtime::config {
 constexpr std::string_view kTraceFilePathKey{"SPOOR_RUNTIME_TRACE_FILE_PATH"};
 const std::string kTraceFilePathDefaultValue{""};
 constexpr std::string_view kSessionIdKey{"SPOOR_RUNTIME_SESSION_ID"};
-const auto kSessionIdDefaultValue = []() -> trace::SessionId {
+const auto kSessionIdDefaultValue = [] {
   std::random_device seed{};
   std::default_random_engine engine{seed()};
   std::uniform_int_distribution<trace::SessionId> distribution{};
@@ -54,12 +54,8 @@ constexpr std::string_view kMaxFlushBufferToFileAttemptsKey{
     "SPOOR_RUNTIME_MAX_FLUSH_BUFFER_TO_FILE_ATTEMPTS"};
 constexpr int32 kMaxFlushBufferToFileAttemptsDefaultValue{
     std::numeric_limits<int32>::max()};
-constexpr std::string_view kFlushEventBufferWhenFullKey{
-    "SPOOR_RUNTIME_FLUSH_EVENT_BUFFER_WHEN_FULL"};
-constexpr bool kFlushEventBufferWhenFullDefaultValue{true};
-constexpr std::string_view kFlushEventBufferImmediatelyAfterFlushKey{
-    "SPOOR_RUNTIME_FLUSH_EVENT_BUFFER_IMMEDIATELY_AFTER_FLUSH"};
-constexpr bool kFlushEventBufferImmediatelyAfterFlushDefaultValue{true};
+constexpr std::string_view kFlushAllEventsKey{"SPOOR_RUNTIME_FLUSH_ALL_EVENTS"};
+constexpr bool kFlushAllEventsDefaultValue{true};
 
 struct UserOptions {
   using SizeType = buffer::CircularBuffer<trace::Event>::SizeType;
@@ -78,8 +74,7 @@ struct UserOptions {
   SizeType dynamic_event_slice_borrow_cas_attempts;
   trace::DurationNanoseconds event_buffer_retention_duration_nanoseconds;
   int32 max_flush_buffer_to_file_attempts;
-  bool flush_event_buffer_when_full;
-  bool flush_event_buffer_immediately_after_flush;
+  bool flush_all_events;
 };
 
 auto operator==(const UserOptions& lhs, const UserOptions& rhs) -> bool;

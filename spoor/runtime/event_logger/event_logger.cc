@@ -19,35 +19,28 @@ EventLogger::~EventLogger() {
 auto EventLogger::SetPool(Pool* pool) -> void {
   if (pool == nullptr) Flush();
   pool_ = pool;
-  buffer_ = Buffer{{.buffer_slice_pool = pool_, .capacity = options_.capacity}};
+  buffer_ = Buffer{
+      {.buffer_slice_pool = pool_, .capacity = options_.preferred_capacity}};
 }
 
-auto EventLogger::LogFunctionEntry(trace::FunctionId function_id) -> void {
+auto EventLogger::LogEvent(trace::Event::Type type,
+                           trace::FunctionId function_id) -> void {
   const auto now = options_.steady_clock->Now();
+  if (pool_ == nullptr || !buffer_.has_value()) return;
   const auto now_nanoseconds =
       std::chrono::duration_cast<std::chrono::nanoseconds>(
           now.time_since_epoch())
           .count();
-  const trace::Event event{trace::Event::Type::kFunctionEntry, function_id,
-                           now_nanoseconds};
-  Log(event);
-}
-
-auto EventLogger::LogFunctionExit(trace::FunctionId function_id) -> void {
-  const auto now = options_.steady_clock->Now();
-  const auto now_nanoseconds =
-      std::chrono::duration_cast<std::chrono::nanoseconds>(
-          now.time_since_epoch())
-          .count();
-  const trace::Event event{trace::Event::Type::kFunctionExit, function_id,
-                           now_nanoseconds};
-  Log(event);
+  const trace::Event event{type, function_id, now_nanoseconds};
+  buffer_->Push(event);
+  if (options_.flush_buffer_when_full && buffer_->WillWrapOnNextPush()) Flush();
 }
 
 auto EventLogger::Flush() -> void {
   if (!buffer_.has_value() || buffer_.value().Empty()) return;
   options_.flush_queue->Enqueue(std::move(buffer_.value()));
-  buffer_ = Buffer{{.buffer_slice_pool = pool_, .capacity = options_.capacity}};
+  buffer_ = Buffer{
+      {.buffer_slice_pool = pool_, .capacity = options_.preferred_capacity}};
 }
 
 auto EventLogger::Clear() -> void {
@@ -73,12 +66,6 @@ auto EventLogger::Empty() const -> bool {
 auto EventLogger::Full() const -> bool {
   if (!buffer_.has_value()) return true;
   return buffer_->Full();
-}
-
-auto EventLogger::Log(trace::Event event) -> void {
-  if (pool_ == nullptr || !buffer_.has_value()) return;
-  buffer_->Push(event);
-  if (options_.flush_buffer_when_full && buffer_->WillWrapOnNextPush()) Flush();
 }
 
 }  // namespace spoor::runtime::event_logger

@@ -27,8 +27,7 @@ TEST(UserOptions, GetsUserProvidedValue) {  // NOLINT
         {kDynamicEventSliceBorrowCasAttemptsKey, "42"},
         {kEventBufferRetentionDurationNanosecondsKey, "42"},
         {kMaxFlushBufferToFileAttemptsKey, "42"},
-        {kFlushEventBufferWhenFullKey, "false"},
-        {kFlushEventBufferImmediatelyAfterFlushKey, "false"}};
+        {kFlushAllEventsKey, "false"}};
     return environment.at(key).data();
   };
   const UserOptions expected_options{
@@ -42,8 +41,7 @@ TEST(UserOptions, GetsUserProvidedValue) {  // NOLINT
       .dynamic_event_slice_borrow_cas_attempts = 42,
       .event_buffer_retention_duration_nanoseconds = 42,
       .max_flush_buffer_to_file_attempts = 42,
-      .flush_event_buffer_when_full = false,
-      .flush_event_buffer_immediately_after_flush = false};
+      .flush_all_events = false};
   ASSERT_EQ(UserOptions::FromEnv(get_env), expected_options);
 }
 
@@ -62,8 +60,7 @@ TEST(UserOptions, UsesDefaultValueWhenNotSpecified) {  // NOLINT
       .dynamic_event_slice_borrow_cas_attempts = 1,
       .event_buffer_retention_duration_nanoseconds = 0,
       .max_flush_buffer_to_file_attempts = std::numeric_limits<int32>::max(),
-      .flush_event_buffer_when_full = true,
-      .flush_event_buffer_immediately_after_flush = true};
+      .flush_all_events = true};
   const auto options = UserOptions::FromEnv(get_env);
   // Ignore `session_id` which is randomly generated.
   expected_options.session_id = options.session_id;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+
 namespace spoor::runtime::flush_queue {
 
 template <class T>
@@ -10,7 +12,7 @@ class FlushQueue {
   virtual auto Run() -> void = 0;
   virtual auto Enqueue(T&& item) -> void = 0;
   virtual auto DrainAndStop() -> void = 0;
-  virtual auto Flush() -> void = 0;
+  virtual auto Flush(std::function<void()> completion) -> void = 0;
   virtual auto Clear() -> void = 0;
 
  protected:

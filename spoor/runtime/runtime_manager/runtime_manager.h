@@ -1,6 +1,8 @@
 #pragma once
 
+#include <chrono>
 #include <filesystem>
+#include <functional>
 #include <shared_mutex>
 #include <unordered_set>
 
@@ -21,18 +23,21 @@ class RuntimeManager final : public event_logger::EventLoggerNotifier {
 
   struct Options {
     std::filesystem::path trace_file_path;
-    util::time::SystemClock* system_clock;
     util::time::SteadyClock* steady_clock;
     flush_queue::FlushQueue<Buffer>* flush_queue;
-    spoor::runtime::trace::SessionId session_id;
-    spoor::runtime::trace::ProcessId process_id;
+    SizeType thread_event_buffer_capacity;
     SizeType reserved_pool_capacity;
     SizeType reserved_pool_max_slice_capacity;
     SizeType dynamic_pool_capacity;
     SizeType dynamic_pool_max_slice_capacity;
     SizeType dynamic_pool_borrow_cas_attempts;
     int32 max_buffer_flush_attempts;
-    bool flush_immediately;
+    bool flush_all_events;
+  };
+
+  struct DeletedFilesInfo {
+    int32 deleted_files;
+    int64 deleted_bytes;
   };
 
   RuntimeManager() = delete;
@@ -52,11 +57,20 @@ class RuntimeManager final : public event_logger::EventLoggerNotifier {
   auto Unsubscribe(gsl::not_null<event_logger::EventLogger*> subscriber)
       -> void override;
 
-  auto Flush() -> void;
-  auto Clear() -> void;
+  auto LogEvent(trace::Event::Type type, trace::FunctionId function_id) -> void;
+
+  auto Flush(std::function<void(/*TODO*/)> completion) -> void;
+  auto Clear(std::function<void(/*TODO*/)> completion) -> void;
 
   [[nodiscard]] auto Initialized() const -> bool;
   [[nodiscard]] auto Enabled() const -> bool;
+
+  auto FlushedTraceFiles(
+      std::function<void(std::vector<std::filesystem::path>)> completion) const
+      -> void;
+  auto DeleteFlushedTraceFilesOlderThan(
+      std::chrono::time_point<std::chrono::system_clock> timestamp,
+      std::function<void(DeletedFilesInfo)> completion) const -> void;
 
  private:
   Options options_;

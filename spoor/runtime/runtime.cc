@@ -3,20 +3,24 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "buffer/circular_slice_buffer.h"
+#include <chrono>
+#include <utility>
+
+#include "gsl/gsl"
 #include "spoor/runtime/config/config.h"
-#include "spoor/runtime/event_logger/event_logger.h"
 #include "spoor/runtime/flush_queue/disk_flush_queue.h"
 #include "spoor/runtime/runtime_manager/runtime_manager.h"
+#include "spoor/runtime/trace/trace.h"
 #include "spoor/runtime/trace/trace_writer.h"
+#include "util/numeric.h"
 
-namespace spoor::runtime {
+namespace {
 
-const auto user_options_ = config::UserOptions::FromEnv();
+const auto user_options_ = spoor::runtime::config::UserOptions::FromEnv();
 util::time::SystemClock system_clock_{};
 util::time::SteadyClock steady_clock_{};
-trace::TraceFileWriter trace_writer_{};
-flush_queue::DiskFlushQueue flush_queue_{
+spoor::runtime::trace::TraceFileWriter trace_writer_{};
+spoor::runtime::flush_queue::DiskFlushQueue flush_queue_{
     {.trace_file_path = user_options_.trace_file_path,
      .buffer_retention_duration =
          std::chrono::nanoseconds{
@@ -28,43 +32,31 @@ flush_queue::DiskFlushQueue flush_queue_{
      .process_id = ::getpid(),
      .max_buffer_flush_attempts =
          user_options_.max_flush_buffer_to_file_attempts,
-     .flush_immediately =
-         user_options_.flush_event_buffer_immediately_after_flush}};
-runtime_manager::RuntimeManager runtime_{
-    {.trace_file_path = user_options_.trace_file_path,
-     .system_clock = &system_clock_,
-     .steady_clock = &steady_clock_,
-     .session_id = user_options_.session_id,
-     .process_id = ::getpid(),
+     .flush_all_events = user_options_.flush_all_events}};
+spoor::runtime::runtime_manager::RuntimeManager runtime_{
+    {.steady_clock = &steady_clock_,
+     .flush_queue = &flush_queue_,
+     .thread_event_buffer_capacity = user_options_.thread_event_buffer_capacity,
      .reserved_pool_capacity = user_options_.reserved_event_pool_capacity,
      .reserved_pool_max_slice_capacity =
          user_options_.max_reserved_event_buffer_slice_capacity,
      .dynamic_pool_capacity = user_options_.dynamic_event_pool_capacity,
      .dynamic_pool_max_slice_capacity =
-         user_options_.max_dynamic_event_buffer_slice_capacity}};
-thread_local event_logger::EventLogger event_logger_{
-    {.steady_clock = &steady_clock_,
-     .event_logger_notifier = &runtime_,
-     .flush_queue = &flush_queue_,
-     .capacity = user_options_.thread_event_buffer_capacity}};
-
-}  // namespace spoor::runtime
-
-namespace {
-
-using spoor::runtime::event_logger_;
-using spoor::runtime::runtime_;
+         user_options_.max_dynamic_event_buffer_slice_capacity,
+     .flush_all_events = user_options_.flush_all_events}};
 
 }  // namespace
 
 // NOLINTNEXTLINE(readability-identifier-naming)
-auto __spoor_runtime_InitRuntime() -> void { runtime_.Initialize(); }
+auto __spoor_runtime_InitializeRuntime() -> void { runtime_.Initialize(); }
 
 // NOLINTNEXTLINE(readability-identifier-naming)
-auto __spoor_runtime_DeinitRuntime() -> void { runtime_.Deinitialize(); }
+auto __spoor_runtime_DeinitializeRuntime() -> void { runtime_.Deinitialize(); }
 
 // NOLINTNEXTLINE(readability-identifier-naming)
-auto __spoor_runtime_RuntimeInitialized() -> bool { return runtime_.Initialized(); }
+auto __spoor_runtime_RuntimeInitialized() -> bool {
+  return runtime_.Initialized();
+}
 
 // NOLINTNEXTLINE(readability-identifier-naming)
 auto __spoor_runtime_EnableRuntime() -> void { runtime_.Enable(); }
@@ -76,39 +68,65 @@ auto __spoor_runtime_DisableRuntime() -> void { runtime_.Disable(); }
 auto __spoor_runtime_RuntimeEnabled() -> bool { return runtime_.Enabled(); }
 
 // NOLINTNEXTLINE(readability-identifier-naming)
-auto __spoor_runtime_LogFunctionEntry(__spoor_runtime_FunctionId function_id)
-    -> void {
-  if (!runtime_.Enabled()) return;
-  event_logger_.LogFunctionEntry(function_id);
+auto __spoor_runtime_LogFunctionEntry(
+    const __spoor_runtime_FunctionId function_id) -> void {
+  runtime_.LogEvent(spoor::runtime::trace::Event::Type::kFunctionEntry,
+                    function_id);
 }
 
 // NOLINTNEXTLINE(readability-identifier-naming)
-auto __spoor_runtime_LogFunctionExit(__spoor_runtime_FunctionId function_id)
-    -> void {
-  if (!runtime_.Enabled()) return;
-  event_logger_.LogFunctionExit(function_id);
+auto __spoor_runtime_LogFunctionExit(
+    const __spoor_runtime_FunctionId function_id) -> void {
+  runtime_.LogEvent(spoor::runtime::trace::Event::Type::kFunctionExit,
+                    function_id);
 }
 
 // NOLINTNEXTLINE(readability-identifier-naming)
 auto __spoor_runtime_FlushTraceEvents(
-    __spoor_runtime_FlushTraceEventsCallback callback) -> void {
-  (void)callback;  // TODO
-  runtime_.Flush();
+    const __spoor_runtime_FlushTraceEventsCallback completion) -> void {
+  runtime_.Flush(completion);
 }
 
 // NOLINTNEXTLINE(readability-identifier-naming)
-auto __spoor_runtime_ClearTraceEvents() -> void { runtime_.Clear(); }
+auto __spoor_runtime_ClearTraceEvents(
+    const __spoor_runtime_FlushTraceEventsCallback completion) -> void {
+  runtime_.Clear(completion);
+}
 
 // NOLINTNEXTLINE(readability-identifier-naming)
 auto __spoor_runtime_FlushedTraceFiles(
-    __spoor_runtime_FlushedTraceEventsCallback callback) -> void {
-  (void)callback;  // TODO
+    const __spoor_runtime_FlushedTraceEventsCallback completion) -> void {
+  runtime_.FlushedTraceFiles([completion](const auto trace_file_paths) {
+    auto** file_paths =
+        static_cast<char**>(malloc(sizeof(char*) * trace_file_paths.size()));
+    for (typename decltype(trace_file_paths)::size_type index{0};
+         index < trace_file_paths.size(); ++index) {
+      const auto& trace_file = trace_file_paths.at(index).string();
+      file_paths[index] =
+          static_cast<char*>(malloc(sizeof(char) * (trace_file.size() + 1)));
+      trace_file.copy(file_paths[index], trace_file.size());
+      file_paths[index][trace_file.size()] = '\0';
+    };
+    completion(__spoor_runtime_TraceFiles{
+        .size = gsl::narrow_cast<int32>(trace_file_paths.size()),
+        .file_paths = file_paths});
+  });
 }
 
 // NOLINTNEXTLINE(readability-identifier-naming)
 auto __spoor_runtime_DeleteFlushedTraceFilesOlderThan(
-    __spoor_runtime_SystemTimestampSeconds system_timestamp,
-    __spoor_runtime_DeleteFlushedTraceFilesCallback callback) -> void {
-  (void)system_timestamp;  // TODO
-  (void)callback;  // TODO
+    const __spoor_runtime_SystemTimestampSeconds system_timestamp_seconds,
+    const __spoor_runtime_DeleteFlushedTraceFilesCallback completion) -> void {
+  using DeletedFilesInfo =
+      spoor::runtime::runtime_manager::RuntimeManager::DeletedFilesInfo;
+  const auto system_timestamp =
+      std::chrono::time_point<std::chrono::system_clock>{
+          std::chrono::seconds{system_timestamp_seconds}};
+  runtime_.DeleteFlushedTraceFilesOlderThan(
+      system_timestamp,
+      [completion](const DeletedFilesInfo deleted_files_info) {
+        completion(__spoor_runtime_DeletedFilesInfo{
+            .deleted_files = deleted_files_info.deleted_files,
+            .deleted_bytes = deleted_files_info.deleted_bytes});
+      });
 }

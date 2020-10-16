@@ -22,7 +22,7 @@ class EventLogger {
     util::time::SteadyClock* steady_clock;
     EventLoggerNotifier* event_logger_notifier;
     flush_queue::FlushQueue<Buffer>* flush_queue;
-    SizeType capacity;
+    SizeType preferred_capacity;
     bool flush_buffer_when_full;
   };
 
@@ -35,8 +35,7 @@ class EventLogger {
   ~EventLogger();
 
   auto SetPool(Pool* pool) -> void;
-  auto LogFunctionEntry(trace::FunctionId function_id) -> void;
-  auto LogFunctionExit(trace::FunctionId function_id) -> void;
+  auto LogEvent(trace::Event::Type type, trace::FunctionId function_id) -> void;
 
   auto Flush() -> void;
   auto Clear() -> void;
@@ -47,8 +46,6 @@ class EventLogger {
   [[nodiscard]] auto Full() const -> bool;
 
  private:
-  auto Log(trace::Event event) -> void;
-
   Options options_;
   Pool* pool_;
   std::optional<Buffer> buffer_;

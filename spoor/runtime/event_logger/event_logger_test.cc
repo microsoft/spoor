@@ -47,8 +47,8 @@ TEST(EventLogger, LogsEvents) {  // NOLINT
   constexpr SizeType capacity{4};
   Pool expected_buffer_pool{
       {.max_slice_capacity = capacity, .capacity = capacity}};
-  Buffer expected_buffer{
-      {.buffer_slice_pool = &expected_buffer_pool, .capacity = capacity}};
+  Buffer expected_buffer{{.buffer_slice_pool = &expected_buffer_pool,
+                          .capacity = capacity}};
   expected_buffer.Push({Event::Type::kFunctionEntry, 3, 4});
   expected_buffer.Push({Event::Type::kFunctionExit, 3, 5});
   expected_buffer.Push({Event::Type::kFunctionExit, 2, 6});
@@ -59,17 +59,17 @@ TEST(EventLogger, LogsEvents) {  // NOLINT
   EventLogger event_logger{{.steady_clock = &steady_clock,
                             .event_logger_notifier = &event_logger_notifier,
                             .flush_queue = &flush_queue,
-                            .capacity = capacity,
+                            .preferred_capacity = capacity,
                             .flush_buffer_when_full = false}};
   event_logger.SetPool(&pool);
-  event_logger.LogFunctionEntry(1);
-  event_logger.LogFunctionEntry(2);
-  event_logger.LogFunctionEntry(3);
-  event_logger.LogFunctionExit(3);
-  event_logger.LogFunctionEntry(3);
-  event_logger.LogFunctionExit(3);
-  event_logger.LogFunctionExit(2);
-  event_logger.LogFunctionExit(1);
+  event_logger.LogEvent(Event::Type::kFunctionEntry, 1);
+  event_logger.LogEvent(Event::Type::kFunctionEntry, 2);
+  event_logger.LogEvent(Event::Type::kFunctionEntry, 3);
+  event_logger.LogEvent(Event::Type::kFunctionExit, 3);
+  event_logger.LogEvent(Event::Type::kFunctionEntry, 3);
+  event_logger.LogEvent(Event::Type::kFunctionExit, 3);
+  event_logger.LogEvent(Event::Type::kFunctionExit, 2);
+  event_logger.LogEvent(Event::Type::kFunctionExit, 1);
 }
 
 TEST(EventLogger, DoesNotLogEventsWithoutPool) {  // NOLINT
@@ -84,14 +84,14 @@ TEST(EventLogger, DoesNotLogEventsWithoutPool) {  // NOLINT
   EventLogger event_logger{{.steady_clock = &steady_clock,
                             .event_logger_notifier = &event_logger_notifier,
                             .flush_queue = &flush_queue,
-                            .capacity = 3,
+                            .preferred_capacity = 3,
                             .flush_buffer_when_full = false}};
   ASSERT_TRUE(event_logger.Empty());
-  event_logger.LogFunctionEntry(1);
+  event_logger.LogEvent(Event::Type::kFunctionEntry, 1);
   ASSERT_TRUE(event_logger.Empty());
-  event_logger.LogFunctionEntry(2);
+  event_logger.LogEvent(Event::Type::kFunctionEntry, 2);
   ASSERT_TRUE(event_logger.Empty());
-  event_logger.LogFunctionEntry(3);
+  event_logger.LogEvent(Event::Type::kFunctionEntry, 3);
   ASSERT_TRUE(event_logger.Empty());
   event_logger.Flush();
   ASSERT_TRUE(event_logger.Empty());
@@ -111,13 +111,13 @@ TEST(EventLogger, PushWithZeroCapacity) {  // NOLINT
   EventLogger event_logger{{.steady_clock = &steady_clock,
                             .event_logger_notifier = &event_logger_notifier,
                             .flush_queue = &flush_queue,
-                            .capacity = 8,
+                            .preferred_capacity = 8,
                             .flush_buffer_when_full = false}};
   event_logger.SetPool(&pool);
-  event_logger.LogFunctionExit(0);
-  event_logger.LogFunctionExit(0);
-  event_logger.LogFunctionExit(0);
-  event_logger.LogFunctionExit(0);
+  event_logger.LogEvent(Event::Type::kFunctionExit, 0);
+  event_logger.LogEvent(Event::Type::kFunctionExit, 0);
+  event_logger.LogEvent(Event::Type::kFunctionExit, 0);
+  event_logger.LogEvent(Event::Type::kFunctionExit, 0);
   ASSERT_TRUE(event_logger.Empty());
 }
 
@@ -131,7 +131,7 @@ TEST(EventLogger, RaiiSubscribeToAndUnsubscribeFromNotifier) {  // NOLINT
       .steady_clock = &steady_clock,
       .event_logger_notifier = &event_logger_notifier,
       .flush_queue = &flush_queue,
-      .capacity = capacity,
+      .preferred_capacity = capacity,
       .flush_buffer_when_full = false};
   std::array<std::byte, sizeof(EventLogger)> buffer{};
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
@@ -158,16 +158,16 @@ TEST(EventLogger, FlushWhenFull) {  // NOLINT
     EXPECT_CALL(event_logger_notifier, Unsubscribe).RetiresOnSaturation();
     FlushQueueMock flush_queue{};
     EXPECT_CALL(flush_queue, Enqueue).Times(multiplier).RetiresOnSaturation();
+    Pool pool{
+        {.max_slice_capacity = capacity, .capacity = multiplier * capacity}};
     EventLogger event_logger{{.steady_clock = &steady_clock,
                               .event_logger_notifier = &event_logger_notifier,
                               .flush_queue = &flush_queue,
-                              .capacity = capacity,
+                              .preferred_capacity = capacity,
                               .flush_buffer_when_full = true}};
-    Pool pool{
-        {.max_slice_capacity = capacity, .capacity = multiplier * capacity}};
     event_logger.SetPool(&pool);
     for (SizeType i{0}; i < multiplier * capacity; ++i) {
-      event_logger.LogFunctionEntry(0);
+      event_logger.LogEvent(Event::Type::kFunctionEntry, 0);
     }
   }
 }
@@ -186,12 +186,12 @@ TEST(EventLogger, FlushesOnDestruction) {  // NOLINT
   EventLogger event_logger{{.steady_clock = &steady_clock,
                             .event_logger_notifier = &event_logger_notifier,
                             .flush_queue = &flush_queue,
-                            .capacity = capacity,
+                            .preferred_capacity = capacity,
                             .flush_buffer_when_full = false}};
   event_logger.SetPool(&pool);
-  event_logger.LogFunctionEntry(0);
-  event_logger.LogFunctionEntry(0);
-  event_logger.LogFunctionEntry(0);
+  event_logger.LogEvent(Event::Type::kFunctionEntry, 0);
+  event_logger.LogEvent(Event::Type::kFunctionEntry, 0);
+  event_logger.LogEvent(Event::Type::kFunctionEntry, 0);
 }
 
 TEST(EventLogger, DoesNotFlushWhenEmpty) {  // NOLINT
@@ -208,7 +208,7 @@ TEST(EventLogger, DoesNotFlushWhenEmpty) {  // NOLINT
   EventLogger event_logger{{.steady_clock = &steady_clock,
                             .event_logger_notifier = &event_logger_notifier,
                             .flush_queue = &flush_queue,
-                            .capacity = capacity,
+                            .preferred_capacity = capacity,
                             .flush_buffer_when_full = false}};
   event_logger.SetPool(&pool);
   ASSERT_TRUE(event_logger.Empty());
@@ -232,7 +232,7 @@ TEST(EventLogger, SizeEmptyCapacityFull) {  // NOLINT
     EventLogger event_logger{{.steady_clock = &steady_clock,
                               .event_logger_notifier = &event_logger_notifier,
                               .flush_queue = &flush_queue,
-                              .capacity = capacity,
+                              .preferred_capacity = capacity,
                               .flush_buffer_when_full = false}};
     event_logger.SetPool(&pool);
     ASSERT_TRUE(event_logger.Empty());
@@ -241,7 +241,7 @@ TEST(EventLogger, SizeEmptyCapacityFull) {  // NOLINT
     ASSERT_EQ(event_logger.Full(), capacity == 0);
     for (SizeType i{0}; i < capacity; ++i) {
       ASSERT_FALSE(event_logger.Full());
-      event_logger.LogFunctionEntry(0);
+      event_logger.LogEvent(Event::Type::kFunctionEntry, 0);
       ASSERT_FALSE(event_logger.Empty());
       ASSERT_EQ(event_logger.Size(), i + 1);
     }

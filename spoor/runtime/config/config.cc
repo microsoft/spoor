@@ -33,12 +33,8 @@ auto UserOptions::FromEnv(const util::env::GetEnv& get_env) -> UserOptions {
           .max_flush_buffer_to_file_attempts = GetEnvOrDefault(
               kMaxFlushBufferToFileAttemptsKey.data(),
               kMaxFlushBufferToFileAttemptsDefaultValue, get_env),
-          .flush_event_buffer_when_full =
-              GetEnvOrDefault(kFlushEventBufferWhenFullKey.data(),
-                              kFlushEventBufferWhenFullDefaultValue, get_env),
-          .flush_event_buffer_immediately_after_flush = GetEnvOrDefault(
-              kFlushEventBufferImmediatelyAfterFlushKey.data(),
-              kFlushEventBufferImmediatelyAfterFlushDefaultValue, get_env)};
+          .flush_all_events = GetEnvOrDefault(
+              kFlushAllEventsKey.data(), kFlushAllEventsDefaultValue, get_env)};
 }
 
 auto operator==(const UserOptions& lhs, const UserOptions& rhs) -> bool {
@@ -55,9 +51,7 @@ auto operator==(const UserOptions& lhs, const UserOptions& rhs) -> bool {
              rhs.dynamic_event_slice_borrow_cas_attempts &&
          lhs.event_buffer_retention_duration_nanoseconds ==
              rhs.event_buffer_retention_duration_nanoseconds &&
-         lhs.flush_event_buffer_when_full == rhs.flush_event_buffer_when_full &&
-         lhs.flush_event_buffer_immediately_after_flush ==
-             rhs.flush_event_buffer_immediately_after_flush;
+         lhs.flush_all_events == rhs.flush_all_events;
 }
 
-};  // namespace spoor::runtime::config
+}  // namespace spoor::runtime::config
