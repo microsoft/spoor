@@ -4,26 +4,26 @@
 #include <functional>
 
 #include "absl/strings/numbers.h"
-#include "util/numeric.h"
 
 namespace util::env {
 
 using GetEnv = std::function<const char*(const char*)>;
 
-template <class T>
-auto GetEnvOrDefault(
-    const char* key, T default_value,
-    const GetEnv& get_env = [](const char* key) { return std::getenv(key); })
-    -> T;
+auto GetEnvOrDefault(const char* key, std::string default_value,
+                     const std::function<const char*(const char*)>& get_env)
+    -> std::string;
 
-template <class T>
-requires(std::is_integral_v<T>) auto GetEnvOrDefault(const char* key,
-                                                     const T default_value,
-                                                     const GetEnv& get_env)
-    -> T {
+auto GetEnvOrDefault(const char* key, bool default_value,
+                     const std::function<const char*(const char*)>& get_env)
+    -> bool;
+
+template <class T, class = std::enable_if_t<std::is_integral_v<T> &&
+                                            !std::is_same_v<T, bool>>>
+auto GetEnvOrDefault(const char* key, const T default_value,
+                     const GetEnv& get_env) -> T {
   const auto* user_value = get_env(key);
   if (user_value == nullptr) return default_value;
-  uint64 value{};
+  T value{};
   const auto success = absl::SimpleAtoi(user_value, &value);
   return success ? value : default_value;
 }

@@ -2,6 +2,7 @@
 #define SPOOR_RUNTIME
 
 #ifdef __cplusplus
+
 #include <cstdint>
 extern "C" {
 #else

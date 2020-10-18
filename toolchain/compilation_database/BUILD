@@ -5,6 +5,7 @@ load(
     "cc_proto_library",
     "cc_test",
 )
+load("@rules_proto//proto:defs.bzl", "proto_library")
 
 cc_proto_library(
     name = "extra_actions_base_cc_proto",
@@ -16,11 +17,13 @@ cc_proto_library(
 proto_library(
     name = "compile_commands_proto",
     srcs = ["compile_commands.proto"],
+    visibility = ["//visibility:public"],
 )
 
 cc_proto_library(
     name = "compile_commands_cc_proto",
     deps = [":compile_commands_proto"],
+    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -48,6 +51,7 @@ cc_test(
     deps = [
         ":compilation_database_util",
         "@com_google_absl//absl/strings",
+        "@com_google_protobuf//:protobuf",
         "@com_google_googletest//:gtest_main",
     ],
 )

@@ -7,7 +7,6 @@ cc_library(
     copts = ["-Werror"],
     visibility = ["//visibility:public"],
     deps = [
-        ":numeric",
         "@com_google_absl//absl/strings",
     ],
 )

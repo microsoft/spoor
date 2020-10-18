@@ -16,34 +16,33 @@
 
 namespace {
 
-const auto user_options_ = spoor::runtime::config::UserOptions::FromEnv();
+const auto config_ = spoor::runtime::config::Config::FromEnv();
 util::time::SystemClock system_clock_{};
 util::time::SteadyClock steady_clock_{};
 spoor::runtime::trace::TraceFileWriter trace_writer_{};
 spoor::runtime::flush_queue::DiskFlushQueue flush_queue_{
-    {.trace_file_path = user_options_.trace_file_path,
+    {.trace_file_path = config_.trace_file_path,
      .buffer_retention_duration =
          std::chrono::nanoseconds{
-             user_options_.event_buffer_retention_duration_nanoseconds},
+             config_.event_buffer_retention_duration_nanoseconds},
      .system_clock = &system_clock_,
      .steady_clock = &steady_clock_,
      .trace_writer = &trace_writer_,
-     .session_id = user_options_.session_id,
+     .session_id = config_.session_id,
      .process_id = ::getpid(),
-     .max_buffer_flush_attempts =
-         user_options_.max_flush_buffer_to_file_attempts,
-     .flush_all_events = user_options_.flush_all_events}};
+     .max_buffer_flush_attempts = config_.max_flush_buffer_to_file_attempts,
+     .flush_all_events = config_.flush_all_events}};
 spoor::runtime::runtime_manager::RuntimeManager runtime_{
     {.steady_clock = &steady_clock_,
      .flush_queue = &flush_queue_,
-     .thread_event_buffer_capacity = user_options_.thread_event_buffer_capacity,
-     .reserved_pool_capacity = user_options_.reserved_event_pool_capacity,
+     .thread_event_buffer_capacity = config_.thread_event_buffer_capacity,
+     .reserved_pool_capacity = config_.reserved_event_pool_capacity,
      .reserved_pool_max_slice_capacity =
-         user_options_.max_reserved_event_buffer_slice_capacity,
-     .dynamic_pool_capacity = user_options_.dynamic_event_pool_capacity,
+         config_.max_reserved_event_buffer_slice_capacity,
+     .dynamic_pool_capacity = config_.dynamic_event_pool_capacity,
      .dynamic_pool_max_slice_capacity =
-         user_options_.max_dynamic_event_buffer_slice_capacity,
-     .flush_all_events = user_options_.flush_all_events}};
+         config_.max_dynamic_event_buffer_slice_capacity,
+     .flush_all_events = config_.flush_all_events}};
 
 }  // namespace
 

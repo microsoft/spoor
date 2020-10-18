@@ -3,23 +3,19 @@
 #include <functional>
 #include <string>
 
-#include "util/numeric.h"
-
 namespace util::env {
 
-template <>
-auto GetEnvOrDefault<std::string>(
-    const char* key, const std::string default_value,
-    const std::function<const char*(const char*)>& get_env) -> std::string {
+auto GetEnvOrDefault(const char* key, std::string default_value,
+                     const std::function<const char*(const char*)>& get_env)
+    -> std::string {
   const auto* user_value = get_env(key);
   if (user_value == nullptr) return default_value;
   return std::string{user_value};
 }
 
-template <>
-auto GetEnvOrDefault<bool>(
-    const char* key, const bool default_value,
-    const std::function<const char*(const char*)>& get_env) -> bool {
+auto GetEnvOrDefault(const char* key, const bool default_value,
+                     const std::function<const char*(const char*)>& get_env)
+    -> bool {
   const auto* user_value = get_env(key);
   if (user_value == nullptr) return default_value;
   std::string value{user_value};

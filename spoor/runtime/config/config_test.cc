@@ -9,11 +9,11 @@
 
 namespace {
 
-using spoor::runtime::config::UserOptions;
+using spoor::runtime::config::Config;
 using SizeType = spoor::runtime::buffer::CircularBuffer<
     spoor::runtime::trace::Event>::SizeType;
 
-TEST(UserOptions, GetsUserProvidedValue) {  // NOLINT
+TEST(Config, GetsUserProvidedValue) {  // NOLINT
   const auto get_env = [](const char* key) {
     using namespace spoor::runtime::config;
     const std::unordered_map<std::string_view, std::string_view> environment{
@@ -30,7 +30,7 @@ TEST(UserOptions, GetsUserProvidedValue) {  // NOLINT
         {kFlushAllEventsKey, "false"}};
     return environment.at(key).data();
   };
-  const UserOptions expected_options{
+  const Config expected_options{
       .trace_file_path = "/path/to/file.extension",
       .session_id = 42,
       .thread_event_buffer_capacity = 42,
@@ -42,14 +42,14 @@ TEST(UserOptions, GetsUserProvidedValue) {  // NOLINT
       .event_buffer_retention_duration_nanoseconds = 42,
       .max_flush_buffer_to_file_attempts = 42,
       .flush_all_events = false};
-  ASSERT_EQ(UserOptions::FromEnv(get_env), expected_options);
+  ASSERT_EQ(Config::FromEnv(get_env), expected_options);
 }
 
-TEST(UserOptions, UsesDefaultValueWhenNotSpecified) {  // NOLINT
+TEST(Config, UsesDefaultValueWhenNotSpecified) {  // NOLINT
   const auto get_env = [](const char * /*unused*/) -> const char* {
     return nullptr;
   };
-  UserOptions expected_options{
+  Config expected_options{
       .trace_file_path = "",
       .session_id = 0,  // Ignored
       .thread_event_buffer_capacity = 10'000,
@@ -61,7 +61,7 @@ TEST(UserOptions, UsesDefaultValueWhenNotSpecified) {  // NOLINT
       .event_buffer_retention_duration_nanoseconds = 0,
       .max_flush_buffer_to_file_attempts = std::numeric_limits<int32>::max(),
       .flush_all_events = true};
-  const auto options = UserOptions::FromEnv(get_env);
+  const auto options = Config::FromEnv(get_env);
   // Ignore `session_id` which is randomly generated.
   expected_options.session_id = options.session_id;
   ASSERT_EQ(options, expected_options);

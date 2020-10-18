@@ -4,7 +4,7 @@ namespace spoor::runtime::config {
 
 using util::env::GetEnvOrDefault;
 
-auto UserOptions::FromEnv(const util::env::GetEnv& get_env) -> UserOptions {
+auto Config::FromEnv(const util::env::GetEnv& get_env) -> Config {
   return {.trace_file_path = GetEnvOrDefault(
               kTraceFilePathKey.data(), kTraceFilePathDefaultValue, get_env),
           .session_id = GetEnvOrDefault(kSessionIdKey.data(),
@@ -37,7 +37,7 @@ auto UserOptions::FromEnv(const util::env::GetEnv& get_env) -> UserOptions {
               kFlushAllEventsKey.data(), kFlushAllEventsDefaultValue, get_env)};
 }
 
-auto operator==(const UserOptions& lhs, const UserOptions& rhs) -> bool {
+auto operator==(const Config& lhs, const Config& rhs) -> bool {
   return lhs.trace_file_path == rhs.trace_file_path &&
          lhs.session_id == rhs.session_id &&
          lhs.thread_event_buffer_capacity == rhs.thread_event_buffer_capacity &&

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <type_traits>
 #include <vector>
 
@@ -18,11 +19,11 @@ using ThreadId = uint64;
 using TimestampNanoseconds = int64;
 using TraceFileVersion = uint64;
 
-// IMPORTANT: Update the version number if the header, event, or footer
+// IMPORTANT: Increment the version number if the header, event, or footer
 // structure changes.
 const TraceFileVersion kTraceFileVersion{0};
 
-struct Header {
+struct alignas(8) Header {
   // IMPORTANT: Keep `version` as the first property.
   TraceFileVersion version;
   SessionId session_id;
@@ -31,12 +32,12 @@ struct Header {
   TimestampNanoseconds system_clock_timestamp;
   TimestampNanoseconds steady_clock_timestamp;
   EventCount event_count;
-  std::array<char, 4> padding;
-} __attribute__((aligned(8)));
+  std::array<std::byte, 4> padding;
+};
 
 static_assert(sizeof(Header) == 56);
 
-class Event {
+class alignas(8) Event {
  public:
   enum class Type : bool {
     kFunctionExit = false,
@@ -66,15 +67,15 @@ class Event {
   static constexpr auto MakeTypeAndTimestamp(Type type,
                                              TimestampNanoseconds timestamp)
       -> uint64;
-} __attribute__((aligned(8)));
+};
 
 static_assert(sizeof(Event) == 16);
 
-struct Footer {
+struct alignas(1) Footer {
  private:
   friend constexpr auto operator==(const Footer& lhs, const Footer& rhs)
       -> bool;
-} __attribute__((aligned(1)));
+};
 
 static_assert(sizeof(Footer) == 1);
 
@@ -134,7 +135,7 @@ inline auto Serialize(const Header header) -> std::array<char, sizeof(Header)> {
       absl::ghtonll(header.system_clock_timestamp);
   serialized_header->steady_clock_timestamp =
       absl::ghtonll(header.steady_clock_timestamp);
-  serialized_header->event_count = absl::ghtonll(header.event_count);
+  serialized_header->event_count = absl::ghtonl(header.event_count);
   return serialized;
 }
 
@@ -174,7 +175,7 @@ inline auto Deserialize(std::array<char, sizeof(Event)> serialized) -> Event {
 
 inline auto Serialize(const Footer /*unused*/)
     -> std::array<char, sizeof(Footer)> {
-  return std::array<char, sizeof(Footer)>{};
+  return {};
 }
 
 inline auto Deserialize(std::array<char, sizeof(Footer)> /*unused*/) -> Footer {

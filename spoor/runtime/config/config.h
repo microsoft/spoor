@@ -57,12 +57,12 @@ constexpr int32 kMaxFlushBufferToFileAttemptsDefaultValue{
 constexpr std::string_view kFlushAllEventsKey{"SPOOR_RUNTIME_FLUSH_ALL_EVENTS"};
 constexpr bool kFlushAllEventsDefaultValue{true};
 
-struct UserOptions {
+struct Config {
   using SizeType = buffer::CircularBuffer<trace::Event>::SizeType;
 
   static auto FromEnv(const util::env::GetEnv& get_env = [](const char* key) {
     return std::getenv(key);
-  }) -> UserOptions;
+  }) -> Config;
 
   std::filesystem::path trace_file_path;
   trace::SessionId session_id;
@@ -77,6 +77,6 @@ struct UserOptions {
   bool flush_all_events;
 };
 
-auto operator==(const UserOptions& lhs, const UserOptions& rhs) -> bool;
+auto operator==(const Config& lhs, const Config& rhs) -> bool;
 
 };  // namespace spoor::runtime::config

@@ -14,6 +14,22 @@ new_git_repository(
     shallow_since = "1600896232 -0700",
 )
 
+# new_git_repository(
+#     name = "com_llvm_llvm",
+#     build_file = "@//toolchain:llvm.BUILD",
+#     commit = "ef32c611aa214dea855364efd7ba451ec5ec3f74",  # v10.0.1
+#     remote = "https://github.com/llvm/llvm-project.git",
+#     shallow_since = "1594138897 -0700",
+# )
+
+new_git_repository(
+    name = "org_llvm_llvm",
+    build_file = "@//toolchain:llvm.BUILD",
+    commit = "176249bd6732a8044d457092ed932768724a6f06",  # v11.0.0
+    remote = "https://github.com/llvm/llvm-project.git",
+    shallow_since = "1602065448 +0200",
+)
+
 git_repository(
     name = "com_google_absl",
     commit = "c51510d1d87ebce8615ae1752fd5aca912f6cf4c",  # v20200225.2
