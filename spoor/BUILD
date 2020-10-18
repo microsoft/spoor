@@ -6,7 +6,7 @@ cc_binary(
     copts = ["-Werror"],
     visibility = ["//visibility:public"],
     deps = [
-        "//spoor/runtime:runtime",
+        "//spoor/runtime",
         "//util:numeric",
     ],
 )

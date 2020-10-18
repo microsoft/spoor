@@ -6,6 +6,8 @@ load(
     "new_git_repository",
 )
 
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
 new_git_repository(
     name = "com_microsoft_gsl",
     build_file = "@//toolchain:gsl.BUILD",
@@ -14,20 +16,31 @@ new_git_repository(
     shallow_since = "1600896232 -0700",
 )
 
-# new_git_repository(
-#     name = "com_llvm_llvm",
-#     build_file = "@//toolchain:llvm.BUILD",
-#     commit = "ef32c611aa214dea855364efd7ba451ec5ec3f74",  # v10.0.1
-#     remote = "https://github.com/llvm/llvm-project.git",
-#     shallow_since = "1594138897 -0700",
-# )
+http_archive(
+    name = "com_samolisov_bazel_llvm_bridge",
+    sha256 = "d1a471806651511ccde5e24573bcd2433a866f14b86c55ee74dd1b02418641d4",
+    strip_prefix = "bazel-llvm-bridge-release-10-05",
+    url = "https://github.com/samolisov/bazel-llvm-bridge/archive/release/10-05.zip",
+)
 
-new_git_repository(
+load("@com_samolisov_bazel_llvm_bridge//llvm:llvm_configure.bzl", "llvm_configure")
+
+llvm_configure(
     name = "org_llvm_llvm",
-    build_file = "@//toolchain:llvm.BUILD",
-    commit = "176249bd6732a8044d457092ed932768724a6f06",  # v11.0.0
-    remote = "https://github.com/llvm/llvm-project.git",
-    shallow_since = "1602065448 +0200",
+    add_headers_to_deps = True,
+)
+
+http_archive(
+    name = "com_apple_swift",
+    build_file = "@//toolchain:swift.BUILD",
+    patch_cmds = [
+        "cat /dev/null > include/swift/Runtime/Config.h",
+        "cat /dev/null > include/swift/Runtime/CMakeConfig.h",
+        "sed -i '' 's/SWIFT_RUNTIME_EXPORT//g' include/swift/Demangling/Demangle.h",
+    ],
+    sha256 = "f9e5bd81441c4ec13dd9ea290e2d7b8fe9b30ef66ad68947481022ea5179f83a",
+    strip_prefix = "swift-swift-5.3-RELEASE",
+    urls = ["https://github.com/apple/swift/archive/swift-5.3-RELEASE.tar.gz"],
 )
 
 git_repository(

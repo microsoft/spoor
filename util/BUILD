@@ -2,8 +2,8 @@ load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 cc_library(
     name = "env",
-    hdrs = ["env.h"],
     srcs = ["env.cc"],
+    hdrs = ["env.h"],
     copts = ["-Werror"],
     visibility = ["//visibility:public"],
     deps = [

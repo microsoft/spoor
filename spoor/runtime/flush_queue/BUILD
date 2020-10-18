@@ -28,10 +28,10 @@ cc_test(
     deps = [
         ":flush_queue",
         "//spoor/runtime/buffer",
-        "//spoor/runtime/trace:trace",
+        "//spoor/runtime/trace",
         "//spoor/runtime/trace:trace_writer_mock",
-        "//util/time:clock_mock",
         "//util:numeric",
+        "//util/time:clock_mock",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_googletest//:gtest_main",
         "@com_microsoft_gsl//:gsl",
@@ -48,4 +48,3 @@ cc_library(
         "@com_google_googletest//:gtest_main",
     ],
 )
-

@@ -22,8 +22,8 @@ proto_library(
 
 cc_proto_library(
     name = "compile_commands_cc_proto",
-    deps = [":compile_commands_proto"],
     visibility = ["//visibility:public"],
+    deps = [":compile_commands_proto"],
 )
 
 cc_library(
@@ -51,8 +51,8 @@ cc_test(
     deps = [
         ":compilation_database_util",
         "@com_google_absl//absl/strings",
-        "@com_google_protobuf//:protobuf",
         "@com_google_googletest//:gtest_main",
+        "@com_google_protobuf//:protobuf",
     ],
 )
 

@@ -28,8 +28,11 @@ using spoor::instrumentation::inject_runtime::InjectRuntime;
 
 constexpr std::string_view kUninstrumentedIrFile{
     "spoor/instrumentation/inject_runtime/test_data/fib.ll"};
-constexpr std::string_view kUninstrumentedIrWithDebugInfoFile{
-    "spoor/instrumentation/inject_runtime/test_data/fib_debug.ll"};
+constexpr std::string_view kUninstrumentedIrWithDebugInfoCppSourceFile{
+    "spoor/instrumentation/inject_runtime/test_data/fib_debug_cpp.ll"};
+constexpr std::string_view kUninstrumentedIrWithDebugInfoSwiftSourceFile{
+    "spoor/instrumentation/inject_runtime/test_data/"
+    "fib_debug_swift_patched.ll"};  // TODO
 constexpr std::string_view kInstrumentedIrFile{
     "spoor/instrumentation/inject_runtime/test_data/fib_instrumented.ll"};
 constexpr std::string_view kInstrumentedInitializedIrFile{
@@ -121,12 +124,13 @@ TEST(InjectRuntime, InstrumentsModule) {  // NOLINT
   }
 }
 
-TEST(InjectRuntime, OutputsInstrumentedFunctionMapWithDebugInfo) {  // NOLINT
+// NOLINTNEXTLINE
+TEST(InjectRuntime, OutputsInstrumentedFunctionMapWithDebugInfoCppSource) {
   llvm::SMDiagnostic instrumented_module_diagnostic{};
   llvm::LLVMContext instrumented_module_context{};
-  auto module = llvm::parseIRFile(kUninstrumentedIrWithDebugInfoFile.data(),
-                                  instrumented_module_diagnostic,
-                                  instrumented_module_context);
+  auto module = llvm::parseIRFile(
+      kUninstrumentedIrWithDebugInfoCppSourceFile.data(),
+      instrumented_module_diagnostic, instrumented_module_context);
   ASSERT_NE(module, nullptr);
 
   const std::filesystem::path file_path{};
@@ -149,9 +153,9 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMapWithDebugInfo) {  // NOLINT
 
   InstrumentedFunctionMap expected_instrumented_function_map{};
   expected_instrumented_function_map.set_module_id(
-      kUninstrumentedIrWithDebugInfoFile.data());
-  auto* function_map =
-      expected_instrumented_function_map.mutable_function_map();
+      kUninstrumentedIrWithDebugInfoCppSourceFile.data());
+  auto& function_map =
+      *expected_instrumented_function_map.mutable_function_map();
 
   InstrumentedFunctionInfo fibonacci_function_info{};
   fibonacci_function_info.set_linkage_name("_Z9Fibonaccii");
@@ -160,7 +164,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMapWithDebugInfo) {  // NOLINT
   fibonacci_function_info.set_directory("/path/to/file");
   fibonacci_function_info.set_line(1);
   fibonacci_function_info.set_instrumented(true);
-  (*function_map)[0] = fibonacci_function_info;
+  function_map[0] = fibonacci_function_info;
 
   InstrumentedFunctionInfo main_function_info{};
   main_function_info.set_linkage_name("main");
@@ -169,7 +173,67 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMapWithDebugInfo) {  // NOLINT
   main_function_info.set_directory("/path/to/file");
   main_function_info.set_line(6);
   main_function_info.set_instrumented(true);
-  (*function_map)[1] = main_function_info;
+  function_map[1] = main_function_info;
+
+  InstrumentedFunctionMap instrumented_function_map{};
+  instrumented_function_map.ParseFromIstream(&stream);
+
+  ASSERT_TRUE(MessageDifferencer::Equals(instrumented_function_map,
+                                         expected_instrumented_function_map));
+}
+
+// NOLINTNEXTLINE
+TEST(InjectRuntime, OutputsInstrumentedFunctionMapWithDebugInfoSwiftSource) {
+  llvm::SMDiagnostic module_diagnostic{};
+  llvm::LLVMContext module_context{};
+  auto module =
+      llvm::parseIRFile(kUninstrumentedIrWithDebugInfoSwiftSourceFile.data(),
+                        module_diagnostic, module_context);
+  ASSERT_NE(module, nullptr);
+
+  const std::filesystem::path file_path{};
+  std::stringstream stream{};
+  const std::unordered_set<std::string> function_blocklist{};
+  const std::unordered_set<std::string> function_allow_list{};
+  constexpr int32 min_instruction_count_to_instrument{0};
+  constexpr bool initialize_runtime{false};
+  constexpr bool enable_runtime{true};
+  const InjectRuntime::Options options{file_path,
+                                       function_blocklist,
+                                       function_allow_list,
+                                       &stream,
+                                       min_instruction_count_to_instrument,
+                                       initialize_runtime,
+                                       enable_runtime};
+  InjectRuntime inject_runtime{options};
+  llvm::ModuleAnalysisManager module_analysis_manager{};
+  inject_runtime.run(*module, module_analysis_manager);
+
+  InstrumentedFunctionMap expected_instrumented_function_map{};
+  expected_instrumented_function_map.set_module_id(
+      kUninstrumentedIrWithDebugInfoSwiftSourceFile.data());
+  auto& function_map =
+      *expected_instrumented_function_map.mutable_function_map();
+
+  InstrumentedFunctionInfo fibonacci_function_info{};
+  fibonacci_function_info.set_linkage_name("$s9fibonacciAAyS2iF");
+  fibonacci_function_info.set_demangled_name(
+      "fibonacci.fibonacci(Swift.Int) -> Swift.Int");
+  fibonacci_function_info.set_file_name("fibonacci.swift");
+  fibonacci_function_info.set_directory("/path/to/file");
+  fibonacci_function_info.set_line(1);
+  fibonacci_function_info.set_instrumented(true);
+  function_map[1] = fibonacci_function_info;
+
+  InstrumentedFunctionInfo main_function_info{};
+  main_function_info.set_linkage_name("main");
+  main_function_info.set_demangled_name("main");
+  main_function_info.set_file_name("fibonacci.swift");
+  main_function_info.set_directory("/path/to/file");
+  // Swift automatically adds a `main` function and picks the line number.
+  main_function_info.set_line(1);
+  main_function_info.set_instrumented(true);
+  function_map[0] = main_function_info;
 
   InstrumentedFunctionMap instrumented_function_map{};
   instrumented_function_map.ParseFromIstream(&stream);
@@ -207,20 +271,20 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMapWithoutDebugInfo) {  // NOLINT
   InstrumentedFunctionMap expected_instrumented_function_map{};
   expected_instrumented_function_map.set_module_id(
       kUninstrumentedIrFile.data());
-  auto* function_map =
-      expected_instrumented_function_map.mutable_function_map();
+  auto& function_map =
+      *expected_instrumented_function_map.mutable_function_map();
 
   InstrumentedFunctionInfo fibonacci_function_info{};
   fibonacci_function_info.set_linkage_name("_Z9Fibonaccii");
   fibonacci_function_info.set_demangled_name("Fibonacci(int)");
   fibonacci_function_info.set_instrumented(true);
-  (*function_map)[0] = fibonacci_function_info;
+  function_map[0] = fibonacci_function_info;
 
   InstrumentedFunctionInfo main_function_info{};
   main_function_info.set_linkage_name("main");
   main_function_info.set_demangled_name("main");
   main_function_info.set_instrumented(true);
-  (*function_map)[1] = main_function_info;
+  function_map[1] = main_function_info;
 
   InstrumentedFunctionMap instrumented_function_map{};
   instrumented_function_map.ParseFromIstream(&stream);

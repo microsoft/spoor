@@ -1,4 +1,4 @@
-; Source program:
+; Source program: fibonacci.cc
 ; 1: auto Fibonacci(int n) -> int {
 ; 2:    if (n < 2) return n;
 ; 3:      return Fibonacci(n - 1) + Fibonacci(n - 2);

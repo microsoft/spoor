@@ -7,8 +7,8 @@ cc_library(
     copts = ["-Werror"],
     visibility = ["//visibility:public"],
     deps = [
-        "//spoor/runtime/buffer:buffer",
-        "//spoor/runtime/trace:trace",
+        "//spoor/runtime/buffer",
+        "//spoor/runtime/trace",
         "//util:env",
         "//util:numeric",
         "@com_microsoft_gsl//:gsl",

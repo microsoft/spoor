@@ -6,7 +6,6 @@
 #include <unordered_map>
 #include <utility>
 
-#include "absl/strings/str_format.h"
 #include "gsl/gsl"
 #include "llvm/ADT/APInt.h"
 #include "llvm/Demangle/Demangle.h"
@@ -19,6 +18,8 @@
 #include "llvm/IR/Type.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "spoor/instrumentation/instrumentation_map.pb.h"
+#include "swift/Demangling/Demangle.h"
+#include "swift/Demangling/Demangler.h"
 
 namespace spoor::instrumentation::inject_runtime {
 
@@ -43,13 +44,13 @@ auto InjectRuntime::run(llvm::Module& module, llvm::ModuleAnalysisManager &
 
   if (modified) return llvm::PreservedAnalyses::none();
   return llvm::PreservedAnalyses::all();
-};
+}
 
 auto InjectRuntime::InstrumentModule(gsl::not_null<llvm::Module*> module)
     -> std::pair<InstrumentedFunctionMap, bool> {
   InstrumentedFunctionMap instrumented_function_map{};
   instrumented_function_map.set_module_id(module->getModuleIdentifier());
-  auto* function_map = instrumented_function_map.mutable_function_map();
+  auto& function_map = *instrumented_function_map.mutable_function_map();
 
   auto& context = module->getContext();
   auto* void_return_type = llvm::Type::getVoidTy(context);
@@ -84,6 +85,14 @@ auto InjectRuntime::InstrumentModule(gsl::not_null<llvm::Module*> module)
     const auto finally = gsl::finally([&] { ++function_id; });
 
     const auto function_name = function.getName();
+    const auto demangled_name = [function_name] {
+      if (swift::Demangle::isSwiftSymbol(function_name)) {
+        return swift::Demangle::demangleSymbolAsString(
+            function_name.data(), function_name.size(), {});
+      }
+      return llvm::demangle(function_name);
+    }();
+
     const auto is_main = function_name.equals(kMainFunctionName.data());
     const auto instrument_function = [&] {
       if (is_main ||
@@ -103,7 +112,7 @@ auto InjectRuntime::InstrumentModule(gsl::not_null<llvm::Module*> module)
 
     InstrumentedFunctionInfo function_info{};
     function_info.set_linkage_name(function_name);
-    function_info.set_demangled_name(llvm::demangle(function_name));
+    function_info.set_demangled_name(demangled_name);
     const auto* subprogram = function.getSubprogram();
     if (subprogram != nullptr) {
       function_info.set_file_name(subprogram->getFilename());
@@ -111,7 +120,7 @@ auto InjectRuntime::InstrumentModule(gsl::not_null<llvm::Module*> module)
       function_info.set_line(subprogram->getLine());
     }
     function_info.set_instrumented(instrument_function);
-    (*function_map)[function_id] = function_info;
+    function_map[function_id] = function_info;
 
     modified |= instrument_function;
     if (!instrument_function) continue;

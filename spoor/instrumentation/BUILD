@@ -9,14 +9,14 @@ proto_library(
 
 cc_proto_library(
     name = "instrumentation_map_cc_proto",
-    deps = [":instrumentation_map_proto"],
     visibility = ["//visibility:public"],
+    deps = [":instrumentation_map_proto"],
 )
 
 cc_library(
     name = "instrumentation",
-    hdrs = ["instrumentation.h"],
     srcs = ["instrumentation.cc"],
+    hdrs = ["instrumentation.h"],
     copts = [
         "-Wno-unused-parameter",  # Since we're including LLVM in this module.
         "-Werror",
@@ -25,8 +25,8 @@ cc_library(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//spoor/instrumentation/config:config",
-        "//spoor/instrumentation/inject_runtime:inject_runtime",
+        "//spoor/instrumentation/config",
+        "//spoor/instrumentation/inject_runtime",
         #"@org_llvm_llvm//:llvm"
     ],
 )
