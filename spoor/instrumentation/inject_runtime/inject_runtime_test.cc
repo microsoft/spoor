@@ -22,7 +22,7 @@
 namespace {
 
 using google::protobuf::util::MessageDifferencer;
-using spoor::instrumentation::InstrumentedFunctionInfo;
+using spoor::instrumentation::FunctionInfo;
 using spoor::instrumentation::InstrumentedFunctionMap;
 using spoor::instrumentation::inject_runtime::InjectRuntime;
 
@@ -157,7 +157,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMapWithDebugInfoCppSource) {
   auto& function_map =
       *expected_instrumented_function_map.mutable_function_map();
 
-  InstrumentedFunctionInfo fibonacci_function_info{};
+  FunctionInfo fibonacci_function_info{};
   fibonacci_function_info.set_linkage_name("_Z9Fibonaccii");
   fibonacci_function_info.set_demangled_name("Fibonacci(int)");
   fibonacci_function_info.set_file_name("fibonacci.cc");
@@ -166,7 +166,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMapWithDebugInfoCppSource) {
   fibonacci_function_info.set_instrumented(true);
   function_map[0] = fibonacci_function_info;
 
-  InstrumentedFunctionInfo main_function_info{};
+  FunctionInfo main_function_info{};
   main_function_info.set_linkage_name("main");
   main_function_info.set_demangled_name("main");
   main_function_info.set_file_name("fibonacci.cc");
@@ -215,7 +215,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMapWithDebugInfoSwiftSource) {
   auto& function_map =
       *expected_instrumented_function_map.mutable_function_map();
 
-  InstrumentedFunctionInfo fibonacci_function_info{};
+  FunctionInfo fibonacci_function_info{};
   fibonacci_function_info.set_linkage_name("$s9fibonacciAAyS2iF");
   fibonacci_function_info.set_demangled_name(
       "fibonacci.fibonacci(Swift.Int) -> Swift.Int");
@@ -225,7 +225,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMapWithDebugInfoSwiftSource) {
   fibonacci_function_info.set_instrumented(true);
   function_map[1] = fibonacci_function_info;
 
-  InstrumentedFunctionInfo main_function_info{};
+  FunctionInfo main_function_info{};
   main_function_info.set_linkage_name("main");
   main_function_info.set_demangled_name("main");
   main_function_info.set_file_name("fibonacci.swift");
@@ -274,13 +274,13 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMapWithoutDebugInfo) {  // NOLINT
   auto& function_map =
       *expected_instrumented_function_map.mutable_function_map();
 
-  InstrumentedFunctionInfo fibonacci_function_info{};
+  FunctionInfo fibonacci_function_info{};
   fibonacci_function_info.set_linkage_name("_Z9Fibonaccii");
   fibonacci_function_info.set_demangled_name("Fibonacci(int)");
   fibonacci_function_info.set_instrumented(true);
   function_map[0] = fibonacci_function_info;
 
-  InstrumentedFunctionInfo main_function_info{};
+  FunctionInfo main_function_info{};
   main_function_info.set_linkage_name("main");
   main_function_info.set_demangled_name("main");
   main_function_info.set_instrumented(true);

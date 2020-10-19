@@ -110,7 +110,7 @@ auto InjectRuntime::InstrumentModule(gsl::not_null<llvm::Module*> module)
                        function_name) == std::cend(options_.function_blocklist);
     }();
 
-    InstrumentedFunctionInfo function_info{};
+    FunctionInfo function_info{};
     function_info.set_linkage_name(function_name);
     function_info.set_demangled_name(demangled_name);
     const auto* subprogram = function.getSubprogram();
