@@ -46,7 +46,6 @@ FEATURES = [
                             "-pedantic",
                             "-Wno-gnu-zero-variadic-macro-arguments",  # gMock
                             "-Wno-gcc-compat",  # absl::StrFormat.
-                            #"-I/usr/local/opt/llvm/include",
                         ],
                     ),
                 ]),
@@ -60,43 +59,43 @@ def linux_llvm_toolchain_impl(ctx):
     tool_paths = [
         tool_path(
             name = "gcc",
-            path = "/usr/bin/clang-10",
+            path = "/usr/bin/clang-11",
         ),
         tool_path(
             name = "ld",
-            path = "/usr/bin/lld-10",
+            path = "/usr/bin/lld-11",
         ),
         tool_path(
             name = "ar",
-            path = "/usr/bin/llvm-ar-10",
+            path = "/usr/bin/llvm-ar-11",
         ),
         tool_path(
             name = "cpp",
-            path = "/usr/bin/clang++-10",
+            path = "/usr/bin/clang++-11",
         ),
         tool_path(
             name = "gcov",
-            path = "/usr/bin/llvm-cov-10",
+            path = "/usr/bin/llvm-cov-11",
         ),
         tool_path(
             name = "nm",
-            path = "/usr/bin/llvm-nm-10",
+            path = "/usr/bin/llvm-nm-11",
         ),
         tool_path(
             name = "objdump",
-            path = "/usr/bin/llvm-objdump-10",
+            path = "/usr/bin/llvm-objdump-11",
         ),
         tool_path(
             name = "strip",
-            path = "/usr/bin/llvm-strip-10",
+            path = "/usr/bin/llvm-strip-11",
         ),
     ]
     return cc_common.create_cc_toolchain_config_info(
         ctx = ctx,
         features = FEATURES,
         cxx_builtin_include_directories = [
-            "/usr/lib/llvm-10/lib/clang/10.0.0/include",
-            "/usr/lib/llvm-10/lib/clang/10.0.0/share",
+            "/usr/lib/llvm-11/lib/clang/11.0.0/include",
+            "/usr/lib/llvm-11/lib/clang/11.0.0/share",
             "/usr/include",
         ],
         toolchain_identifier = "linux-llvm-toolchain",
@@ -150,11 +149,10 @@ def darwin_llvm_toolchain_impl(ctx):
         ctx = ctx,
         features = FEATURES,
         cxx_builtin_include_directories = [
-            "/usr/local/opt/llvm/include",
             "/usr/local/opt/llvm/include/c++/v1",
-            "/usr/local/Cellar/llvm/10.0.1_1/include",
-            "/usr/local/Cellar/llvm/10.0.1_1/lib/clang/10.0.1/include",
-            "/usr/local/Cellar/llvm/10.0.1_1/lib/clang/10.0.1/share",
+            "/usr/local/Cellar/llvm/11.0.0/include",
+            "/usr/local/Cellar/llvm/11.0.0/lib/clang/11.0.0/include",
+            "/usr/local/Cellar/llvm/11.0.0/lib/clang/11.0.0/share",
             "/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/include",
             "/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/System/Library/Frameworks",
         ],
