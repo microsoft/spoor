@@ -32,7 +32,7 @@ jobs:
     vmImage: 'ubuntu-20.04'
   steps:
   - template: ./templates/install-common.yml
-  - script: sudo apt-get install clang-format clang-tidy
+  - script: sudo apt-get install clang-format-11 clang-tidy-11
     displayName: Install Clang Format and Clang Tidy
   - script: |
       ./toolchain/style/clang_format.sh

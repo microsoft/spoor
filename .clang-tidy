@@ -12,6 +12,10 @@
 #   The check does not support configuration from the project root.
 # llvm-include-order
 #   Enforced by Clang Format.
+# llvmlibc-callee-namespace
+# llvmlibc-implementation-in-namespace
+# llvmlibc-restrict-system-libc-headers
+#   Not useful when developing outside LLVM libc.
 # readability-magic-numbers
 #   These warnings are generally unhelpful because the "magic numbers" are
 #   self-explanatory in the context of the code.
@@ -26,6 +30,9 @@ Checks: '
   -fuchsia-trailing-return,
   -llvm-header-guard,
   -llvm-include-order,
+  -llvmlibc-callee-namespace,
+  -llvmlibc-implementation-in-namespace,
+  -llvmlibc-restrict-system-libc-headers,
   -readability-magic-numbers,
 
   -cert-con36-c,
