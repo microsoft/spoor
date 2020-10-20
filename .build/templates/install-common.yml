@@ -1,3 +1,14 @@
 steps:
+- script: |
+    wget https://apt.llvm.org/llvm.sh
+    chmod +x llvm.sh
+    sudo ./llvm.sh 11
+  displayName: Install LLVM (Linux)
+  condition: eq(variables['Agent.OS'], 'Linux')
+- script: |
+    brew update
+    brew upgrade --force llvm@11
+  displayName: Install LLVM (macOS)
+  condition: eq(variables['Agent.OS'], 'Darwin')
 - script: cp ./.build/ci.bazelrc ./.bazelrc
   displayName: Copy .bazelrc

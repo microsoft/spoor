@@ -4,6 +4,15 @@ set -e
 
 WORKSPACE="$(bazel info workspace)"
 
+if command -v clang-tidy &> /dev/null; then
+  CLANG_TIDY="clang-tidy"
+elif command -v clang-tidy-11 &> /dev/null; then
+  CLANG_TIDY="clang-tidy-11"
+else
+  echo "clang-tidy not found"
+  exit 1
+fi
+
 if [[ "$AZURE_PIPELINES_OS" == "Linux" ]]; then
   echo "Detected Linux CI environment"
   # TODO(#17): Remove CI-specific warnings as errors.
@@ -20,7 +29,7 @@ fi
 
 function run_clang_tidy {
   echo "Tidying $1"
-  clang-tidy \
+  "$CLANG_TIDY" \
     -p="$WORKSPACE" \
     --checks='' \
     --warnings-as-errors="$WARNING_AS_ERRORS" \
@@ -38,8 +47,7 @@ bazel build $(bazel query 'kind(cc_.*, //...)')
 
 if [ $# -eq 0 ]; then
   find "$WORKSPACE" \
-    -type f \
-    \( -iname '*.h' -o -iname '*.cc' ! -iname 'bazel-' \) \
+    -type f \( -iname "*.h" -o -iname "*.cc" \) \
     -print0 |
       while read -d $'\0' file_name; do
         run_clang_tidy "$file_name"
