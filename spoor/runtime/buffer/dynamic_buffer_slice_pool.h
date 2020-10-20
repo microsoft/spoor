@@ -1,7 +1,6 @@
 #pragma once
 
 #include <atomic>
-#include <cassert>
 #include <memory>
 
 #include "spoor/runtime/buffer/buffer_slice_pool.h"
@@ -51,7 +50,7 @@ class DynamicBufferSlicePool final : public BufferSlicePool<T> {
   [[nodiscard]] auto Borrow(SizeType preferred_slice_capacity)
       -> BorrowResult override;
   // Return a buffer slice to the object pool.
-  // Complexity: Lock-free O(1)
+  // Complexity: Lock-free O(1).
   auto Return(OwnedSlicePtr&& owned_ptr) -> ReturnResult override;
 
   [[nodiscard]] constexpr auto Size() const -> SizeType override;
@@ -77,7 +76,7 @@ constexpr DynamicBufferSlicePool<T>::DynamicBufferSlicePool(
 
 template <class T>
 DynamicBufferSlicePool<T>::~DynamicBufferSlicePool() {
-  assert(Full());
+  Expects(Full());
 }
 
 template <class T>
@@ -93,6 +92,9 @@ auto DynamicBufferSlicePool<T>::Borrow(SizeType preferred_slice_capacity)
         borrowed_items_size, new_borrowed_items_size);
     if (exchanged) {
       if (buffer_size < 1) return BorrowError::kNoSlicesAvailable;
+      // Conceptually, the pool owns the pointer, therefore, using `gsl::owner`
+      // expresses the wrong semantics.
+      // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
       auto* slice = new OwnedSlice{buffer_size};
       return OwnedSlicePtr{slice, this};
     }
@@ -104,9 +106,12 @@ template <class T>
 auto DynamicBufferSlicePool<T>::Return(Slice* slice) -> ReturnRawPtrResult {
   // The dynamic buffer pool does not store a table of borrowed slices,
   // therefore, this method deletes a slice regardless if it is owned by the
-  // pool or not.
+  // pool.
   borrowed_items_size_ -= slice->Capacity();
-  delete slice;
+  // Conceptually, the pool owns the pointer, therefore, using `gsl::owner`
+  // expresses the wrong semantics. Additionally, `Return`'s signature must
+  // match its interface's signature.
+  delete slice;  // NOLINT(cppcoreguidelines-owning-memory)
   return ReturnRawPtrResult::Ok({});
 }
 

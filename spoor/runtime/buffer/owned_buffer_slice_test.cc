@@ -4,7 +4,6 @@
 
 namespace {
 
-// TODO implement this test
 // constructors
 // copy/move semantics
 

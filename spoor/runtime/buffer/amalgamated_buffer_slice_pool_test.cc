@@ -150,8 +150,8 @@ TEST(AmalgamatedBufferSlicePool, BorrowSliceFromDynamicPool) {  // NOLINT
   }
 }
 
-TEST(AmalgamatedBufferSlicePool,
-     BorrowSliceFromReservedAndDynamicPools) {  // NOLINT
+// NOLINTNEXTLINE
+TEST(AmalgamatedBufferSlicePool, BorrowSliceFromReservedAndDynamicPools) {
   for (const SizeType reserved_pool_capacity : {0, 1, 2, 5}) {
     for (const SizeType dynamic_pool_capacity : {0, 1, 2, 5}) {
       const auto expected_capacity =

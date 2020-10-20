@@ -4,7 +4,6 @@
 #include <functional>
 #include <iterator>
 #include <vector>
-#include <iostream> // TODO
 
 #include "gsl/gsl"
 #include "spoor/runtime/buffer/buffer_slice_pool.h"
@@ -42,7 +41,7 @@ class CircularSliceBuffer final : public CircularBuffer<T> {
   auto operator=(const CircularSliceBuffer&) -> CircularSliceBuffer& = delete;
   auto operator=(CircularSliceBuffer&&) noexcept
       -> CircularSliceBuffer& = default;
-  ~CircularSliceBuffer();
+  ~CircularSliceBuffer() = default;
 
   constexpr auto Push(const T& item) -> void override;
   constexpr auto Push(T&& item) -> void override;
@@ -76,11 +75,6 @@ CircularSliceBuffer<T>::CircularSliceBuffer(const Options& options)
       size_{0},
       acquired_slices_capacity_{0},
       insertion_iterator_{std::begin(slices_)} {}
-
-template <class T>
-CircularSliceBuffer<T>::~CircularSliceBuffer() {
-  // options_.buffer_slice_pool->Return(std::move(slices_));
-}
 
 template <class T>
 constexpr auto CircularSliceBuffer<T>::Push(const T& item) -> void {

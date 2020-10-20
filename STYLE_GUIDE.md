@@ -107,7 +107,7 @@ int64 a[] = {1, 2, 3};  // NOLINT(modernize-avoid-c-arrays)
 int64 a[] = {1, 2, 3};  // NOLINT
 ```
 
-Exception: Google Test and Abseil flags library macros.
+Exception: Google Test, Google Benchmark,  and Abseil flags library macros.
 
 ```c++
 // ✅ Okay
@@ -116,8 +116,12 @@ TEST(Foo, Bar) { // NOLINT
 }
 
 // ✅ Okay
+BENCHMARK(Foo);  // NOLINT
+BENCHMARK_MAIN();  // NOLINT
+
+// ✅ Okay
 ABSL_FLAG(  // NOLINT
-    std::string, my_flag, {}, "Description...");
+    std::string, flag, {}, "Description");
 ```
 
 ## Starlark (Bazel)

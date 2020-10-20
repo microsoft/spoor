@@ -1,7 +1,6 @@
 #pragma once
 
 #include <atomic>
-#include <cassert>
 #include <vector>
 
 #include "gsl/gsl"
@@ -43,11 +42,11 @@ class ReservedBufferSlicePool final : public BufferSlicePool<T> {
 
   // Borrow a buffer slice from the object pool with its intrinsic capacity
   // (i.e. ignores the preferred slice capacity).
-  // Complexity: Lock-free O(ceil(capacity / max_slice_capacity))
+  // Complexity: Lock-free O(ceil(capacity / max_slice_capacity)).
   [[nodiscard]] auto Borrow(SizeType preferred_slice_capacity)
       -> BorrowResult override;
   // Return a buffer slice to the object pool.
-  // Complexity: Lock-free O(1)
+  // Complexity: Lock-free O(1).
   auto Return(OwnedSlicePtr&& owned_ptr) -> ReturnResult override;
 
   [[nodiscard]] constexpr auto Size() const -> SizeType override;
@@ -103,7 +102,7 @@ ReservedBufferSlicePool<T>::ReservedBufferSlicePool(const Options& options)
 
 template <class T>
 ReservedBufferSlicePool<T>::~ReservedBufferSlicePool() {
-  assert(Full());
+  Expects(Full());
 }
 
 template <class T>

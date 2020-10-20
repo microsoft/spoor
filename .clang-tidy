@@ -14,7 +14,7 @@
 #   Enforced by Clang Format.
 # readability-magic-numbers
 #   These warnings are generally unhelpful because the "magic numbers" are
-#   self-explanatory in the context of the code).
+#   self-explanatory in the context of the code.
 # Other checks are aliases which are disable so only one NOLINT is required.
 #   https://clang.llvm.org/extra/clang-tidy/checks/list.html#id117
 Checks: '
@@ -91,8 +91,6 @@ CheckOptions:
     value: 2  # Match clang-format
   - key: readability-identifier-naming.ClassCase
     value: CamelCase
-  - key: readability-identifier-naming.ClassMemberSuffix
-    value: _
   - key: readability-identifier-naming.ClassMethodCase
     value: CamelCase
   - key: readability-identifier-naming.EnumConstantCase
@@ -109,6 +107,10 @@ CheckOptions:
     value: 1
   - key: readability-identifier-naming.NamespaceCase
     value: lower_case
+  # Structs have public member variables. Classes should only have private
+  # member variables.
+  - key: readability-identifier-naming.PrivateMemberSuffix
+    value: _
   - key: readability-identifier-naming.StructCase
     value: CamelCase
   - key: readability-identifier-naming.TemplateParameterCase

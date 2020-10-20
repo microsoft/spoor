@@ -16,7 +16,7 @@ using CircularSliceBuffer =
 
 auto CustomArguments(benchmark::internal::Benchmark* benchmark) -> void {
   for (SizeType circular_buffer_slice_capacity{8};
-       circular_buffer_slice_capacity <= (8 << 15);
+       circular_buffer_slice_capacity <= (8ULL << 15ULL);
        circular_buffer_slice_capacity *= 8) {
     for (SizeType max_slice_capacity{circular_buffer_slice_capacity / 4};
          max_slice_capacity <= circular_buffer_slice_capacity;
@@ -36,6 +36,7 @@ auto CustomArguments(benchmark::internal::Benchmark* benchmark) -> void {
   }
 }
 
+// NOLINTNEXTLINE(google-runtime-references)
 auto BenchmarkCircularSliceBufferPush(benchmark::State& state) -> void {
   const SizeType capacity{4096};
   const auto dynamic_pool_capacity = static_cast<SizeType>(state.range(0));
@@ -54,13 +55,14 @@ auto BenchmarkCircularSliceBufferPush(benchmark::State& state) -> void {
       .capacity = capacity,
   };
   CircularSliceBuffer circular_slice_buffer{circular_slice_buffer_options};
-  for (auto _ : state) {
+  for (auto _ : state) {  // NOLINT(clang-analyzer-deadcode.DeadStores)
     circular_slice_buffer.Push(42);
   }
 }
-BENCHMARK(BenchmarkCircularSliceBufferPush)
+BENCHMARK(BenchmarkCircularSliceBufferPush)  // NOLINT
     ->ArgsProduct({{0, 2048, 4096}, {8, 512, 1024}});
 
+// NOLINTNEXTLINE(google-runtime-references)
 auto BenchmarkCircularSliceBufferCreateFillClear(benchmark::State& state)
     -> void {
   const typename Pool::Options pool_options{
@@ -78,7 +80,7 @@ auto BenchmarkCircularSliceBufferCreateFillClear(benchmark::State& state)
       .buffer_slice_pool = &pool,
       .capacity = gsl::narrow_cast<SizeType>(state.range(0)),
   };
-  for (auto _ : state) {
+  for (auto _ : state) {  // NOLINT(clang-analyzer-deadcode.DeadStores)
     CircularSliceBuffer circular_slice_buffer{circular_slice_buffer_options};
     for (SizeType i{0}; i < circular_slice_buffer_options.capacity; ++i) {
       circular_slice_buffer.Push(42);
@@ -86,8 +88,9 @@ auto BenchmarkCircularSliceBufferCreateFillClear(benchmark::State& state)
     circular_slice_buffer.Clear();
   }
 }
-BENCHMARK(BenchmarkCircularSliceBufferCreateFillClear)->Apply(CustomArguments);
+BENCHMARK(BenchmarkCircularSliceBufferCreateFillClear)  // NOLINT
+    ->Apply(CustomArguments);
 
 }  // namespace
 
-BENCHMARK_MAIN();
+BENCHMARK_MAIN();  // NOLINT

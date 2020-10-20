@@ -7,8 +7,6 @@
 
 namespace spoor::runtime::buffer {
 
-// TODO decide if we need to call each items' destructor on clear and
-// destruction
 template <class T>
 class OwnedBufferSlice final : public CircularBuffer<T> {
  public:
@@ -17,7 +15,6 @@ class OwnedBufferSlice final : public CircularBuffer<T> {
   OwnedBufferSlice() = delete;
   explicit constexpr OwnedBufferSlice(SizeType capacity);
   OwnedBufferSlice(const OwnedBufferSlice&) = delete;
-  // TODO is the default sufficient?
   constexpr OwnedBufferSlice(OwnedBufferSlice&& other) noexcept = default;
   auto operator=(const OwnedBufferSlice&) -> OwnedBufferSlice& = delete;
   auto operator=(OwnedBufferSlice&&) noexcept -> OwnedBufferSlice& = delete;

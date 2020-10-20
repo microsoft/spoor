@@ -5,8 +5,6 @@
 #include "gsl/gsl"
 #include "spoor/runtime/buffer/circular_buffer.h"
 
-// TODO decide if we need to call each items' destructor on clear and
-
 namespace spoor::runtime::buffer {
 
 template <class T>
