@@ -46,7 +46,9 @@ echo "Building C++ targets"
 bazel build $(bazel query 'kind(cc_.*, //...)')
 
 if [ $# -eq 0 ]; then
+  # TODO(#22): Include the `spoor` directory when the buffer system is complete.
   find "$WORKSPACE" \
+    -type d -name "spoor" -prune -o \
     -type f \( -iname "*.h" -o -iname "*.cc" \) \
     -print0 |
       while read -d $'\0' file_name; do
