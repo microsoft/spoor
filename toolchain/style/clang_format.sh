@@ -5,9 +5,9 @@ set -eu
 WORKSPACE="$(bazel info workspace)"
 
 if command -v clang-format &> /dev/null; then
-  CLANG_TIDY="clang-format"
+  CLANG_FORMAT="clang-format"
 elif command -v clang-format-11 &> /dev/null; then
-  CLANG_TIDY="clang-format-11"
+  CLANG_FORMAT="clang-format-11"
 else
   echo "clang-format not found"
   exit 1
@@ -15,7 +15,7 @@ fi
 
 function run_clang_format {
   echo "Formatting $1"
-  clang-format \
+  "$CLANG_FORMAT" \
     -style=file \
     -i \
     "$1"
