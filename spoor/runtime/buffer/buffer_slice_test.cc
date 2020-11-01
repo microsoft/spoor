@@ -6,6 +6,7 @@
 #include "gtest/gtest.h"
 #include "spoor/runtime/buffer/circular_buffer.h"
 #include "spoor/runtime/buffer/owned_buffer_slice.h"
+#include "spoor/runtime/buffer/unowned_buffer_slice.h"
 #include "util/numeric.h"
 
 namespace {
@@ -13,13 +14,16 @@ namespace {
 using BufferSlice = spoor::runtime::buffer::CircularBuffer<int64>;
 using ValueType = BufferSlice::ValueType;
 using OwnedBufferSlice = spoor::runtime::buffer::OwnedBufferSlice<ValueType>;
+using UnownedBufferSlice =
+    spoor::runtime::buffer::UnownedBufferSlice<ValueType>;
 using SizeType = BufferSlice::SizeType;
 
 auto Slices(gsl::span<ValueType> buffer)
     -> std::vector<std::unique_ptr<BufferSlice>> {
   std::vector<std::unique_ptr<BufferSlice>> slices{};
-  slices.reserve(1);
+  slices.reserve(2);
   slices.push_back(std::make_unique<OwnedBufferSlice>(buffer.size()));
+  slices.push_back(std::make_unique<UnownedBufferSlice>(buffer));
   return slices;
 }
 
