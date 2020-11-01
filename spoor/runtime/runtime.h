@@ -72,16 +72,14 @@ bool __spoor_runtime_RuntimeEnabled();
 // the event. A call to this function is inserted at the start of every function
 // by the compile-time instrumentation.
 // NOLINTNEXTLINE(readability-identifier-naming)
-void __spoor_runtime_LogFunctionEntry(
-    __spoor_runtime_FunctionId function_id);
+void __spoor_runtime_LogFunctionEntry(__spoor_runtime_FunctionId function_id);
 
 // Log that the program exited a function. The function internally checks if the
 // runtime is enabled before collecting the current timestamp and logging the
 // event. A call to this function is inserted at the end of every function by
 // the compile-time instrumentation.
 // NOLINTNEXTLINE(readability-identifier-naming)
-void __spoor_runtime_LogFunctionExit(
-    __spoor_runtime_FunctionId function_id);
+void __spoor_runtime_LogFunctionExit(__spoor_runtime_FunctionId function_id);
 
 // Flush in-memory trace events to disk.
 // NOLINTNEXTLINE(readability-identifier-naming)

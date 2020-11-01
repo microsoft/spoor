@@ -1,5 +1,8 @@
 #pragma once
 
+#include <algorithm>
+#include <iterator>
+#include <utility>
 #include <vector>
 
 #include "gsl/gsl"
@@ -13,17 +16,17 @@ class UnownedBufferSlice final : public CircularBuffer<T> {
   using SizeType = typename CircularBuffer<T>::SizeType;
 
   UnownedBufferSlice() = delete;
-  explicit constexpr UnownedBufferSlice(gsl::span<T> buffer);
+  constexpr explicit UnownedBufferSlice(gsl::span<T> buffer);
   UnownedBufferSlice(const UnownedBufferSlice&) = delete;
   constexpr UnownedBufferSlice(UnownedBufferSlice&& other) noexcept = default;
   auto operator=(const UnownedBufferSlice&) -> UnownedBufferSlice& = delete;
   auto operator=(UnownedBufferSlice&&) noexcept -> UnownedBufferSlice& = delete;
-  ~UnownedBufferSlice() = default;
+  constexpr ~UnownedBufferSlice() = default;
 
   constexpr auto Push(const T& item) -> void override;
   constexpr auto Push(T&& item) -> void override;
   constexpr auto Clear() -> void override;
-  [[nodiscard]] auto ContiguousMemoryChunks()
+  [[nodiscard]] constexpr auto ContiguousMemoryChunks()
       -> std::vector<gsl::span<T>> override;
 
   [[nodiscard]] constexpr auto Size() const -> SizeType override;
@@ -45,9 +48,7 @@ constexpr UnownedBufferSlice<T>::UnownedBufferSlice(gsl::span<T> buffer)
 template <class T>
 constexpr auto UnownedBufferSlice<T>::Push(const T& item) -> void {
   if (Capacity() == 0) return;
-  if (insertion_iterator_ == std::end(buffer_)) {
-    insertion_iterator_ = std::begin(buffer_);
-  }
+  if (WillWrapOnNextPush()) insertion_iterator_ = std::begin(buffer_);
   *insertion_iterator_ = item;
   size_ = std::min(size_ + 1, Capacity());
   ++insertion_iterator_;
@@ -56,9 +57,7 @@ constexpr auto UnownedBufferSlice<T>::Push(const T& item) -> void {
 template <class T>
 constexpr auto UnownedBufferSlice<T>::Push(T&& item) -> void {
   if (Capacity() == 0) return;
-  if (insertion_iterator_ == std::end(buffer_)) {
-    insertion_iterator_ = std::begin(buffer_);
-  }
+  if (WillWrapOnNextPush()) insertion_iterator_ = std::begin(buffer_);
   *insertion_iterator_ = std::move(item);
   size_ = std::min(size_ + 1, Capacity());
   ++insertion_iterator_;
@@ -71,11 +70,11 @@ constexpr auto UnownedBufferSlice<T>::Clear() -> void {
 }
 
 template <class T>
-auto UnownedBufferSlice<T>::ContiguousMemoryChunks()
+constexpr auto UnownedBufferSlice<T>::ContiguousMemoryChunks()
     -> std::vector<gsl::span<T>> {
   if (Empty()) return {};
-  const auto begin = std::begin(buffer_);
-  const auto end = std::end(buffer_);
+  const auto begin = std::cbegin(buffer_);
+  const auto end = std::cend(buffer_);
   if (!Full() || insertion_iterator_ == end) return {{&(*begin), Size()}};
   const gsl::span<T> first_chunk{
       &(*insertion_iterator_),
@@ -108,7 +107,7 @@ constexpr auto UnownedBufferSlice<T>::Full() const -> bool {
 
 template <class T>
 constexpr auto UnownedBufferSlice<T>::WillWrapOnNextPush() const -> bool {
-  return insertion_iterator_ == std::end(buffer_);
+  return insertion_iterator_ == std::cend(buffer_);
 }
 
 }  // namespace spoor::runtime::buffer

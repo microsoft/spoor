@@ -118,7 +118,7 @@ constexpr auto operator==(const Event& lhs, const Event& rhs) -> bool {
          lhs.type_and_timestamp_ == rhs.type_and_timestamp_;
 }
 
-constexpr auto operator==(const Footer& /*unused*/, const Footer & /*unused*/)
+constexpr auto operator==(const Footer& /*unused*/, const Footer& /*unused*/)
     -> bool {
   return true;
 }

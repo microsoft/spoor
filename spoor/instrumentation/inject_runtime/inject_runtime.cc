@@ -18,8 +18,8 @@
 #include "llvm/IR/Type.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "spoor/instrumentation/instrumentation_map.pb.h"
-#include "swift/Demangling/Demangle.h"
-#include "swift/Demangling/Demangler.h"
+// #include "swift/Demangling/Demangle.h"
+// #include "swift/Demangling/Demangler.h"
 
 namespace spoor::instrumentation::inject_runtime {
 
@@ -37,7 +37,7 @@ constexpr std::string_view kLogFunctionExitFunctionName{
 
 InjectRuntime::InjectRuntime(const Options options) : options_{options} {}
 
-auto InjectRuntime::run(llvm::Module& module, llvm::ModuleAnalysisManager &
+auto InjectRuntime::run(llvm::Module& module, llvm::ModuleAnalysisManager&
                         /*unused*/) -> llvm::PreservedAnalyses {
   const auto [instrumented_function_map, modified] = InstrumentModule(&module);
   instrumented_function_map.SerializeToOstream(options_.ostream);

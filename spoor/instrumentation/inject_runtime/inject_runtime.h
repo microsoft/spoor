@@ -1,11 +1,11 @@
 #pragma once
 
+#include <filesystem>
 #include <ostream>
 #include <string>
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include <filesystem>
 
 #include "gsl/gsl"
 #include "llvm/IR/Module.h"

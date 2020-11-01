@@ -47,8 +47,8 @@ TEST(EventLogger, LogsEvents) {  // NOLINT
   constexpr SizeType capacity{4};
   Pool expected_buffer_pool{
       {.max_slice_capacity = capacity, .capacity = capacity}};
-  Buffer expected_buffer{{.buffer_slice_pool = &expected_buffer_pool,
-                          .capacity = capacity}};
+  Buffer expected_buffer{
+      {.buffer_slice_pool = &expected_buffer_pool, .capacity = capacity}};
   expected_buffer.Push({Event::Type::kFunctionEntry, 3, 4});
   expected_buffer.Push({Event::Type::kFunctionExit, 3, 5});
   expected_buffer.Push({Event::Type::kFunctionExit, 2, 6});

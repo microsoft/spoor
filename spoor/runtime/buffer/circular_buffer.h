@@ -13,7 +13,7 @@ class CircularBuffer {
   using ValueType = T;
   using SizeType = std::size_t;
 
-  virtual ~CircularBuffer() = default;
+  virtual constexpr ~CircularBuffer() = default;
 
   virtual constexpr auto Push(const T& item) -> void = 0;
   virtual constexpr auto Push(T&& item) -> void = 0;

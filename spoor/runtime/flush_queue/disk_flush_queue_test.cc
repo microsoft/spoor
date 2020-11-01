@@ -28,12 +28,12 @@ using spoor::runtime::trace::Header;
 using spoor::runtime::trace::TimestampNanoseconds;
 using spoor::runtime::trace::testing::TraceWriterMock;
 using std::literals::chrono_literals::operator""ns;
+using testing::_;
 using testing::InSequence;
 using testing::Invoke;
 using testing::MatchesRegex;
 using testing::Return;
 using testing::Truly;
-using testing::_;
 using util::time::testing::MakeTimePoint;
 using util::time::testing::SteadyClockMock;
 using util::time::testing::SystemClockMock;
@@ -118,9 +118,9 @@ TEST(DiskFlushQueue, WritesEvents) {  // NOLINT
       .WillRepeatedly(Return(
           MakeTimePoint<std::chrono::steady_clock>(steady_clock_timestamp)));
 
-  const std::string trace_file_pattern = absl::StrFormat(
-      R"(trace\/file\/path\/%016x-[0-9a-f]{16}-%016x\.spoor)", kSessionId,
-      steady_clock_timestamp);
+  const std::string trace_file_pattern =
+      absl::StrFormat(R"(trace\/file\/path\/%016x-[0-9a-f]{16}-%016x\.spoor)",
+                      kSessionId, steady_clock_timestamp);
   const auto matches_header = [&](const Header& header) {
     // Ignore the `thread_id` because it reflects the hash of the true value
     // which cannot be determined.

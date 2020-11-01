@@ -1,11 +1,6 @@
 #pragma once
 
-#include <algorithm>
-#include <atomic>
-#include <cstddef>
-#include <iterator>
-#include <new>
-#include <optional>
+#include <utility>
 
 #include "spoor/runtime/buffer/buffer_slice_pool.h"
 #include "spoor/runtime/buffer/circular_buffer.h"
@@ -35,22 +30,22 @@ class AmalgamatedBufferSlicePool final : public BufferSlicePool<T> {
   };
 
   AmalgamatedBufferSlicePool() = delete;
-  explicit AmalgamatedBufferSlicePool(const Options& options);
+  constexpr explicit AmalgamatedBufferSlicePool(const Options& options);
   AmalgamatedBufferSlicePool(const AmalgamatedBufferSlicePool&) = delete;
   AmalgamatedBufferSlicePool(AmalgamatedBufferSlicePool&&) noexcept = delete;
   auto operator=(const AmalgamatedBufferSlicePool&)
       -> AmalgamatedBufferSlicePool& = delete;
   auto operator=(AmalgamatedBufferSlicePool&&) noexcept
       -> AmalgamatedBufferSlicePool& = delete;
-  ~AmalgamatedBufferSlicePool() = default;
+  constexpr ~AmalgamatedBufferSlicePool() = default;
 
-  // Borrow a buffer from the reserved pool if available. Otherwise, returns a
-  // buffer from the dynamic pool.
-  [[nodiscard]] auto Borrow(SizeType preferred_slice_capacity)
+  // Borrow a buffer from the reserved pool if available. Otherwise, borrow a
+  // buffer from the dynamic pool if available.
+  [[nodiscard]] constexpr auto Borrow(SizeType preferred_slice_capacity)
       -> BorrowResult override;
-  auto Return(OwnedSlicePtr&& slice) -> ReturnResult override;
+  constexpr auto Return(OwnedSlicePtr&& slice) -> ReturnResult override;
   template <class Collection>
-  auto Return(Collection&& slices) -> std::vector<OwnedSlicePtr>;
+  constexpr auto Return(Collection&& slices) -> std::vector<OwnedSlicePtr>;
 
   [[nodiscard]] constexpr auto ReservedPoolSize() const -> SizeType;
   [[nodiscard]] constexpr auto DynamicPoolSize() const -> SizeType;
@@ -69,7 +64,7 @@ class AmalgamatedBufferSlicePool final : public BufferSlicePool<T> {
   using ReturnRawPtrResult =
       typename util::memory::PtrOwner<Slice>::ReturnRawPtrResult;
 
-  auto Return(Slice* slice) -> ReturnRawPtrResult override;
+  constexpr auto Return(Slice* slice) -> ReturnRawPtrResult override;
 
  private:
   Options options_;
@@ -78,14 +73,14 @@ class AmalgamatedBufferSlicePool final : public BufferSlicePool<T> {
 };
 
 template <class T>
-AmalgamatedBufferSlicePool<T>::AmalgamatedBufferSlicePool(
+constexpr AmalgamatedBufferSlicePool<T>::AmalgamatedBufferSlicePool(
     const Options& options)
     : options_{options},
       reserved_pool_{ReservedPool{options.reserved_pool_options}},
       dynamic_pool_{DynamicPool{options.dynamic_pool_options}} {}
 
 template <class T>
-auto AmalgamatedBufferSlicePool<T>::Borrow(
+constexpr auto AmalgamatedBufferSlicePool<T>::Borrow(
     const SizeType preferred_slice_capacity) -> BorrowResult {
   auto reserved_pool_slice_result =
       reserved_pool_.Borrow(preferred_slice_capacity);
@@ -98,13 +93,7 @@ auto AmalgamatedBufferSlicePool<T>::Borrow(
 }
 
 template <class T>
-auto AmalgamatedBufferSlicePool<T>::Return(Slice * /*unused*/)
-    -> ReturnRawPtrResult {
-  return ReturnRawPtrResult::Err({});
-}
-
-template <class T>
-auto AmalgamatedBufferSlicePool<T>::Return(OwnedSlicePtr&& slice)
+constexpr auto AmalgamatedBufferSlicePool<T>::Return(OwnedSlicePtr&& slice)
     -> ReturnResult {
   auto owner = slice.Owner();
   if (owner != &reserved_pool_ && owner != &dynamic_pool_) {
@@ -117,7 +106,7 @@ auto AmalgamatedBufferSlicePool<T>::Return(OwnedSlicePtr&& slice)
 
 template <class T>
 template <class Collection>
-auto AmalgamatedBufferSlicePool<T>::Return(Collection&& slices)
+constexpr auto AmalgamatedBufferSlicePool<T>::Return(Collection&& slices)
     -> std::vector<OwnedSlicePtr> {
   std::vector<OwnedSlicePtr> slices_owned_by_other_pools{};
   for (auto& slice : slices) {
@@ -192,6 +181,12 @@ constexpr auto AmalgamatedBufferSlicePool<T>::DynamicPoolFull() const -> bool {
 template <class T>
 constexpr auto AmalgamatedBufferSlicePool<T>::Full() const -> bool {
   return ReservedPoolFull() && DynamicPoolFull();
+}
+
+template <class T>
+constexpr auto AmalgamatedBufferSlicePool<T>::Return(Slice* /*unused*/)
+    -> ReturnRawPtrResult {
+  return ReturnRawPtrResult::Err({});
 }
 
 }  // namespace spoor::runtime::buffer

@@ -1,7 +1,7 @@
 #include "spoor/instrumentation/instrumentation.h"
 
-#include "llvm/Passes/PassPlugin.h"
 #include "llvm/Passes/PassBuilder.h"
+#include "llvm/Passes/PassPlugin.h"
 #include "spoor/instrumentation/config/config.h"
 #include "spoor/instrumentation/inject_runtime/inject_runtime.h"
 

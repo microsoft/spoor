@@ -16,10 +16,10 @@
 
 namespace {
 
-const auto config_ = spoor::runtime::config::Config::FromEnv();
-util::time::SystemClock system_clock_{};
-util::time::SteadyClock steady_clock_{};
-spoor::runtime::trace::TraceFileWriter trace_writer_{};
+auto config_ = spoor::runtime::config::Config::FromEnv();
+constinit util::time::SystemClock system_clock_{};
+constinit util::time::SteadyClock steady_clock_{};
+constinit spoor::runtime::trace::TraceFileWriter trace_writer_{};
 spoor::runtime::flush_queue::DiskFlushQueue flush_queue_{
     {.trace_file_path = config_.trace_file_path,
      .buffer_retention_duration =

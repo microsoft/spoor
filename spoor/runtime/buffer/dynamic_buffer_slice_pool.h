@@ -1,7 +1,8 @@
 #pragma once
 
+#include <algorithm>
 #include <atomic>
-#include <memory>
+#include <utility>
 
 #include "spoor/runtime/buffer/buffer_slice_pool.h"
 #include "spoor/runtime/buffer/circular_buffer.h"
@@ -31,14 +32,14 @@ class DynamicBufferSlicePool final : public BufferSlicePool<T> {
   };
 
   DynamicBufferSlicePool() = delete;
-  explicit constexpr DynamicBufferSlicePool(const Options& options);
+  constexpr explicit DynamicBufferSlicePool(const Options& options);
   DynamicBufferSlicePool(const DynamicBufferSlicePool&) = delete;
   DynamicBufferSlicePool(DynamicBufferSlicePool&&) noexcept = delete;
   auto operator=(const DynamicBufferSlicePool&)
       -> DynamicBufferSlicePool& = delete;
   auto operator=(DynamicBufferSlicePool&&) noexcept
       -> DynamicBufferSlicePool& = delete;
-  ~DynamicBufferSlicePool();
+  constexpr ~DynamicBufferSlicePool();
 
   // Borrow a buffer slice from the object pool whose size is the minimum of:
   // - The preferred slice size.
@@ -47,11 +48,11 @@ class DynamicBufferSlicePool final : public BufferSlicePool<T> {
   // Complexity:
   // - Lock-free O(borrow_cas_attempts) worst case.
   // - Lock-free O(1) with no thread contention.
-  [[nodiscard]] auto Borrow(SizeType preferred_slice_capacity)
+  [[nodiscard]] constexpr auto Borrow(SizeType preferred_slice_capacity)
       -> BorrowResult override;
   // Return a buffer slice to the object pool.
   // Complexity: Lock-free O(1).
-  auto Return(OwnedSlicePtr&& owned_ptr) -> ReturnResult override;
+  constexpr auto Return(OwnedSlicePtr&& owned_ptr) -> ReturnResult override;
 
   [[nodiscard]] constexpr auto Size() const -> SizeType override;
   [[nodiscard]] constexpr auto Capacity() const -> SizeType override;
@@ -62,11 +63,13 @@ class DynamicBufferSlicePool final : public BufferSlicePool<T> {
   using ReturnRawPtrResult =
       typename util::memory::PtrOwner<Slice>::ReturnRawPtrResult;
 
-  auto Return(Slice* slice) -> ReturnRawPtrResult override;
+  constexpr auto Return(Slice* slice) -> ReturnRawPtrResult override;
 
  private:
   Options options_;
   std::atomic_size_t borrowed_items_size_;
+
+  static_assert(std::atomic_size_t::is_always_lock_free);
 };
 
 template <class T>
@@ -75,13 +78,13 @@ constexpr DynamicBufferSlicePool<T>::DynamicBufferSlicePool(
     : options_{options}, borrowed_items_size_{0} {}
 
 template <class T>
-DynamicBufferSlicePool<T>::~DynamicBufferSlicePool() {
+constexpr DynamicBufferSlicePool<T>::~DynamicBufferSlicePool() {
   Expects(Full());
 }
 
 template <class T>
-auto DynamicBufferSlicePool<T>::Borrow(SizeType preferred_slice_capacity)
-    -> BorrowResult {
+constexpr auto DynamicBufferSlicePool<T>::Borrow(
+    SizeType preferred_slice_capacity) -> BorrowResult {
   for (SizeType attempt{0}; attempt < options_.borrow_cas_attempts; ++attempt) {
     auto borrowed_items_size = borrowed_items_size_.load();
     const auto buffer_size =
@@ -103,7 +106,8 @@ auto DynamicBufferSlicePool<T>::Borrow(SizeType preferred_slice_capacity)
 }
 
 template <class T>
-auto DynamicBufferSlicePool<T>::Return(Slice* slice) -> ReturnRawPtrResult {
+constexpr auto DynamicBufferSlicePool<T>::Return(Slice* slice)
+    -> ReturnRawPtrResult {
   // The dynamic buffer pool does not store a table of borrowed slices,
   // therefore, this method deletes a slice regardless if it is owned by the
   // pool.
@@ -116,7 +120,7 @@ auto DynamicBufferSlicePool<T>::Return(Slice* slice) -> ReturnRawPtrResult {
 }
 
 template <class T>
-auto DynamicBufferSlicePool<T>::Return(OwnedSlicePtr&& owned_ptr)
+constexpr auto DynamicBufferSlicePool<T>::Return(OwnedSlicePtr&& owned_ptr)
     -> ReturnResult {
   if (owned_ptr.Owner() != this) return std::move(owned_ptr);
   const auto result = Return(owned_ptr.Take());

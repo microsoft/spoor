@@ -1,4 +1,5 @@
 #include "spoor/instrumentation/config/config.h"
+
 #include "util/env.h"
 
 namespace spoor::instrumentation::config {

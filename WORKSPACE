@@ -16,32 +16,61 @@ new_git_repository(
     shallow_since = "1600896232 -0700",
 )
 
-http_archive(
-    name = "com_samolisov_bazel_llvm_bridge",
-    sha256 = "d1a471806651511ccde5e24573bcd2433a866f14b86c55ee74dd1b02418641d4",
-    strip_prefix = "bazel-llvm-bridge-release-10-05",
-    url = "https://github.com/samolisov/bazel-llvm-bridge/archive/release/10-05.zip",
+# http_archive(
+#     name = "com_samolisov_bazel_llvm_bridge",
+#     sha256 = "d1a471806651511ccde5e24573bcd2433a866f14b86c55ee74dd1b02418641d4",
+#     strip_prefix = "bazel-llvm-bridge-release-10-05",
+#     url = "https://github.com/samolisov/bazel-llvm-bridge/archive/release/10-05.zip",
+# )
+# 
+# load("@com_samolisov_bazel_llvm_bridge//llvm:llvm_configure.bzl", "llvm_configure")
+# 
+# llvm_configure(
+#     name = "org_llvm_llvm",
+#     add_headers_to_deps = True,
+# )
+
+# http_archive(
+#     name = "com_grail_bazel_toolchain",
+#     strip_prefix = "bazel-toolchain-master",
+#     urls = ["https://github.com/grailbio/bazel-toolchain/archive/master.tar.gz"],
+#     sha256 = "2d305a14280591a10e65bd8af16027f788b7b8491d658674a683f848063b7bc5"
+# )
+# 
+# load("@com_grail_bazel_toolchain//toolchain:deps.bzl", "bazel_toolchain_dependencies")
+# 
+# bazel_toolchain_dependencies()
+# 
+# load("@com_grail_bazel_toolchain//toolchain:rules.bzl", "llvm_toolchain")
+# 
+# llvm_toolchain(
+#     name = "llvm_toolchain",
+#     llvm_version = "11.0.0",
+# )
+# 
+# load("@llvm_toolchain//:toolchains.bzl", "llvm_register_toolchains")
+# 
+# llvm_register_toolchains()
+
+load("//toolchain:llvm.bzl", "llvm")
+llvm(
+    name = "llvm",
+    workspace_name = "spoor",
 )
 
-load("@com_samolisov_bazel_llvm_bridge//llvm:llvm_configure.bzl", "llvm_configure")
 
-llvm_configure(
-    name = "org_llvm_llvm",
-    add_headers_to_deps = True,
-)
-
-http_archive(
-    name = "com_apple_swift",
-    build_file = "@//toolchain:swift.BUILD",
-    patch_cmds = [
-        "cat /dev/null > include/swift/Runtime/Config.h",
-        "cat /dev/null > include/swift/Runtime/CMakeConfig.h",
-        "sed -i '' 's/SWIFT_RUNTIME_EXPORT//g' include/swift/Demangling/Demangle.h",
-    ],
-    sha256 = "f9e5bd81441c4ec13dd9ea290e2d7b8fe9b30ef66ad68947481022ea5179f83a",
-    strip_prefix = "swift-swift-5.3-RELEASE",
-    urls = ["https://github.com/apple/swift/archive/swift-5.3-RELEASE.tar.gz"],
-)
+# http_archive(
+#     name = "com_apple_swift",
+#     build_file = "@//toolchain:swift.BUILD",
+#     patch_cmds = [
+#         "cat /dev/null > include/swift/Runtime/Config.h",
+#         "cat /dev/null > include/swift/Runtime/CMakeConfig.h",
+#         "sed -i '' 's/SWIFT_RUNTIME_EXPORT//g' include/swift/Demangling/Demangle.h",
+#     ],
+#     sha256 = "f9e5bd81441c4ec13dd9ea290e2d7b8fe9b30ef66ad68947481022ea5179f83a",
+#     strip_prefix = "swift-swift-5.3-RELEASE",
+#     urls = ["https://github.com/apple/swift/archive/swift-5.3-RELEASE.tar.gz"],
+# )
 
 git_repository(
     name = "com_google_absl",

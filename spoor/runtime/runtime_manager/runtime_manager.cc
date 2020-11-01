@@ -161,9 +161,7 @@ auto RuntimeManager::DeleteFlushedTraceFilesOlderThan(
     std::function<void(DeletedFilesInfo)> completion) const -> void {
   std::thread{[trace_file_path{options_.trace_file_path}, timestamp,
                completion{std::move(completion)}] {
-    DeletedFilesInfo deleted_files_info {
-      .deleted_files = 0,
-      .deleted_bytes = 0};
+    DeletedFilesInfo deleted_files_info{.deleted_files = 0, .deleted_bytes = 0};
     for (const auto& file :
          std::filesystem::directory_iterator(trace_file_path)) {
       if (!file.is_regular_file() ||
@@ -182,8 +180,8 @@ auto RuntimeManager::DeleteFlushedTraceFilesOlderThan(
         }
         const auto header_system_clock_timestamp =
             std::chrono::time_point<std::chrono::system_clock>{
-              std::chrono::duration_cast<std::chrono::seconds>(
-                std::chrono::nanoseconds{header.system_clock_timestamp})};
+                std::chrono::duration_cast<std::chrono::seconds>(
+                    std::chrono::nanoseconds{header.system_clock_timestamp})};
         if (timestamp < header_system_clock_timestamp) continue;
       }
       const auto file_size = std::filesystem::file_size(file.path());

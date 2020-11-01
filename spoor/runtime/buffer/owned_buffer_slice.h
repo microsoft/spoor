@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iterator>
+#include <utility>
 #include <vector>
 
 #include "gsl/gsl"
@@ -13,12 +15,12 @@ class OwnedBufferSlice final : public CircularBuffer<T> {
   using SizeType = typename CircularBuffer<T>::SizeType;
 
   OwnedBufferSlice() = delete;
-  explicit constexpr OwnedBufferSlice(SizeType capacity);
+  constexpr explicit OwnedBufferSlice(SizeType capacity);
   OwnedBufferSlice(const OwnedBufferSlice&) = delete;
   constexpr OwnedBufferSlice(OwnedBufferSlice&& other) noexcept = default;
   auto operator=(const OwnedBufferSlice&) -> OwnedBufferSlice& = delete;
   auto operator=(OwnedBufferSlice&&) noexcept -> OwnedBufferSlice& = delete;
-  ~OwnedBufferSlice() = default;
+  constexpr ~OwnedBufferSlice() = default;
 
   constexpr auto Push(const T& item) -> void override;
   constexpr auto Push(T&& item) -> void override;
@@ -47,9 +49,7 @@ constexpr OwnedBufferSlice<T>::OwnedBufferSlice(SizeType capacity)
 template <class T>
 constexpr auto OwnedBufferSlice<T>::Push(const T& item) -> void {
   if (Capacity() == 0) return;
-  if (Full() && insertion_iterator_ == std::end(buffer_)) {
-    insertion_iterator_ = std::begin(buffer_);
-  }
+  if (WillWrapOnNextPush()) insertion_iterator_ = std::begin(buffer_);
   if (Full()) {
     *insertion_iterator_ = item;
     ++insertion_iterator_;
@@ -62,9 +62,7 @@ constexpr auto OwnedBufferSlice<T>::Push(const T& item) -> void {
 template <class T>
 constexpr auto OwnedBufferSlice<T>::Push(T&& item) -> void {
   if (Capacity() == 0) return;
-  if (Full() && insertion_iterator_ == std::end(buffer_)) {
-    insertion_iterator_ = std::begin(buffer_);
-  }
+  if (WillWrapOnNextPush()) insertion_iterator_ = std::begin(buffer_);
   if (Full()) {
     *insertion_iterator_ = std::move(item);
     ++insertion_iterator_;
@@ -84,9 +82,9 @@ template <class T>
 constexpr auto OwnedBufferSlice<T>::ContiguousMemoryChunks()
     -> std::vector<gsl::span<T>> {
   if (Empty()) return {};
-  if (!Full() || insertion_iterator_ == std::end(buffer_)) return {buffer_};
-  const auto begin = std::begin(buffer_);
   const auto end = std::end(buffer_);
+  const auto begin = std::begin(buffer_);
+  if (!Full() || insertion_iterator_ == end) return {buffer_};
   const gsl::span<T> first_chunk{
       &(*insertion_iterator_),
       static_cast<SizeType>(std::distance(insertion_iterator_, end))};
@@ -118,8 +116,7 @@ constexpr auto OwnedBufferSlice<T>::Full() const -> bool {
 
 template <class T>
 constexpr auto OwnedBufferSlice<T>::WillWrapOnNextPush() const -> bool {
-  if (!Full()) return false;
-  return insertion_iterator_ == std::end(buffer_);
+  return Full() && insertion_iterator_ == std::cend(buffer_);
 }
 
 }  // namespace spoor::runtime::buffer

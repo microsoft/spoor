@@ -1,7 +1,5 @@
 #pragma once
 
-#include <cstddef>
-
 #include "spoor/runtime/buffer/circular_buffer.h"
 #include "util/memory/owned_ptr.h"
 #include "util/memory/ptr_owner.h"
@@ -24,9 +22,8 @@ class BufferSlicePool : public util::memory::PtrOwner<CircularBuffer<T>> {
     kCasAttemptsExhausted,
   };
 
-  virtual ~BufferSlicePool() = default;
-
-  [[nodiscard]] virtual auto Borrow(SizeType preferred_slice_capacity)
+  virtual constexpr ~BufferSlicePool() = default;
+  [[nodiscard]] virtual constexpr auto Borrow(SizeType preferred_slice_capacity)
       -> BorrowResult = 0;
 
   [[nodiscard]] virtual constexpr auto Size() const -> SizeType = 0;
@@ -35,11 +32,13 @@ class BufferSlicePool : public util::memory::PtrOwner<CircularBuffer<T>> {
   [[nodiscard]] virtual constexpr auto Full() const -> bool = 0;
 
  protected:
-  BufferSlicePool() = default;
-  BufferSlicePool(const BufferSlicePool&) = default;
-  BufferSlicePool(BufferSlicePool&&) noexcept = default;
-  auto operator=(const BufferSlicePool&) -> BufferSlicePool& = default;
-  auto operator=(BufferSlicePool&&) noexcept -> BufferSlicePool& = default;
+  constexpr BufferSlicePool() = default;
+  constexpr BufferSlicePool(const BufferSlicePool&) = default;
+  constexpr BufferSlicePool(BufferSlicePool&&) noexcept = default;
+  constexpr auto operator=(const BufferSlicePool&)
+      -> BufferSlicePool& = default;
+  constexpr auto operator=(BufferSlicePool&&) noexcept
+      -> BufferSlicePool& = default;
 };
 
 }  // namespace spoor::runtime::buffer

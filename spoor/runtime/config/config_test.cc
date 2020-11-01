@@ -46,7 +46,7 @@ TEST(Config, GetsUserProvidedValue) {  // NOLINT
 }
 
 TEST(Config, UsesDefaultValueWhenNotSpecified) {  // NOLINT
-  const auto get_env = [](const char * /*unused*/) -> const char* {
+  const auto get_env = [](const char* /*unused*/) -> const char* {
     return nullptr;
   };
   Config expected_options{
