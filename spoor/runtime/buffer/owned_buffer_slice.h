@@ -40,4 +40,83 @@ class OwnedBufferSlice final : public CircularBuffer<T> {
   typename std::vector<T>::iterator insertion_iterator_;
 };
 
+template <class T>
+constexpr OwnedBufferSlice<T>::OwnedBufferSlice(SizeType capacity)
+    : capacity_{capacity}, buffer_{}, insertion_iterator_{std::begin(buffer_)} {
+  buffer_.reserve(capacity);
+}
+
+template <class T>
+constexpr auto OwnedBufferSlice<T>::Push(const T& item) -> void {
+  if (Capacity() == 0) return;
+  if (WillWrapOnNextPush()) insertion_iterator_ = std::begin(buffer_);
+  if (Full()) {
+    *insertion_iterator_ = item;
+    ++insertion_iterator_;
+  } else {
+    buffer_.push_back(item);
+    insertion_iterator_ = buffer_.end();
+  }
+}
+
+template <class T>
+constexpr auto OwnedBufferSlice<T>::Push(T&& item) -> void {
+  if (Capacity() == 0) return;
+  if (WillWrapOnNextPush()) insertion_iterator_ = std::begin(buffer_);
+  if (Full()) {
+    *insertion_iterator_ = std::move(item);
+    ++insertion_iterator_;
+  } else {
+    buffer_.push_back(std::move(item));
+    insertion_iterator_ = buffer_.end();
+  }
+}
+
+template <class T>
+constexpr auto OwnedBufferSlice<T>::Clear() -> void {
+  buffer_.clear();
+  insertion_iterator_ = std::begin(buffer_);
+}
+
+template <class T>
+constexpr auto OwnedBufferSlice<T>::ContiguousMemoryChunks()
+    -> std::vector<gsl::span<T>> {
+  if (Empty()) return {};
+  const auto end = std::end(buffer_);
+  const auto begin = std::begin(buffer_);
+  if (!Full() || insertion_iterator_ == end) return {buffer_};
+  const gsl::span<T> first_chunk{
+      &(*insertion_iterator_),
+      static_cast<SizeType>(std::distance(insertion_iterator_, end))};
+  const gsl::span<T> second_chunk{
+      &(*begin),
+      static_cast<SizeType>(std::distance(begin, insertion_iterator_))};
+  return {first_chunk, second_chunk};
+}
+
+template <class T>
+constexpr auto OwnedBufferSlice<T>::Size() const -> SizeType {
+  return buffer_.size();
+}
+
+template <class T>
+constexpr auto OwnedBufferSlice<T>::Capacity() const -> SizeType {
+  return capacity_;
+}
+
+template <class T>
+constexpr auto OwnedBufferSlice<T>::Empty() const -> bool {
+  return buffer_.empty();
+}
+
+template <class T>
+constexpr auto OwnedBufferSlice<T>::Full() const -> bool {
+  return Capacity() <= Size();
+}
+
+template <class T>
+constexpr auto OwnedBufferSlice<T>::WillWrapOnNextPush() const -> bool {
+  return Full() && insertion_iterator_ == std::cend(buffer_);
+}
+
 }  // namespace spoor::runtime::buffer
