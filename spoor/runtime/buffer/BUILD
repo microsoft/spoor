@@ -1,4 +1,4 @@
-load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 cc_library(
     name = "buffer",
@@ -19,5 +19,19 @@ cc_library(
         "//util:result",
         "//util/memory",
         "@com_microsoft_gsl//:gsl",
+    ],
+)
+
+cc_test(
+    name = "buffer_slice_test",
+    size = "small",
+    srcs = ["buffer_slice_test.cc"],
+    copts = ["-Werror"],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":buffer",
+        "//util:numeric",
+        "//util/memory",
+        "@com_google_googletest//:gtest_main",
     ],
 )
