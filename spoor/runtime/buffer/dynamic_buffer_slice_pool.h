@@ -72,4 +72,80 @@ class DynamicBufferSlicePool final : public BufferSlicePool<T> {
   static_assert(std::atomic_size_t::is_always_lock_free);
 };
 
+template <class T>
+constexpr DynamicBufferSlicePool<T>::DynamicBufferSlicePool(
+    const Options& options)
+    : options_{options}, borrowed_items_size_{0} {}
+
+template <class T>
+constexpr DynamicBufferSlicePool<T>::~DynamicBufferSlicePool() {
+  Expects(Full());
+}
+
+template <class T>
+constexpr auto DynamicBufferSlicePool<T>::Borrow(
+    SizeType preferred_slice_capacity) -> BorrowResult {
+  for (SizeType attempt{0}; attempt < options_.borrow_cas_attempts; ++attempt) {
+    auto borrowed_items_size = borrowed_items_size_.load();
+    const auto buffer_size =
+        std::min({preferred_slice_capacity, options_.max_slice_capacity,
+                  Capacity(), Capacity() - borrowed_items_size});
+    const auto new_borrowed_items_size = borrowed_items_size + buffer_size;
+    const auto exchanged = borrowed_items_size_.compare_exchange_weak(
+        borrowed_items_size, new_borrowed_items_size);
+    if (exchanged) {
+      if (buffer_size < 1) return BorrowError::kNoSlicesAvailable;
+      // Conceptually, the pool owns the pointer, therefore, using `gsl::owner`
+      // expresses the wrong semantics.
+      // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
+      auto* slice = new OwnedSlice{buffer_size};
+      return OwnedSlicePtr{slice, this};
+    }
+  }
+  return BorrowError::kCasAttemptsExhausted;
+}
+
+template <class T>
+constexpr auto DynamicBufferSlicePool<T>::Return(Slice* slice)
+    -> ReturnRawPtrResult {
+  // The dynamic buffer pool does not store a table of borrowed slices,
+  // therefore, this method deletes a slice regardless if it is owned by the
+  // pool.
+  borrowed_items_size_ -= slice->Capacity();
+  // Conceptually, the pool owns the pointer, therefore, using `gsl::owner`
+  // expresses the wrong semantics. Additionally, `Return`'s signature must
+  // match its interface's signature.
+  delete slice;  // NOLINT(cppcoreguidelines-owning-memory)
+  return ReturnRawPtrResult::Ok({});
+}
+
+template <class T>
+constexpr auto DynamicBufferSlicePool<T>::Return(OwnedSlicePtr&& owned_ptr)
+    -> ReturnResult {
+  if (owned_ptr.Owner() != this) return std::move(owned_ptr);
+  const auto result = Return(owned_ptr.Take());
+  if (result.IsOk()) return ReturnResult::Ok({});
+  return std::move(owned_ptr);
+}
+
+template <class T>
+constexpr auto DynamicBufferSlicePool<T>::Size() const -> SizeType {
+  return Capacity() - borrowed_items_size_;
+}
+
+template <class T>
+constexpr auto DynamicBufferSlicePool<T>::Capacity() const -> SizeType {
+  return options_.capacity;
+}
+
+template <class T>
+constexpr auto DynamicBufferSlicePool<T>::Empty() const -> bool {
+  return Size() == 0;
+}
+
+template <class T>
+constexpr auto DynamicBufferSlicePool<T>::Full() const -> bool {
+  return Capacity() <= Size();
+}
+
 }  // namespace spoor::runtime::buffer
