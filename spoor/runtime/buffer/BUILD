@@ -78,3 +78,18 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_test(
+    name = "amalgamated_buffer_slice_pool_test",
+    size = "small",
+    srcs = ["amalgamated_buffer_slice_pool_test.cc"],
+    copts = ["-Werror"],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":buffer",
+        "//util:numeric",
+        "//util:result",
+        "//util/memory",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
