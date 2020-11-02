@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <atomic>
 #include <utility>
 #include <vector>
@@ -74,5 +75,100 @@ class ReservedBufferSlicePool final : public BufferSlicePool<T> {
   static_assert(std::atomic_bool::is_always_lock_free);
   static_assert(std::atomic_size_t::is_always_lock_free);
 };
+
+template <class T>
+constexpr ReservedBufferSlicePool<T>::ReservedBufferSlicePool(
+    const Options& options)
+    : options_{options},
+      buffer_{std::vector<T>(options.capacity)},
+      pool_{[&]() -> std::vector<UnownedSlice> {
+        if (options.max_slice_capacity == 0) return {};
+        const auto maximally_sized_slices_size =
+            options.capacity / options.max_slice_capacity;
+        const auto remainder_slice_buffer_size =
+            options.capacity % options.max_slice_capacity;
+        const auto slices_size =
+            maximally_sized_slices_size +
+            std::min(remainder_slice_buffer_size, SizeType{1});
+        std::vector<UnownedSlice> pool{};
+        pool.reserve(slices_size);
+        for (SizeType index{0}; index < maximally_sized_slices_size; ++index) {
+          auto* buffer =
+              std::next(buffer_.data(), options.max_slice_capacity * index);
+          const gsl::span<T> unowned_buffer{buffer, options.max_slice_capacity};
+          pool.push_back(UnownedSlice{unowned_buffer});
+        }
+        if (remainder_slice_buffer_size != 0) {
+          auto* buffer = std::next(
+              buffer_.data(), options.max_slice_capacity * (slices_size - 1));
+          const gsl::span<T> unowned_buffer{buffer,
+                                            remainder_slice_buffer_size};
+          pool.push_back(UnownedSlice{unowned_buffer});
+        }
+        return pool;
+      }()},
+      borrowed_{std::vector<std::atomic_bool>(pool_.size())},
+      size_{options.capacity} {}
+
+template <class T>
+ReservedBufferSlicePool<T>::~ReservedBufferSlicePool() {
+  Expects(Full());
+}
+
+template <class T>
+constexpr auto ReservedBufferSlicePool<T>::Borrow(SizeType /*unused*/)
+    -> BorrowResult {
+  for (SizeType index{0}; index < pool_.size(); ++index) {
+    if (!borrowed_.at(index).exchange(true)) {
+      auto* slice = &pool_.at(index);
+      size_ -= slice->Capacity();
+      return OwnedSlicePtr{slice, this};
+    }
+  }
+  return BorrowError::kNoSlicesAvailable;
+}
+
+template <class T>
+constexpr auto ReservedBufferSlicePool<T>::Return(OwnedSlicePtr&& owned_ptr)
+    -> ReturnResult {
+  if (owned_ptr.Owner() != this) return std::move(owned_ptr);
+  const auto result = Return(owned_ptr.Take());
+  if (result.IsOk()) return ReturnResult::Ok({});
+  return std::move(owned_ptr);
+}
+
+template <class T>
+constexpr auto ReservedBufferSlicePool<T>::Size() const -> SizeType {
+  return size_;
+}
+
+template <class T>
+constexpr auto ReservedBufferSlicePool<T>::Capacity() const -> SizeType {
+  return options_.capacity;
+}
+
+template <class T>
+constexpr auto ReservedBufferSlicePool<T>::Empty() const -> bool {
+  return Size() == 0;
+}
+
+template <class T>
+constexpr auto ReservedBufferSlicePool<T>::Full() const -> bool {
+  return Capacity() <= Size();
+}
+
+template <class T>
+constexpr auto ReservedBufferSlicePool<T>::Return(Slice* slice)
+    -> ReturnRawPtrResult {
+  auto* unowned_slice = static_cast<UnownedSlice*>(slice);
+  const auto index = std::distance(pool_.data(), unowned_slice);
+  if (index < 0 || Capacity() <= gsl::narrow_cast<SizeType>(index)) {
+    return ReturnRawPtrResult::Err({});
+  }
+  slice->Clear();
+  borrowed_.at(index) = false;
+  size_ += slice->Capacity();
+  return ReturnRawPtrResult::Ok({});
+}
 
 }  // namespace spoor::runtime::buffer
