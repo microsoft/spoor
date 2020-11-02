@@ -9,6 +9,7 @@
 
 #include "gtest/gtest.h"
 #include "spoor/runtime/buffer/circular_buffer.h"
+#include "spoor/runtime/buffer/dynamic_buffer_slice_pool.h"
 #include "spoor/runtime/buffer/reserved_buffer_slice_pool.h"
 #include "util/memory/owned_ptr.h"
 #include "util/numeric.h"
@@ -21,6 +22,7 @@ using SizeType = Slice::SizeType;
 using BufferSlicePool = spoor::runtime::buffer::BufferSlicePool<ValueType>;
 using BorrowError = BufferSlicePool::BorrowError;
 using OwnedSlicePtr = util::memory::OwnedPtr<Slice>;
+using DynamicPool = spoor::runtime::buffer::DynamicBufferSlicePool<ValueType>;
 using ReservedPool = spoor::runtime::buffer::ReservedBufferSlicePool<ValueType>;
 
 struct Options {
@@ -31,11 +33,16 @@ struct Options {
 
 auto Pools(const Options options)
     -> std::vector<std::unique_ptr<BufferSlicePool>> {
+  const typename DynamicPool::Options dynamic_pool_options{
+      .max_slice_capacity = options.max_slice_capacity,
+      .capacity = options.capacity,
+      .borrow_cas_attempts = options.borrow_cas_attempts};
   const typename ReservedPool::Options reserved_pool_options{
       .max_slice_capacity = options.max_slice_capacity,
       .capacity = options.capacity};
   std::vector<std::unique_ptr<BufferSlicePool>> pools{};
-  pools.reserve(1);
+  pools.reserve(2);
+  pools.push_back(std::make_unique<DynamicPool>(dynamic_pool_options));
   pools.push_back(std::make_unique<ReservedPool>(reserved_pool_options));
   return pools;
 }
