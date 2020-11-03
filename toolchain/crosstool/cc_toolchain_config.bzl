@@ -96,8 +96,8 @@ def linux_llvm_toolchain_impl(ctx):
         cxx_builtin_include_directories = [
             "/usr/include",
             "/usr/lib/llvm-11/include/llvm",
-            "/usr/lib/llvm-11/lib/clang/11.0.0/include",
-            "/usr/lib/llvm-11/lib/clang/11.0.0/share",
+            "/usr/lib/llvm-11/lib/clang/11.0.1/include",
+            "/usr/lib/llvm-11/lib/clang/11.0.1/share",
         ],
         toolchain_identifier = "linux-llvm-toolchain",
         host_system_name = "local",
