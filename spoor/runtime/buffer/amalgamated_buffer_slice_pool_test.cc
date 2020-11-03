@@ -26,7 +26,7 @@ using AmalgamatedPool =
     spoor::runtime::buffer::AmalgamatedBufferSlicePool<ValueType>;
 
 TEST(AmalgamatedBufferSlicePool, BorrowSliceFromReservedPool) {  // NOLINT
-  const SizeType dynamic_pool_capacity{0};
+  constexpr SizeType dynamic_pool_capacity{0};
   for (const SizeType reserved_pool_capacity : {0, 1, 2, 5}) {
     const auto expected_capacity =
         reserved_pool_capacity + dynamic_pool_capacity;
@@ -89,7 +89,7 @@ TEST(AmalgamatedBufferSlicePool, BorrowSliceFromReservedPool) {  // NOLINT
 }
 
 TEST(AmalgamatedBufferSlicePool, BorrowSliceFromDynamicPool) {  // NOLINT
-  const SizeType reserved_pool_capacity{0};
+  constexpr SizeType reserved_pool_capacity{0};
   for (const SizeType dynamic_pool_capacity : {0, 1, 2, 5}) {
     const auto expected_capacity =
         reserved_pool_capacity + dynamic_pool_capacity;
@@ -276,11 +276,11 @@ TEST(AmalgamatedBufferSlicePool, BulkReturnSlices) {  // NOLINT
 
 // NOLINTNEXTLINE
 TEST(AmalgamatedBufferSlicePool, BulkReturnReturnsErrorWithSlicesItDoesNotOwn) {
-  const ReservedPoolOptions reserved_pool_options{.max_slice_capacity = 1,
-                                                  .capacity = 1};
-  const DynamicPoolOptions dynamic_pool_options{
+  constexpr ReservedPoolOptions reserved_pool_options{.max_slice_capacity = 1,
+                                                      .capacity = 1};
+  constexpr DynamicPoolOptions dynamic_pool_options{
       .max_slice_capacity = 1, .capacity = 1, .borrow_cas_attempts = 1};
-  const AmalgamatedPool::Options options{
+  constexpr AmalgamatedPool::Options options{
       .reserved_pool_options = reserved_pool_options,
       .dynamic_pool_options = dynamic_pool_options};
   AmalgamatedPool pool_a{options};
