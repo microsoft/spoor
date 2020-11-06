@@ -1,4 +1,4 @@
-#include "spoor/runtime/buffer/amalgamated_buffer_slice_pool.h"
+#include "spoor/runtime/buffer/combined_buffer_slice_pool.h"
 
 #include <unordered_set>
 #include <vector>
@@ -22,10 +22,9 @@ using DynamicPoolOptions =
     spoor::runtime::buffer::DynamicBufferSlicePool<ValueType>::Options;
 using ReservedPoolOptions =
     spoor::runtime::buffer::ReservedBufferSlicePool<ValueType>::Options;
-using AmalgamatedPool =
-    spoor::runtime::buffer::AmalgamatedBufferSlicePool<ValueType>;
+using CombinedPool = spoor::runtime::buffer::CombinedBufferSlicePool<ValueType>;
 
-TEST(AmalgamatedBufferSlicePool, BorrowSliceFromReservedPool) {  // NOLINT
+TEST(CombinedBufferSlicePool, BorrowSliceFromReservedPool) {  // NOLINT
   constexpr SizeType dynamic_pool_capacity{0};
   for (const SizeType reserved_pool_capacity : {0, 1, 2, 5}) {
     const auto expected_capacity =
@@ -36,10 +35,10 @@ TEST(AmalgamatedBufferSlicePool, BorrowSliceFromReservedPool) {  // NOLINT
         .max_slice_capacity = 1,
         .capacity = dynamic_pool_capacity,
         .borrow_cas_attempts = 1};
-    const AmalgamatedPool::Options options{
+    const CombinedPool::Options options{
         .reserved_pool_options = reserved_pool_options,
         .dynamic_pool_options = dynamic_pool_options};
-    AmalgamatedPool pool{options};
+    CombinedPool pool{options};
     ASSERT_EQ(pool.Capacity(), expected_capacity);
     ASSERT_EQ(pool.Size(), pool.Capacity());
     std::vector<OwnedSlicePtr> retained_slices{};
@@ -88,7 +87,7 @@ TEST(AmalgamatedBufferSlicePool, BorrowSliceFromReservedPool) {  // NOLINT
   }
 }
 
-TEST(AmalgamatedBufferSlicePool, BorrowSliceFromDynamicPool) {  // NOLINT
+TEST(CombinedBufferSlicePool, BorrowSliceFromDynamicPool) {  // NOLINT
   constexpr SizeType reserved_pool_capacity{0};
   for (const SizeType dynamic_pool_capacity : {0, 1, 2, 5}) {
     const auto expected_capacity =
@@ -99,10 +98,10 @@ TEST(AmalgamatedBufferSlicePool, BorrowSliceFromDynamicPool) {  // NOLINT
         .max_slice_capacity = 1,
         .capacity = dynamic_pool_capacity,
         .borrow_cas_attempts = 1};
-    const AmalgamatedPool::Options options{
+    const CombinedPool::Options options{
         .reserved_pool_options = reserved_pool_options,
         .dynamic_pool_options = dynamic_pool_options};
-    AmalgamatedPool pool{options};
+    CombinedPool pool{options};
     ASSERT_EQ(pool.Capacity(), dynamic_pool_capacity);
     ASSERT_EQ(pool.Size(), pool.Capacity());
     std::vector<OwnedSlicePtr> retained_slices{};
@@ -151,7 +150,7 @@ TEST(AmalgamatedBufferSlicePool, BorrowSliceFromDynamicPool) {  // NOLINT
 }
 
 // NOLINTNEXTLINE
-TEST(AmalgamatedBufferSlicePool, BorrowSliceFromReservedAndDynamicPools) {
+TEST(CombinedBufferSlicePool, BorrowSliceFromReservedAndDynamicPools) {
   for (const SizeType reserved_pool_capacity : {0, 1, 2, 5}) {
     for (const SizeType dynamic_pool_capacity : {0, 1, 2, 5}) {
       const auto expected_capacity =
@@ -162,10 +161,10 @@ TEST(AmalgamatedBufferSlicePool, BorrowSliceFromReservedAndDynamicPools) {
           .max_slice_capacity = 1,
           .capacity = dynamic_pool_capacity,
           .borrow_cas_attempts = 1};
-      const AmalgamatedPool::Options options{
+      const CombinedPool::Options options{
           .reserved_pool_options = reserved_pool_options,
           .dynamic_pool_options = dynamic_pool_options};
-      AmalgamatedPool pool{options};
+      CombinedPool pool{options};
       ASSERT_EQ(pool.Capacity(), expected_capacity);
       ASSERT_EQ(pool.Size(), pool.Capacity());
       std::vector<OwnedSlicePtr> retained_slices{};
@@ -246,7 +245,7 @@ TEST(AmalgamatedBufferSlicePool, BorrowSliceFromReservedAndDynamicPools) {
   }
 }
 
-TEST(AmalgamatedBufferSlicePool, BulkReturnSlices) {  // NOLINT
+TEST(CombinedBufferSlicePool, BulkReturnSlices) {  // NOLINT
   for (const SizeType reserved_pool_capacity : {0, 1, 2, 5}) {
     for (const SizeType dynamic_pool_capacity : {0, 1, 2, 5}) {
       const ReservedPoolOptions reserved_pool_options{
@@ -255,10 +254,10 @@ TEST(AmalgamatedBufferSlicePool, BulkReturnSlices) {  // NOLINT
           .max_slice_capacity = 1,
           .capacity = dynamic_pool_capacity,
           .borrow_cas_attempts = 1};
-      const AmalgamatedPool::Options options{
+      const CombinedPool::Options options{
           .reserved_pool_options = reserved_pool_options,
           .dynamic_pool_options = dynamic_pool_options};
-      AmalgamatedPool pool{options};
+      CombinedPool pool{options};
       std::vector<OwnedSlicePtr> retained_slices{};
       retained_slices.reserve(reserved_pool_capacity + dynamic_pool_capacity);
       for (SizeType i{0}; i < pool.Capacity(); ++i) {
@@ -275,15 +274,15 @@ TEST(AmalgamatedBufferSlicePool, BulkReturnSlices) {  // NOLINT
 }
 
 // NOLINTNEXTLINE
-TEST(AmalgamatedBufferSlicePool, BulkReturnReturnsErrorWithSlicesItDoesNotOwn) {
+TEST(CombinedBufferSlicePool, BulkReturnReturnsErrorWithSlicesItDoesNotOwn) {
   constexpr ReservedPoolOptions reserved_pool_options{.max_slice_capacity = 1,
                                                       .capacity = 1};
   constexpr DynamicPoolOptions dynamic_pool_options{
       .max_slice_capacity = 1, .capacity = 1, .borrow_cas_attempts = 1};
-  constexpr AmalgamatedPool::Options options{
+  constexpr CombinedPool::Options options{
       .reserved_pool_options = reserved_pool_options,
       .dynamic_pool_options = dynamic_pool_options};
-  AmalgamatedPool pool_a{options};
+  CombinedPool pool_a{options};
   std::vector<OwnedSlicePtr> pool_a_slices{};
   pool_a_slices.reserve(pool_a.Capacity());
   for (SizeType i{0}; i < pool_a.Capacity(); ++i) {
@@ -291,7 +290,7 @@ TEST(AmalgamatedBufferSlicePool, BulkReturnReturnsErrorWithSlicesItDoesNotOwn) {
     ASSERT_TRUE(result.IsOk());
     pool_a_slices.push_back(std::move(result.Ok()));
   }
-  AmalgamatedPool pool_b{options};
+  CombinedPool pool_b{options};
   auto slices_not_owned_by_pool_b = pool_b.Return(std::move(pool_a_slices));
   ASSERT_EQ(slices_not_owned_by_pool_b.size(), pool_a.Capacity());
   const auto slices_not_owned_by_pool_a =

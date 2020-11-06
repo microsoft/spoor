@@ -13,7 +13,7 @@
 namespace spoor::runtime::buffer {
 
 template <class T>
-class AmalgamatedBufferSlicePool final : public BufferSlicePool<T> {
+class CombinedBufferSlicePool final : public BufferSlicePool<T> {
  public:
   using ValueType = T;
   using Slice = CircularBuffer<T>;
@@ -30,15 +30,15 @@ class AmalgamatedBufferSlicePool final : public BufferSlicePool<T> {
     typename DynamicPool::Options dynamic_pool_options;
   };
 
-  AmalgamatedBufferSlicePool() = delete;
-  constexpr explicit AmalgamatedBufferSlicePool(const Options& options);
-  AmalgamatedBufferSlicePool(const AmalgamatedBufferSlicePool&) = delete;
-  AmalgamatedBufferSlicePool(AmalgamatedBufferSlicePool&&) noexcept = delete;
-  auto operator=(const AmalgamatedBufferSlicePool&)
-      -> AmalgamatedBufferSlicePool& = delete;
-  auto operator=(AmalgamatedBufferSlicePool&&) noexcept
-      -> AmalgamatedBufferSlicePool& = delete;
-  constexpr ~AmalgamatedBufferSlicePool() = default;
+  CombinedBufferSlicePool() = delete;
+  constexpr explicit CombinedBufferSlicePool(const Options& options);
+  CombinedBufferSlicePool(const CombinedBufferSlicePool&) = delete;
+  CombinedBufferSlicePool(CombinedBufferSlicePool&&) noexcept = delete;
+  auto operator=(const CombinedBufferSlicePool&)
+      -> CombinedBufferSlicePool& = delete;
+  auto operator=(CombinedBufferSlicePool&&) noexcept
+      -> CombinedBufferSlicePool& = delete;
+  constexpr ~CombinedBufferSlicePool() = default;
 
   // Borrow a buffer from the reserved pool if available. Otherwise, borrow a
   // buffer from the dynamic pool if available.
@@ -74,14 +74,14 @@ class AmalgamatedBufferSlicePool final : public BufferSlicePool<T> {
 };
 
 template <class T>
-constexpr AmalgamatedBufferSlicePool<T>::AmalgamatedBufferSlicePool(
+constexpr CombinedBufferSlicePool<T>::CombinedBufferSlicePool(
     const Options& options)
     : options_{options},
       reserved_pool_{ReservedPool{options.reserved_pool_options}},
       dynamic_pool_{DynamicPool{options.dynamic_pool_options}} {}
 
 template <class T>
-constexpr auto AmalgamatedBufferSlicePool<T>::Borrow(
+constexpr auto CombinedBufferSlicePool<T>::Borrow(
     const SizeType preferred_slice_capacity) -> BorrowResult {
   auto reserved_pool_slice_result =
       reserved_pool_.Borrow(preferred_slice_capacity);
@@ -94,7 +94,7 @@ constexpr auto AmalgamatedBufferSlicePool<T>::Borrow(
 }
 
 template <class T>
-constexpr auto AmalgamatedBufferSlicePool<T>::Return(OwnedSlicePtr&& slice)
+constexpr auto CombinedBufferSlicePool<T>::Return(OwnedSlicePtr&& slice)
     -> ReturnResult {
   auto owner = slice.Owner();
   if (owner != &reserved_pool_ && owner != &dynamic_pool_) {
@@ -107,7 +107,7 @@ constexpr auto AmalgamatedBufferSlicePool<T>::Return(OwnedSlicePtr&& slice)
 
 template <class T>
 template <class Collection>
-constexpr auto AmalgamatedBufferSlicePool<T>::Return(Collection&& slices)
+constexpr auto CombinedBufferSlicePool<T>::Return(Collection&& slices)
     -> std::vector<OwnedSlicePtr> {
   std::vector<OwnedSlicePtr> slices_owned_by_other_pools{};
   for (auto& slice : slices) {
@@ -120,72 +120,70 @@ constexpr auto AmalgamatedBufferSlicePool<T>::Return(Collection&& slices)
 }
 
 template <class T>
-constexpr auto AmalgamatedBufferSlicePool<T>::ReservedPoolSize() const
+constexpr auto CombinedBufferSlicePool<T>::ReservedPoolSize() const
     -> SizeType {
   return reserved_pool_.Size();
 }
 
 template <class T>
-constexpr auto AmalgamatedBufferSlicePool<T>::DynamicPoolSize() const
-    -> SizeType {
+constexpr auto CombinedBufferSlicePool<T>::DynamicPoolSize() const -> SizeType {
   return dynamic_pool_.Size();
 }
 
 template <class T>
-constexpr auto AmalgamatedBufferSlicePool<T>::Size() const -> SizeType {
+constexpr auto CombinedBufferSlicePool<T>::Size() const -> SizeType {
   return ReservedPoolSize() + DynamicPoolSize();
 }
 
 template <class T>
-constexpr auto AmalgamatedBufferSlicePool<T>::ReservedPoolCapacity() const
+constexpr auto CombinedBufferSlicePool<T>::ReservedPoolCapacity() const
     -> SizeType {
   return reserved_pool_.Capacity();
 }
 
 template <class T>
-constexpr auto AmalgamatedBufferSlicePool<T>::DynamicPoolCapacity() const
+constexpr auto CombinedBufferSlicePool<T>::DynamicPoolCapacity() const
     -> SizeType {
   return dynamic_pool_.Capacity();
 }
 
 template <class T>
-constexpr auto AmalgamatedBufferSlicePool<T>::Capacity() const -> SizeType {
+constexpr auto CombinedBufferSlicePool<T>::Capacity() const -> SizeType {
   return ReservedPoolCapacity() + DynamicPoolCapacity();
 }
 
 template <class T>
-constexpr auto AmalgamatedBufferSlicePool<T>::ReservedPoolEmpty() const
-    -> bool {
+constexpr auto CombinedBufferSlicePool<T>::ReservedPoolEmpty() const -> bool {
   return reserved_pool_.Empty();
 }
 
 template <class T>
-constexpr auto AmalgamatedBufferSlicePool<T>::DynamicPoolEmpty() const -> bool {
+constexpr auto CombinedBufferSlicePool<T>::DynamicPoolEmpty() const -> bool {
   return dynamic_pool_.Empty();
 }
 
 template <class T>
-constexpr auto AmalgamatedBufferSlicePool<T>::Empty() const -> bool {
+constexpr auto CombinedBufferSlicePool<T>::Empty() const -> bool {
   return ReservedPoolEmpty() && DynamicPoolEmpty();
 }
 
 template <class T>
-constexpr auto AmalgamatedBufferSlicePool<T>::ReservedPoolFull() const -> bool {
+constexpr auto CombinedBufferSlicePool<T>::ReservedPoolFull() const -> bool {
   return reserved_pool_.Full();
 }
 
 template <class T>
-constexpr auto AmalgamatedBufferSlicePool<T>::DynamicPoolFull() const -> bool {
+constexpr auto CombinedBufferSlicePool<T>::DynamicPoolFull() const -> bool {
   return dynamic_pool_.Full();
 }
 
 template <class T>
-constexpr auto AmalgamatedBufferSlicePool<T>::Full() const -> bool {
+constexpr auto CombinedBufferSlicePool<T>::Full() const -> bool {
   return ReservedPoolFull() && DynamicPoolFull();
 }
 
 template <class T>
-constexpr auto AmalgamatedBufferSlicePool<T>::Return(Slice* /*unused*/)
+constexpr auto CombinedBufferSlicePool<T>::Return(Slice* /*unused*/)
     -> ReturnRawPtrResult {
   return ReturnRawPtrResult::Err({});
 }
