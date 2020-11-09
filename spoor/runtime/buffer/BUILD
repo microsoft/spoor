@@ -23,6 +23,21 @@ cc_library(
 )
 
 cc_test(
+    name = "circular_buffer_test",
+    size = "small",
+    srcs = ["circular_buffer_test.cc"],
+    copts = ["-Werror"],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":buffer",
+        "//util:numeric",
+        "//util/memory",
+        "@com_google_googletest//:gtest_main",
+        "@com_microsoft_gsl//:gsl",
+    ],
+)
+
+cc_test(
     name = "buffer_slice_test",
     size = "small",
     srcs = ["buffer_slice_test.cc"],
@@ -45,21 +60,6 @@ cc_test(
     deps = [
         ":buffer",
         "//util:numeric",
-        "//util/memory",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
-
-cc_test(
-    name = "combined_buffer_slice_pool_test",
-    size = "small",
-    srcs = ["combined_buffer_slice_pool_test.cc"],
-    copts = ["-Werror"],
-    visibility = ["//visibility:private"],
-    deps = [
-        ":buffer",
-        "//util:numeric",
-        "//util:result",
         "//util/memory",
         "@com_google_googletest//:gtest_main",
     ],
@@ -90,6 +90,34 @@ cc_test(
         ":buffer",
         "//util:numeric",
         "//util/memory",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "combined_buffer_slice_pool_test",
+    size = "small",
+    srcs = ["combined_buffer_slice_pool_test.cc"],
+    copts = ["-Werror"],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":buffer",
+        "//util:numeric",
+        "//util:result",
+        "//util/memory",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "circular_slice_buffer_test",
+    size = "small",
+    srcs = ["circular_slice_buffer_test.cc"],
+    copts = ["-Werror"],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":buffer",
+        "//util:numeric",
         "@com_google_googletest//:gtest_main",
     ],
 )
