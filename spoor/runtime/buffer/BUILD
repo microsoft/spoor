@@ -3,10 +3,10 @@ load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 cc_library(
     name = "buffer",
     hdrs = [
-        "amalgamated_buffer_slice_pool.h",
         "buffer_slice_pool.h",
         "circular_buffer.h",
         "circular_slice_buffer.h",
+        "combined_buffer_slice_pool.h",
         "dynamic_buffer_slice_pool.h",
         "owned_buffer_slice.h",
         "reserved_buffer_slice_pool.h",
@@ -45,6 +45,21 @@ cc_test(
     deps = [
         ":buffer",
         "//util:numeric",
+        "//util/memory",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "combined_buffer_slice_pool_test",
+    size = "small",
+    srcs = ["combined_buffer_slice_pool_test.cc"],
+    copts = ["-Werror"],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":buffer",
+        "//util:numeric",
+        "//util:result",
         "//util/memory",
         "@com_google_googletest//:gtest_main",
     ],

@@ -20,7 +20,11 @@ FEATURES = [
                 actions = [ACTION_NAMES.cpp_link_executable],
                 flag_groups = ([
                     flag_group(
-                        flags = ["-lstdc++"],
+                        flags = [
+                            "-lstdc++",
+                            "-lm",
+                            "-lpthread",
+                        ],
                     ),
                 ]),
             ),

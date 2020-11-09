@@ -9,6 +9,7 @@
 
 #include "gtest/gtest.h"
 #include "spoor/runtime/buffer/circular_buffer.h"
+#include "spoor/runtime/buffer/combined_buffer_slice_pool.h"
 #include "spoor/runtime/buffer/dynamic_buffer_slice_pool.h"
 #include "spoor/runtime/buffer/reserved_buffer_slice_pool.h"
 #include "util/memory/owned_ptr.h"
@@ -22,6 +23,7 @@ using SizeType = Slice::SizeType;
 using BufferSlicePool = spoor::runtime::buffer::BufferSlicePool<ValueType>;
 using BorrowError = BufferSlicePool::BorrowError;
 using OwnedSlicePtr = util::memory::OwnedPtr<Slice>;
+using CombinedPool = spoor::runtime::buffer::CombinedBufferSlicePool<ValueType>;
 using DynamicPool = spoor::runtime::buffer::DynamicBufferSlicePool<ValueType>;
 using ReservedPool = spoor::runtime::buffer::ReservedBufferSlicePool<ValueType>;
 
@@ -40,10 +42,37 @@ auto Pools(const Options options)
   const typename ReservedPool::Options reserved_pool_options{
       .max_slice_capacity = options.max_slice_capacity,
       .capacity = options.capacity};
+  std::vector<typename CombinedPool::Options> combined_pool_options{
+      {.reserved_pool_options = {.max_slice_capacity =
+                                     options.max_slice_capacity,
+                                 .capacity = options.capacity},
+       .dynamic_pool_options = {.max_slice_capacity = 0,
+                                .capacity = 0,
+                                .borrow_cas_attempts =
+                                    options.borrow_cas_attempts}},
+      {.reserved_pool_options = {.max_slice_capacity = 0, .capacity = 0},
+       .dynamic_pool_options = {.max_slice_capacity =
+                                    options.max_slice_capacity,
+                                .capacity = options.capacity,
+                                .borrow_cas_attempts =
+                                    options.borrow_cas_attempts}},
+      {.reserved_pool_options = {.max_slice_capacity =
+                                     options.max_slice_capacity,
+                                 .capacity = options.max_slice_capacity *
+                                             (options.capacity /
+                                              options.max_slice_capacity)},
+       .dynamic_pool_options =
+           {.max_slice_capacity = options.max_slice_capacity,
+            .capacity = options.capacity % options.max_slice_capacity,
+            .borrow_cas_attempts = options.borrow_cas_attempts}},
+  };
   std::vector<std::unique_ptr<BufferSlicePool>> pools{};
-  pools.reserve(2);
+  pools.reserve(2 + combined_pool_options.size());
   pools.push_back(std::make_unique<DynamicPool>(dynamic_pool_options));
   pools.push_back(std::make_unique<ReservedPool>(reserved_pool_options));
+  for (const auto options : combined_pool_options) {
+    pools.push_back(std::make_unique<CombinedPool>(options));
+  }
   return pools;
 }
 
