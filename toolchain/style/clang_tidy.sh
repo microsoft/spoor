@@ -46,7 +46,9 @@ echo "Building C++ targets"
 bazel build $(bazel query 'kind(cc_.*, //...)')
 
 if [ $# -eq 0 ]; then
+  # TODO(#34): Do not exclude `trace_writer_mock.h`.
   find "$WORKSPACE" \
+    -type f -name "trace_writer_mock.h" -prune -o \
     -type f \( -iname "*.h" -o -iname "*.cc" \) \
     -print0 |
       while read -d $'\0' file_name; do
