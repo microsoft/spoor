@@ -14,6 +14,8 @@ jobs:
     displayName: Build
   - script: bazel test //...
     displayName: Test
+  - script: ./toolchain/benchmark/run_benchmarks.sh
+    displayName: Benchmark
   - script: ./toolchain/compilation_database/generate_compilation_database.sh
     displayName: Generate compilation database
 - job: sanitizers

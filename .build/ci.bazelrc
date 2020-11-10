@@ -25,3 +25,7 @@ build:ubsan --copt -g
 build:ubsan --copt -fno-omit-frame-pointer
 build:ubsan --linkopt -fsanitize=undefined
 build:ubsan --linkopt -lubsan
+
+build:benchmark --compilation_mode opt
+build:benchmark --copt -fno-omit-frame-pointer
+build:benchmark --copt -DNDEBUG

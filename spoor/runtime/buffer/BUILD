@@ -1,4 +1,4 @@
-load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 
 cc_library(
     name = "buffer",
@@ -119,5 +119,18 @@ cc_test(
         ":buffer",
         "//util:numeric",
         "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_binary(
+    name = "circular_slice_buffer_benchmark",
+    srcs = ["circular_slice_buffer_benchmark.cc"],
+    copts = ["-Werror"],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":buffer",
+        "//util:numeric",
+        "@com_google_benchmark//:benchmark",
+        "@com_microsoft_gsl//:gsl",
     ],
 )
