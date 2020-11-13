@@ -18,17 +18,13 @@ jobs:
     displayName: Benchmark
   - script: ./toolchain/compilation_database/generate_compilation_database.sh
     displayName: Generate compilation database
-- job: sanitizers
-  pool:
-    vmImage: 'ubuntu-20.04'
-  steps:
-  - template: ./templates/install-common.yml
   - script: bazel test --config=asan //...
     displayName: Address sanitizer
   - script: bazel test --config=tsan //...
     displayName: Thread sanitizer
   - script: bazel test --config=ubsan //...
     displayName: Undefined behavior sanitizer
+    condition: eq(variables['Agent.OS'], 'Linux')
 - job: style_and_lint
   pool:
     vmImage: 'ubuntu-20.04'
