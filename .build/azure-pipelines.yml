@@ -27,11 +27,9 @@ jobs:
     condition: eq(variables['Agent.OS'], 'Linux')
 - job: style_and_lint
   pool:
-    vmImage: 'ubuntu-20.04'
+    vmImage: 'macos-10.15'
   steps:
   - template: ./templates/install-common.yml
-  - script: sudo apt-get install clang-format-11 clang-tidy-11
-    displayName: Install Clang Format and Clang Tidy
   - script: |
       ./toolchain/style/clang_format.sh
       git diff --exit-code
