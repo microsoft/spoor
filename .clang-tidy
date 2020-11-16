@@ -1,8 +1,8 @@
 # cppcoreguidelines-init-variables
 #   Appears not to support the {} default initializer.
 # fuchsia-default-arguments
-#   Default arguments are permitted.
 # fuchsia-default-arguments-calls
+# fuchsia-default-arguments-declarations
 #   Function calls with default argument calls are permitted.
 # fuchsia-overloaded-operator
 #   Operator overloading is permitted.
@@ -26,6 +26,7 @@ Checks: '
   -cppcoreguidelines-init-variables,
   -fuchsia-default-arguments,
   -fuchsia-default-arguments-calls,
+  -fuchsia-default-arguments-declarations,
   -fuchsia-overloaded-operator,
   -fuchsia-trailing-return,
   -llvm-header-guard,
