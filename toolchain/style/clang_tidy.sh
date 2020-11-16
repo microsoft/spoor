@@ -33,11 +33,13 @@ bazel build $(bazel query 'kind(cc_.*, //...)')
 if [ $# -eq 0 ]; then
   # TODO(#34): Do not exclude `trace_writer_mock.h`.
   # TODO(#37): Do not exclude `flush_queue_mock.h`.
+  # TODO(#42): Do not exclude `event_logger_notifier_mock.h`.
   find "$WORKSPACE" \
     -type f \
     \( -iname "*.h" -o -iname "*.cc" \) \
     ! -name "trace_writer_mock.h" \
     ! -name "flush_queue_mock.h" \
+    ! -name "event_logger_notifier_mock.h" \
     -print0 |
       while read -d $'\0' file_name; do
         run_clang_tidy "$file_name"
