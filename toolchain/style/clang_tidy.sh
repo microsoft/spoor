@@ -13,26 +13,11 @@ else
   exit 1
 fi
 
-if [[ "$AZURE_PIPELINES_OS" == "Linux" ]]; then
-  echo "Detected Linux CI environment"
-  # TODO(#17): Remove CI-specific warnings as errors.
-  # Clang Tidy is mysteriously emitting the following violation in CI for most
-  # source files the following error:
-  # `error: invalid case style for template parameter 'expr-type'`.
-  # The does not make sense because 'expr-type' is invalid template parameter
-  # syntax and does not reproduce locally (on macOS or Ubuntu). The check will
-  # not be treated as an error for not to unblock development.
-  WARNING_AS_ERRORS="-readability-identifier-naming"
-else
-  WARNING_AS_ERRORS=""
-fi
-
 function run_clang_tidy {
   echo "Tidying $1"
   "$CLANG_TIDY" \
     -p="$WORKSPACE" \
     --checks='' \
-    --warnings-as-errors="$WARNING_AS_ERRORS" \
     --config="$(cat "$WORKSPACE"/.clang-tidy)" \
     "$1"
 }
@@ -46,13 +31,13 @@ echo "Building C++ targets"
 bazel build $(bazel query 'kind(cc_.*, //...)')
 
 if [ $# -eq 0 ]; then
-  # TODO(#34): Do not exclude `flush_queue_mock.h`.
+  # TODO(#34): Do not exclude `trace_writer_mock.h`.
   # TODO(#37): Do not exclude `flush_queue_mock.h`.
   find "$WORKSPACE" \
     -type f \
     \( -iname "*.h" -o -iname "*.cc" \) \
-    ! -name "flush_queue_mock.h" \
     ! -name "trace_writer_mock.h" \
+    ! -name "flush_queue_mock.h" \
     -print0 |
       while read -d $'\0' file_name; do
         run_clang_tidy "$file_name"
