@@ -19,10 +19,14 @@ EventLogger::~EventLogger() {
 }
 
 auto EventLogger::SetPool(Pool* pool) -> void {
-  if (pool == nullptr) Flush();
+  if (pool == nullptr) {
+    Flush();
+    buffer_ = {};
+  } else {
+    buffer_ = Buffer{
+        {.buffer_slice_pool = pool, .capacity = options_.preferred_capacity}};
+  }
   pool_ = pool;
-  buffer_ = Buffer{
-      {.buffer_slice_pool = pool_, .capacity = options_.preferred_capacity}};
 }
 
 auto EventLogger::LogEvent(trace::Event::Type type,
