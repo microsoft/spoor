@@ -1,7 +1,9 @@
 #include "spoor/runtime/event_logger/event_logger.h"
 
 #include <chrono>
+#include <utility>
 
+#include "gsl/gsl"
 #include "util/memory/owned_ptr.h"
 
 namespace spoor::runtime::event_logger {
