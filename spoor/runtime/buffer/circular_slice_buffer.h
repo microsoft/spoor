@@ -30,7 +30,7 @@ class CircularSliceBuffer final : public CircularBuffer<T> {
   using SlicesType = std::vector<OwnedSlicePtr>;
 
   struct Options {
-    SlicePool* buffer_slice_pool;
+    gsl::not_null<SlicePool*> buffer_slice_pool;
     SizeType capacity;
   };
 

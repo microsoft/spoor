@@ -81,7 +81,7 @@ auto DiskFlushQueue::Run() -> void {
           flush_completion_.swap(flush_completion);
         }
       }
-      if (flush_completion.has_value()) {
+      if (flush_completion.has_value() && flush_completion.value() != nullptr) {
         std::thread{[completion{std::move(flush_completion.value())}] {
           completion();
         }}.detach();

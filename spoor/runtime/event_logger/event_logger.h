@@ -2,6 +2,7 @@
 
 #include <optional>
 
+#include "gsl/gsl"
 #include "spoor/runtime/buffer/buffer_slice_pool.h"
 #include "spoor/runtime/buffer/circular_slice_buffer.h"
 #include "spoor/runtime/event_logger/event_logger_notifier.h"
@@ -19,9 +20,9 @@ class EventLogger {
   using SizeType = Buffer::SizeType;
 
   struct Options {
-    util::time::SteadyClock* steady_clock;
-    EventLoggerNotifier* event_logger_notifier;
-    flush_queue::FlushQueue<Buffer>* flush_queue;
+    gsl::not_null<util::time::SteadyClock*> steady_clock;
+    gsl::not_null<EventLoggerNotifier*> event_logger_notifier;
+    gsl::not_null<flush_queue::FlushQueue<Buffer>*> flush_queue;
     SizeType preferred_capacity;
     bool flush_buffer_when_full;
   };

@@ -11,6 +11,7 @@
 #include <thread>
 #include <unordered_set>
 
+#include "gsl/gsl"
 #include "spoor/runtime/buffer/circular_slice_buffer.h"
 #include "spoor/runtime/flush_queue/flush_queue.h"
 #include "spoor/runtime/trace/trace.h"
@@ -29,9 +30,9 @@ class DiskFlushQueue final
   struct Options {
     std::filesystem::path trace_file_path;
     std::chrono::nanoseconds buffer_retention_duration;
-    util::time::SystemClock* system_clock;
-    util::time::SteadyClock* steady_clock;
-    trace::TraceWriter* trace_writer;
+    gsl::not_null<util::time::SystemClock*> system_clock;
+    gsl::not_null<util::time::SteadyClock*> steady_clock;
+    gsl::not_null<trace::TraceWriter*> trace_writer;
     trace::SessionId session_id;
     trace::ProcessId process_id;
     int32 max_buffer_flush_attempts;
