@@ -1,9 +1,10 @@
+#include "spoor/runtime/trace/trace_file_writer.h"
+
 #include <filesystem>
 #include <fstream>
 #include <ios>
 
 #include "spoor/runtime/trace/trace.h"
-#include "spoor/runtime/trace/trace_writer.h"
 
 namespace spoor::runtime::trace {
 
@@ -11,7 +12,7 @@ auto TraceFileWriter::Write(const std::filesystem::path& file_path,
                             const Header header, Events* events,
                             const Footer footer) const -> Result {
   std::ofstream file{file_path, std::ios::trunc | std::ios::binary};
-  if (!file.is_open()) return Result::Err({});
+  if (!file.is_open()) return Error::kFailedToOpenFile;
   const auto serialized_header = Serialize(header);
   file.write(serialized_header.data(), serialized_header.size());
   for (auto& chunk : events->ContiguousMemoryChunks()) {
