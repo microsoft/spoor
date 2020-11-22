@@ -29,7 +29,7 @@ cc_test(
         ":flush_queue",
         "//spoor/runtime/buffer",
         "//spoor/runtime/trace",
-        "//spoor/runtime/trace:trace_writer_mock",
+        "//spoor/runtime/trace:trace_mock",
         "//util:numeric",
         "//util/time:clock_mock",
         "@com_google_absl//absl/strings:str_format",
