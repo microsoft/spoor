@@ -14,7 +14,7 @@ namespace spoor::runtime::config {
 
 constexpr std::string_view kTraceFilePathKey{"SPOOR_RUNTIME_TRACE_FILE_PATH"};
 // NOLINTNEXTLINE(fuchsia-statically-constructed-objects)
-const std::string kTraceFilePathDefaultValue{};
+const std::string kTraceFilePathDefaultValue{"."};
 constexpr std::string_view kSessionIdKey{"SPOOR_RUNTIME_SESSION_ID"};
 // NOLINTNEXTLINE(fuchsia-statically-constructed-objects)
 constexpr auto kSessionIdDefaultValue = [] {
@@ -54,8 +54,7 @@ constexpr trace::DurationNanoseconds
     kEventBufferRetentionNanosecondsDefaultValue{0};
 constexpr std::string_view kMaxFlushBufferToFileAttemptsKey{
     "SPOOR_RUNTIME_MAX_FLUSH_BUFFER_TO_FILE_ATTEMPTS"};
-constexpr int32 kMaxFlushBufferToFileAttemptsDefaultValue{
-    std::numeric_limits<int32>::max()};
+constexpr int32 kMaxFlushBufferToFileAttemptsDefaultValue{2};
 constexpr std::string_view kFlushAllEventsKey{"SPOOR_RUNTIME_FLUSH_ALL_EVENTS"};
 constexpr bool kFlushAllEventsDefaultValue{true};
 

@@ -17,7 +17,7 @@ namespace spoor::runtime::runtime_manager {
 
 RuntimeManager::RuntimeManager(Options options)
     : options_{std::move(options)},
-      pool_{},
+      pool_{nullptr},
       initialized_{false},
       enabled_{false} {}
 

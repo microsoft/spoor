@@ -60,7 +60,7 @@ TEST(Config, UsesDefaultValueWhenNotSpecified) {  // NOLINT
     return nullptr;
   };
   Config expected_options{
-      .trace_file_path = "",
+      .trace_file_path{"."},
       .session_id = 0,  // Ignored
       .thread_event_buffer_capacity = 10'000,
       .max_reserved_event_buffer_slice_capacity = 1'000,
@@ -69,7 +69,7 @@ TEST(Config, UsesDefaultValueWhenNotSpecified) {  // NOLINT
       .dynamic_event_pool_capacity = std::numeric_limits<SizeType>::max(),
       .dynamic_event_slice_borrow_cas_attempts = 1,
       .event_buffer_retention_duration_nanoseconds = 0,
-      .max_flush_buffer_to_file_attempts = std::numeric_limits<int32>::max(),
+      .max_flush_buffer_to_file_attempts = 2,
       .flush_all_events = true};
   const auto options = Config::FromEnv(get_env);
   // Ignore `session_id` which is randomly generated.
