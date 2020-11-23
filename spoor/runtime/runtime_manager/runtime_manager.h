@@ -132,11 +132,11 @@ auto RuntimeManager::DeleteFlushedTraceFilesOlderThan(
               std::chrono::duration_cast<std::chrono::microseconds>(
                   std::chrono::nanoseconds{header.system_clock_timestamp})};
       if (timestamp < header_system_clock_timestamp) continue;
-      const auto file_size = file_system->FileSize(file->path());
-      const auto success = file_system->Remove(file->path());
-      if (success) {
+      const auto file_size_result = file_system->FileSize(file->path());
+      const auto success_result = file_system->Remove(file->path());
+      if (success_result.IsOk()) {
         ++deleted_files_info.deleted_files;
-        deleted_files_info.deleted_bytes += file_size;
+        deleted_files_info.deleted_bytes += file_size_result.OkOr(0);
       }
     }
     if (completion != nullptr) completion(deleted_files_info);

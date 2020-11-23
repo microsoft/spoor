@@ -7,6 +7,7 @@ cc_library(
     ],
     copts = ["-Werror"],
     visibility = ["//visibility:public"],
+    deps = ["//util:result"],
 )
 
 cc_library(
@@ -20,6 +21,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":file_system",
+        "//util:result",
         "@com_google_googletest//:gtest",
     ],
 )
