@@ -4,6 +4,7 @@
 #include <chrono>
 #include <future>
 #include <map>
+#include <system_error>
 #include <thread>
 #include <utility>
 
@@ -34,6 +35,7 @@ using testing::ElementsAreArray;
 using testing::Return;
 using util::file_system::testing::DirectoryEntryMock;
 using util::file_system::testing::FileSystemMock;
+using util::result::None;
 using util::time::testing::MakeTimePoint;
 using util::time::testing::SteadyClockMock;
 using FlushQueueMock = spoor::runtime::flush_queue::testing::FlushQueueMock<
@@ -240,7 +242,9 @@ TEST(RuntimeManager, DeleteFlushedTraceFilesOlderThan) {  // NOLINT
   for (auto i{-1}; i < trace_files_size + 3; ++i) {
     for (auto j{0}; j < std::min(i, trace_files_size); ++j) {
       const auto path = make_path(j);
-      EXPECT_CALL(file_system, Remove(path)).WillOnce(Return(true));
+      EXPECT_CALL(file_system, Remove(path))
+          .WillOnce(
+              Return(util::result::Result<None, std::error_code>::Ok({})));
     }
     const auto timestamp = make_timestamp(i) - 1'000;
     std::promise<RuntimeManager::DeletedFilesInfo> promise{};

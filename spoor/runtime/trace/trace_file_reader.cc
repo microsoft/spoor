@@ -18,7 +18,9 @@ TraceFileReader::TraceFileReader(Options options)
 
 auto TraceFileReader::MatchesTraceFileConvention(
     const std::filesystem::path& file) const -> bool {
-  return options_.file_system->IsRegularFile(file) &&
+  const auto result = options_.file_system->IsRegularFile(file);
+  const auto is_regular_file = result.OkOr(false);
+  return is_regular_file &&
          std::regex_match(file.filename().string(), kTraceFileNamePattern);
 }
 
