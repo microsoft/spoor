@@ -14,7 +14,6 @@
 #include "spoor/runtime/buffer/circular_slice_buffer.h"
 #include "spoor/runtime/buffer/reserved_buffer_slice_pool.h"
 #include "spoor/runtime/trace/trace.h"
-#include "spoor/runtime/trace/trace_writer.h"
 #include "spoor/runtime/trace/trace_writer_mock.h"
 #include "util/numeric.h"
 #include "util/time/clock_mock.h"
@@ -132,7 +131,7 @@ TEST(DiskFlushQueue, WritesEvents) {  // NOLINT
            header.steady_clock_timestamp == steady_clock_timestamp &&
            gsl::narrow_cast<SizeType>(header.event_count) == events.size();
   };
-  const auto matches_events = [expected_events = &events](Buffer* buffer) {
+  const auto matches_events = [expected_events{&events}](Buffer* buffer) {
     const auto chunks = buffer->ContiguousMemoryChunks();
     if (chunks.size() != 1) return false;
     const auto events = chunks.front();
