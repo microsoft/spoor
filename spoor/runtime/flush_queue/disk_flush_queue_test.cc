@@ -2,8 +2,8 @@
 
 #include <atomic>
 #include <chrono>
-#include <condition_variable>
 #include <filesystem>
+#include <future>
 #include <iterator>
 #include <vector>
 
@@ -233,18 +233,12 @@ TEST(DiskFlushQueue, FlushCallback) {  // NOLINT
   flush_queue.Enqueue(std::move(buffer_a));
   ASSERT_EQ(flush_queue.Size(), 1);
   ++time;
-  {
-    std::mutex mutex{};
-    std::condition_variable condition_variable{};
-    flush_queue.Flush([&mutex, &condition_variable] {
-      std::unique_lock lock{mutex};
-      condition_variable.notify_all();
-    });
-    ++time;
-    flush_queue.Enqueue(std::move(buffer_b));
-    std::unique_lock lock{mutex};
-    condition_variable.wait(lock);
-  }
+  std::promise<void> promise{};
+  flush_queue.Flush([&promise] { promise.set_value(); });
+  ++time;
+  flush_queue.Enqueue(std::move(buffer_b));
+  auto future = promise.get_future();
+  future.wait();
   ASSERT_EQ(flush_queue.Size(), 1);
   flush_queue.Clear();
   ASSERT_TRUE(flush_queue.Empty());
