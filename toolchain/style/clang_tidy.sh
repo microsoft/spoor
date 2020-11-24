@@ -33,6 +33,9 @@ bazel build $(bazel query 'kind(cc_.*, //...)')
 if [ $# -eq 0 ]; then
   # TODO(#42): Do not exclude `event_logger_notifier_mock.h`.
   # TODO(#37): Do not exclude `flush_queue_mock.h`.
+  # `runtime.h` is excluded because the header uses a C-style API which emits
+  # numerous warnings. Suppressing the warnings via NOLINT adds a considerable
+  # amount of visual noise.
   # TODO(#49): Do not exclude `trace_reader_mock.h`.
   # TODO(#34): Do not exclude `trace_writer_mock.h`.
   find "$WORKSPACE" \
@@ -40,6 +43,7 @@ if [ $# -eq 0 ]; then
     \( -iname "*.h" -o -iname "*.cc" \) \
     ! -name "event_logger_notifier_mock.h" \
     ! -name "flush_queue_mock.h" \
+    ! -name "runtime.h" \
     ! -name "trace_reader_mock.h" \
     ! -name "trace_writer_mock.h" \
     -print0 |

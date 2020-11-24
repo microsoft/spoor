@@ -111,6 +111,10 @@ CheckOptions:
     value: CamelCase
   - key: readability-identifier-naming.GlobalConstantPrefix
     value: k
+  - key: readability-identifier-naming.GlobalVariableCase
+    value: lower_case
+  - key: readability-identifier-naming.GlobalVariableSuffix
+    value: _
   - key: readability-identifier-naming.IgnoreMainLikeFunctions
     value: 1
   - key: readability-identifier-naming.NamespaceCase
