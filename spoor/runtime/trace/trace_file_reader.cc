@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 #include "spoor/runtime/trace/trace_file_reader.h"
 
 #include <array>

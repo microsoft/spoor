@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 #include "spoor/runtime/event_logger/event_logger.h"
 
 #include <chrono>

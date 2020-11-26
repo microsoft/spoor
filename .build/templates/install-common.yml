@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 steps:
 - script: |
     wget https://apt.llvm.org/llvm.sh

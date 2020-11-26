@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 #include "spoor/runtime/buffer/circular_slice_buffer.h"
 
 #include <algorithm>

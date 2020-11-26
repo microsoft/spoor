@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 #include "util/file_system/local_file_system.h"
 
 #include <cstdint>

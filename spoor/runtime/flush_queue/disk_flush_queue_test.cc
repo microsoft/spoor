@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 #include "spoor/runtime/flush_queue/disk_flush_queue.h"
 
 #include <atomic>
