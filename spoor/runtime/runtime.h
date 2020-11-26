@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 #ifndef SPOOR_RUNTIME
 #define SPOOR_RUNTIME
 

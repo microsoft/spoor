@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 #include "toolchain/compilation_database/compilation_database_util.h"
 
 #include <filesystem>

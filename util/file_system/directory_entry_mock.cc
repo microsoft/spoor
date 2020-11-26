@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 #include "util/file_system/directory_entry_mock.h"
 
 #include <filesystem>

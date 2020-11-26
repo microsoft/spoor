@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 load(
     ":cc_toolchain_config.bzl",
     "cc_toolchain_config_darwin",

@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 cc_library(
     name = "clock",
     hdrs = ["clock.h"],

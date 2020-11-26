@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 cc_library(
     name = "file_system",
     srcs = ["local_file_system.cc"],

@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 #include "spoor/runtime/buffer/circular_buffer.h"
 
 #include <algorithm>

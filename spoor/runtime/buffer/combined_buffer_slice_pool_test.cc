@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 #include "spoor/runtime/buffer/combined_buffer_slice_pool.h"
 
 #include <unordered_set>

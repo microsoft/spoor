@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 cc_library(
     name = "env",
     srcs = ["env.cc"],
