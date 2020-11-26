@@ -21,9 +21,10 @@ $ bazel test //... --test_output=all
 
 ## Style and lint
 ```
-$ bazel run //toolchain/style:buildifier  # Format Starlark files
-$ ./toolchain/style/clang_format.sh       # Format C++ and Protobuf files
-$ ./toolchain/style/clang_tidy.sh         # Lint C++ files
+$ bazel run //toolchain/style:buildifier                # Format Starlark files
+$ ./toolchain/style/clang_format.sh                     # Format C++ and Protobuf files
+$ ./toolchain/style/clang_tidy.sh                       # Lint C++ files
+$ ./toolchain/copyright_header/add_copyright_header.sh  # Add copyright header
 ```
 ## Compilation database
 Generate a `compile_commands.json` compilation database used by Clang Tidy for

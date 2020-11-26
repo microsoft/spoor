@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 jobs:
 - job: build_and_test
   strategy:
@@ -30,6 +33,10 @@ jobs:
     vmImage: 'macos-10.15'
   steps:
   - template: ./templates/install-common.yml
+  - script: |
+      ./toolchain/copyright_header/add_copyright_header.sh
+      git diff --exit-code
+    displayName: Copyright header
   - script: |
       ./toolchain/style/clang_format.sh
       git diff --exit-code
