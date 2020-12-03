@@ -24,9 +24,11 @@ FEATURES = [
                 flag_groups = ([
                     flag_group(
                         flags = [
+                            "-lc++",
                             "-lstdc++",
-                            "-lm",
                             "-lpthread",
+                            "-lm",
+                            "-lz",
                         ],
                     ),
                 ]),
@@ -45,6 +47,7 @@ FEATURES = [
                     flag_group(
                         flags = [
                             "-std=c++20",
+                            "-stdlib=libc++",
                             "-pthread",
                             "-fno-exceptions",
                             "-fno-rtti",
@@ -102,7 +105,8 @@ def linux_llvm_toolchain_impl(ctx):
         features = FEATURES,
         cxx_builtin_include_directories = [
             "/usr/include",
-            "/usr/lib/llvm-11/include/llvm",
+            "/usr/include/c++/10/",
+            "/usr/lib/llvm-11/include/c++/v1/",
             "/usr/lib/llvm-11/lib/clang/11.0.1/include",
             "/usr/lib/llvm-11/lib/clang/11.0.1/share",
         ],

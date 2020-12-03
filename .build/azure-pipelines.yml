@@ -7,8 +7,6 @@ jobs:
     matrix:
       linux:
         imageName: 'ubuntu-20.04'
-      mac:
-        imageName: 'macos-10.15'
   pool:
     vmImage: $(imageName)
   steps:
@@ -28,24 +26,3 @@ jobs:
   - script: bazel test --config=ubsan //...
     displayName: Undefined behavior sanitizer
     condition: eq(variables['Agent.OS'], 'Linux')
-- job: style_and_lint
-  pool:
-    vmImage: 'macos-10.15'
-  steps:
-  - template: ./templates/install-common.yml
-  - script: |
-      ./toolchain/copyright_header/add_copyright_header.sh
-      git diff --exit-code
-    displayName: Copyright header
-  - script: |
-      ./toolchain/style/clang_format.sh
-      git diff --exit-code
-    displayName: Clang Format
-  - script: |
-      bazel run //toolchain/style:buildifier
-      git diff --exit-code
-    displayName: Buildifier
-  - script: ./toolchain/style/clang_tidy.sh
-    displayName: Clang Tidy
-    env:
-      AZURE_PIPELINES_OS: $(Agent.OS)
