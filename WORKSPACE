@@ -3,6 +3,7 @@
 
 workspace(name = "spoor")
 
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load(
     "@bazel_tools//tools/build_defs/repo:git.bzl",
     "git_repository",
@@ -15,6 +16,39 @@ new_git_repository(
     commit = "5de956aaf0c80f58b1326591cd59bad72be79556",  # 2020-09-23 (>v3.1.0)
     remote = "https://github.com/microsoft/gsl.git",
     shallow_since = "1600896232 -0700",
+)
+
+# TODO(#54): Migrate to the original repository when the fork's changes with
+# LLVM 11 support are checked in.
+git_repository(
+    name = "llvm",
+    commit = "eb12c9841cae08461e0f1ca03fc43cd9e788064b",
+    remote = "https://github.com/lelandjansen/bazel_llvm",
+    shallow_since = "1606261631 -0800",
+)
+
+load("@llvm//tools/bzl:deps.bzl", "llvm_deps")
+
+llvm_deps()
+
+http_archive(
+    name = "com_apple_swift",
+    build_file = "@//toolchain:swift.BUILD",
+    patch_cmds = [
+        "cat /dev/null > include/swift/Basic/STLExtras.h",
+        "cat /dev/null > include/swift/Runtime/Config.h",
+        "cat /dev/null > include/swift/Runtime/CMakeConfig.h",
+        """
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+          sed -i '' 's/SWIFT_RUNTIME_EXPORT//g' include/swift/Demangling/Demangle.h
+        else
+          sed -i 's/SWIFT_RUNTIME_EXPORT//g' include/swift/Demangling/Demangle.h
+        fi
+        """,
+    ],
+    sha256 = "73cec0b4967562cdcd14d724cfcc25ad6d1aaf3e0d42f25bfaf23a38f22c63be",
+    strip_prefix = "swift-swift-5.3.1-RELEASE",
+    urls = ["https://github.com/apple/swift/archive/swift-5.3.1-RELEASE.tar.gz"],
 )
 
 git_repository(
