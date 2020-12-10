@@ -19,10 +19,12 @@ cc_proto_library(
 proto_library(
     name = "compile_commands_proto",
     srcs = ["compile_commands.proto"],
+    visibility = ["//visibility:private"],
 )
 
 cc_proto_library(
     name = "compile_commands_cc_proto",
+    visibility = ["//visibility:private"],
     deps = [":compile_commands_proto"],
 )
 
@@ -31,7 +33,7 @@ cc_library(
     srcs = ["compilation_database_util.cc"],
     hdrs = ["compilation_database_util.h"],
     copts = ["-Werror"],
-    visibility = ["//visibility:public"],
+    visibility = ["//visibility:private"],
     deps = [
         ":compile_commands_cc_proto",
         ":extra_actions_base_cc_proto",
@@ -61,6 +63,7 @@ cc_binary(
         "extract_compile_command.cc",
     ],
     copts = ["-Werror"],
+    visibility = ["//visibility:public"],
     deps = [
         ":compilation_database_util",
         "@com_google_absl//absl/flags:flag",
@@ -74,6 +77,7 @@ cc_binary(
     name = "concatenate_compile_commands",
     srcs = ["concatenate_compile_commands.cc"],
     copts = ["-Werror"],
+    visibility = ["//visibility:public"],
     deps = [
         ":compilation_database_util",
         "@com_google_absl//absl/flags:flag",
@@ -96,4 +100,5 @@ extra_action(
         --output_file=$(output $(ACTION_ID).compile_command.pb)",
     out_templates = ["$(ACTION_ID).compile_command.pb"],
     tools = [":extract_compile_command"],
+    visibility = ["//visibility:public"],
 )

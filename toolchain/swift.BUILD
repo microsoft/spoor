@@ -21,7 +21,5 @@ cc_library(
     ],
     strip_include_prefix = "include",
     visibility = ["//visibility:public"],
-    deps = [
-        "@llvm//11.0.0",
-    ],
+    deps = ["@llvm//11.0.0"],
 )

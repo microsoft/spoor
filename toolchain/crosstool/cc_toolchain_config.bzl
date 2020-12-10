@@ -24,7 +24,6 @@ FEATURES = [
                 flag_groups = ([
                     flag_group(
                         flags = [
-                            "-lc++",
                             "-lstdc++",
                             "-lpthread",
                             "-lm",
@@ -47,7 +46,6 @@ FEATURES = [
                     flag_group(
                         flags = [
                             "-std=c++20",
-                            "-stdlib=libc++",
                             "-pthread",
                             "-fno-exceptions",
                             "-fno-rtti",
@@ -129,7 +127,7 @@ def darwin_llvm_toolchain_impl(ctx):
         ),
         tool_path(
             name = "ld",
-            path = "/usr/local/opt/llvm/bin/lld",
+            path = "/usr/local/opt/llvm/bin/ld64.lld",
         ),
         tool_path(
             name = "ar",

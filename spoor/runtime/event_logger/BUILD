@@ -11,7 +11,7 @@ cc_library(
         "event_logger_notifier.h",
     ],
     copts = ["-Werror"],
-    visibility = ["//visibility:public"],
+    visibility = ["//spoor/runtime:__subpackages__"],
     deps = [
         "//spoor/runtime/buffer",
         "//spoor/runtime/flush_queue",
@@ -23,9 +23,10 @@ cc_library(
 
 cc_library(
     name = "event_logger_notifier_mock",
+    testonly = True,
     hdrs = ["event_logger_notifier_mock.h"],
     copts = ["-Werror"],
-    visibility = ["//visibility:public"],
+    visibility = ["//spoor/runtime:__subpackages__"],
     deps = [
         ":event_logger",
         "@com_google_googletest//:gtest",

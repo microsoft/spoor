@@ -6,7 +6,7 @@ load("@rules_cc//cc:defs.bzl", "cc_binary")
 filegroup(
     name = "copyright_header",
     srcs = ["copyright_header.txt"],
-    visibility = ["//visibility:public"],
+    visibility = ["//visibility:private"],
 )
 
 cc_binary(
@@ -14,6 +14,7 @@ cc_binary(
     srcs = ["add_copyright_header.cc"],
     copts = ["-Werror"],
     data = [":copyright_header"],
+    visibility = ["//visibility:public"],
     deps = [
         "//util:numeric",
         "//util:result",

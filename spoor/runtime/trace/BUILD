@@ -17,7 +17,7 @@ cc_library(
         "trace_writer.h",
     ],
     copts = ["-Werror"],
-    visibility = ["//visibility:public"],
+    visibility = ["//spoor/runtime:__subpackages__"],
     deps = [
         "//spoor/runtime/buffer",
         "//util:numeric",
@@ -42,12 +42,13 @@ cc_test(
 
 cc_library(
     name = "trace_mock",
+    testonly = True,
     hdrs = [
         "trace_reader_mock.h",
         "trace_writer_mock.h",
     ],
     copts = ["-Werror"],
-    visibility = ["//visibility:public"],
+    visibility = ["//spoor/runtime:__subpackages__"],
     deps = [
         ":trace",
         "@com_google_googletest//:gtest",
