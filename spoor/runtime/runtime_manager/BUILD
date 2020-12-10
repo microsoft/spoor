@@ -8,10 +8,9 @@ cc_library(
     srcs = ["runtime_manager.cc"],
     hdrs = ["runtime_manager.h"],
     copts = ["-Werror"],
-    visibility = ["//visibility:public"],
+    visibility = ["//spoor/runtime:__pkg__"],
     deps = [
         "//spoor/runtime/buffer",
-        "//spoor/runtime/config",
         "//spoor/runtime/event_logger",
         "//spoor/runtime/flush_queue",
         "//spoor/runtime/trace",

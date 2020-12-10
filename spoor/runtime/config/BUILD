@@ -8,7 +8,7 @@ cc_library(
     srcs = ["config.cc"],
     hdrs = ["config.h"],
     copts = ["-Werror"],
-    visibility = ["//visibility:public"],
+    visibility = ["//spoor/runtime:__subpackages__"],
     deps = [
         "//spoor/runtime/buffer",
         "//spoor/runtime/trace",

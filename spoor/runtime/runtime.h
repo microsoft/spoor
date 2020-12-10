@@ -4,7 +4,7 @@
 #ifndef SPOOR_RUNTIME
 #define SPOOR_RUNTIME
 
-#ifdef cplusplus
+#ifdef __cplusplus
 #include <cstdint>
 extern "C" {
 #else
@@ -108,7 +108,7 @@ void _spoor_runtime_DeleteFlushedTraceFilesOlderThan(
 // Retrieve Spoor's configuration.
 _spoor_runtime_Config _spoor_runtime_GetConfig();
 
-#ifdef cplusplus
+#ifdef __cplusplus
 }
 #endif
 

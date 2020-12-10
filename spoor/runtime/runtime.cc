@@ -139,10 +139,9 @@ auto _spoor_runtime_FlushedTraceFiles(
             .size = gsl::narrow_cast<int32>(file_paths.size()),
             .file_paths = file_paths.data()});
       };  // NOLINT(clang-analyzer-unix.Malloc)
-  std::error_code error_code{};
+  std::error_code error{};
   const std::filesystem::directory_iterator directory{kConfig.trace_file_path,
-                                                      error_code};
-  const auto error = static_cast<bool>(error_code);
+                                                      error};
   if (error) {
     callback_adapter({});
     return;

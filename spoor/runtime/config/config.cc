@@ -3,6 +3,8 @@
 
 #include "spoor/runtime/config/config.h"
 
+#include "util/env/env.h"
+
 namespace spoor::runtime::config {
 
 using util::env::GetEnvOrDefault;

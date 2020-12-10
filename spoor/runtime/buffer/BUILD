@@ -16,7 +16,7 @@ cc_library(
         "unowned_buffer_slice.h",
     ],
     copts = ["-Werror"],
-    visibility = ["//visibility:public"],
+    visibility = ["//spoor/runtime:__subpackages__"],
     deps = [
         "//util:numeric",
         "//util:result",

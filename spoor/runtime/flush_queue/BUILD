@@ -11,7 +11,7 @@ cc_library(
         "flush_queue.h",
     ],
     copts = ["-Werror"],
-    visibility = ["//visibility:public"],
+    visibility = ["//spoor/runtime:__subpackages__"],
     deps = [
         "//spoor/runtime/buffer",
         "//spoor/runtime/trace",
@@ -43,9 +43,10 @@ cc_test(
 
 cc_library(
     name = "flush_queue_mock",
+    testonly = True,
     hdrs = ["flush_queue_mock.h"],
     copts = ["-Werror"],
-    visibility = ["//visibility:public"],
+    visibility = ["//spoor/runtime:__subpackages__"],
     deps = [
         ":flush_queue",
         "@com_google_googletest//:gtest",
