@@ -20,11 +20,11 @@ jobs:
     displayName: Benchmark
   - script: ./toolchain/compilation_database/generate_compilation_database.sh
     displayName: Generate compilation database
-  - script: bazel test --config=asan //...
+  - script: bazel test --config=asan $(bazel query 'kind(cc_.*, tests(//...))')
     displayName: Address sanitizer
-  - script: bazel test --config=tsan //...
+  - script: bazel test --config=tsan $(bazel query 'kind(cc_.*, tests(//...))')
     displayName: Thread sanitizer
-  - script: bazel test --config=ubsan //...
+  - script: bazel test --config=ubsan $(bazel query 'kind(cc_.*, tests(//...))')
     displayName: Undefined behavior sanitizer
     condition: eq(variables['Agent.OS'], 'Linux')
 - job: style_and_lint

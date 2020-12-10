@@ -5,12 +5,18 @@
 
 #include <algorithm>
 #include <cctype>
+#include <chrono>
+#include <cstdlib>
 #include <functional>
 #include <iterator>
 #include <string_view>
+#include <system_error>
 #include <unordered_map>
 #include <utility>
 
+#include "absl/strings/str_format.h"
+#include "google/protobuf/timestamp.pb.h"
+#include "google/protobuf/util/time_util.h"
 #include "gsl/gsl"
 #include "llvm/ADT/APInt.h"
 #include "llvm/Demangle/Demangle.h"
@@ -22,11 +28,15 @@
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/Type.h"
 #include "llvm/Passes/PassPlugin.h"
+#include "llvm/Support/raw_ostream.h"
 #include "spoor/instrumentation/instrumentation_map.pb.h"
 #include "swift/Demangling/Demangle.h"
 #include "swift/Demangling/Demangler.h"
+#include "util/time/clock.h"
 
 namespace spoor::instrumentation::inject_runtime {
+
+using google::protobuf::util::TimeUtil;
 
 constexpr std::string_view kMainFunctionName{"main"};
 constexpr std::string_view kInitializeRuntimeFunctionName{
@@ -44,13 +54,40 @@ InjectRuntime::InjectRuntime(Options options) : options_{std::move(options)} {}
 
 auto InjectRuntime::run(llvm::Module& llvm_module, llvm::ModuleAnalysisManager&
                         /*unused*/) -> llvm::PreservedAnalyses {
-  const auto [instrumented_function_map, modified] =
-      InstrumentModule(&llvm_module);
-  instrumented_function_map.SerializeToOstream(options_.ostream);
+  auto [instrumented_function_map, modified] = InstrumentModule(&llvm_module);
+
+  const auto now = [&] {
+    const auto now = options_.system_clock->Now().time_since_epoch();
+    const auto nanoseconds =
+        std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
+    return TimeUtil::NanosecondsToTimestamp(nanoseconds);
+  }();
+  *instrumented_function_map.mutable_created_at() = now;
+
+  const auto file_name = absl::StrFormat(
+      "%x.%s", std::hash<std::string>{}(llvm_module.getModuleIdentifier()),
+      kInstrumentedFunctionMapFileExtension);
+  const auto path = options_.instrumented_function_map_output_path / file_name;
+  std::error_code error{};
+  auto output_stream =
+      options_.instrumented_function_map_output_stream(path.c_str(), &error);
+  if (error) {
+    llvm::WithColor::error();
+    llvm::errs()
+        << "Failed to open/create the instrumentation map output file '" << path
+        << "'. " << error.message() << ".\n";
+    exit(EXIT_FAILURE);
+  }
+
+  // LLVM passes do not support `std::ostream` so we're forced to bridge the
+  // output with a `std::string` instead of directly using `SerializeToOstream`.
+  std::string buffer{};
+  instrumented_function_map.SerializeToString(&buffer);
+  *output_stream << buffer;
 
   if (modified) return llvm::PreservedAnalyses::none();
   return llvm::PreservedAnalyses::all();
-}
+}  // namespace spoor::instrumentation::inject_runtime
 
 auto InjectRuntime::InstrumentModule(gsl::not_null<llvm::Module*> llvm_module)
     const -> std::pair<InstrumentedFunctionMap, bool> {
@@ -81,11 +118,19 @@ auto InjectRuntime::InstrumentModule(gsl::not_null<llvm::Module*> llvm_module)
   const auto log_function_exit = llvm_module->getOrInsertFunction(
       kLogFunctionExitFunctionName.data(), log_function_type);
 
-  uint64 function_id{0};
+  const auto module_id_hash = static_cast<uint64>(
+      std::hash<std::string>{}(llvm_module->getModuleIdentifier()));
+  const auto make_function_id = [&module_id_hash](const uint32 counter) {
+    constexpr uint64 partition{32};
+    return (module_id_hash << partition) | static_cast<uint64>(counter);
+  };
+
+  uint64 counter{0};
   bool modified{false};
   for (auto& function : llvm_module->functions()) {
     if (function.isDeclaration()) continue;
-    const auto finally = gsl::finally([&] { ++function_id; });
+    const auto function_id = make_function_id(counter);
+    const auto finally = gsl::finally([&counter] { ++counter; });
 
     const auto function_name = function.getName().str();
     const auto demangled_name = [function_name] {

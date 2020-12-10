@@ -45,6 +45,29 @@ TEST(GetEnvOrDefault, String) {  // NOLINT
   ASSERT_EQ(retrieved_default_value, default_value);
 }
 
+TEST(GetEnvOrDefault, OptionalString) {  // NOLINT
+  const std::string default_value{"foo"};
+  for (const auto* env_value : {"bar", "baz", "/path/to/file.extension"}) {
+    const auto retrieved_env_value = GetEnvOrDefault(
+        "KEY", default_value, true,
+        [&env_value](const char* /*unused*/) { return env_value; });
+    ASSERT_EQ(retrieved_env_value, std::optional{env_value});
+  }
+  for (const auto empty_string_is_nullopt : {false, true}) {
+    const auto retrieved_env_value =
+        GetEnvOrDefault("KEY", default_value, empty_string_is_nullopt,
+                        [](const char* /*unused*/) { return ""; });
+    if (empty_string_is_nullopt) {
+      ASSERT_EQ(retrieved_env_value, std::nullopt);
+    } else {
+      ASSERT_EQ(retrieved_env_value, std::optional{""});
+    }
+  }
+  const auto retrieved_default_value = GetEnvOrDefault(
+      "KEY", default_value, [](const char* /*unused*/) { return nullptr; });
+  ASSERT_EQ(retrieved_default_value, default_value);
+}
+
 TEST(GetEnvOrDefault, Bool) {  // NOLINT
   for (const auto* env_value : {"0", "no", "false"}) {
     constexpr bool value{false};

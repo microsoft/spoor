@@ -3,6 +3,7 @@
 
 filegroup(
     name = "test_data",
+    testonly = True,
     srcs = [
         "fib.ll",
         "fib_debug_c.ll",
@@ -12,7 +13,8 @@ filegroup(
         "fib_instrumented.ll",
         "fib_instrumented_initialized.ll",
         "fib_instrumented_initialized_enabled.ll",
+        "fib_no_main.ll",
         "fib_only_main_instrumented.ll",
     ],
-    visibility = ["//visibility:public"],
+    visibility = ["//spoor/instrumentation:__subpackages__"],
 )
