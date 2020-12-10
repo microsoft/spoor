@@ -3,83 +3,96 @@
 
 #include "spoor/instrumentation/inject_runtime/inject_runtime.h"
 
-#include <filesystem>
+#include <cstdlib>
 #include <limits>
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <system_error>
 #include <unordered_set>
 #include <vector>
 
+#include "gmock/gmock.h"
 #include "google/protobuf/util/message_differencer.h"
+#include "google/protobuf/util/time_util.h"
 #include "gsl/gsl"
 #include "gtest/gtest.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/PassManager.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "spoor/instrumentation/instrumentation_map.pb.h"
 #include "util/numeric.h"
+#include "util/time/clock.h"
+#include "util/time/clock_mock.h"
 
 namespace {
 
 using google::protobuf::util::MessageDifferencer;
+using google::protobuf::util::TimeUtil;
 using spoor::instrumentation::FunctionInfo;
 using spoor::instrumentation::InstrumentedFunctionMap;
 using spoor::instrumentation::inject_runtime::InjectRuntime;
+using testing::MatchesRegex;
+using testing::Return;
+using util::time::SystemClock;
+using util::time::testing::MakeTimePoint;
+using util::time::testing::SystemClockMock;
 
 constexpr std::string_view kUninstrumentedIrFile{
-    "spoor/instrumentation/inject_runtime/test_data/fib.ll"};
+    "spoor/instrumentation/test_data/fib.ll"};
 constexpr std::string_view kUninstrumentedIrWithDebugInfoCSourceFile{
-    "spoor/instrumentation/inject_runtime/test_data/fib_debug_c.ll"};
+    "spoor/instrumentation/test_data/fib_debug_c.ll"};
 constexpr std::string_view kUninstrumentedIrWithDebugInfoCppSourceFile{
-    "spoor/instrumentation/inject_runtime/test_data/fib_debug_cpp.ll"};
+    "spoor/instrumentation/test_data/fib_debug_cpp.ll"};
 constexpr std::string_view kUninstrumentedIrWithDebugInfoObjcSourceFile{
-    "spoor/instrumentation/inject_runtime/test_data/fib_debug_objc.ll"};
+    "spoor/instrumentation/test_data/fib_debug_objc.ll"};
 constexpr std::string_view kUninstrumentedIrWithDebugInfoSwiftSourceFile{
-    "spoor/instrumentation/inject_runtime/test_data/fib_debug_swift.ll"};
+    "spoor/instrumentation/test_data/fib_debug_swift.ll"};
 constexpr std::string_view kInstrumentedIrFile{
-    "spoor/instrumentation/inject_runtime/test_data/fib_instrumented.ll"};
+    "spoor/instrumentation/test_data/fib_instrumented.ll"};
 constexpr std::string_view kInstrumentedInitializedIrFile{
-    "spoor/instrumentation/inject_runtime/test_data/"
-    "fib_instrumented_initialized.ll"};
+    "spoor/instrumentation/test_data/fib_instrumented_initialized.ll"};
 constexpr std::string_view kInstrumentedInitializedEnabledIrFile{
-    "spoor/instrumentation/inject_runtime/test_data/"
-    "fib_instrumented_initialized_enabled.ll"};
+    "spoor/instrumentation/test_data/fib_instrumented_initialized_enabled.ll"};
+constexpr std::string_view kNoMainIrFile{
+    "spoor/instrumentation/test_data/fib_no_main.ll"};
 constexpr std::string_view kOnlyMainFunctionInstrumentedIrFile{
-    "spoor/instrumentation/inject_runtime/test_data/"
-    "fib_only_main_instrumented.ll"};
+    "spoor/instrumentation/test_data/fib_only_main_instrumented.ll"};
 
-auto AssertModulesEqual(gsl::not_null<llvm::Module*> module_a,
-                        gsl::not_null<llvm::Module*> module_b) -> void {
+auto AssertModulesEqual(gsl::not_null<llvm::Module*> computed_module,
+                        gsl::not_null<llvm::Module*> expected_module) -> void {
   // Hack: Modules are equal if their IR string representations are equal,
   // except for the module identifier and source file name. A nice side effect
   // of this approach is that we get a diff in the error message.
-  const std::string module_a_id{module_a->getModuleIdentifier()};
-  module_a->setModuleIdentifier({});
-  const std::string module_a_source_file{module_a->getSourceFileName()};
-  module_a->setSourceFileName({});
-  const std::string module_b_id{module_b->getModuleIdentifier()};
-  module_b->setModuleIdentifier({});
-  const std::string module_b_source_file{module_b->getSourceFileName()};
-  module_b->setSourceFileName({});
+  const std::string computed_module_id{computed_module->getModuleIdentifier()};
+  computed_module->setModuleIdentifier({});
+  const std::string computed_module_source_file{
+      computed_module->getSourceFileName()};
+  computed_module->setSourceFileName({});
+  const std::string expected_module_id{computed_module->getModuleIdentifier()};
+  expected_module->setModuleIdentifier({});
+  const std::string expected_module_source_file{
+      expected_module->getSourceFileName()};
+  expected_module->setSourceFileName({});
 
-  std::string module_a_ir{};
-  llvm::raw_string_ostream module_a_ostream{module_a_ir};
-  module_a_ostream << *module_a;
+  std::string computed_module_ir{};
+  llvm::raw_string_ostream computed_module_ostream{computed_module_ir};
+  computed_module_ostream << *computed_module;
 
-  std::string module_b_ir{};
-  llvm::raw_string_ostream module_b_ostream{module_b_ir};
-  module_b_ostream << *module_b;
+  std::string expected_module_ir{};
+  llvm::raw_string_ostream expected_module_ostream{expected_module_ir};
+  expected_module_ostream << *expected_module;
 
-  ASSERT_EQ(module_a_ir, module_b_ir);
+  ASSERT_EQ(expected_module_ir, computed_module_ir);
 
-  module_a->setModuleIdentifier(module_a_id);
-  module_a->setSourceFileName(module_a_source_file);
-  module_b->setModuleIdentifier(module_b_id);
-  module_b->setSourceFileName(module_b_source_file);
+  computed_module->setModuleIdentifier(computed_module_id);
+  computed_module->setSourceFileName(computed_module_source_file);
+  expected_module->setModuleIdentifier(expected_module_id);
+  expected_module->setSourceFileName(expected_module_source_file);
 }
 
 TEST(InjectRuntime, InstrumentsModule) {  // NOLINT
@@ -109,19 +122,22 @@ TEST(InjectRuntime, InstrumentsModule) {  // NOLINT
                                            uninstrumented_module_context);
     ASSERT_NE(parsed_module, nullptr);
 
-    const std::filesystem::path file_path{};
-    std::ostringstream ostream{};
-    const std::unordered_set<std::string> function_blocklist{};
-    const std::unordered_set<std::string> function_allow_list{};
-    constexpr uint32 min_instruction_count_to_instrument{0};
-    const InjectRuntime::Options options{file_path,
-                                         function_blocklist,
-                                         function_allow_list,
-                                         &ostream,
-                                         min_instruction_count_to_instrument,
-                                         config.initialize_runtime,
-                                         config.enable_runtime};
-    InjectRuntime inject_runtime{options};
+    const auto ostream = [](const llvm::StringRef /*unused*/,
+                            gsl::not_null<std::error_code*> /*unused*/) {
+      return std::make_unique<llvm::raw_null_ostream>();
+    };
+    SystemClockMock system_clock{};
+    EXPECT_CALL(system_clock, Now())
+        .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
+    InjectRuntime inject_runtime{
+        {.instrumented_function_map_output_path = "/",
+         .instrumented_function_map_output_stream = ostream,
+         .system_clock = &system_clock,
+         .function_allow_list = {},
+         .function_blocklist = {},
+         .min_instruction_count_to_instrument = 0,
+         .initialize_runtime = config.initialize_runtime,
+         .enable_runtime = config.enable_runtime}};
     llvm::ModuleAnalysisManager module_analysis_manager{};
     inject_runtime.run(*parsed_module, module_analysis_manager);
     {
@@ -140,6 +156,8 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             InstrumentedFunctionMap expected_instrumented_function_map{};
             expected_instrumented_function_map.set_module_id(
                 kUninstrumentedIrFile.data());
+            *expected_instrumented_function_map.mutable_created_at() =
+                TimeUtil::NanosecondsToTimestamp(0);
             auto& function_map =
                 *expected_instrumented_function_map.mutable_function_map();
 
@@ -147,13 +165,13 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             fibonacci_function_info.set_linkage_name("_Z9Fibonaccii");
             fibonacci_function_info.set_demangled_name("Fibonacci(int)");
             fibonacci_function_info.set_instrumented(true);
-            function_map[0] = fibonacci_function_info;
+            function_map[0x73c43c2b00000000] = fibonacci_function_info;
 
             FunctionInfo main_function_info{};
             main_function_info.set_linkage_name("main");
             main_function_info.set_demangled_name("main");
             main_function_info.set_instrumented(true);
-            function_map[1] = main_function_info;
+            function_map[0x73c43c2b00000001] = main_function_info;
 
             return expected_instrumented_function_map;
           }(),
@@ -164,6 +182,8 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             InstrumentedFunctionMap expected_instrumented_function_map{};
             expected_instrumented_function_map.set_module_id(
                 kUninstrumentedIrWithDebugInfoCSourceFile.data());
+            *expected_instrumented_function_map.mutable_created_at() =
+                TimeUtil::NanosecondsToTimestamp(0);
             auto& function_map =
                 *expected_instrumented_function_map.mutable_function_map();
 
@@ -174,7 +194,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             fibonacci_function_info.set_directory("/path/to/file");
             fibonacci_function_info.set_line(1);
             fibonacci_function_info.set_instrumented(true);
-            function_map[0] = fibonacci_function_info;
+            function_map[0x753f031f00000000] = fibonacci_function_info;
 
             FunctionInfo main_function_info{};
             main_function_info.set_linkage_name("main");
@@ -183,7 +203,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             main_function_info.set_directory("/path/to/file");
             main_function_info.set_line(6);
             main_function_info.set_instrumented(true);
-            function_map[1] = main_function_info;
+            function_map[0x753f031f00000001] = main_function_info;
 
             return expected_instrumented_function_map;
           }(),
@@ -194,6 +214,8 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             InstrumentedFunctionMap expected_instrumented_function_map{};
             expected_instrumented_function_map.set_module_id(
                 kUninstrumentedIrWithDebugInfoCppSourceFile.data());
+            *expected_instrumented_function_map.mutable_created_at() =
+                TimeUtil::NanosecondsToTimestamp(0);
             auto& function_map =
                 *expected_instrumented_function_map.mutable_function_map();
 
@@ -204,7 +226,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             fibonacci_function_info.set_directory("/path/to/file");
             fibonacci_function_info.set_line(1);
             fibonacci_function_info.set_instrumented(true);
-            function_map[0] = fibonacci_function_info;
+            function_map[0xc373298f00000000] = fibonacci_function_info;
 
             FunctionInfo main_function_info{};
             main_function_info.set_linkage_name("main");
@@ -213,7 +235,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             main_function_info.set_directory("/path/to/file");
             main_function_info.set_line(6);
             main_function_info.set_instrumented(true);
-            function_map[1] = main_function_info;
+            function_map[0xc373298f00000001] = main_function_info;
 
             return expected_instrumented_function_map;
           }(),
@@ -224,6 +246,8 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             InstrumentedFunctionMap expected_instrumented_function_map{};
             expected_instrumented_function_map.set_module_id(
                 kUninstrumentedIrWithDebugInfoObjcSourceFile.data());
+            *expected_instrumented_function_map.mutable_created_at() =
+                TimeUtil::NanosecondsToTimestamp(0);
             auto& function_map =
                 *expected_instrumented_function_map.mutable_function_map();
 
@@ -235,7 +259,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             fibonacci_function_info.set_directory("/path/to/file");
             fibonacci_function_info.set_line(6);
             fibonacci_function_info.set_instrumented(true);
-            function_map[0] = fibonacci_function_info;
+            function_map[0x917362100000000] = fibonacci_function_info;
 
             FunctionInfo main_function_info{};
             main_function_info.set_linkage_name("main");
@@ -244,7 +268,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             main_function_info.set_directory("/path/to/file");
             main_function_info.set_line(12);
             main_function_info.set_instrumented(true);
-            function_map[1] = main_function_info;
+            function_map[0x917362100000001] = main_function_info;
 
             return expected_instrumented_function_map;
           }(),
@@ -255,6 +279,8 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             InstrumentedFunctionMap expected_instrumented_function_map{};
             expected_instrumented_function_map.set_module_id(
                 kUninstrumentedIrWithDebugInfoSwiftSourceFile.data());
+            *expected_instrumented_function_map.mutable_created_at() =
+                TimeUtil::NanosecondsToTimestamp(0);
             auto& function_map =
                 *expected_instrumented_function_map.mutable_function_map();
 
@@ -266,7 +292,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             fibonacci_function_info.set_directory("/path/to/file");
             fibonacci_function_info.set_line(1);
             fibonacci_function_info.set_instrumented(true);
-            function_map[1] = fibonacci_function_info;
+            function_map[0x88a7c6bf00000001] = fibonacci_function_info;
 
             FunctionInfo main_function_info{};
             main_function_info.set_linkage_name("main");
@@ -277,7 +303,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             // number.
             main_function_info.set_line(1);
             main_function_info.set_instrumented(true);
-            function_map[0] = main_function_info;
+            function_map[0x88a7c6bf00000000] = main_function_info;
 
             return expected_instrumented_function_map;
           }(),
@@ -291,26 +317,28 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
                           instrumented_module_context);
     ASSERT_NE(parsed_module, nullptr);
 
-    const std::filesystem::path file_path{};
-    std::stringstream stream{};
-    const std::unordered_set<std::string> function_blocklist{};
-    const std::unordered_set<std::string> function_allow_list{};
-    constexpr uint32 min_instruction_count_to_instrument{0};
-    constexpr bool initialize_runtime{false};
-    constexpr bool enable_runtime{true};
-    const InjectRuntime::Options options{file_path,
-                                         function_blocklist,
-                                         function_allow_list,
-                                         &stream,
-                                         min_instruction_count_to_instrument,
-                                         initialize_runtime,
-                                         enable_runtime};
-    InjectRuntime inject_runtime{options};
+    std::string buffer{};
+    const auto ostream = [&buffer](const llvm::StringRef /*unused*/,
+                                   gsl::not_null<std::error_code*> /*unused*/) {
+      return std::make_unique<llvm::raw_string_ostream>(buffer);
+    };
+    SystemClockMock system_clock{};
+    EXPECT_CALL(system_clock, Now())
+        .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
+    InjectRuntime inject_runtime{
+        {.instrumented_function_map_output_path = "/",
+         .instrumented_function_map_output_stream = ostream,
+         .system_clock = &system_clock,
+         .function_allow_list = {},
+         .function_blocklist = {},
+         .min_instruction_count_to_instrument = 0,
+         .initialize_runtime = false,
+         .enable_runtime = false}};
     llvm::ModuleAnalysisManager module_analysis_manager{};
     inject_runtime.run(*parsed_module, module_analysis_manager);
 
     InstrumentedFunctionMap instrumented_function_map{};
-    instrumented_function_map.ParseFromIstream(&stream);
+    instrumented_function_map.ParseFromString(buffer);
 
     ASSERT_TRUE(MessageDifferencer::Equals(instrumented_function_map,
                                            expected_instrumented_function_map));
@@ -332,60 +360,22 @@ TEST(InjectRuntime, FunctionBlocklist) {  // NOLINT
                                          uninstrumented_module_context);
   ASSERT_NE(parsed_module, nullptr);
 
-  const std::filesystem::path file_path{};
-  std::ostringstream ostream{};
-  const std::unordered_set<std::string> function_blocklist{"_Z9Fibonaccii"};
-  const std::unordered_set<std::string> function_allow_list{};
-  constexpr uint32 min_instruction_count_to_instrument{0};
-  constexpr bool initialize_runtime{false};
-  constexpr bool enable_runtime{false};
-  const InjectRuntime::Options options{file_path,
-                                       function_blocklist,
-                                       function_allow_list,
-                                       &ostream,
-                                       min_instruction_count_to_instrument,
-                                       initialize_runtime,
-                                       enable_runtime};
-  InjectRuntime inject_runtime{options};
-  llvm::ModuleAnalysisManager module_analysis_manager{};
-  inject_runtime.run(*parsed_module, module_analysis_manager);
-  {
-    SCOPED_TRACE("Modules are not equal.");
-    AssertModulesEqual(parsed_module.get(), expected_instrumented_module.get());
-  }
-}
-
-TEST(InjectRuntime, FunctionAllowList) {  // NOLINT
-  llvm::SMDiagnostic expected_module_diagnostic{};
-  llvm::LLVMContext expected_module_context{};
-  auto expected_instrumented_module =
-      llvm::parseIRFile(kInstrumentedIrFile.data(), expected_module_diagnostic,
-                        expected_module_context);
-  ASSERT_NE(expected_instrumented_module, nullptr);
-
-  llvm::SMDiagnostic uninstrumented_module_diagnostic{};
-  llvm::LLVMContext uninstrumented_module_context{};
-  auto parsed_module = llvm::parseIRFile(kUninstrumentedIrFile.data(),
-                                         uninstrumented_module_diagnostic,
-                                         uninstrumented_module_context);
-  ASSERT_NE(parsed_module, nullptr);
-
-  const std::filesystem::path file_path{};
-  std::ostringstream ostream{};
-  const std::unordered_set<std::string> function_blocklist{};
-  const std::unordered_set<std::string> function_allow_list{"_Z9Fibonaccii"};
-  constexpr auto min_instruction_count_to_instrument =
-      std::numeric_limits<uint32>::max();
-  constexpr bool initialize_runtime{false};
-  constexpr bool enable_runtime{false};
-  const InjectRuntime::Options options{file_path,
-                                       function_blocklist,
-                                       function_allow_list,
-                                       &ostream,
-                                       min_instruction_count_to_instrument,
-                                       initialize_runtime,
-                                       enable_runtime};
-  InjectRuntime inject_runtime{options};
+  const auto ostream = [](const llvm::StringRef /*unused*/,
+                          gsl::not_null<std::error_code*> /*unused*/) {
+    return std::make_unique<llvm::raw_null_ostream>();
+  };
+  SystemClockMock system_clock{};
+  EXPECT_CALL(system_clock, Now())
+      .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
+  InjectRuntime inject_runtime{
+      {.instrumented_function_map_output_path = "/",
+       .instrumented_function_map_output_stream = ostream,
+       .system_clock = &system_clock,
+       .function_allow_list = {},
+       .function_blocklist = {"_Z9Fibonaccii"},
+       .min_instruction_count_to_instrument = 0,
+       .initialize_runtime = false,
+       .enable_runtime = false}};
   llvm::ModuleAnalysisManager module_analysis_manager{};
   inject_runtime.run(*parsed_module, module_analysis_manager);
   {
@@ -409,21 +399,22 @@ TEST(InjectRuntime, FunctionAllowListOverridesBlocklist) {  // NOLINT
                                          uninstrumented_module_context);
   ASSERT_NE(parsed_module, nullptr);
 
-  const std::filesystem::path file_path{};
-  std::ostringstream ostream{};
-  const std::unordered_set<std::string> function_blocklist{"_Z9Fibonaccii"};
-  const std::unordered_set<std::string> function_allow_list{"_Z9Fibonaccii"};
-  constexpr uint32 min_instruction_count_to_instrument{0};
-  constexpr bool initialize_runtime{false};
-  constexpr bool enable_runtime{false};
-  const InjectRuntime::Options options{file_path,
-                                       function_blocklist,
-                                       function_allow_list,
-                                       &ostream,
-                                       min_instruction_count_to_instrument,
-                                       initialize_runtime,
-                                       enable_runtime};
-  InjectRuntime inject_runtime{options};
+  auto ostream = [](const llvm::StringRef /*unused*/,
+                    gsl::not_null<std::error_code*> /*unused*/) {
+    return std::make_unique<llvm::raw_null_ostream>();
+  };
+  SystemClockMock system_clock{};
+  EXPECT_CALL(system_clock, Now())
+      .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
+  InjectRuntime inject_runtime{
+      {.instrumented_function_map_output_path = "/",
+       .instrumented_function_map_output_stream = ostream,
+       .system_clock = &system_clock,
+       .function_allow_list = {"_Z9Fibonaccii"},
+       .function_blocklist = {"_Z9Fibonaccii"},
+       .min_instruction_count_to_instrument = 0,
+       .initialize_runtime = false,
+       .enable_runtime = false}};
   llvm::ModuleAnalysisManager module_analysis_manager{};
   inject_runtime.run(*parsed_module, module_analysis_manager);
   {
@@ -458,17 +449,22 @@ TEST(InjectRuntime, InstructionThreshold) {  // NOLINT
                                            uninstrumented_module_context);
     ASSERT_NE(parsed_module, nullptr);
 
-    const std::filesystem::path file_path{};
-    std::ostringstream ostream{};
-    const std::unordered_set<std::string> function_blocklist{};
-    const std::unordered_set<std::string> function_allow_list{};
-    constexpr bool initialize_runtime{false};
-    constexpr bool enable_runtime{false};
-    const InjectRuntime::Options options{
-        file_path,     function_blocklist,           function_allow_list,
-        &ostream,      config.instruction_threshold, initialize_runtime,
-        enable_runtime};
-    InjectRuntime inject_runtime{options};
+    const auto ostream = [](const llvm::StringRef /*unused*/,
+                            gsl::not_null<std::error_code*> /*unused*/) {
+      return std::make_unique<llvm::raw_null_ostream>();
+    };
+    SystemClockMock system_clock{};
+    EXPECT_CALL(system_clock, Now())
+        .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
+    InjectRuntime inject_runtime{
+        {.instrumented_function_map_output_path = "/",
+         .instrumented_function_map_output_stream = ostream,
+         .system_clock = &system_clock,
+         .function_allow_list = {},
+         .function_blocklist = {},
+         .min_instruction_count_to_instrument = config.instruction_threshold,
+         .initialize_runtime = false,
+         .enable_runtime = false}};
     llvm::ModuleAnalysisManager module_analysis_manager{};
     inject_runtime.run(*parsed_module, module_analysis_manager);
     {
@@ -494,29 +490,187 @@ TEST(InjectRuntime, AlwaysInstrumentsMain) {  // NOLINT
                                          uninstrumented_module_context);
   ASSERT_NE(parsed_module, nullptr);
 
-  const std::filesystem::path file_path{};
-  std::ostringstream ostream{};
-  const std::unordered_set<std::string> function_blocklist{"main",
-                                                           "_Z9Fibonaccii"};
-  const std::unordered_set<std::string> function_allow_list{};
-  constexpr auto min_instruction_count_to_instrument =
-      std::numeric_limits<uint32>::max();
-  constexpr bool initialize_runtime{false};
-  constexpr bool enable_runtime{false};
-  const InjectRuntime::Options options{file_path,
-                                       function_blocklist,
-                                       function_allow_list,
-                                       &ostream,
-                                       min_instruction_count_to_instrument,
-                                       initialize_runtime,
-                                       enable_runtime};
-  InjectRuntime inject_runtime{options};
+  const auto ostream = [](const llvm::StringRef /*unused*/,
+                          gsl::not_null<std::error_code*> /*unused*/) {
+    return std::make_unique<llvm::raw_null_ostream>();
+  };
+  SystemClockMock system_clock{};
+  EXPECT_CALL(system_clock, Now())
+      .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
+  InjectRuntime inject_runtime{
+      {.instrumented_function_map_output_path = "/",
+       .instrumented_function_map_output_stream = ostream,
+       .system_clock = &system_clock,
+       .function_allow_list = {},
+       .function_blocklist = {"main", "_Z9Fibonaccii"},
+       .min_instruction_count_to_instrument =
+           std::numeric_limits<uint32>::max(),
+       .initialize_runtime = false,
+       .enable_runtime = false}};
   llvm::ModuleAnalysisManager module_analysis_manager{};
   inject_runtime.run(*parsed_module, module_analysis_manager);
   {
     SCOPED_TRACE("Modules are not equal.");
     AssertModulesEqual(parsed_module.get(), expected_instrumented_module.get());
   }
+}
+
+TEST(InjectRuntime, InstrumentedFunctionMapFileName) {  // NOLINT
+  llvm::SMDiagnostic expected_module_diagnostic{};
+  llvm::LLVMContext expected_module_context{};
+  auto expected_instrumented_module =
+      llvm::parseIRFile(kOnlyMainFunctionInstrumentedIrFile.data(),
+                        expected_module_diagnostic, expected_module_context);
+  ASSERT_NE(expected_instrumented_module, nullptr);
+
+  llvm::SMDiagnostic uninstrumented_module_diagnostic{};
+  llvm::LLVMContext uninstrumented_module_context{};
+  auto parsed_module = llvm::parseIRFile(kUninstrumentedIrFile.data(),
+                                         uninstrumented_module_diagnostic,
+                                         uninstrumented_module_context);
+  ASSERT_NE(parsed_module, nullptr);
+
+  std::string file_name{};
+  const auto ostream = [&file_name](
+                           const llvm::StringRef file,
+                           gsl::not_null<std::error_code*> /*unused*/) {
+    file_name = file;
+    return std::make_unique<llvm::raw_null_ostream>();
+  };
+  SystemClockMock system_clock{};
+  EXPECT_CALL(system_clock, Now())
+      .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
+  InjectRuntime inject_runtime{
+      {.instrumented_function_map_output_path = "/path/to/output",
+       .instrumented_function_map_output_stream = ostream,
+       .system_clock = &system_clock,
+       .function_allow_list = {},
+       .function_blocklist = {},
+       .min_instruction_count_to_instrument = 0,
+       .initialize_runtime = false,
+       .enable_runtime = false}};
+  llvm::ModuleAnalysisManager module_analysis_manager{};
+  inject_runtime.run(*parsed_module, module_analysis_manager);
+  const std::string pattern{
+      R"(/path/to/output/[a-f0-9]{16}\.spoor_function_map)"};
+  ASSERT_THAT(file_name, MatchesRegex(pattern));
+}
+
+TEST(InjectRuntime, AddsTimestamp) {  // NOLINT
+  llvm::SMDiagnostic module_diagnostic{};
+  llvm::LLVMContext module_context{};
+  auto parsed_module = llvm::parseIRFile(kUninstrumentedIrFile.data(),
+                                         module_diagnostic, module_context);
+  ASSERT_NE(parsed_module, nullptr);
+
+  std::string buffer{};
+  const auto ostream = [&buffer](const llvm::StringRef /*unused*/,
+                                 gsl::not_null<std::error_code*> /*unused*/) {
+    return std::make_unique<llvm::raw_string_ostream>(buffer);
+  };
+  const auto nanoseconds = 1'607'590'800'000'000'000;
+  SystemClockMock system_clock{};
+  EXPECT_CALL(system_clock, Now())
+      .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(nanoseconds)));
+  InjectRuntime inject_runtime{
+      {.instrumented_function_map_output_path = "/path/to/output",
+       .instrumented_function_map_output_stream = ostream,
+       .system_clock = &system_clock,
+       .function_allow_list = {},
+       .function_blocklist = {},
+       .min_instruction_count_to_instrument = 0,
+       .initialize_runtime = false,
+       .enable_runtime = false}};
+  llvm::ModuleAnalysisManager module_analysis_manager{};
+  inject_runtime.run(*parsed_module, module_analysis_manager);
+
+  InstrumentedFunctionMap instrumented_function_map{};
+  instrumented_function_map.ParseFromString(buffer);
+
+  ASSERT_EQ(
+      TimeUtil::TimestampToNanoseconds(instrumented_function_map.created_at()),
+      nanoseconds);
+}
+
+TEST(InjectRuntime, ReturnValue) {  // NOLINT
+  struct TestCaseConfig {
+    std::unordered_set<std::string> function_blocklist;
+    bool are_all_preserved;
+  };
+  const std::vector<TestCaseConfig> configs{{{}, false},
+                                            {{"_Z9Fibonaccii"}, true}};
+
+  for (const auto& config : configs) {
+    llvm::SMDiagnostic module_diagnostic{};
+    llvm::LLVMContext module_context{};
+    auto parsed_module = llvm::parseIRFile(kNoMainIrFile.data(),
+                                           module_diagnostic, module_context);
+    ASSERT_NE(parsed_module, nullptr);
+
+    const std::string path{"/"};
+    const auto ostream = [](const llvm::StringRef /*unused*/,
+                            gsl::not_null<std::error_code*> /*unused*/) {
+      return std::make_unique<llvm::raw_null_ostream>();
+    };
+    SystemClockMock system_clock{};
+    EXPECT_CALL(system_clock, Now())
+        .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
+    InjectRuntime inject_runtime{
+        {.instrumented_function_map_output_path = "/",
+         .instrumented_function_map_output_stream = ostream,
+         .system_clock = &system_clock,
+         .function_allow_list = {},
+         .function_blocklist = config.function_blocklist,
+         .min_instruction_count_to_instrument = 0,
+         .initialize_runtime = false,
+         .enable_runtime = false}};
+    llvm::ModuleAnalysisManager module_analysis_manager{};
+    const auto result =
+        inject_runtime.run(*parsed_module, module_analysis_manager);
+    ASSERT_EQ(result.areAllPreserved(), config.are_all_preserved);
+  }
+}
+
+TEST(InjectRuntime, ExistsOnOstreamError) {  // NOLINT
+  llvm::SMDiagnostic expected_module_diagnostic{};
+  llvm::LLVMContext expected_module_context{};
+  auto expected_instrumented_module =
+      llvm::parseIRFile(kOnlyMainFunctionInstrumentedIrFile.data(),
+                        expected_module_diagnostic, expected_module_context);
+  ASSERT_NE(expected_instrumented_module, nullptr);
+
+  llvm::SMDiagnostic uninstrumented_module_diagnostic{};
+  llvm::LLVMContext uninstrumented_module_context{};
+  auto parsed_module = llvm::parseIRFile(kUninstrumentedIrFile.data(),
+                                         uninstrumented_module_diagnostic,
+                                         uninstrumented_module_context);
+  ASSERT_NE(parsed_module, nullptr);
+
+  const std::string path{"/path/to/file"};
+  auto error = std::make_error_code(std::errc::permission_denied);
+  const auto ostream = [&error](const llvm::StringRef /*unused*/,
+                                gsl::not_null<std::error_code*> error_code) {
+    *error_code = error;
+    return std::make_unique<llvm::raw_null_ostream>();
+  };
+  SystemClock system_clock{};
+  InjectRuntime inject_runtime{
+      {.instrumented_function_map_output_path = "/",
+       .instrumented_function_map_output_stream = ostream,
+       .system_clock = &system_clock,
+       .function_allow_list = {},
+       .function_blocklist = {},
+       .min_instruction_count_to_instrument = 0,
+       .initialize_runtime = false,
+       .enable_runtime = false}};
+  llvm::ModuleAnalysisManager module_analysis_manager{};
+  const std::string pattern{
+      "error: Failed to open/create the instrumentation map output file "
+      "'.*'\\. Permission denied\\..*"};
+  ASSERT_EXIT(  // NOLINT
+      inject_runtime.run(*parsed_module, module_analysis_manager),
+      [](const int exit_code) { return exit_code != EXIT_SUCCESS; },
+      MatchesRegex(pattern));
 }
 
 }  // namespace
