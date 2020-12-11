@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load("//toolchain:cc_static_library.bzl", "cc_static_library")
 
 cc_library(
     name = "runtime",
@@ -18,6 +19,11 @@ cc_library(
         "@com_google_absl//absl/strings",
         "@com_microsoft_gsl//:gsl",
     ],
+)
+
+cc_static_library(
+    name = "spoor_runtime",
+    deps = [":runtime"],
 )
 
 cc_test(
