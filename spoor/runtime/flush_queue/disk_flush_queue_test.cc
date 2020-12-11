@@ -24,6 +24,7 @@
 namespace {
 
 using spoor::runtime::flush_queue::DiskFlushQueue;
+using spoor::runtime::flush_queue::kTraceFileExtension;
 using spoor::runtime::trace::Event;
 using spoor::runtime::trace::Footer;
 using spoor::runtime::trace::Header;
@@ -47,8 +48,9 @@ using Pool = spoor::runtime::buffer::ReservedBufferSlicePool<Event>;
 // NOLINTNEXTLINE(fuchsia-statically-constructed-objects)
 const std::filesystem::path kTraceFilePath{"trace/file/path"};
 // NOLINTNEXTLINE(fuchsia-statically-constructed-objects)
-const std::string kTraceFilePattern{
-    R"(trace\/file\/path\/[0-9a-f]{16}-[0-9a-f]{16}-[0-9a-f]{16}\.spoor)"};
+const std::string kTraceFilePattern = absl::StrFormat(
+    R"(trace\/file\/path\/[0-9a-f]{16}-[0-9a-f]{16}-[0-9a-f]{16}\.%s)",
+    kTraceFileExtension);
 constexpr spoor::runtime::trace::SessionId kSessionId{42};
 constexpr spoor::runtime::trace::ProcessId kProcessId{1729};
 constexpr Footer kExpectedFooter{};
@@ -123,8 +125,8 @@ TEST(DiskFlushQueue, WritesEvents) {  // NOLINT
           MakeTimePoint<std::chrono::steady_clock>(steady_clock_timestamp)));
 
   const std::string trace_file_pattern =
-      absl::StrFormat(R"(trace\/file\/path\/%016x-[0-9a-f]{16}-%016x\.spoor)",
-                      kSessionId, steady_clock_timestamp);
+      absl::StrFormat(R"(trace\/file\/path\/%016x-[0-9a-f]{16}-%016x\.%s)",
+                      kSessionId, steady_clock_timestamp, kTraceFileExtension);
   const auto matches_header = [&](const Header& header) {
     // Ignore the `thread_id` because it reflects the hash of the true value
     // which cannot be determined.
