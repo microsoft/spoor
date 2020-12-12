@@ -152,8 +152,8 @@ auto DiskFlushQueue::TraceFilePath(const FlushInfo& flush_info) const
                              flush_info.flush_timestamp.time_since_epoch())
                              .count();
   const auto file_name =
-      absl::StrFormat("%016x-%016x-%016x.spoor", options_.session_id,
-                      flush_info.thread_id, timestamp);
+      absl::StrFormat("%016x-%016x-%016x.%s", options_.session_id,
+                      flush_info.thread_id, timestamp, kTraceFileExtension);
   return options_.trace_file_path / file_name;
 }
 
