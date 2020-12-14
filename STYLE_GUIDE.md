@@ -126,6 +126,12 @@ Follow [Starlark's Style Guide][starlark-style-guide].
 
 Use [Buildifier][buildifier] to style and lint Starlark files.
 
+## JavaScript and TypeScript
+Follow Google's [JavaScript][google-javascript-style-guide] and
+[TypeScript][google-typescript-style-guide] style guides.
+
+Use [gts][gts] style and lint JavaScript and TypeScript files.
+
 ## Shell
 
 Follow [Google's Shell Style Guide][google-shell-style-guide].
@@ -172,8 +178,11 @@ Follow
 [clang-format]: https://clang.llvm.org/docs/ClangFormat.html
 [clang-tidy]: https://clang.llvm.org/extra/clang-tidy/
 [google-cpp-style-guide]: https://google.github.io/styleguide/cppguide.html
+[google-javascript-style-guide]: https://google.github.io/styleguide/jsguide.html
 [google-markdown-style-guide]: https://google.github.io/styleguide/docguide/style.html#document-layout
 [google-shell-style-guide]: https://google.github.io/styleguide/shellguide.html 
+[google-typescript-style-guide]: https://github.com/google/gts
+[gts]: https://github.com/google/gts
 [microsoft-writing-style-guide]: https://docs.microsoft.com/en-us/style-guide/welcome/
 [rust-result]: https://doc.rust-lang.org/std/result/
 [starlark-style-guide]: https://docs.bazel.build/versions/master/skylark/bzl-style.html
