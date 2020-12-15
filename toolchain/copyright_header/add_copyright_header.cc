@@ -34,12 +34,17 @@ const std::unordered_map<std::string, std::string> kFileExtensionComment{
     {"c", "//"},
     {"cc", "//"},
     {"h", "//"},
+    {"js", "//"},
+    {"jsx", "//"},
     {"ll", ";"},
     {"sh", "#"},
+    {"ts", "//"},
+    {"tsx", "//"},
     {"yml", "#"}};
 // NOLINTNEXTLINE(fuchsia-statically-constructed-objects)
 const std::unordered_set<std::string> kPathBlocklist{
-    ".git", "bazel-bin", "bazel-out", "bazel-spoor", "bazel-testlogs"};
+    ".git",           "bazel-bin", "bazel-out",   "bazel-spoor",
+    "bazel-testlogs", "dist",      "node_modules"};
 
 auto AddCopyrightHeaderToFile(const std::filesystem::path& path,
                               const std::string& copyright_header_text)

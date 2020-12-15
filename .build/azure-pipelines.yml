@@ -12,9 +12,13 @@ jobs:
     vmImage: $(imageName)
   steps:
   - template: ./templates/install-common.yml
-  - script: bazel build //...
+  - script: |
+      bazel build //...
+      yarn workspaces run build
     displayName: Build
-  - script: bazel test //...
+  - script: |
+      bazel test //...
+      yarn workspaces run test
     displayName: Test
   - script: ./toolchain/benchmark/run_benchmarks.sh
     displayName: Benchmark
@@ -40,6 +44,8 @@ jobs:
       ./toolchain/style/clang_format.sh
       git diff --exit-code
     displayName: Clang Format
+  - script: yarn lint
+    displayName: gts
   - script: |
       bazel run //toolchain/style:buildifier
       git diff --exit-code

@@ -14,5 +14,9 @@ steps:
     echo '##vso[task.prependpath]/usr/local/opt/llvm/bin'
   displayName: Install LLVM (macOS)
   condition: eq(variables['Agent.OS'], 'Darwin')
+- script: |
+    yarn
+    git diff --exit-code
+  displayName: Install JavaScript and TypeScript dependencies
 - script: cp ./.build/ci.bazelrc ./.bazelrc
   displayName: Copy .bazelrc
