@@ -4,27 +4,22 @@
 workspace(name = "spoor")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-load(
-    "@bazel_tools//tools/build_defs/repo:git.bzl",
-    "git_repository",
-    "new_git_repository",
-)
 
-new_git_repository(
+http_archive(
     name = "com_microsoft_gsl",
-    build_file = "@//toolchain:gsl.BUILD",
-    commit = "5de956aaf0c80f58b1326591cd59bad72be79556",  # 2020-09-23 (>v3.1.0)
-    remote = "https://github.com/microsoft/gsl.git",
-    shallow_since = "1600896232 -0700",
+    build_file = "//toolchain:gsl.BUILD",
+    sha256 = "ca3f015ea80a8d9163714dbf6b377a424e196bd5c8b254fdb5e5770ea3f84a55",
+    strip_prefix = "GSL-ec6cd75d57f68b6566e1d406de20e59636a881e7",
+    urls = ["https://github.com/microsoft/GSL/archive/ec6cd75d57f68b6566e1d406de20e59636a881e7.tar.gz"],
 )
 
 # TODO(#54): Migrate to the original repository when the fork's changes with
 # LLVM 11 support are checked in.
-git_repository(
+http_archive(
     name = "llvm",
-    commit = "eb12c9841cae08461e0f1ca03fc43cd9e788064b",
-    remote = "https://github.com/lelandjansen/bazel_llvm",
-    shallow_since = "1606261631 -0800",
+    sha256 = "bd878e859227850e7e529d02bfa6ebf247c463671815ae73912fed8c373b8b44",
+    strip_prefix = "bazel_llvm-eb12c9841cae08461e0f1ca03fc43cd9e788064b",
+    urls = ["https://github.com/lelandjansen/bazel_llvm/archive/eb12c9841cae08461e0f1ca03fc43cd9e788064b.tar.gz"],
 )
 
 load("@llvm//tools/bzl:deps.bzl", "llvm_deps")
@@ -51,59 +46,57 @@ http_archive(
     urls = ["https://github.com/apple/swift/archive/swift-5.3.1-RELEASE.tar.gz"],
 )
 
-git_repository(
+http_archive(
     name = "com_google_absl",
-    commit = "c51510d1d87ebce8615ae1752fd5aca912f6cf4c",  # v20200225.2
-    remote = "https://github.com/abseil/abseil-cpp.git",
-    shallow_since = "1587584588 -0400",
+    sha256 = "bf3f13b13a0095d926b25640e060f7e13881bd8a792705dd9e161f3c2b9aa976",
+    strip_prefix = "abseil-cpp-20200923.2",
+    urls = ["https://github.com/abseil/abseil-cpp/archive/20200923.2.tar.gz"],
 )
 
-git_repository(
+http_archive(
     name = "com_google_protobuf",
-    commit = "fde7cf7358ec7cd69e8db9be4f1fa6a5c431386a",  # v3.13.0
-    remote = "https://github.com/protocolbuffers/protobuf.git",
-    shallow_since = "1597443653 -0700",
+    sha256 = "50ec5a07c0c55d4ec536dd49021f2e194a26bfdbc531d03d1e9d4d3e27175659",
+    strip_prefix = "protobuf-3.14.0",
+    urls = ["https://github.com/protocolbuffers/protobuf/releases/download/v3.14.0/protobuf-cpp-3.14.0.tar.gz"],
 )
 
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 
 protobuf_deps()
 
-git_repository(
+http_archive(
     name = "com_google_googletest",
-    commit = "703bd9caab50b139428cea1aaff9974ebee5742e",  # v1.10.0
-    remote = "https://github.com/google/googletest.git",
-    shallow_since = "1570114335 -0400",
+    sha256 = "9dc9157a9a1551ec7a7e43daea9a694a0bb5fb8bec81235d8a1e6ef64c716dcb",
+    strip_prefix = "googletest-release-1.10.0",
+    urls = ["https://github.com/google/googletest/archive/release-1.10.0.tar.gz"],
 )
 
-git_repository(
+http_archive(
     name = "com_google_benchmark",
-    commit = "73d4d5e8d6d449fc8663765a42aa8aeeee844489",  # v1.5.2
-    remote = "https://github.com/google/benchmark.git",
-    shallow_since = "1599818118 +0100",
+    sha256 = "dccbdab796baa1043f04982147e67bb6e118fe610da2c65f88912d73987e700c",
+    strip_prefix = "benchmark-1.5.2",
+    urls = ["https://github.com/google/benchmark/archive/v1.5.2.tar.gz"],
 )
 
-git_repository(
+http_archive(
     name = "com_bazelbuild_bazel",
-    commit = "7cfe416c5b702967b63cb2d9e2a2a2aefb8d2cac",  # v3.4.1
-    remote = "https://github.com/bazelbuild/bazel.git",
-    shallow_since = "1594707848 +0200",
+    sha256 = "8d3bf2767f8797efc4ff59a1ad2e3c7dd789a288689bdbc44963d4f025286c98",
+    strip_prefix = "bazel-3.7.1",
+    urls = ["https://github.com/bazelbuild/bazel/archive/3.7.1.tar.gz"],
 )
 
-git_repository(
+http_archive(
     # Dependencies require deviating from the naming convention.
     name = "io_bazel_rules_go",
-    commit = "13c17d4aa8c8407049f5644e13c9ace1275d200e",  # v0.23.8
-    remote = "https://github.com/bazelbuild/rules_go.git",
-    shallow_since = "1597238923 -0400",
+    sha256 = "81eff5df9077783b18e93d0c7ff990d8ad7a3b8b3ca5b785e1c483aacdb342d7",
+    urls = ["https://github.com/bazelbuild/rules_go/releases/download/v0.24.9/rules_go-v0.24.9.tar.gz"],
 )
 
-git_repository(
+http_archive(
     # Dependencies require deviating from the naming convention.
     name = "bazel_gazelle",
-    commit = "c00612418c4dbc9f3cd35fe71fe1147748048b69",  # v0.21.1
-    remote = "https://github.com/bazelbuild/bazel-gazelle",
-    shallow_since = "1590680880 -0400",
+    sha256 = "b85f48fa105c4403326e9525ad2b2cc437babaa6e15a3fc0b1dbab0ab064bc7c",
+    urls = ["https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.22.2/bazel-gazelle-v0.22.2.tar.gz"],
 )
 
 load(
