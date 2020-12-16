@@ -37,6 +37,7 @@ const std::unordered_map<std::string, std::string> kFileExtensionComment{
     {"js", "//"},
     {"jsx", "//"},
     {"ll", ";"},
+    {"proto", "//"},
     {"sh", "#"},
     {"ts", "//"},
     {"tsx", "//"},
