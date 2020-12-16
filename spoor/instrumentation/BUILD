@@ -1,21 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-load("@rules_cc//cc:defs.bzl", "cc_library", "cc_proto_library", "cc_test")
-load("@rules_proto//proto:defs.bzl", "proto_library")
-
-proto_library(
-    name = "instrumentation_map_proto",
-    srcs = ["instrumentation_map.proto"],
-    visibility = ["//visibility:public"],
-    deps = ["@com_google_protobuf//:timestamp_proto"],
-)
-
-cc_proto_library(
-    name = "instrumentation_map_cc_proto",
-    visibility = ["//visibility:public"],
-    deps = [":instrumentation_map_proto"],
-)
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 # Hack to produce a shared library with the correct extension for each platform.
 

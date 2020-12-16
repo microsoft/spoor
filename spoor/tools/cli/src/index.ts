@@ -1,8 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import {add} from '@microsoft/spoor-lib';
-import {parseArgs} from './command';
+import yargs from 'yargs/yargs';
 
-const args = parseArgs(process.argv.slice(2));
-console.log(`${args.x} + ${args.y} = ${add(args.x, args.y)}`);
+function main(argv: string[]) {
+  yargs(argv.slice(2)).command(require('./commands/cat')).demandCommand().help()
+    .argv;
+}
+
+main(process.argv);

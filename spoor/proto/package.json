@@ -1,8 +1,8 @@
 {
-  "name": "@microsoft/spoor-lib",
+  "name": "@microsoft/spoor-proto",
   "version": "0.0.0",
-  "description": "Libraries to parse and analyze Spoor traces.",
-  "homepage": "https://github.com/microsoft/spoor/spoor/tools/lib",
+  "description": "Protocol buffers for Spoor traces and function maps.",
+  "homepage": "https://github.com/microsoft/spoor/spoor/proto",
   "bugs": {
     "url": "https://github.com/microsoft/spoor/issues"
   },
@@ -16,14 +16,14 @@
   "types": "dist/index",
   "files": ["dist"],
   "scripts": {
-    "build": "tsc",
+    "build": "mkdir -p dist && protoc --js_out=import_style=commonjs,binary:dist spoor.proto && tsc",
     "test": "yarn build && jest"
   },
   "engines": {
     "node": ">=12.0.0"
   },
   "dependencies": {
-    "@microsoft/spoor-proto": "~0.0.0"
+    "google-protobuf": "~3.14.0"
   },
   "devDependencies": {
     "@types/jest": "~26.0.19",

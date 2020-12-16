@@ -12,6 +12,7 @@
 * Post-processing tools
   * [Node.js][nodejs]
   * [yarn][yarn]
+  * [protoc][protoc-installation]
 
 ## Build
 ```
@@ -79,5 +80,6 @@ comments.
 [compilation-database-readme]: toolchain/compilation_database/README.md
 [nodejs]: https://nodejs.org/
 [opencode-email]: mailto:opencode@microsoft.com
+[protoc-installation]: https://grpc.io/docs/protoc-installation/
 [style-guide]: STYLE_GUIDE.md
 [yarn]: https://classic.yarnpkg.com/
