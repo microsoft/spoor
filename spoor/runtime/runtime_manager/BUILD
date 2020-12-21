@@ -30,7 +30,6 @@ cc_test(
     deps = [
         ":runtime_manager",
         "//spoor/runtime/buffer",
-        "//spoor/runtime/config",
         "//spoor/runtime/event_logger",
         "//spoor/runtime/flush_queue:flush_queue_mock",
         "//spoor/runtime/trace",
