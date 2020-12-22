@@ -4,6 +4,7 @@
   "license": "MIT",
   "author": "Microsoft Corporation",
   "workspaces": [
+    "spoor/proto",
     "spoor/tools/lib",
     "spoor/tools/cli"
   ],

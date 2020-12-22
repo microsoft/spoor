@@ -10,11 +10,10 @@ cc_library(
     copts = ["-Werror"],
     visibility = ["//spoor/instrumentation:__pkg__"],
     deps = [
-        "//spoor/instrumentation:instrumentation_map_cc_proto",
+        "//spoor/proto:spoor_cc_proto",
         "//util:numeric",
         "//util/time:clock",
         "@com_apple_swift//:demangle",
-        "@com_google_absl//absl/strings:str_format",
         "@com_microsoft_gsl//:gsl",
         "@llvm//11.0.0",
     ],
@@ -29,7 +28,7 @@ cc_test(
     visibility = ["//visibility:private"],
     deps = [
         ":inject_runtime",
-        "//spoor/instrumentation:instrumentation_map_cc_proto",
+        "//spoor/proto:spoor_cc_proto",
         "//util:numeric",
         "//util/time:clock",
         "//util/time:clock_mock",

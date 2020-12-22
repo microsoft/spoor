@@ -24,7 +24,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
-#include "spoor/instrumentation/instrumentation_map.pb.h"
+#include "spoor/proto/spoor.pb.h"
 #include "util/numeric.h"
 #include "util/time/clock.h"
 #include "util/time/clock_mock.h"
@@ -33,8 +33,8 @@ namespace {
 
 using google::protobuf::util::MessageDifferencer;
 using google::protobuf::util::TimeUtil;
-using spoor::instrumentation::FunctionInfo;
-using spoor::instrumentation::InstrumentedFunctionMap;
+using spoor::FunctionInfo;
+using spoor::InstrumentedFunctionMap;
 using spoor::instrumentation::inject_runtime::InjectRuntime;
 using testing::MatchesRegex;
 using testing::Return;
@@ -80,12 +80,10 @@ auto AssertModulesEqual(gsl::not_null<llvm::Module*> computed_module,
   expected_module->setSourceFileName({});
 
   std::string computed_module_ir{};
-  llvm::raw_string_ostream computed_module_ostream{computed_module_ir};
-  computed_module_ostream << *computed_module;
+  llvm::raw_string_ostream{computed_module_ir} << *computed_module;
 
   std::string expected_module_ir{};
-  llvm::raw_string_ostream expected_module_ostream{expected_module_ir};
-  expected_module_ostream << *expected_module;
+  llvm::raw_string_ostream{expected_module_ir} << *expected_module;
 
   ASSERT_EQ(expected_module_ir, computed_module_ir);
 
@@ -165,13 +163,13 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             fibonacci_function_info.set_linkage_name("_Z9Fibonaccii");
             fibonacci_function_info.set_demangled_name("Fibonacci(int)");
             fibonacci_function_info.set_instrumented(true);
-            function_map[0x73c43c2b00000000] = fibonacci_function_info;
+            function_map["0x73c43c2b00000000"] = fibonacci_function_info;
 
             FunctionInfo main_function_info{};
             main_function_info.set_linkage_name("main");
             main_function_info.set_demangled_name("main");
             main_function_info.set_instrumented(true);
-            function_map[0x73c43c2b00000001] = main_function_info;
+            function_map["0x73c43c2b00000001"] = main_function_info;
 
             return expected_instrumented_function_map;
           }(),
@@ -194,7 +192,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             fibonacci_function_info.set_directory("/path/to/file");
             fibonacci_function_info.set_line(1);
             fibonacci_function_info.set_instrumented(true);
-            function_map[0x753f031f00000000] = fibonacci_function_info;
+            function_map["0x753f031f00000000"] = fibonacci_function_info;
 
             FunctionInfo main_function_info{};
             main_function_info.set_linkage_name("main");
@@ -203,7 +201,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             main_function_info.set_directory("/path/to/file");
             main_function_info.set_line(6);
             main_function_info.set_instrumented(true);
-            function_map[0x753f031f00000001] = main_function_info;
+            function_map["0x753f031f00000001"] = main_function_info;
 
             return expected_instrumented_function_map;
           }(),
@@ -226,7 +224,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             fibonacci_function_info.set_directory("/path/to/file");
             fibonacci_function_info.set_line(1);
             fibonacci_function_info.set_instrumented(true);
-            function_map[0xc373298f00000000] = fibonacci_function_info;
+            function_map["0xc373298f00000000"] = fibonacci_function_info;
 
             FunctionInfo main_function_info{};
             main_function_info.set_linkage_name("main");
@@ -235,7 +233,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             main_function_info.set_directory("/path/to/file");
             main_function_info.set_line(6);
             main_function_info.set_instrumented(true);
-            function_map[0xc373298f00000001] = main_function_info;
+            function_map["0xc373298f00000001"] = main_function_info;
 
             return expected_instrumented_function_map;
           }(),
@@ -259,7 +257,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             fibonacci_function_info.set_directory("/path/to/file");
             fibonacci_function_info.set_line(6);
             fibonacci_function_info.set_instrumented(true);
-            function_map[0x917362100000000] = fibonacci_function_info;
+            function_map["0x0917362100000000"] = fibonacci_function_info;
 
             FunctionInfo main_function_info{};
             main_function_info.set_linkage_name("main");
@@ -268,7 +266,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             main_function_info.set_directory("/path/to/file");
             main_function_info.set_line(12);
             main_function_info.set_instrumented(true);
-            function_map[0x917362100000001] = main_function_info;
+            function_map["0x0917362100000001"] = main_function_info;
 
             return expected_instrumented_function_map;
           }(),
@@ -292,7 +290,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             fibonacci_function_info.set_directory("/path/to/file");
             fibonacci_function_info.set_line(1);
             fibonacci_function_info.set_instrumented(true);
-            function_map[0x88a7c6bf00000001] = fibonacci_function_info;
+            function_map["0x88a7c6bf00000001"] = fibonacci_function_info;
 
             FunctionInfo main_function_info{};
             main_function_info.set_linkage_name("main");
@@ -303,7 +301,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             // number.
             main_function_info.set_line(1);
             main_function_info.set_instrumented(true);
-            function_map[0x88a7c6bf00000000] = main_function_info;
+            function_map["0x88a7c6bf00000000"] = main_function_info;
 
             return expected_instrumented_function_map;
           }(),
@@ -339,6 +337,9 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
 
     InstrumentedFunctionMap instrumented_function_map{};
     instrumented_function_map.ParseFromString(buffer);
+
+    std::cerr << instrumented_function_map.DebugString() << "\n\n";
+    std::cerr << expected_instrumented_function_map.DebugString() << '\n';
 
     ASSERT_TRUE(MessageDifferencer::Equals(instrumented_function_map,
                                            expected_instrumented_function_map));
@@ -631,7 +632,7 @@ TEST(InjectRuntime, ReturnValue) {  // NOLINT
   }
 }
 
-TEST(InjectRuntime, ExistsOnOstreamError) {  // NOLINT
+TEST(InjectRuntime, ExitsOnOstreamError) {  // NOLINT
   llvm::SMDiagnostic expected_module_diagnostic{};
   llvm::LLVMContext expected_module_context{};
   auto expected_instrumented_module =

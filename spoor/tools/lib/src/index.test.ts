@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import {add} from '.';
+import {InstrumentedFunctionMap} from '.';
 
-test('one plus two is three', () => {
-  expect(add(1, 2)).toBe(3);
+test('bonus usage to maximize coverage', () => {
+  new InstrumentedFunctionMap();
 });

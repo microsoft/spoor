@@ -14,7 +14,6 @@
 #include <unordered_map>
 #include <utility>
 
-#include "absl/strings/str_format.h"
 #include "google/protobuf/timestamp.pb.h"
 #include "google/protobuf/util/time_util.h"
 #include "gsl/gsl"
@@ -28,8 +27,9 @@
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/Type.h"
 #include "llvm/Passes/PassPlugin.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
-#include "spoor/instrumentation/instrumentation_map.pb.h"
+#include "spoor/proto/spoor.pb.h"
 #include "swift/Demangling/Demangle.h"
 #include "swift/Demangling/Demangler.h"
 #include "util/time/clock.h"
@@ -58,15 +58,22 @@ auto InjectRuntime::run(llvm::Module& llvm_module, llvm::ModuleAnalysisManager&
 
   const auto now = [&] {
     const auto now = options_.system_clock->Now().time_since_epoch();
+    // const auto now = std::chrono::system_clock::now().time_since_epoch();
     const auto nanoseconds =
         std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
     return TimeUtil::NanosecondsToTimestamp(nanoseconds);
   }();
   *instrumented_function_map.mutable_created_at() = now;
 
-  const auto file_name = absl::StrFormat(
-      "%x.%s", std::hash<std::string>{}(llvm_module.getModuleIdentifier()),
-      kInstrumentedFunctionMapFileExtension);
+  const auto file_name = [&] {
+    std::string buffer{};
+    const auto module_id_hash =
+        std::hash<std::string>{}(llvm_module.getModuleIdentifier());
+    llvm::raw_string_ostream{buffer}
+        << llvm::format_hex_no_prefix(module_id_hash, 16) << '.'
+        << kInstrumentedFunctionMapFileExtension.data();
+    return buffer;
+  }();
   const auto path = options_.instrumented_function_map_output_path / file_name;
   std::error_code error{};
   auto output_stream =
@@ -87,7 +94,7 @@ auto InjectRuntime::run(llvm::Module& llvm_module, llvm::ModuleAnalysisManager&
 
   if (modified) return llvm::PreservedAnalyses::none();
   return llvm::PreservedAnalyses::all();
-}  // namespace spoor::instrumentation::inject_runtime
+}
 
 auto InjectRuntime::InstrumentModule(gsl::not_null<llvm::Module*> llvm_module)
     const -> std::pair<InstrumentedFunctionMap, bool> {
@@ -173,7 +180,12 @@ auto InjectRuntime::InstrumentModule(gsl::not_null<llvm::Module*> llvm_module)
       function_info.set_line(subprogram->getLine());
     }
     function_info.set_instrumented(instrument_function);
-    function_map[function_id] = function_info;
+    const auto function_id_string = [&] {
+      std::string buffer{};
+      llvm::raw_string_ostream{buffer} << llvm::format_hex(function_id, 18);
+      return buffer;
+    }();
+    function_map[function_id_string] = function_info;
 
     modified |= instrument_function;
     if (!instrument_function) continue;
@@ -193,7 +205,6 @@ auto InjectRuntime::InstrumentModule(gsl::not_null<llvm::Module*> llvm_module)
             llvm::ReturnInst::classof(&instruction);
         if (is_return_instruction) {
           builder.SetInsertPoint(&instruction);
-          (void)log_function_exit;
           builder.CreateCall(log_function_exit,
                              {builder.getInt64(function_id)});
           if (is_main) builder.CreateCall(deinitialize_runtime);

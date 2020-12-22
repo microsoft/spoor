@@ -70,6 +70,9 @@ auto PluginInfo() -> llvm::PassPluginLibraryInfo {
                                                               *error);
               };
           util::time::SystemClock system_clock{};
+          // auto* sc = &system_clock;
+          // auto n = sc->Now().time_since_epoch();
+          // llvm::errs() << n.count() << '\n';
           pass_manager.addPass(inject_runtime::InjectRuntime({
               .instrumented_function_map_output_path =
                   config.instrumentation_map_output_path,

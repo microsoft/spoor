@@ -20,7 +20,7 @@
 #include "llvm/IR/PassManager.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Support/raw_ostream.h"
-#include "spoor/instrumentation/instrumentation_map.pb.h"
+#include "spoor/proto/spoor.pb.h"
 #include "util/numeric.h"
 #include "util/time/clock.h"
 
