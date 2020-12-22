@@ -15,7 +15,6 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "spoor/runtime/buffer/circular_slice_buffer.h"
-#include "spoor/runtime/config/config.h"
 #include "spoor/runtime/event_logger/event_logger.h"
 #include "spoor/runtime/flush_queue/flush_queue_mock.h"
 #include "spoor/runtime/trace/trace_reader_mock.h"
