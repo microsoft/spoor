@@ -24,23 +24,12 @@ const std::string kCopyrightHeaderFile{
     "toolchain/copyright_header/copyright_header.txt"};
 // NOLINTNEXTLINE(fuchsia-statically-constructed-objects)
 const std::unordered_map<std::string, std::string> kFileExtensionComment{
-    {".clang-format", "#"},
-    {".clang-tidy", "#"},
-    {".gitignore", "#"},
-    {"BUILD", "#"},
-    {"WORKSPACE", "#"},
-    {"bazelrc", "#"},
-    {"bzl", "#"},
-    {"c", "//"},
-    {"cc", "//"},
-    {"h", "//"},
-    {"js", "//"},
-    {"jsx", "//"},
-    {"ll", ";"},
-    {"proto", "//"},
-    {"sh", "#"},
-    {"ts", "//"},
-    {"tsx", "//"},
+    {"BUILD", "#"},        {"WORKSPACE", "#"},  {"bazelrc", "#"},
+    {"bzl", "#"},          {"c", "//"},         {"cc", "//"},
+    {"clang-format", "#"}, {"clang-tidy", "#"}, {"eslintignore", "#"},
+    {"gitignore", "#"},    {"h", "//"},         {"js", "//"},
+    {"jsx", "//"},         {"ll", ";"},         {"proto", "//"},
+    {"sh", "#"},           {"ts", "//"},        {"tsx", "//"},
     {"yml", "#"}};
 // NOLINTNEXTLINE(fuchsia-statically-constructed-objects)
 const std::unordered_set<std::string> kPathBlocklist{
@@ -54,9 +43,6 @@ auto AddCopyrightHeaderToFile(const std::filesystem::path& path,
     const auto& file_name = path.filename();
     if (file_name.has_extension()) {
       return file_name.extension().string().substr(1);
-    }
-    if (!file_name.empty() && file_name.string().at(0) == '.') {
-      return file_name.string().substr(1);
     }
     return file_name.string();
   }();

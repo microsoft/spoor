@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 # cppcoreguidelines-init-variables
 #   Appears not to support the {} default initializer.
 # fuchsia-default-arguments
