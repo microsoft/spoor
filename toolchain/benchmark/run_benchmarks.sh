@@ -5,4 +5,4 @@
 set -eu
 
 bazel query 'kind(cc_binary, //...) intersect attr(name, ".*_benchmark", //...)' |
-  xargs bazel run --config=benchmark
+  xargs -L 1 bazel run --config=benchmark
