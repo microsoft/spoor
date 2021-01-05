@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <deque>
 #include <filesystem>
+#include <functional>
 #include <mutex>
 #include <optional>
 #include <shared_mutex>
@@ -54,9 +55,9 @@ class DiskFlushQueue final
   ~DiskFlushQueue() override;
 
   auto Run() -> void override;
+  auto Enqueue(Buffer&& buffer) -> void override;
   // Waits for the queue to empty synchronously. Buffers will be retained until
   // the deadline or until the queue is flushed or cleared.
-  auto Enqueue(Buffer&& buffer) -> void override;
   auto DrainAndStop() -> void override;
   auto Flush(std::function<void()> completion) -> void override;
   auto Clear() -> void override;

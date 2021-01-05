@@ -39,3 +39,18 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_binary(
+    name = "runtime_manager_benchmark",
+    srcs = ["runtime_manager_benchmark.cc"],
+    copts = ["-Werror"],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":runtime_manager",
+        "//spoor/runtime/flush_queue:black_hole_flush_queue",
+        "//util:numeric",
+        "//util/time:clock",
+        "@com_google_benchmark//:benchmark",
+        "@com_microsoft_gsl//:gsl",
+    ],
+)
