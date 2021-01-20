@@ -159,9 +159,9 @@ def darwin_llvm_toolchain_impl(ctx):
         features = FEATURES,
         cxx_builtin_include_directories = [
             "/usr/local/opt/llvm/include/c++/v1",
-            "/usr/local/Cellar/llvm/11.0.0/include/",
-            "/usr/local/Cellar/llvm/11.0.0/lib/clang/11.0.0/include",
-            "/usr/local/Cellar/llvm/11.0.0/lib/clang/11.0.0/share",
+            "/usr/local/Cellar/llvm/11.0.0_1/include/",
+            "/usr/local/Cellar/llvm/11.0.0_1/lib/clang/11.0.0/include",
+            "/usr/local/Cellar/llvm/11.0.0_1/lib/clang/11.0.0/share",
             "/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/include",
             "/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/System/Library/Frameworks",
         ],
