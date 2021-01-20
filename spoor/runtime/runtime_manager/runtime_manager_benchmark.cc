@@ -89,12 +89,51 @@ auto FibonacciRecursiveCallCount(const uint64 n) -> uint64 {
   //      = 2 * 1 - 1
   //      = 2 * f(n) - 1
   //
-  // Inductive step (n >= 2)
-  // g(n + 1) = 1 + g(n) + g(n - 1)
-  //          = 1 + (2 * f(n) - 1) + (2 * f(n - 1) - 1)
-  //          = 2 * f(n) + 2 * f(n - 1) - 1
-  //          = 2 * f(n + 1) - 1
+  // Assume g(n) holds true for n = k.
+  // g(k) = 2 * f(k) - 1
+  //
+  // Show g(n) holds true for n = k + 1:
+  // g(k + 1) = 1 + g(k) + g(k - 1)
+  //          = 1 + (2 * f(k) - 1) + (2 * f(k - 1) - 1)
+  //          = 2 * f(k) + 2 * f(k - 1) - 1
+  //          = 2 * f(k + 1) - 1
   return 2 * FibonacciEfficient(n) - 1;
+}
+
+auto Run(const std::function<uint64(const uint64,
+                                    gsl::not_null<RuntimeManager*>)>& fibonacci,
+         const bool enable, gsl::not_null<benchmark::State*> state) -> void {
+  const auto n = state->range(0);
+  const auto fibonacci_function_calls = FibonacciRecursiveCallCount(n);
+  const auto event_count_per_thread = 2 * fibonacci_function_calls;
+  const auto thread_count = state->range(1);
+  util::time::SteadyClock steady_clock{};
+  BlackHoleFlushQueue flush_queue{};
+  RuntimeManager runtime_manager{
+      {.steady_clock = &steady_clock,
+       .flush_queue = &flush_queue,
+       .thread_event_buffer_capacity = event_count_per_thread,
+       .reserved_pool_capacity = thread_count * event_count_per_thread,
+       .reserved_pool_max_slice_capacity = event_count_per_thread,
+       .dynamic_pool_capacity = 0,
+       .dynamic_pool_max_slice_capacity = 0,
+       .dynamic_pool_borrow_cas_attempts = 1,
+       .max_buffer_flush_attempts = 1,
+       .flush_all_events = kFlushAllEvents}};
+  runtime_manager.Initialize();
+  if (enable) runtime_manager.Enable();
+  std::vector<std::thread> threads{};
+  threads.reserve(thread_count);
+  for (auto _ : *state) {  // NOLINT(clang-analyzer-deadcode.DeadStores)
+    for (auto thread{0}; thread < thread_count; ++thread) {
+      threads.emplace_back(fibonacci, n, &runtime_manager);
+    }
+    std::for_each(std::begin(threads), std::end(threads), [](auto& thread) {
+      if (thread.joinable()) thread.join();
+    });
+    threads.clear();
+  }
+  runtime_manager.Deinitialize();
 }
 
 // NOLINTNEXTLINE(google-runtime-references)
@@ -134,74 +173,29 @@ BENCHMARK(BenchmarkThreadCreation)  // NOLINT
 
 // NOLINTNEXTLINE(google-runtime-references)
 auto BenchmarkFibonacciUninstrumented(benchmark::State& state) -> void {
-  const auto n = state.range(0);
-  const auto fibonacci_function_calls = FibonacciRecursiveCallCount(n);
-  const auto event_count_per_thread = 2 * fibonacci_function_calls;
-  const auto thread_count = state.range(1);
-  util::time::SteadyClock steady_clock{};
-  BlackHoleFlushQueue flush_queue{};
-  RuntimeManager runtime_manager{
-      {.steady_clock = &steady_clock,
-       .flush_queue = &flush_queue,
-       .thread_event_buffer_capacity = event_count_per_thread,
-       .reserved_pool_capacity = thread_count * event_count_per_thread,
-       .reserved_pool_max_slice_capacity = event_count_per_thread,
-       .dynamic_pool_capacity = 0,
-       .dynamic_pool_max_slice_capacity = 0,
-       .dynamic_pool_borrow_cas_attempts = 1,
-       .max_buffer_flush_attempts = 1,
-       .flush_all_events = kFlushAllEvents}};
-  std::vector<std::thread> threads{};
-  threads.reserve(thread_count);
-  for (auto _ : state) {  // NOLINT(clang-analyzer-deadcode.DeadStores)
-    for (auto thread{0}; thread < thread_count; ++thread) {
-      threads.emplace_back(FibonacciUninstrumented, n, &runtime_manager);
-    }
-    std::for_each(std::begin(threads), std::end(threads), [](auto& thread) {
-      if (thread.joinable()) thread.join();
-    });
-  }
+  constexpr auto enabled{false};
+  Run(FibonacciUninstrumented, enabled, &state);
 }
 
 BENCHMARK(BenchmarkFibonacciUninstrumented)  // NOLINT
     ->ArgsProduct(kNAndThreadCount);
 
 // NOLINTNEXTLINE(google-runtime-references)
-auto BenchmarkFibonacciInstrumented(benchmark::State& state) -> void {
-  const auto n = state.range(0);
-  const auto fibonacci_function_calls = FibonacciRecursiveCallCount(n);
-  const auto event_count_per_thread = 2 * fibonacci_function_calls;
-  const auto thread_count = state.range(1);
-  util::time::SteadyClock steady_clock{};
-  BlackHoleFlushQueue flush_queue{};
-  RuntimeManager runtime_manager{
-      {.steady_clock = &steady_clock,
-       .flush_queue = &flush_queue,
-       .thread_event_buffer_capacity = event_count_per_thread,
-       .reserved_pool_capacity = thread_count * event_count_per_thread,
-       .reserved_pool_max_slice_capacity = event_count_per_thread,
-       .dynamic_pool_capacity = 0,
-       .dynamic_pool_max_slice_capacity = 0,
-       .dynamic_pool_borrow_cas_attempts = 1,
-       .max_buffer_flush_attempts = 1,
-       .flush_all_events = kFlushAllEvents}};
-  runtime_manager.Initialize();
-  runtime_manager.Enable();
-  std::vector<std::thread> threads{};
-  threads.reserve(thread_count);
-  for (auto _ : state) {  // NOLINT(clang-analyzer-deadcode.DeadStores)
-    for (auto thread{0}; thread < thread_count; ++thread) {
-      threads.emplace_back(FibonacciInstrumented, n, &runtime_manager);
-    }
-    std::for_each(std::begin(threads), std::end(threads), [](auto& thread) {
-      if (thread.joinable()) thread.join();
-    });
-    threads.clear();
-  }
-  runtime_manager.Deinitialize();
+auto BenchmarkFibonacciInstrumentedDisabled(benchmark::State& state) -> void {
+  constexpr auto enabled{false};
+  Run(FibonacciInstrumented, enabled, &state);
 }
 
-BENCHMARK(BenchmarkFibonacciInstrumented)  // NOLINT
+BENCHMARK(BenchmarkFibonacciInstrumentedDisabled)  // NOLINT
+    ->ArgsProduct(kNAndThreadCount);
+
+// NOLINTNEXTLINE(google-runtime-references)
+auto BenchmarkFibonacciInstrumentedEnabled(benchmark::State& state) -> void {
+  constexpr auto enabled{true};
+  Run(FibonacciInstrumented, enabled, &state);
+}
+
+BENCHMARK(BenchmarkFibonacciInstrumentedEnabled)  // NOLINT
     ->ArgsProduct(kNAndThreadCount);
 
 }  // namespace
