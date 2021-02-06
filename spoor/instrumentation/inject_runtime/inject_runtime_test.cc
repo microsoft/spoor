@@ -36,6 +36,8 @@ using google::protobuf::util::TimeUtil;
 using spoor::FunctionInfo;
 using spoor::InstrumentedFunctionMap;
 using spoor::instrumentation::inject_runtime::InjectRuntime;
+using spoor::instrumentation::inject_runtime::
+    kInstrumentedFunctionMapFileExtension;
 using testing::MatchesRegex;
 using testing::Return;
 using util::time::SystemClock;
@@ -133,6 +135,7 @@ TEST(InjectRuntime, InstrumentsModule) {  // NOLINT
          .system_clock = &system_clock,
          .function_allow_list = {},
          .function_blocklist = {},
+         .module_id = {},
          .min_instruction_count_to_instrument = 0,
          .initialize_runtime = config.initialize_runtime,
          .enable_runtime = config.enable_runtime}};
@@ -329,6 +332,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
          .system_clock = &system_clock,
          .function_allow_list = {},
          .function_blocklist = {},
+         .module_id = {},
          .min_instruction_count_to_instrument = 0,
          .initialize_runtime = false,
          .enable_runtime = false}};
@@ -374,6 +378,7 @@ TEST(InjectRuntime, FunctionBlocklist) {  // NOLINT
        .system_clock = &system_clock,
        .function_allow_list = {},
        .function_blocklist = {"_Z9Fibonaccii"},
+       .module_id = {},
        .min_instruction_count_to_instrument = 0,
        .initialize_runtime = false,
        .enable_runtime = false}};
@@ -413,6 +418,7 @@ TEST(InjectRuntime, FunctionAllowListOverridesBlocklist) {  // NOLINT
        .system_clock = &system_clock,
        .function_allow_list = {"_Z9Fibonaccii"},
        .function_blocklist = {"_Z9Fibonaccii"},
+       .module_id = {},
        .min_instruction_count_to_instrument = 0,
        .initialize_runtime = false,
        .enable_runtime = false}};
@@ -463,6 +469,7 @@ TEST(InjectRuntime, InstructionThreshold) {  // NOLINT
          .system_clock = &system_clock,
          .function_allow_list = {},
          .function_blocklist = {},
+         .module_id = {},
          .min_instruction_count_to_instrument = config.instruction_threshold,
          .initialize_runtime = false,
          .enable_runtime = false}};
@@ -504,6 +511,7 @@ TEST(InjectRuntime, AlwaysInstrumentsMain) {  // NOLINT
        .system_clock = &system_clock,
        .function_allow_list = {},
        .function_blocklist = {"main", "_Z9Fibonaccii"},
+       .module_id = {},
        .min_instruction_count_to_instrument =
            std::numeric_limits<uint32>::max(),
        .initialize_runtime = false,
@@ -530,31 +538,49 @@ TEST(InjectRuntime, InstrumentedFunctionMapFileName) {  // NOLINT
                                          uninstrumented_module_diagnostic,
                                          uninstrumented_module_context);
   ASSERT_NE(parsed_module, nullptr);
-
-  std::string file_name{};
-  const auto ostream = [&file_name](
-                           const llvm::StringRef file,
-                           gsl::not_null<std::error_code*> /*unused*/) {
-    file_name = file;
-    return std::make_unique<llvm::raw_null_ostream>();
-  };
-  SystemClockMock system_clock{};
-  EXPECT_CALL(system_clock, Now())
-      .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
-  InjectRuntime inject_runtime{
-      {.instrumented_function_map_output_path = "/path/to/output",
-       .instrumented_function_map_output_stream = ostream,
-       .system_clock = &system_clock,
-       .function_allow_list = {},
-       .function_blocklist = {},
-       .min_instruction_count_to_instrument = 0,
-       .initialize_runtime = false,
-       .enable_runtime = false}};
-  llvm::ModuleAnalysisManager module_analysis_manager{};
-  inject_runtime.run(*parsed_module, module_analysis_manager);
-  const std::string pattern{
-      R"(/path/to/output/[a-f0-9]{16}\.spoor_function_map)"};
-  ASSERT_THAT(file_name, MatchesRegex(pattern));
+  constexpr std::string_view instrumented_function_map_output_path{
+      "/path/to/output"};
+  const std::vector<std::optional<std::string>> module_ids{{}, "", "module_id"};
+  for (const auto& module_id : module_ids) {
+    std::string file_name{};
+    const auto ostream = [&file_name](
+                             const llvm::StringRef file,
+                             gsl::not_null<std::error_code*> /*unused*/) {
+      file_name = file;
+      return std::make_unique<llvm::raw_null_ostream>();
+    };
+    const auto expected_file_name = [&] {
+      std::string buffer{};
+      const auto id = module_id.value_or(parsed_module->getModuleIdentifier());
+      const auto module_id_hash = std::hash<std::string>{}(id);
+      llvm::raw_string_ostream{buffer}
+          << instrumented_function_map_output_path << '/'
+          << llvm::format_hex_no_prefix(module_id_hash,
+                                        sizeof(module_id_hash) * 2)
+          << '.' << kInstrumentedFunctionMapFileExtension;
+      return buffer;
+    }();
+    SystemClockMock system_clock{};
+    EXPECT_CALL(system_clock, Now())
+        .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
+    InjectRuntime inject_runtime{
+        {.instrumented_function_map_output_path =
+             instrumented_function_map_output_path,
+         .instrumented_function_map_output_stream = ostream,
+         .system_clock = &system_clock,
+         .function_allow_list = {},
+         .function_blocklist = {},
+         .module_id = module_id,
+         .min_instruction_count_to_instrument = 0,
+         .initialize_runtime = false,
+         .enable_runtime = false}};
+    llvm::ModuleAnalysisManager module_analysis_manager{};
+    inject_runtime.run(*parsed_module, module_analysis_manager);
+    const std::string pattern{
+        R"(/path/to/output/[a-f0-9]{16}\.spoor_function_map)"};
+    ASSERT_THAT(file_name, MatchesRegex(pattern));
+    ASSERT_EQ(file_name, expected_file_name);
+  }
 }
 
 TEST(InjectRuntime, AddsTimestamp) {  // NOLINT
@@ -622,6 +648,7 @@ TEST(InjectRuntime, ReturnValue) {  // NOLINT
          .system_clock = &system_clock,
          .function_allow_list = {},
          .function_blocklist = config.function_blocklist,
+         .module_id = {},
          .min_instruction_count_to_instrument = 0,
          .initialize_runtime = false,
          .enable_runtime = false}};
@@ -661,6 +688,7 @@ TEST(InjectRuntime, ExitsOnOstreamError) {  // NOLINT
        .system_clock = &system_clock,
        .function_allow_list = {},
        .function_blocklist = {},
+       .module_id = {},
        .min_instruction_count_to_instrument = 0,
        .initialize_runtime = false,
        .enable_runtime = false}};

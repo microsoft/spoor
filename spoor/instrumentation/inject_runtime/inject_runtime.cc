@@ -67,11 +67,13 @@ auto InjectRuntime::run(llvm::Module& llvm_module, llvm::ModuleAnalysisManager&
 
   const auto file_name = [&] {
     std::string buffer{};
-    const auto module_id_hash =
-        std::hash<std::string>{}(llvm_module.getModuleIdentifier());
+    const auto module_id =
+        options_.module_id.value_or(llvm_module.getModuleIdentifier());
+    const auto module_id_hash = std::hash<std::string>{}(module_id);
     llvm::raw_string_ostream{buffer}
-        << llvm::format_hex_no_prefix(module_id_hash, 16) << '.'
-        << kInstrumentedFunctionMapFileExtension.data();
+        << llvm::format_hex_no_prefix(module_id_hash,
+                                      sizeof(module_id_hash) * 2)
+        << '.' << kInstrumentedFunctionMapFileExtension;
     return buffer;
   }();
   const auto path = options_.instrumented_function_map_output_path / file_name;
