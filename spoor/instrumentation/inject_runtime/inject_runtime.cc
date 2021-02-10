@@ -50,7 +50,8 @@ constexpr std::string_view kLogFunctionEntryFunctionName{
 constexpr std::string_view kLogFunctionExitFunctionName{
     "_spoor_runtime_LogFunctionExit"};
 
-InjectRuntime::InjectRuntime(Options options) : options_{std::move(options)} {}
+InjectRuntime::InjectRuntime(Options&& options)
+    : options_{std::move(options)} {}
 
 auto InjectRuntime::run(llvm::Module& llvm_module, llvm::ModuleAnalysisManager&
                         /*unused*/) -> llvm::PreservedAnalyses {
@@ -58,7 +59,6 @@ auto InjectRuntime::run(llvm::Module& llvm_module, llvm::ModuleAnalysisManager&
 
   const auto now = [&] {
     const auto now = options_.system_clock->Now().time_since_epoch();
-    // const auto now = std::chrono::system_clock::now().time_since_epoch();
     const auto nanoseconds =
         std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
     return TimeUtil::NanosecondsToTimestamp(nanoseconds);
@@ -142,7 +142,7 @@ auto InjectRuntime::InstrumentModule(gsl::not_null<llvm::Module*> llvm_module)
     const auto finally = gsl::finally([&counter] { ++counter; });
 
     const auto function_name = function.getName().str();
-    const auto demangled_name = [function_name] {
+    const auto demangled_name = [&function_name] {
       if (swift::Demangle::isSwiftSymbol(function_name)) {
         return swift::Demangle::demangleSymbolAsString(
             function_name.c_str(), function_name.size(), {});

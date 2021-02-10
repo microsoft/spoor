@@ -69,16 +69,13 @@ auto PluginInfo() -> llvm::PassPluginLibraryInfo {
                 return std::make_unique<llvm::raw_fd_ostream>(file_path,
                                                               *error);
               };
-          util::time::SystemClock system_clock{};
-          // auto* sc = &system_clock;
-          // auto n = sc->Now().time_since_epoch();
-          // llvm::errs() << n.count() << '\n';
-          pass_manager.addPass(inject_runtime::InjectRuntime({
+          auto system_clock = std::make_unique<util::time::SystemClock>();
+          pass_manager.addPass(inject_runtime::InjectRuntime{{
               .instrumented_function_map_output_path =
                   config.instrumented_function_map_output_path,
               .instrumented_function_map_output_stream =
                   std::move(instrumented_function_map_output_stream),
-              .system_clock = &system_clock,
+              .system_clock = std::move(system_clock),
               .function_allow_list = function_allow_list,
               .function_blocklist = function_blocklist,
               .module_id = config.module_id,
@@ -86,7 +83,7 @@ auto PluginInfo() -> llvm::PassPluginLibraryInfo {
                   config.min_instruction_threshold,
               .initialize_runtime = config.initialize_runtime,
               .enable_runtime = config.enable_runtime,
-          }));
+          }});
           return true;
         };
     pass_builder.registerPipelineParsingCallback(pipeline_parsing_callback);

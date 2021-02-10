@@ -126,13 +126,13 @@ TEST(InjectRuntime, InstrumentsModule) {  // NOLINT
                             gsl::not_null<std::error_code*> /*unused*/) {
       return std::make_unique<llvm::raw_null_ostream>();
     };
-    SystemClockMock system_clock{};
-    EXPECT_CALL(system_clock, Now())
+    auto system_clock = std::make_unique<SystemClockMock>();
+    EXPECT_CALL(*system_clock, Now())
         .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
     InjectRuntime inject_runtime{
         {.instrumented_function_map_output_path = "/",
          .instrumented_function_map_output_stream = ostream,
-         .system_clock = &system_clock,
+         .system_clock = std::move(system_clock),
          .function_allow_list = {},
          .function_blocklist = {},
          .module_id = {},
@@ -323,13 +323,13 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
                                    gsl::not_null<std::error_code*> /*unused*/) {
       return std::make_unique<llvm::raw_string_ostream>(buffer);
     };
-    SystemClockMock system_clock{};
-    EXPECT_CALL(system_clock, Now())
+    auto system_clock = std::make_unique<SystemClockMock>();
+    EXPECT_CALL(*system_clock, Now())
         .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
     InjectRuntime inject_runtime{
         {.instrumented_function_map_output_path = "/",
          .instrumented_function_map_output_stream = ostream,
-         .system_clock = &system_clock,
+         .system_clock = std::move(system_clock),
          .function_allow_list = {},
          .function_blocklist = {},
          .module_id = {},
@@ -369,13 +369,13 @@ TEST(InjectRuntime, FunctionBlocklist) {  // NOLINT
                           gsl::not_null<std::error_code*> /*unused*/) {
     return std::make_unique<llvm::raw_null_ostream>();
   };
-  SystemClockMock system_clock{};
-  EXPECT_CALL(system_clock, Now())
+  auto system_clock = std::make_unique<SystemClockMock>();
+  EXPECT_CALL(*system_clock, Now())
       .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
   InjectRuntime inject_runtime{
       {.instrumented_function_map_output_path = "/",
        .instrumented_function_map_output_stream = ostream,
-       .system_clock = &system_clock,
+       .system_clock = std::move(system_clock),
        .function_allow_list = {},
        .function_blocklist = {"_Z9Fibonaccii"},
        .module_id = {},
@@ -409,13 +409,13 @@ TEST(InjectRuntime, FunctionAllowListOverridesBlocklist) {  // NOLINT
                     gsl::not_null<std::error_code*> /*unused*/) {
     return std::make_unique<llvm::raw_null_ostream>();
   };
-  SystemClockMock system_clock{};
-  EXPECT_CALL(system_clock, Now())
+  auto system_clock = std::make_unique<SystemClockMock>();
+  EXPECT_CALL(*system_clock, Now())
       .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
   InjectRuntime inject_runtime{
       {.instrumented_function_map_output_path = "/",
        .instrumented_function_map_output_stream = ostream,
-       .system_clock = &system_clock,
+       .system_clock = std::move(system_clock),
        .function_allow_list = {"_Z9Fibonaccii"},
        .function_blocklist = {"_Z9Fibonaccii"},
        .module_id = {},
@@ -460,13 +460,13 @@ TEST(InjectRuntime, InstructionThreshold) {  // NOLINT
                             gsl::not_null<std::error_code*> /*unused*/) {
       return std::make_unique<llvm::raw_null_ostream>();
     };
-    SystemClockMock system_clock{};
-    EXPECT_CALL(system_clock, Now())
+    auto system_clock = std::make_unique<SystemClockMock>();
+    EXPECT_CALL(*system_clock, Now())
         .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
     InjectRuntime inject_runtime{
         {.instrumented_function_map_output_path = "/",
          .instrumented_function_map_output_stream = ostream,
-         .system_clock = &system_clock,
+         .system_clock = std::move(system_clock),
          .function_allow_list = {},
          .function_blocklist = {},
          .module_id = {},
@@ -502,13 +502,13 @@ TEST(InjectRuntime, AlwaysInstrumentsMain) {  // NOLINT
                           gsl::not_null<std::error_code*> /*unused*/) {
     return std::make_unique<llvm::raw_null_ostream>();
   };
-  SystemClockMock system_clock{};
-  EXPECT_CALL(system_clock, Now())
+  auto system_clock = std::make_unique<SystemClockMock>();
+  EXPECT_CALL(*system_clock, Now())
       .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
   InjectRuntime inject_runtime{
       {.instrumented_function_map_output_path = "/",
        .instrumented_function_map_output_stream = ostream,
-       .system_clock = &system_clock,
+       .system_clock = std::move(system_clock),
        .function_allow_list = {},
        .function_blocklist = {"main", "_Z9Fibonaccii"},
        .module_id = {},
@@ -560,14 +560,14 @@ TEST(InjectRuntime, InstrumentedFunctionMapFileName) {  // NOLINT
           << '.' << kInstrumentedFunctionMapFileExtension;
       return buffer;
     }();
-    SystemClockMock system_clock{};
-    EXPECT_CALL(system_clock, Now())
+    auto system_clock = std::make_unique<SystemClockMock>();
+    EXPECT_CALL(*system_clock, Now())
         .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
     InjectRuntime inject_runtime{
         {.instrumented_function_map_output_path =
              instrumented_function_map_output_path,
          .instrumented_function_map_output_stream = ostream,
-         .system_clock = &system_clock,
+         .system_clock = std::move(system_clock),
          .function_allow_list = {},
          .function_blocklist = {},
          .module_id = module_id,
@@ -596,13 +596,13 @@ TEST(InjectRuntime, AddsTimestamp) {  // NOLINT
     return std::make_unique<llvm::raw_string_ostream>(buffer);
   };
   const auto nanoseconds = 1'607'590'800'000'000'000;
-  SystemClockMock system_clock{};
-  EXPECT_CALL(system_clock, Now())
+  auto system_clock = std::make_unique<SystemClockMock>();
+  EXPECT_CALL(*system_clock, Now())
       .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(nanoseconds)));
   InjectRuntime inject_runtime{
       {.instrumented_function_map_output_path = "/path/to/output",
        .instrumented_function_map_output_stream = ostream,
-       .system_clock = &system_clock,
+       .system_clock = std::move(system_clock),
        .function_allow_list = {},
        .function_blocklist = {},
        .min_instruction_count_to_instrument = 0,
@@ -639,13 +639,13 @@ TEST(InjectRuntime, ReturnValue) {  // NOLINT
                             gsl::not_null<std::error_code*> /*unused*/) {
       return std::make_unique<llvm::raw_null_ostream>();
     };
-    SystemClockMock system_clock{};
-    EXPECT_CALL(system_clock, Now())
+    auto system_clock = std::make_unique<SystemClockMock>();
+    EXPECT_CALL(*system_clock, Now())
         .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
     InjectRuntime inject_runtime{
         {.instrumented_function_map_output_path = "/",
          .instrumented_function_map_output_stream = ostream,
-         .system_clock = &system_clock,
+         .system_clock = std::move(system_clock),
          .function_allow_list = {},
          .function_blocklist = config.function_blocklist,
          .module_id = {},
@@ -681,11 +681,11 @@ TEST(InjectRuntime, ExitsOnOstreamError) {  // NOLINT
     *error_code = error;
     return std::make_unique<llvm::raw_null_ostream>();
   };
-  SystemClock system_clock{};
+  auto system_clock = std::make_unique<SystemClock>();
   InjectRuntime inject_runtime{
       {.instrumented_function_map_output_path = "/",
        .instrumented_function_map_output_stream = ostream,
-       .system_clock = &system_clock,
+       .system_clock = std::move(system_clock),
        .function_allow_list = {},
        .function_blocklist = {},
        .module_id = {},

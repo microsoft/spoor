@@ -37,7 +37,7 @@ class InjectRuntime : public llvm::PassInfoMixin<InjectRuntime> {
         llvm::StringRef /*file_path*/,
         gsl::not_null<std::error_code*> /*error*/)>
         instrumented_function_map_output_stream;
-    gsl::not_null<util::time::SystemClock*> system_clock;
+    std::unique_ptr<util::time::SystemClock> system_clock;
     std::unordered_set<std::string> function_allow_list;
     std::unordered_set<std::string> function_blocklist;
     std::optional<std::string> module_id;
@@ -47,10 +47,10 @@ class InjectRuntime : public llvm::PassInfoMixin<InjectRuntime> {
   };
 
   InjectRuntime() = delete;
-  explicit InjectRuntime(Options options);
-  InjectRuntime(const InjectRuntime&) = default;
+  explicit InjectRuntime(Options&& options);
+  InjectRuntime(const InjectRuntime&) = delete;
   InjectRuntime(InjectRuntime&&) noexcept = default;
-  auto operator=(const InjectRuntime&) -> InjectRuntime& = default;
+  auto operator=(const InjectRuntime&) -> InjectRuntime& = delete;
   auto operator=(InjectRuntime&&) noexcept -> InjectRuntime& = default;
   ~InjectRuntime() = default;
 
