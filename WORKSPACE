@@ -41,9 +41,9 @@ http_archive(
         fi
         """,
     ],
-    sha256 = "73cec0b4967562cdcd14d724cfcc25ad6d1aaf3e0d42f25bfaf23a38f22c63be",
-    strip_prefix = "swift-swift-5.3.1-RELEASE",
-    urls = ["https://github.com/apple/swift/archive/swift-5.3.1-RELEASE.tar.gz"],
+    sha256 = "f32b9dd541fbf3a412123138eb8aaf0fa793d866779c6c3cd5df6621788258c3",
+    strip_prefix = "swift-swift-5.3.3-RELEASE",
+    urls = ["https://github.com/apple/swift/archive/swift-5.3.3-RELEASE.tar.gz"],
 )
 
 http_archive(
