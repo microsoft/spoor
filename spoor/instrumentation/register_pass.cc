@@ -75,12 +75,13 @@ auto PluginInfo() -> llvm::PassPluginLibraryInfo {
           // llvm::errs() << n.count() << '\n';
           pass_manager.addPass(inject_runtime::InjectRuntime({
               .instrumented_function_map_output_path =
-                  config.instrumentation_map_output_path,
+                  config.instrumented_function_map_output_path,
               .instrumented_function_map_output_stream =
                   std::move(instrumented_function_map_output_stream),
               .system_clock = &system_clock,
               .function_allow_list = function_allow_list,
               .function_blocklist = function_blocklist,
+              .module_id = config.module_id,
               .min_instruction_count_to_instrument =
                   config.min_instruction_threshold,
               .initialize_runtime = config.initialize_runtime,

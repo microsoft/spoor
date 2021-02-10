@@ -40,6 +40,7 @@ class InjectRuntime : public llvm::PassInfoMixin<InjectRuntime> {
     gsl::not_null<util::time::SystemClock*> system_clock;
     std::unordered_set<std::string> function_allow_list;
     std::unordered_set<std::string> function_blocklist;
+    std::optional<std::string> module_id;
     uint32 min_instruction_count_to_instrument;
     bool initialize_runtime;
     bool enable_runtime;
