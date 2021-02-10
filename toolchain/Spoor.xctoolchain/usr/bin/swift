@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
+from shared import DEFAULT_SWIFT, OBJECT_FILE_EXTENSION
+from shared import flatten, instrument_and_compile_ir
+import argparse
+import subprocess
+import sys
+
+SWIFT_EMIT_IR_ARG = '-emit-ir'
+SWIFT_OUTPUT_FILE_ARG = '-o'
+SWIFT_TARGET_ARG = '-target'
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        SWIFT_OUTPUT_FILE_ARG,
+        action='append',
+        dest='output_files',
+        nargs=1,
+    )
+    parser.add_argument(
+        SWIFT_TARGET_ARG,
+        dest='target',
+        nargs=1,
+    )
+    args, other_args = parser.parse_known_args()
+
+    output_files = flatten(args.output_files)
+    if not output_files or \
+            not all(f.endswith(OBJECT_FILE_EXTENSION) for f in output_files):
+        swift_args = [DEFAULT_SWIFT] + sys.argv[1:]
+        swift_process = subprocess.Popen(swift_args)
+        swift_process.wait()
+        sys.exit(swift_process.returncode)
+
+    if len(output_files) != 1:
+        message = f'Expected exactly one output file, got {len(output_files)}'
+        raise ValueError(message)
+    output_file = output_files[0]
+
+    if not args.target:
+        raise ValueError('No target was supplied')
+    target = args.target[0]
+
+    swift_args = [DEFAULT_SWIFT]
+    swift_args += other_args
+    swift_args += [SWIFT_TARGET_ARG, target]
+    swift_args += [SWIFT_EMIT_IR_ARG]
+
+    swift_process = subprocess.Popen(swift_args, stdout=subprocess.PIPE)
+    return_code = instrument_and_compile_ir(swift_process, output_file, target)
+    sys.exit(return_code)
+
+
+if __name__ == '__main__':
+    main()

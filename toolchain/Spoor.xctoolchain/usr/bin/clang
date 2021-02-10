@@ -1,0 +1,95 @@
+#!/usr/bin/env python3
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
+from shared import DEFAULT_CLANG, DEFAULT_CLANGXX, OBJECT_FILE_EXTENSION
+from shared import SPOOR_LIBRARY_PATH, LLVM_IR_LANGUAGE
+from shared import flatten, instrument_and_compile_ir
+import argparse
+import subprocess
+import sys
+
+CLANG_EMIT_LLVM_ARG = '-emit-llvm'
+CLANG_LANGUAGE_ARG = '-x'
+CLANG_LIBRARY_SEARCH_PATH_ARG = '-L'
+CLANG_LINK_LIBRARY_ARG = '-l'
+CLANG_ONLY_PREPROCESS_COMPILE_AND_ASSEMBLE_ARG = '-c'
+CLANG_OUTPUT_FILE_ARG = '-o'
+CLANG_OUTPUT_STDOUT_VALUE = '-'
+CLANG_TARGET_ARG = '-target'
+LIB_CXX_LIBRARY = 'c++'
+SUPPORTED_LANGUAGES = \
+        {'c', 'c++', LLVM_IR_LANGUAGE, 'objective-c', 'objective-c++'}
+
+def runtime_library_for_target(target):
+    if 'x86_64' in target:
+        if 'ios' in target:
+            return 'spoor_runtime_ios_x86_64'
+        elif 'mac' in target:
+            return 'spoor_runtime_macos_x86_64'
+    elif 'arm64' in target:
+        if 'ios' in target:
+            return 'spoor_runtime_ios_arm64'
+    raise ValueError(f'Unsupported target {target}')
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        CLANG_OUTPUT_FILE_ARG,
+        action='append',
+        dest='output_files',
+        nargs=1,
+    )
+    parser.add_argument(
+        CLANG_TARGET_ARG,
+        dest='target',
+        nargs=1,
+    )
+    parser.add_argument(
+        CLANG_LANGUAGE_ARG,
+        dest='language',
+        nargs=1,
+    )
+    args, other_args = parser.parse_known_args()
+
+    if not args.target:
+        raise ValueError('No target was supplied')
+    target = args.target[0]
+
+    output_files = flatten(args.output_files)
+    language = args.language[0] \
+            if (args.language and 0 < len(args.language)) else None
+    if not language in SUPPORTED_LANGUAGES or not output_files or \
+            not all(f.endswith(OBJECT_FILE_EXTENSION) for f in output_files):
+        clang_args = [DEFAULT_CLANG] + sys.argv[1:]
+        if CLANG_ONLY_PREPROCESS_COMPILE_AND_ASSEMBLE_ARG not in clang_args:
+            runtime_library = runtime_library_for_target(target)
+            clang_args += [
+                f'{CLANG_LIBRARY_SEARCH_PATH_ARG}{SPOOR_LIBRARY_PATH}',
+                f'{CLANG_LINK_LIBRARY_ARG}{runtime_library}',
+                f'{CLANG_LINK_LIBRARY_ARG}{LIB_CXX_LIBRARY}',
+            ]
+        clang_process = subprocess.Popen(clang_args)
+        clang_process.wait()
+        sys.exit(clang_process.returncode)
+
+    if len(output_files) != 1:
+        message = f'Expected exactly one output file, got {len(output_files)}'
+        raise ValueError(message)
+    output_file = output_files[0]
+
+    clang_args = [DEFAULT_CLANG]
+    clang_args += [CLANG_LANGUAGE_ARG, language]
+    clang_args += [CLANG_TARGET_ARG, target]
+    clang_args += other_args
+    clang_args += [CLANG_OUTPUT_FILE_ARG, CLANG_OUTPUT_STDOUT_VALUE]
+    clang_args += [CLANG_EMIT_LLVM_ARG]
+
+    clang_process = subprocess.Popen(clang_args, stdout=subprocess.PIPE)
+    return_code = instrument_and_compile_ir(clang_process, output_file, target)
+    sys.exit(return_code)
+
+
+if __name__ == '__main__':
+    main()
