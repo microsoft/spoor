@@ -1,6 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+load("@com_google_protobuf//:protobuf.bzl", "py_proto_library")
 load("@rules_cc//cc:defs.bzl", "cc_proto_library")
 load("@rules_proto//proto:defs.bzl", "proto_library")
 
@@ -15,4 +16,11 @@ cc_proto_library(
     name = "spoor_cc_proto",
     visibility = ["//visibility:public"],
     deps = [":spoor_proto"],
+)
+
+py_proto_library(
+    name = "spoor_py_proto",
+    srcs = ["spoor.proto"],
+    visibility = ["//visibility:public"],
+    deps = ["@com_google_protobuf//:protobuf_python"],
 )
