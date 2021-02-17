@@ -166,13 +166,13 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             fibonacci_function_info.set_linkage_name("_Z9Fibonaccii");
             fibonacci_function_info.set_demangled_name("Fibonacci(int)");
             fibonacci_function_info.set_instrumented(true);
-            function_map[0x73c43c2b00000000] = fibonacci_function_info;
+            function_map["0x73c43c2b00000000"] = fibonacci_function_info;
 
             FunctionInfo main_function_info{};
             main_function_info.set_linkage_name("main");
             main_function_info.set_demangled_name("main");
             main_function_info.set_instrumented(true);
-            function_map[0x73c43c2b00000001] = main_function_info;
+            function_map["0x73c43c2b00000001"] = main_function_info;
 
             return expected_instrumented_function_map;
           }(),
@@ -195,7 +195,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             fibonacci_function_info.set_directory("/path/to/file");
             fibonacci_function_info.set_line(1);
             fibonacci_function_info.set_instrumented(true);
-            function_map[0x753f031f00000000] = fibonacci_function_info;
+            function_map["0x753f031f00000000"] = fibonacci_function_info;
 
             FunctionInfo main_function_info{};
             main_function_info.set_linkage_name("main");
@@ -204,7 +204,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             main_function_info.set_directory("/path/to/file");
             main_function_info.set_line(6);
             main_function_info.set_instrumented(true);
-            function_map[0x753f031f00000001] = main_function_info;
+            function_map["0x753f031f00000001"] = main_function_info;
 
             return expected_instrumented_function_map;
           }(),
@@ -227,7 +227,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             fibonacci_function_info.set_directory("/path/to/file");
             fibonacci_function_info.set_line(1);
             fibonacci_function_info.set_instrumented(true);
-            function_map[0xc373298f00000000] = fibonacci_function_info;
+            function_map["0xc373298f00000000"] = fibonacci_function_info;
 
             FunctionInfo main_function_info{};
             main_function_info.set_linkage_name("main");
@@ -236,7 +236,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             main_function_info.set_directory("/path/to/file");
             main_function_info.set_line(6);
             main_function_info.set_instrumented(true);
-            function_map[0xc373298f00000001] = main_function_info;
+            function_map["0xc373298f00000001"] = main_function_info;
 
             return expected_instrumented_function_map;
           }(),
@@ -260,7 +260,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             fibonacci_function_info.set_directory("/path/to/file");
             fibonacci_function_info.set_line(6);
             fibonacci_function_info.set_instrumented(true);
-            function_map[0x0917362100000000] = fibonacci_function_info;
+            function_map["0x0917362100000000"] = fibonacci_function_info;
 
             FunctionInfo main_function_info{};
             main_function_info.set_linkage_name("main");
@@ -269,7 +269,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             main_function_info.set_directory("/path/to/file");
             main_function_info.set_line(12);
             main_function_info.set_instrumented(true);
-            function_map[0x0917362100000001] = main_function_info;
+            function_map["0x0917362100000001"] = main_function_info;
 
             return expected_instrumented_function_map;
           }(),
@@ -293,7 +293,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             fibonacci_function_info.set_directory("/path/to/file");
             fibonacci_function_info.set_line(1);
             fibonacci_function_info.set_instrumented(true);
-            function_map[0x88a7c6bf00000001] = fibonacci_function_info;
+            function_map["0x88a7c6bf00000001"] = fibonacci_function_info;
 
             FunctionInfo main_function_info{};
             main_function_info.set_linkage_name("main");
@@ -304,7 +304,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             // number.
             main_function_info.set_line(1);
             main_function_info.set_instrumented(true);
-            function_map[0x88a7c6bf00000000] = main_function_info;
+            function_map["0x88a7c6bf00000000"] = main_function_info;
 
             return expected_instrumented_function_map;
           }(),
