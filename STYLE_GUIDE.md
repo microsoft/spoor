@@ -172,11 +172,8 @@ Follow
 [clang-format]: https://clang.llvm.org/docs/ClangFormat.html
 [clang-tidy]: https://clang.llvm.org/extra/clang-tidy/
 [google-cpp-style-guide]: https://google.github.io/styleguide/cppguide.html
-[google-javascript-style-guide]: https://google.github.io/styleguide/jsguide.html
 [google-markdown-style-guide]: https://google.github.io/styleguide/docguide/style.html#document-layout
 [google-shell-style-guide]: https://google.github.io/styleguide/shellguide.html
-[google-typescript-style-guide]: https://github.com/google/gts
-[gts]: https://github.com/google/gts
 [microsoft-writing-style-guide]: https://docs.microsoft.com/en-us/style-guide/welcome/
 [rust-result]: https://doc.rust-lang.org/std/result/
 [starlark-style-guide]: https://docs.bazel.build/versions/master/skylark/bzl-style.html

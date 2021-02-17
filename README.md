@@ -9,8 +9,6 @@
   * [Bazel][bazel].
   * [Clang Format][clang-format] and [Clang Tidy][clang-tidy] to style and lint
     code.
-* Post-processing tools
-  * [protoc][protoc-installation]
 
 ## Build
 ```
