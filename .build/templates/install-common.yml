@@ -20,9 +20,5 @@ steps:
 - script: brew install protobuf
   displayName: Install Protocol Buffer compiler (macOS)
   condition: eq(variables['Agent.OS'], 'Darwin')
-- script: |
-    yarn
-    git diff --exit-code
-  displayName: Install JavaScript and TypeScript dependencies
 - script: cp ./.build/ci.bazelrc ./.bazelrc
   displayName: Copy .bazelrc

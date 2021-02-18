@@ -9,26 +9,15 @@
   * [Bazel][bazel].
   * [Clang Format][clang-format] and [Clang Tidy][clang-tidy] to style and lint
     code.
-* Post-processing tools
-  * [Node.js][nodejs]
-  * [yarn][yarn]
-  * [protoc][protoc-installation]
 
 ## Build
 ```
 $ bazel build //...          # Compiler instrumentation and runtime library
-$ yarn workspaces run build  # Post-processing tools
 ```
 
 ## Test
 ```
 $ bazel test //... --test_output=all  # Compiler instrumentation and runtime library
-$ yarn workspaces run test            # Post-processing tools
-```
-
-## Run
-```
-$ yarn workspace @microsoft/spoor-cli start --help  # Post-processing tools CLI
 ```
 
 ## Style and lint
@@ -36,7 +25,6 @@ $ yarn workspace @microsoft/spoor-cli start --help  # Post-processing tools CLI
 $ bazel run //toolchain/style:buildifier                # Format Starlark files
 $ ./toolchain/style/clang_format.sh                     # Format C++ and Protobuf files
 $ ./toolchain/style/clang_tidy.sh                       # Lint C++ files
-$ yarn lint                                             # Lint JavaScript and TypeScript files
 $ ./toolchain/copyright_header/add_copyright_header.sh  # Add copyright header
 ```
 

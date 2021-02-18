@@ -21,12 +21,6 @@ compile_commands.json
 # Python
 venv
 
-# JavaScript and TypeScript
-node_modules
-dist
-*.tsbuildinfo
-yarn*.log
-
 # Testing
 coverage
 
