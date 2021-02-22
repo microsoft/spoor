@@ -55,9 +55,6 @@ InjectRuntime::InjectRuntime(Options&& options)
 
 auto InjectRuntime::run(llvm::Module& llvm_module, llvm::ModuleAnalysisManager&
                         /*unused*/) -> llvm::PreservedAnalyses {
-  const auto module_id =
-      options_.module_id.value_or(llvm_module.getModuleIdentifier());
-
   auto [instrumented_function_map, modified] = InstrumentModule(&llvm_module);
 
   const auto now = [&] {
@@ -68,8 +65,10 @@ auto InjectRuntime::run(llvm::Module& llvm_module, llvm::ModuleAnalysisManager&
   }();
   *instrumented_function_map.mutable_created_at() = now;
 
-  const auto file_name = [&module_id] {
+  const auto file_name = [&] {
     std::string buffer{};
+    const auto module_id =
+        options_.module_id.value_or(llvm_module.getModuleIdentifier());
     const auto module_id_hash = std::hash<std::string>{}(module_id);
     llvm::raw_string_ostream{buffer}
         << llvm::format_hex_no_prefix(module_id_hash,
@@ -102,9 +101,7 @@ auto InjectRuntime::run(llvm::Module& llvm_module, llvm::ModuleAnalysisManager&
 auto InjectRuntime::InstrumentModule(gsl::not_null<llvm::Module*> llvm_module)
     const -> std::pair<InstrumentedFunctionMap, bool> {
   InstrumentedFunctionMap instrumented_function_map{};
-  const auto module_id =
-      options_.module_id.value_or(llvm_module->getModuleIdentifier());
-  instrumented_function_map.set_module_id(module_id);
+  instrumented_function_map.set_module_id(llvm_module->getModuleIdentifier());
   auto& function_map = *instrumented_function_map.mutable_function_map();
 
   auto& context = llvm_module->getContext();
@@ -130,8 +127,8 @@ auto InjectRuntime::InstrumentModule(gsl::not_null<llvm::Module*> llvm_module)
   const auto log_function_exit = llvm_module->getOrInsertFunction(
       kLogFunctionExitFunctionName.data(), log_function_type);
 
-  const auto module_id_hash =
-      static_cast<uint64>(std::hash<std::string>{}(module_id));
+  const auto module_id_hash = static_cast<uint64>(
+      std::hash<std::string>{}(llvm_module->getModuleIdentifier()));
   const auto make_function_id = [&module_id_hash](const uint32 counter) {
     constexpr uint64 partition{32};
     return (module_id_hash << partition) | static_cast<uint64>(counter);
@@ -185,11 +182,6 @@ auto InjectRuntime::InstrumentModule(gsl::not_null<llvm::Module*> llvm_module)
       function_info.set_line(subprogram->getLine());
     }
     function_info.set_instrumented(instrument_function);
-    const auto function_id_string = [&] {
-      std::string buffer{};
-      llvm::raw_string_ostream{buffer} << llvm::format_hex(function_id, 18);
-      return buffer;
-    }();
     function_map[function_id] = function_info;
 
     modified |= instrument_function;
