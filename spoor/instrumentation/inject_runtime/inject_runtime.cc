@@ -53,7 +53,7 @@ constexpr std::string_view kLogFunctionExitFunctionName{
 InjectRuntime::InjectRuntime(Options&& options)
     : options_{std::move(options)} {}
 
-auto InjectRuntime::run(llvm::Module& llvm_module, llvm::ModuleAnalysisManager &
+auto InjectRuntime::run(llvm::Module& llvm_module, llvm::ModuleAnalysisManager&
                         /*unused*/) -> llvm::PreservedAnalyses {
   const auto module_id =
       options_.module_id.value_or(llvm_module.getModuleIdentifier());
