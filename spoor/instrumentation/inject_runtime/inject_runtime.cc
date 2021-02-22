@@ -53,8 +53,12 @@ constexpr std::string_view kLogFunctionExitFunctionName{
 InjectRuntime::InjectRuntime(Options&& options)
     : options_{std::move(options)} {}
 
-auto InjectRuntime::run(llvm::Module& llvm_module, llvm::ModuleAnalysisManager&
+auto InjectRuntime::run(llvm::Module& llvm_module, llvm::ModuleAnalysisManager &
                         /*unused*/) -> llvm::PreservedAnalyses {
+  const auto module_id =
+      options_.module_id.value_or(llvm_module.getModuleIdentifier());
+  // llvm_module.setModuleIdentifier(module_id);
+
   auto [instrumented_function_map, modified] = InstrumentModule(&llvm_module);
 
   const auto now = [&] {
@@ -65,10 +69,8 @@ auto InjectRuntime::run(llvm::Module& llvm_module, llvm::ModuleAnalysisManager&
   }();
   *instrumented_function_map.mutable_created_at() = now;
 
-  const auto file_name = [&] {
+  const auto file_name = [&module_id] {
     std::string buffer{};
-    const auto module_id =
-        options_.module_id.value_or(llvm_module.getModuleIdentifier());
     const auto module_id_hash = std::hash<std::string>{}(module_id);
     llvm::raw_string_ostream{buffer}
         << llvm::format_hex_no_prefix(module_id_hash,
@@ -76,6 +78,7 @@ auto InjectRuntime::run(llvm::Module& llvm_module, llvm::ModuleAnalysisManager&
         << '.' << kInstrumentedFunctionMapFileExtension;
     return buffer;
   }();
+  llvm::errs() << "file name = " << file_name << '\n';
   const auto path = options_.instrumented_function_map_output_path / file_name;
   std::error_code error{};
   auto output_stream =
@@ -101,7 +104,9 @@ auto InjectRuntime::run(llvm::Module& llvm_module, llvm::ModuleAnalysisManager&
 auto InjectRuntime::InstrumentModule(gsl::not_null<llvm::Module*> llvm_module)
     const -> std::pair<InstrumentedFunctionMap, bool> {
   InstrumentedFunctionMap instrumented_function_map{};
-  instrumented_function_map.set_module_id(llvm_module->getModuleIdentifier());
+  const auto module_id =
+      options_.module_id.value_or(llvm_module->getModuleIdentifier());
+  instrumented_function_map.set_module_id(module_id);
   auto& function_map = *instrumented_function_map.mutable_function_map();
 
   auto& context = llvm_module->getContext();
@@ -127,8 +132,12 @@ auto InjectRuntime::InstrumentModule(gsl::not_null<llvm::Module*> llvm_module)
   const auto log_function_exit = llvm_module->getOrInsertFunction(
       kLogFunctionExitFunctionName.data(), log_function_type);
 
-  const auto module_id_hash = static_cast<uint64>(
-      std::hash<std::string>{}(llvm_module->getModuleIdentifier()));
+  const auto module_id_hash =
+      static_cast<uint64>(std::hash<std::string>{}(module_id));
+  llvm::errs() << "module id hash = "
+               << llvm::format_hex_no_prefix(module_id_hash,
+                                             sizeof(module_id_hash) * 2)
+               << '\n';
   const auto make_function_id = [&module_id_hash](const uint32 counter) {
     constexpr uint64 partition{32};
     return (module_id_hash << partition) | static_cast<uint64>(counter);
@@ -139,6 +148,10 @@ auto InjectRuntime::InstrumentModule(gsl::not_null<llvm::Module*> llvm_module)
   for (auto& function : llvm_module->functions()) {
     if (function.isDeclaration()) continue;
     const auto function_id = make_function_id(counter);
+    llvm::errs() << "function id hash = "
+                 << llvm::format_hex_no_prefix(function_id,
+                                               sizeof(function_id) * 2)
+                 << '\n';
     const auto finally = gsl::finally([&counter] { ++counter; });
 
     const auto function_name = function.getName().str();
@@ -184,10 +197,10 @@ auto InjectRuntime::InstrumentModule(gsl::not_null<llvm::Module*> llvm_module)
     function_info.set_instrumented(instrument_function);
     const auto function_id_string = [&] {
       std::string buffer{};
-      llvm::raw_string_ostream{buffer} << llvm::format_hex(function_id, 18);
+      llvm::raw_string_ostream{buffer} << llvm::format_hex(function_id, 16 + 2);
       return buffer;
     }();
-    function_map[function_id_string] = function_info;
+    function_map[function_id] = function_info;
 
     modified |= instrument_function;
     if (!instrument_function) continue;
