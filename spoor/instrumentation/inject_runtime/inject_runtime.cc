@@ -182,12 +182,7 @@ auto InjectRuntime::InstrumentModule(gsl::not_null<llvm::Module*> llvm_module)
       function_info.set_line(subprogram->getLine());
     }
     function_info.set_instrumented(instrument_function);
-    const auto function_id_string = [&] {
-      std::string buffer{};
-      llvm::raw_string_ostream{buffer} << llvm::format_hex(function_id, 18);
-      return buffer;
-    }();
-    function_map[function_id_string] = function_info;
+    function_map[function_id] = function_info;
 
     modified |= instrument_function;
     if (!instrument_function) continue;

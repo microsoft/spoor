@@ -7,9 +7,8 @@ package spoor;
 
 import "google/protobuf/timestamp.proto";
 
-// JavaScript and Google's JavaScript Protocol Buffer implementation do not
-// support 64-bit integers. To work around this limitation, IDs are represented
-// as hex strings.
+// Note: Data types should match the definitions in
+// //spoor/runtime/trace/trace.h.
 
 message FunctionInfo {
   string linkage_name = 1;
@@ -22,7 +21,7 @@ message FunctionInfo {
 
 message InstrumentedFunctionMap {
   string module_id = 1;
-  map<string, FunctionInfo> function_map = 2;
+  map<uint64, FunctionInfo> function_map = 2;
   google.protobuf.Timestamp created_at = 3;
 }
 
@@ -32,10 +31,10 @@ message Event {
     FUNCTION_ENTRY = 1;
   }
 
-  string session_id = 1;
-  string process_id = 2;
-  string thread_id = 3;
-  string function_id = 4;
+  uint64 session_id = 1;
+  int64 process_id = 2;
+  uint64 thread_id = 3;
+  uint64 function_id = 4;
   Type type = 5;
   google.protobuf.Timestamp timestamp = 6;
 }
@@ -43,6 +42,6 @@ message Event {
 message Trace {
   repeated Event events = 1;
   repeated string modules = 2;
-  map<string, FunctionInfo> function_map = 3;
+  map<uint64, FunctionInfo> function_map = 3;
   google.protobuf.Timestamp created_at = 4;
 }
