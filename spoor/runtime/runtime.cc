@@ -9,7 +9,6 @@
 #include <chrono>
 #include <cstddef>
 #include <filesystem>
-#include <span>
 #include <system_error>
 #include <utility>
 
@@ -121,7 +120,7 @@ auto _spoor_runtime_FlushedTraceFiles(
   const auto callback_adapter =
       [callback](const std::vector<std::filesystem::path>& trace_file_paths) {
         if (callback == nullptr) return;
-        std::span<char*> file_paths{
+        gsl::span<char*> file_paths{
             static_cast<char**>(
                 // NOLINTNEXTLINE(cppcoreguidelines-no-malloc)
                 malloc(sizeof(char*) * trace_file_paths.size())),
@@ -153,7 +152,7 @@ auto _spoor_runtime_FlushedTraceFiles(
 
 void _spoor_runtime_ReleaseTraceFilePaths(
     _spoor_runtime_TraceFiles* trace_files) {
-  std::span file_paths{trace_files->file_paths,
+  gsl::span file_paths{trace_files->file_paths,
                        static_cast<std::size_t>(trace_files->size)};
   for (auto* path : file_paths) {
     // clang-format off NOLINTNEXTLINE(cppcoreguidelines-no-malloc, cppcoreguidelines-owning-memory) clang-format on
