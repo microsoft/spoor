@@ -1,6 +1,9 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+trigger:
+- master
+
 jobs:
 - job: build_and_test
   strategy:
