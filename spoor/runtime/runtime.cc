@@ -211,3 +211,5 @@ auto _spoor_runtime_GetConfig() -> _spoor_runtime_Config {
               kConfig.max_flush_buffer_to_file_attempts,
           .flush_all_events = kConfig.flush_all_events};
 }
+
+auto _spoor_runtime_StubImplementation() -> bool { return false; }

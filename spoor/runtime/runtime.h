@@ -108,6 +108,9 @@ void _spoor_runtime_DeleteFlushedTraceFilesOlderThan(
 // Retrieve Spoor's configuration.
 _spoor_runtime_Config _spoor_runtime_GetConfig();
 
+// Check if the runtime contains stub implementations.
+bool _spoor_runtime_StubImplementation();
+
 #ifdef __cplusplus
 }
 #endif

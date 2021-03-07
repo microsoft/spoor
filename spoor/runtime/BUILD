@@ -26,6 +26,19 @@ cc_static_library(
     deps = [":runtime"],
 )
 
+cc_library(
+    name = "runtime_stub",
+    srcs = ["runtime_stub.cc"],
+    hdrs = ["runtime.h"],
+    copts = ["-Werror"],
+    visibility = ["//visibility:public"],
+)
+
+cc_static_library(
+    name = "spoor_runtime_stub",
+    deps = [":runtime_stub"],
+)
+
 cc_test(
     name = "runtime_test",
     size = "small",
@@ -34,6 +47,19 @@ cc_test(
     visibility = ["//visibility:private"],
     deps = [
         ":runtime",
+        "@com_google_googletest//:gtest_main",
+        "@com_microsoft_gsl//:gsl",
+    ],
+)
+
+cc_test(
+    name = "runtime_stub_test",
+    size = "small",
+    srcs = ["runtime_stub_test.cc"],
+    copts = ["-Werror"],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":runtime_stub",
         "@com_google_googletest//:gtest_main",
         "@com_microsoft_gsl//:gsl",
     ],
