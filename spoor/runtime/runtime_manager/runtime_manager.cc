@@ -131,4 +131,10 @@ auto RuntimeManager::Enabled() const -> bool {
   return enabled_;
 }
 
+auto operator==(const RuntimeManager::DeletedFilesInfo& lhs,
+                const RuntimeManager::DeletedFilesInfo& rhs) -> bool {
+  return lhs.deleted_files == rhs.deleted_files &&
+         lhs.deleted_bytes == rhs.deleted_bytes;
+}
+
 }  // namespace spoor::runtime::runtime_manager

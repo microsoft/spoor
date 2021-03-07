@@ -5,13 +5,14 @@
 
 #include <algorithm>
 #include <chrono>
-#include <future>
 #include <map>
 #include <system_error>
 #include <thread>
 #include <utility>
 
 #include "absl/strings/str_format.h"
+#include "absl/synchronization/notification.h"
+#include "absl/time/time.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "spoor/runtime/buffer/circular_slice_buffer.h"
@@ -33,7 +34,7 @@ using spoor::runtime::trace::kTraceFileVersion;
 using spoor::runtime::trace::TimestampNanoseconds;
 using spoor::runtime::trace::testing::TraceReaderMock;
 using testing::_;
-using testing::ElementsAreArray;
+using testing::MockFunction;
 using testing::Return;
 using util::file_system::testing::DirectoryEntryMock;
 using util::file_system::testing::FileSystemMock;
@@ -43,6 +44,12 @@ using util::time::testing::SteadyClockMock;
 using FlushQueueMock = spoor::runtime::flush_queue::testing::FlushQueueMock<
     CircularSliceBuffer<Event>>;
 using SizeType = EventLogger::SizeType;
+
+constexpr absl::Duration kNotificationTimeout{absl::Milliseconds(1'000)};
+
+ACTION_P(Notify, notification) {  // NOLINT
+  notification->Notify();
+}
 
 TEST(RuntimeManager, Initialize) {  // NOLINT
   constexpr auto iterations{3};
@@ -198,15 +205,17 @@ TEST(RuntimeManager, FlushedTraceFiles) {  // NOLINT
     EXPECT_CALL(trace_reader, MatchesTraceFileConvention(path))
         .WillOnce(Return(matches_trace_file_convention));
   }
-  std::promise<std::vector<std::filesystem::path>> promise{};
-  RuntimeManager::FlushedTraceFiles(
-      std::cbegin(directory_entries), std::cend(directory_entries),
-      &trace_reader, [&](auto trace_file_paths) {
-        promise.set_value(std::move(trace_file_paths));
-      });
-  auto future = promise.get_future();
-  const auto result = future.get();
-  ASSERT_THAT(result, ElementsAreArray(expected_trace_file_paths));
+
+  MockFunction<void(std::vector<std::filesystem::path>)> callback{};
+  absl::Notification done{};
+  EXPECT_CALL(callback, Call(expected_trace_file_paths))
+      .WillOnce(Notify(&done));
+  RuntimeManager::FlushedTraceFiles(std::cbegin(directory_entries),
+                                    std::cend(directory_entries), &trace_reader,
+                                    callback.AsStdFunction());
+  const auto success =
+      done.WaitForNotificationWithTimeout(kNotificationTimeout);
+  ASSERT_TRUE(success);
 }
 
 TEST(RuntimeManager, DeleteFlushedTraceFilesOlderThan) {  // NOLINT
@@ -249,26 +258,39 @@ TEST(RuntimeManager, DeleteFlushedTraceFilesOlderThan) {  // NOLINT
               Return(util::result::Result<None, std::error_code>::Ok({})));
     }
     const auto timestamp = make_timestamp(i) - 1'000;
-    std::promise<RuntimeManager::DeletedFilesInfo> promise{};
+
+    RuntimeManager::DeletedFilesInfo expected_deleted_files_info{
+        .deleted_files = std::max(0, std::min(i, trace_files_size)),
+        .deleted_bytes = [&]() -> int64 {
+          // 2^0 + 2^1 + ... + 2^(n - 1) == 2^n - 1
+          const auto shift{
+              static_cast<uint64>(std::min(std::max(i, 0), trace_files_size))};
+          return (1ULL << shift) - 1;
+        }()};
+
+    MockFunction<void(RuntimeManager::DeletedFilesInfo)> callback{};
+    absl::Notification done{};
+    EXPECT_CALL(callback, Call(expected_deleted_files_info))
+        .WillOnce(Notify(&done));
     RuntimeManager::DeleteFlushedTraceFilesOlderThan(
         MakeTimePoint<std::chrono::system_clock>(timestamp),
         std::cbegin(directory_entries), std::cend(directory_entries),
-        &file_system, &trace_reader, [&](auto deleted_files_info) {
-          promise.set_value(std::move(deleted_files_info));
-        });
-    auto future = promise.get_future();
-    const auto result = future.get();
-    const auto expected_deleted_files =
-        std::max(0, std::min(i, trace_files_size));
-    const auto expected_deleted_bytes = [&] {
-      // 2^0 + 2^1 + ... + 2^(n - 1) == 2^n - 1
-      const auto shift{
-          static_cast<uint64>(std::min(std::max(i, 0), trace_files_size))};
-      return (1ULL << shift) - 1;
-    }();
-    ASSERT_EQ(result.deleted_files, expected_deleted_files);
-    ASSERT_EQ(result.deleted_bytes, expected_deleted_bytes);
+        &file_system, &trace_reader, callback.AsStdFunction());
+    const auto success =
+        done.WaitForNotificationWithTimeout(kNotificationTimeout);
+    ASSERT_TRUE(success);
   }
+}
+
+TEST(RuntimeManagerDeletedFilesInfo, Equality) {  // NOLINT
+  RuntimeManager::DeletedFilesInfo info_a{.deleted_files = 1,
+                                          .deleted_bytes = 2};
+  RuntimeManager::DeletedFilesInfo info_b{.deleted_files = 1,
+                                          .deleted_bytes = 2};
+  RuntimeManager::DeletedFilesInfo info_c{.deleted_files = 2,
+                                          .deleted_bytes = 1};
+  ASSERT_EQ(info_a, info_b);
+  ASSERT_NE(info_b, info_c);
 }
 
 }  // namespace

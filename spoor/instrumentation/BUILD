@@ -44,6 +44,7 @@ cc_binary(
 
 sh_test(
     name = "register_pass_test",
+    size = "small",
     srcs = ["register_pass_test.sh"],
     data = [
         ":libspoor_instrumentation.dylib",

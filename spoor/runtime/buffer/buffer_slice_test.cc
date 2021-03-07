@@ -25,8 +25,8 @@ auto Slices(gsl::span<ValueType> buffer)
     -> std::vector<std::unique_ptr<BufferSlice>> {
   std::vector<std::unique_ptr<BufferSlice>> slices{};
   slices.reserve(2);
-  slices.push_back(std::make_unique<OwnedBufferSlice>(buffer.size()));
-  slices.push_back(std::make_unique<UnownedBufferSlice>(buffer));
+  slices.emplace_back(std::make_unique<OwnedBufferSlice>(buffer.size()));
+  slices.emplace_back(std::make_unique<UnownedBufferSlice>(buffer));
   return slices;
 }
 
@@ -38,7 +38,7 @@ TEST(BufferSlice, ContiguousMemoryChunksOneChunk) {  // NOLINT
     std::vector<ValueType> expected{};
     for (SizeType i{0}; i < capacity; ++i) {
       slice->Push(i);
-      expected.push_back(i);
+      expected.emplace_back(i);
       const auto chunks = slice->ContiguousMemoryChunks();
       ASSERT_EQ(chunks.size(), 1);
       auto chunk = chunks.front();

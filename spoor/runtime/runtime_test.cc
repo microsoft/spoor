@@ -3,13 +3,23 @@
 
 #include "spoor/runtime/runtime.h"
 
-#include <future>
 #include <limits>
 
+#include "absl/synchronization/notification.h"
+#include "absl/time/time.h"
+#include "gmock/gmock.h"
 #include "gsl/gsl"
 #include "gtest/gtest.h"
 
 namespace {
+
+using testing::MockFunction;
+
+constexpr absl::Duration kNotificationTimeout{absl::Milliseconds(1'000)};
+
+ACTION_P(Notify, notification) {  // NOLINT
+  notification->Notify();
+}
 
 TEST(Runtime, Initialize) {  // NOLINT
   for (auto iteration{0}; iteration < 3; ++iteration) {
@@ -52,29 +62,35 @@ TEST(Runtime, Enable) {  // NOLINT
 
 TEST(Runtime, FlushTraceEvents) {  // NOLINT
   _spoor_runtime_FlushTraceEvents({});
-  _spoor_runtime_InitializeRuntime();
-  _spoor_runtime_FlushTraceEvents({});
 }
 
 TEST(Runtime, ClearTraceEvents) {  // NOLINT
+  _spoor_runtime_DeinitializeRuntime();
   _spoor_runtime_ClearTraceEvents();
   _spoor_runtime_InitializeRuntime();
   _spoor_runtime_ClearTraceEvents();
+  _spoor_runtime_DeinitializeRuntime();
 }
 
 namespace flused_trace_files_test {
 
 // clang-format off NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects) clang-format on
-std::promise<_spoor_runtime_TraceFiles> promise_{};
+std::function<void(_spoor_runtime_TraceFiles)> callback_{};
 
 TEST(Runtime, FlushedTraceFiles) {  // NOLINT
+  _spoor_runtime_FlushedTraceFiles({});
+
+  constexpr _spoor_runtime_TraceFiles expected_trace_files{
+      .file_paths_size = 0, .file_path_sizes = nullptr, .file_paths = nullptr};
+  MockFunction<void(_spoor_runtime_TraceFiles)> callback{};
+  absl::Notification done{};
+  callback_ = callback.AsStdFunction();
+  EXPECT_CALL(callback, Call(expected_trace_files)).WillOnce(Notify(&done));
   _spoor_runtime_FlushedTraceFiles(
-      [](auto trace_files) { promise_.set_value(trace_files); });
-  auto future = promise_.get_future();
-  auto trace_files = future.get();
-  auto _ =
-      gsl::finally([&] { _spoor_runtime_ReleaseTraceFilePaths(&trace_files); });
-  ASSERT_EQ(trace_files.size, 0);
+      [](auto trace_files) { callback_(trace_files); });
+  const auto success =
+      done.WaitForNotificationWithTimeout(kNotificationTimeout);
+  ASSERT_TRUE(success);
 }
 
 }  // namespace flused_trace_files_test
@@ -82,16 +98,25 @@ TEST(Runtime, FlushedTraceFiles) {  // NOLINT
 namespace delete_flushed_trace_files_older_than_test {
 
 // clang-format off NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects) clang-format on
-std::promise<_spoor_runtime_DeletedFilesInfo> promise_{};
+std::function<void(_spoor_runtime_DeletedFilesInfo)> callback_{};
 
 TEST(Runtime, DeleteFlushedTraceFilesOlderThan) {  // NOLINT
   _spoor_runtime_DeleteFlushedTraceFilesOlderThan(
+      std::numeric_limits<_spoor_runtime_SystemTimestampSeconds>::max(), {});
+
+  constexpr _spoor_runtime_DeletedFilesInfo expected_deleted_files_info{
+      .deleted_files = 0, .deleted_bytes = 0};
+  MockFunction<void(_spoor_runtime_DeletedFilesInfo)> callback{};
+  absl::Notification done{};
+  callback_ = callback.AsStdFunction();
+  EXPECT_CALL(callback, Call(expected_deleted_files_info))
+      .WillOnce(Notify(&done));
+  _spoor_runtime_DeleteFlushedTraceFilesOlderThan(
       std::numeric_limits<_spoor_runtime_SystemTimestampSeconds>::max(),
-      [](auto deleted_files_info) { promise_.set_value(deleted_files_info); });
-  auto future = promise_.get_future();
-  const auto deletes_files_info = future.get();
-  ASSERT_EQ(deletes_files_info.deleted_files, 0);
-  ASSERT_EQ(deletes_files_info.deleted_bytes, 0);
+      [](auto deleted_files_info) { callback_(deleted_files_info); });
+  const auto success =
+      done.WaitForNotificationWithTimeout(kNotificationTimeout);
+  ASSERT_TRUE(success);
 }
 
 }  // namespace delete_flushed_trace_files_older_than_test

@@ -6,7 +6,10 @@ load("//toolchain:cc_static_library.bzl", "cc_static_library")
 
 cc_library(
     name = "runtime",
-    srcs = ["runtime.cc"],
+    srcs = [
+        "runtime.cc",
+        "runtime_common.cc",
+    ],
     hdrs = ["runtime.h"],
     copts = ["-Werror"],
     visibility = ["//visibility:public"],
@@ -28,10 +31,14 @@ cc_static_library(
 
 cc_library(
     name = "runtime_stub",
-    srcs = ["runtime_stub.cc"],
+    srcs = [
+        "runtime_common.cc",
+        "runtime_stub.cc",
+    ],
     hdrs = ["runtime.h"],
     copts = ["-Werror"],
     visibility = ["//visibility:public"],
+    deps = ["@com_microsoft_gsl//:gsl"],
 )
 
 cc_static_library(
@@ -42,11 +49,16 @@ cc_static_library(
 cc_test(
     name = "runtime_test",
     size = "small",
-    srcs = ["runtime_test.cc"],
+    srcs = [
+        "runtime_common_test.cc",
+        "runtime_test.cc",
+    ],
     copts = ["-Werror"],
     visibility = ["//visibility:private"],
     deps = [
         ":runtime",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/time",
         "@com_google_googletest//:gtest_main",
         "@com_microsoft_gsl//:gsl",
     ],

@@ -116,7 +116,7 @@ constexpr auto CombinedBufferSlicePool<T>::Return(Collection&& slices)
   for (auto& slice : slices) {
     auto result = Return(std::move(slice));
     if (result.IsErr()) {
-      slices_owned_by_other_pools.push_back(std::move(result.Err()));
+      slices_owned_by_other_pools.emplace_back(std::move(result.Err()));
     }
   }
   return slices_owned_by_other_pools;

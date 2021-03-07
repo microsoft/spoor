@@ -32,11 +32,10 @@ auto _spoor_runtime_ClearTraceEvents() -> void {}
 auto _spoor_runtime_FlushedTraceFiles(
     const _spoor_runtime_FlushedTraceFilesCallback callback) -> void {
   if (callback == nullptr) return;
-  callback({.file_paths = nullptr});
+  callback({.file_paths_size = 0,
+            .file_path_sizes = nullptr,
+            .file_paths = nullptr});
 }
-
-auto _spoor_runtime_ReleaseTraceFilePaths(_spoor_runtime_TraceFiles*
-                                          /*unused*/) -> void {}
 
 auto _spoor_runtime_DeleteFlushedTraceFilesOlderThan(
     const _spoor_runtime_SystemTimestampSeconds /*unused*/,

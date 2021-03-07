@@ -3,7 +3,6 @@
 
 #include "spoor/runtime/buffer/dynamic_buffer_slice_pool.h"
 
-#include <future>
 #include <limits>
 #include <thread>
 #include <vector>
@@ -40,7 +39,7 @@ TEST(DynamicBufferSlicePool, BorrowsPreferredSliceCapacity) {  // NOLINT
     ASSERT_TRUE(result.IsOk());
     auto slice = std::move(result.Ok());
     ASSERT_EQ(slice->Capacity(), size);
-    retained_slices.push_back(std::move(slice));
+    retained_slices.emplace_back(std::move(slice));
   }
 }
 

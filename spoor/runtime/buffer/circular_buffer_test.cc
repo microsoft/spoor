@@ -44,11 +44,12 @@ auto MakeBuffers(
   using CircularSliceBuffer = spoor::runtime::buffer::CircularSliceBuffer<T>;
   std::vector<std::unique_ptr<CircularBuffer>> circular_buffers{};
   circular_buffers.reserve(3);
-  circular_buffers.push_back(std::make_unique<UnownedBufferSlice>(buffer));
-  circular_buffers.push_back(std::make_unique<OwnedBufferSlice>(buffer.size()));
+  circular_buffers.emplace_back(std::make_unique<UnownedBufferSlice>(buffer));
+  circular_buffers.emplace_back(
+      std::make_unique<OwnedBufferSlice>(buffer.size()));
   const typename CircularSliceBuffer::Options circular_slice_buffer_options{
       .buffer_slice_pool = pool, .capacity = pool->Capacity()};
-  circular_buffers.push_back(
+  circular_buffers.emplace_back(
       std::make_unique<CircularSliceBuffer>(circular_slice_buffer_options));
   return circular_buffers;
 }

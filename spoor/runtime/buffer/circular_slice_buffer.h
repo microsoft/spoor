@@ -147,7 +147,7 @@ constexpr auto CircularSliceBuffer<T>::ContiguousMemoryChunks()
   const auto insertion_iterator_chunks =
       (*insertion_iterator_)->ContiguousMemoryChunks();
   if (1 < insertion_iterator_chunks.size()) {
-    chunks.push_back(insertion_iterator_chunks.front());
+    chunks.emplace_back(insertion_iterator_chunks.front());
   }
   for (auto iterator = std::next(insertion_iterator_);
        iterator != std::cend(slices_); ++iterator) {
@@ -161,7 +161,7 @@ constexpr auto CircularSliceBuffer<T>::ContiguousMemoryChunks()
     chunks.insert(std::cend(chunks), std::cbegin(slice_chunks),
                   std::cend(slice_chunks));
   }
-  chunks.push_back(insertion_iterator_chunks.back());
+  chunks.emplace_back(insertion_iterator_chunks.back());
   return chunks;
 }
 
@@ -179,7 +179,7 @@ constexpr auto CircularSliceBuffer<T>::PrepareToPush() -> void {
       if (result.IsOk()) {
         auto buffer_slice = std::move(result.Ok());
         acquired_slices_capacity_ += buffer_slice->Capacity();
-        slices_.push_back(std::move(buffer_slice));
+        slices_.emplace_back(std::move(buffer_slice));
         insertion_iterator_ = std::prev(std::end(slices_));
       } else {
         insertion_iterator_ = std::begin(slices_);
