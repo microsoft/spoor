@@ -28,7 +28,7 @@ namespace {
 
 using spoor::runtime::runtime_manager::RuntimeManager;
 
-// clang-format off NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects) clang-format on
+// NOLINTNEXTLINE(fuchsia-statically-constructed-objects)
 const auto kConfig = spoor::runtime::config::Config::FromEnv();
 // clang-format off NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects) clang-format on
 util::time::SystemClock system_clock_{};
@@ -74,47 +74,37 @@ RuntimeManager runtime_{
 
 auto _spoor_runtime_InitializeRuntime() -> void { runtime_.Initialize(); }
 
-// NOLINTNEXTLINE(readability-identifier-naming)
 auto _spoor_runtime_DeinitializeRuntime() -> void { runtime_.Deinitialize(); }
 
-// NOLINTNEXTLINE(readability-identifier-naming)
 auto _spoor_runtime_RuntimeInitialized() -> bool {
   return runtime_.Initialized();
 }
 
-// NOLINTNEXTLINE(readability-identifier-naming)
 auto _spoor_runtime_EnableRuntime() -> void { runtime_.Enable(); }
 
-// NOLINTNEXTLINE(readability-identifier-naming)
 auto _spoor_runtime_DisableRuntime() -> void { runtime_.Disable(); }
 
-// NOLINTNEXTLINE(readability-identifier-naming)
 auto _spoor_runtime_RuntimeEnabled() -> bool { return runtime_.Enabled(); }
 
-// NOLINTNEXTLINE(readability-identifier-naming)
 auto _spoor_runtime_LogFunctionEntry(
     const _spoor_runtime_FunctionId function_id) -> void {
   runtime_.LogEvent(spoor::runtime::trace::Event::Type::kFunctionEntry,
                     function_id);
 }
 
-// NOLINTNEXTLINE(readability-identifier-naming)
 auto _spoor_runtime_LogFunctionExit(const _spoor_runtime_FunctionId function_id)
     -> void {
   runtime_.LogEvent(spoor::runtime::trace::Event::Type::kFunctionExit,
                     function_id);
 }
 
-// NOLINTNEXTLINE(readability-identifier-naming)
 auto _spoor_runtime_FlushTraceEvents(
     const _spoor_runtime_FlushTraceEventsCallback callback) -> void {
   runtime_.Flush(callback);
 }
 
-// NOLINTNEXTLINE(readability-identifier-naming)
 auto _spoor_runtime_ClearTraceEvents() -> void { runtime_.Clear(); }
 
-// NOLINTNEXTLINE(readability-identifier-naming)
 auto _spoor_runtime_FlushedTraceFiles(
     const _spoor_runtime_FlushedTraceFilesCallback callback) -> void {
   const auto callback_adapter =
@@ -125,19 +115,27 @@ auto _spoor_runtime_FlushedTraceFiles(
                 // NOLINTNEXTLINE(cppcoreguidelines-no-malloc)
                 malloc(sizeof(char*) * trace_file_paths.size())),
             trace_file_paths.size()};
+        gsl::span<_spoor_runtime_SizeType> file_path_sizes{
+            static_cast<_spoor_runtime_SizeType*>(
+                // NOLINTNEXTLINE(cppcoreguidelines-no-malloc)
+                malloc(sizeof(_spoor_runtime_SizeType) *
+                       trace_file_paths.size())),
+            trace_file_paths.size()};
         for (std::vector<std::filesystem::path>::size_type index{0};
              index < trace_file_paths.size(); ++index) {
           const auto& trace_file = trace_file_paths.at(index).string();
+          file_path_sizes[index] = trace_file.size();
           // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
           file_paths[index] = static_cast<char*>(
               // NOLINTNEXTLINE(cppcoreguidelines-no-malloc)
               malloc(sizeof(char) * (trace_file.size() + 1)));
           trace_file.copy(file_paths[index], trace_file.size());
         };
-        callback(_spoor_runtime_TraceFiles{
-            .size = gsl::narrow_cast<int32>(file_paths.size()),
-            .file_paths = file_paths.data()});
-      };  // NOLINT(clang-analyzer-unix.Malloc)
+        callback(
+            _spoor_runtime_TraceFiles{.file_paths_size = file_paths.size(),
+                                      .file_path_sizes = file_path_sizes.data(),
+                                      .file_paths = file_paths.data()});
+      };
   std::error_code error{};
   const std::filesystem::directory_iterator directory{kConfig.trace_file_path,
                                                       error};
@@ -150,21 +148,6 @@ auto _spoor_runtime_FlushedTraceFiles(
                                     &trace_reader_, callback_adapter);
 }
 
-void _spoor_runtime_ReleaseTraceFilePaths(
-    _spoor_runtime_TraceFiles* trace_files) {
-  gsl::span file_paths{trace_files->file_paths,
-                       static_cast<std::size_t>(trace_files->size)};
-  for (auto* path : file_paths) {
-    // clang-format off NOLINTNEXTLINE(cppcoreguidelines-no-malloc, cppcoreguidelines-owning-memory) clang-format on
-    free(path);
-  }
-  // clang-format off NOLINTNEXTLINE(cppcoreguidelines-no-malloc, cppcoreguidelines-owning-memory) clang-format on
-  free(trace_files->file_paths);
-  trace_files->file_paths = nullptr;
-  trace_files->size = 0;
-}
-
-// NOLINTNEXTLINE(readability-identifier-naming)
 auto _spoor_runtime_DeleteFlushedTraceFilesOlderThan(
     const _spoor_runtime_SystemTimestampSeconds system_timestamp_seconds,
     const _spoor_runtime_DeleteFlushedTraceFilesCallback callback) -> void {
@@ -194,7 +177,8 @@ auto _spoor_runtime_DeleteFlushedTraceFilesOlderThan(
 }
 
 auto _spoor_runtime_GetConfig() -> _spoor_runtime_Config {
-  return {.trace_file_path = kConfig.trace_file_path.c_str(),
+  return {.trace_file_path_size = kConfig.trace_file_path.string().size(),
+          .trace_file_path = kConfig.trace_file_path.c_str(),
           .session_id = kConfig.session_id,
           .thread_event_buffer_capacity = kConfig.thread_event_buffer_capacity,
           .max_reserved_event_buffer_slice_capacity =

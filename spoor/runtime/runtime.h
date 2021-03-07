@@ -18,10 +18,11 @@ typedef int64_t _spoor_runtime_DurationNanoseconds;
 typedef int64_t _spoor_runtime_SystemTimestampSeconds;
 
 typedef struct _spoor_runtime_TraceFiles {
-  int32_t size;
-  // NOTE: The caller takes ownership of the file_paths array and is responsible
-  // for releasing the memory, e.g. by calling
+  _spoor_runtime_SizeType file_paths_size;
+  // NOTE: The caller takes ownership of `file_path_sizes` and `file_paths`, and
+  // is responsible for releasing the memory, e.g., by calling
   // `_spoor_runtime_ReleaseTraceFilePaths`.
+  _spoor_runtime_SizeType* file_path_sizes;
   char** file_paths;
 } _spoor_runtime_TraceFiles;
 
@@ -31,7 +32,8 @@ typedef struct _spoor_runtime_DeletedFilesInfo {
 } _spoor_runtime_DeletedFilesInfo;
 
 typedef struct _spoor_runtime_Config {
-  const char* trace_file_path;
+  _spoor_runtime_SizeType trace_file_path_size;
+  const char* trace_file_path;  // Non-owning
   _spoor_runtime_SessionId session_id;
   _spoor_runtime_SizeType thread_event_buffer_capacity;
   _spoor_runtime_SizeType max_reserved_event_buffer_slice_capacity;
@@ -95,11 +97,6 @@ void _spoor_runtime_ClearTraceEvents();
 void _spoor_runtime_FlushedTraceFiles(
     _spoor_runtime_FlushedTraceFilesCallback callback);
 
-// Release the memory owned by a `_spoor_runtime_TraceFiles` object (but not
-// the object itself).
-void _spoor_runtime_ReleaseTraceFilePaths(
-    _spoor_runtime_TraceFiles* trace_files);
-
 // Delete all trace files older than a given timestamp.
 void _spoor_runtime_DeleteFlushedTraceFilesOlderThan(
     _spoor_runtime_SystemTimestampSeconds system_timestamp,
@@ -111,8 +108,34 @@ _spoor_runtime_Config _spoor_runtime_GetConfig();
 // Check if the runtime contains stub implementations.
 bool _spoor_runtime_StubImplementation();
 
+// Release the memory owned by a `_spoor_runtime_TraceFiles` object (but not
+// the object itself).
+// Implemented in the stub.
+void _spoor_runtime_ReleaseTraceFilePaths(
+    _spoor_runtime_TraceFiles* trace_files);
+
+// Struct equality.
+// Implemented in the stub.
+bool _spoor_runtime_DeletedFilesInfoEqual(
+    const _spoor_runtime_DeletedFilesInfo* lhs,
+    const _spoor_runtime_DeletedFilesInfo* rhs);
+bool _spoor_runtime_TraceFilesEqual(const _spoor_runtime_TraceFiles* lhs,
+                                    const _spoor_runtime_TraceFiles* rhs);
+bool _spoor_runtime_ConfigEqual(const _spoor_runtime_Config* lhs,
+                                const _spoor_runtime_Config* rhs);
+
 #ifdef __cplusplus
 }
+#endif
+
+#ifdef __cplusplus
+// Implemented in the stub.
+auto operator==(const _spoor_runtime_DeletedFilesInfo& lhs,
+                const _spoor_runtime_DeletedFilesInfo& rhs) -> bool;
+auto operator==(const _spoor_runtime_TraceFiles& lhs,
+                const _spoor_runtime_TraceFiles& rhs) -> bool;
+auto operator==(const _spoor_runtime_Config& lhs,
+                const _spoor_runtime_Config& rhs) -> bool;
 #endif
 
 #endif

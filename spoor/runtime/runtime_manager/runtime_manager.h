@@ -146,4 +146,7 @@ auto RuntimeManager::DeleteFlushedTraceFilesOlderThan(
   }}.detach();
 }
 
+auto operator==(const RuntimeManager::DeletedFilesInfo& lhs,
+                const RuntimeManager::DeletedFilesInfo& rhs) -> bool;
+
 }  // namespace spoor::runtime::runtime_manager

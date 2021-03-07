@@ -36,6 +36,8 @@ cc_test(
         "//util:numeric",
         "//util/time:clock_mock",
         "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/time",
         "@com_google_googletest//:gtest_main",
         "@com_microsoft_gsl//:gsl",
     ],
@@ -64,6 +66,8 @@ cc_test(
         ":black_hole_flush_queue",
         "//spoor/runtime/buffer",
         "//spoor/runtime/trace",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/time",
         "@com_google_googletest//:gtest_main",
     ],
 )

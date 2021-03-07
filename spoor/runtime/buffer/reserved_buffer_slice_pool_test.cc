@@ -38,7 +38,7 @@ TEST(ReservedBufferSlicePool, BorrowsMaxSliceCapacity) {  // NOLINT
       ASSERT_TRUE(result.IsOk());
       auto slice = std::move(result.Ok());
       ASSERT_EQ(slice->Capacity(), capacity);
-      retained_slices.push_back(std::move(slice));
+      retained_slices.emplace_back(std::move(slice));
     }
   }
 }

@@ -122,12 +122,10 @@ auto DiskFlushQueue::Flush(std::function<void()> completion) -> void {
   const auto now = options_.steady_clock->Now();
   std::unique_lock lock{lock_};
   flush_timestamp_ = now;
-  if (completion != nullptr) {
-    flush_completion_ = completion;
-    for (const auto& record : queue_) {
-      if (record.flush_timestamp <= now) {
-        manual_flush_record_ids_.emplace(record.id);
-      }
+  if (completion != nullptr) flush_completion_ = completion;
+  for (const auto& record : queue_) {
+    if (record.flush_timestamp <= now) {
+      manual_flush_record_ids_.emplace(record.id);
     }
   }
 }

@@ -3,8 +3,9 @@
 
 #include "spoor/runtime/flush_queue/black_hole_flush_queue.h"
 
-#include <future>
-
+#include "absl/synchronization/notification.h"
+#include "absl/time/time.h"
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "spoor/runtime/buffer/circular_slice_buffer.h"
 #include "spoor/runtime/buffer/reserved_buffer_slice_pool.h"
@@ -14,8 +15,15 @@ namespace {
 
 using spoor::runtime::flush_queue::BlackHoleFlushQueue;
 using spoor::runtime::trace::Event;
+using testing::MockFunction;
 using Buffer = spoor::runtime::buffer::CircularSliceBuffer<Event>;
 using Pool = spoor::runtime::buffer::ReservedBufferSlicePool<Event>;
+
+constexpr absl::Duration kNotificationTimeout{absl::Milliseconds(1'000)};
+
+ACTION_P(Notify, notification) {  // NOLINT
+  notification->Notify();
+}
 
 TEST(BlackHoleFlushQueue, Run) {  // NOLINT
   BlackHoleFlushQueue flush_queue{};
@@ -37,10 +45,13 @@ TEST(BlackHoleFlushQueue, DrainAndStop) {  // NOLINT
 
 TEST(BlackHoleFlushQueue, Flush) {  // NOLINT
   BlackHoleFlushQueue flush_queue{};
-  std::promise<void> promise{};
-  flush_queue.Flush([&promise] { promise.set_value(); });
-  auto future = promise.get_future();
-  future.wait();
+  MockFunction<void()> callback{};
+  absl::Notification done{};
+  EXPECT_CALL(callback, Call()).WillOnce(Notify(&done));
+  flush_queue.Flush(callback.AsStdFunction());
+  const auto success =
+      done.WaitForNotificationWithTimeout(kNotificationTimeout);
+  ASSERT_TRUE(success);
 }
 
 TEST(BlackHoleFlushQueue, FlushWithNullptr) {  // NOLINT

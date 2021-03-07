@@ -71,10 +71,10 @@ auto Pools(const Options options)
   };
   std::vector<std::unique_ptr<BufferSlicePool>> pools{};
   pools.reserve(2 + combined_pool_options.size());
-  pools.push_back(std::make_unique<DynamicPool>(dynamic_pool_options));
-  pools.push_back(std::make_unique<ReservedPool>(reserved_pool_options));
+  pools.emplace_back(std::make_unique<DynamicPool>(dynamic_pool_options));
+  pools.emplace_back(std::make_unique<ReservedPool>(reserved_pool_options));
   for (const auto options : combined_pool_options) {
-    pools.push_back(std::make_unique<CombinedPool>(options));
+    pools.emplace_back(std::make_unique<CombinedPool>(options));
   }
   return pools;
 }
@@ -163,7 +163,7 @@ TEST(BufferSlicePool, ClearsSliceOnReturn) {  // NOLINT
           slice->Push(value);
         }
         ASSERT_TRUE(slice->Full());
-        retained_slices.push_back(std::move(slice));
+        retained_slices.emplace_back(std::move(slice));
       }
       ASSERT_TRUE(pool->Empty());
     }
@@ -185,7 +185,7 @@ TEST(BufferSlicePool, Size) {  // NOLINT
           ASSERT_TRUE(result.IsOk());
           ASSERT_EQ(pool->Size(), capacity - (i + 1) * slice_capacity);
           auto slice = std::move(result.Ok());
-          retained_slices.push_back(std::move(slice));
+          retained_slices.emplace_back(std::move(slice));
         }
         for (auto i{0}; i < 3; ++i) {
           auto result = pool->Borrow(slice_capacity);
@@ -221,7 +221,7 @@ TEST(BufferSlicePool, Capacity) {  // NOLINT
           ASSERT_TRUE(result.IsOk());
           ASSERT_EQ(pool->Capacity(), capacity);
           auto slice = std::move(result.Ok());
-          retained_slices.push_back(std::move(slice));
+          retained_slices.emplace_back(std::move(slice));
         }
         for (auto i{0}; i < 3; ++i) {
           auto result = pool->Borrow(slice_capacity);
@@ -253,7 +253,7 @@ TEST(BufferSlicePool, Empty) {  // NOLINT
           auto result = pool->Borrow(slice_capacity);
           ASSERT_TRUE(result.IsOk());
           auto slice = std::move(result.Ok());
-          retained_slices.push_back(std::move(slice));
+          retained_slices.emplace_back(std::move(slice));
         }
         for (auto i{0}; i < 3; ++i) {
           ASSERT_TRUE(pool->Empty());
@@ -287,7 +287,7 @@ TEST(BufferSlicePool, Full) {  // NOLINT
           ASSERT_TRUE(result.IsOk());
           ASSERT_FALSE(pool->Full());
           auto slice = std::move(result.Ok());
-          retained_slices.push_back(std::move(slice));
+          retained_slices.emplace_back(std::move(slice));
         }
         if (pool->Capacity() == 0) {
           ASSERT_TRUE(pool->Full());
@@ -332,14 +332,14 @@ TEST(BufferSlicePool, MultithreadedBorrow) {  // NOLINT
     std::vector<std::future<BufferSlicePool::BorrowResult>> futures;
     futures.reserve(thread_size + extra_threads_size);
     for (SizeType i{0}; i < thread_size + extra_threads_size; ++i) {
-      futures.push_back(std::async(std::launch::async, borrow));
+      futures.emplace_back(std::async(std::launch::async, borrow));
     }
     std::vector<OwnedSlicePtr> retained_slices{};
     retained_slices.reserve(thread_size);
     SizeType errors{0};
     for (auto& future : futures) {
       auto result = future.get();
-      if (result.IsOk()) retained_slices.push_back(std::move(result.Ok()));
+      if (result.IsOk()) retained_slices.emplace_back(std::move(result.Ok()));
       if (result.IsErr()) {
         ASSERT_EQ(result.Err(), BorrowError::kNoSlicesAvailable);
         errors += 1;

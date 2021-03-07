@@ -342,9 +342,6 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
     InstrumentedFunctionMap instrumented_function_map{};
     instrumented_function_map.ParseFromString(buffer);
 
-    std::cerr << instrumented_function_map.DebugString() << "\n\n";
-    std::cerr << expected_instrumented_function_map.DebugString() << '\n';
-
     ASSERT_TRUE(MessageDifferencer::Equals(instrumented_function_map,
                                            expected_instrumented_function_map));
   }

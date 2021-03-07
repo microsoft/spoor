@@ -42,7 +42,7 @@ auto ParseExtraActionInfo(gsl::not_null<std::istream*> input_stream)
 
   std::vector<std::string> arguments{};
   arguments.reserve(1 + compile_info.compiler_option().size());
-  arguments.push_back(compile_info.tool());
+  arguments.emplace_back(compile_info.tool());
   arguments.insert(std::end(arguments),
                    std::cbegin(compile_info.compiler_option()),
                    std::cend(compile_info.compiler_option()));

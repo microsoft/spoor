@@ -6,11 +6,12 @@
 #include <atomic>
 #include <chrono>
 #include <filesystem>
-#include <future>
 #include <iterator>
 #include <vector>
 
 #include "absl/strings/str_format.h"
+#include "absl/synchronization/notification.h"
+#include "absl/time/time.h"
 #include "gmock/gmock.h"
 #include "gsl/gsl"
 #include "gtest/gtest.h"
@@ -36,6 +37,7 @@ using testing::_;
 using testing::InSequence;
 using testing::Invoke;
 using testing::MatchesRegex;
+using testing::MockFunction;
 using testing::Return;
 using testing::Truly;
 using util::time::testing::MakeTimePoint;
@@ -45,6 +47,7 @@ using Buffer = spoor::runtime::buffer::CircularSliceBuffer<Event>;
 using SizeType = typename Buffer::SizeType;
 using Pool = spoor::runtime::buffer::ReservedBufferSlicePool<Event>;
 
+constexpr absl::Duration kNotificationTimeout{absl::Milliseconds(1'000)};
 // NOLINTNEXTLINE(fuchsia-statically-constructed-objects)
 const std::filesystem::path kTraceFilePath{"trace/file/path"};
 // NOLINTNEXTLINE(fuchsia-statically-constructed-objects)
@@ -54,6 +57,10 @@ const std::string kTraceFilePattern = absl::StrFormat(
 constexpr spoor::runtime::trace::SessionId kSessionId{42};
 constexpr spoor::runtime::trace::ProcessId kProcessId{1729};
 constexpr Footer kExpectedFooter{};
+
+ACTION_P(Notify, notification) {  // NOLINT
+  notification->Notify();
+}
 
 TEST(DiskFlushQueue, Enqueue) {  // NOLINT
   constexpr SizeType capacity{0};
@@ -238,12 +245,18 @@ TEST(DiskFlushQueue, FlushCallback) {  // NOLINT
   flush_queue.Enqueue(std::move(buffer_a));
   ASSERT_EQ(flush_queue.Size(), 1);
   ++time;
-  std::promise<void> promise{};
-  flush_queue.Flush([&promise] { promise.set_value(); });
+
+  MockFunction<void()> callback{};
+  absl::Notification done{};
+  EXPECT_CALL(callback, Call()).WillOnce(Notify(&done));
+  flush_queue.Flush(callback.AsStdFunction());
+  const auto success =
+      done.WaitForNotificationWithTimeout(kNotificationTimeout);
+  ASSERT_TRUE(success);
+  ASSERT_TRUE(flush_queue.Empty());
+
   ++time;
   flush_queue.Enqueue(std::move(buffer_b));
-  auto future = promise.get_future();
-  future.wait();
   ASSERT_EQ(flush_queue.Size(), 1);
   flush_queue.Clear();
   ASSERT_TRUE(flush_queue.Empty());

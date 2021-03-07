@@ -99,14 +99,14 @@ constexpr ReservedBufferSlicePool<T>::ReservedBufferSlicePool(
           auto* buffer =
               std::next(buffer_.data(), options.max_slice_capacity * index);
           const gsl::span<T> unowned_buffer{buffer, options.max_slice_capacity};
-          pool.push_back(UnownedSlice{unowned_buffer});
+          pool.emplace_back(UnownedSlice{unowned_buffer});
         }
         if (remainder_slice_buffer_size != 0) {
           auto* buffer = std::next(
               buffer_.data(), options.max_slice_capacity * (slices_size - 1));
           const gsl::span<T> unowned_buffer{buffer,
                                             remainder_slice_buffer_size};
-          pool.push_back(UnownedSlice{unowned_buffer});
+          pool.emplace_back(UnownedSlice{unowned_buffer});
         }
         return pool;
       }()},
