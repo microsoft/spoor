@@ -3,11 +3,11 @@
 
 #include "spoor/runtime/flush_queue/disk_flush_queue.h"
 
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <filesystem>
 #include <iterator>
-#include <vector>
 
 #include "absl/strings/str_format.h"
 #include "absl/synchronization/notification.h"
@@ -27,7 +27,7 @@ namespace {
 using spoor::runtime::flush_queue::DiskFlushQueue;
 using spoor::runtime::flush_queue::kTraceFileExtension;
 using spoor::runtime::trace::Event;
-using spoor::runtime::trace::Footer;
+using spoor::runtime::trace::EventType;
 using spoor::runtime::trace::Header;
 using spoor::runtime::trace::TimestampNanoseconds;
 using spoor::runtime::trace::TraceWriter;
@@ -56,7 +56,6 @@ const std::string kTraceFilePattern = absl::StrFormat(
     kTraceFileExtension);
 constexpr spoor::runtime::trace::SessionId kSessionId{42};
 constexpr spoor::runtime::trace::ProcessId kProcessId{1729};
-constexpr Footer kExpectedFooter{};
 
 ACTION_P(Notify, notification) {  // NOLINT
   notification->Notify();
@@ -79,7 +78,7 @@ TEST(DiskFlushQueue, Enqueue) {  // NOLINT
   }));
 
   TraceWriterMock trace_writer{};
-  EXPECT_CALL(trace_writer, Write(MatchesRegex(kTraceFilePattern), _, _, _))
+  EXPECT_CALL(trace_writer, Write(MatchesRegex(kTraceFilePattern), _, _))
       .Times(2)
       .WillRepeatedly(Return(TraceWriter::Result::Ok({})));
 
@@ -105,14 +104,39 @@ TEST(DiskFlushQueue, Enqueue) {  // NOLINT
 }
 
 TEST(DiskFlushQueue, WritesEvents) {  // NOLINT
-  const std::vector events{Event(Event::Type::kFunctionEntry, 1, 0),
-                           Event(Event::Type::kFunctionEntry, 2, 1),
-                           Event(Event::Type::kFunctionEntry, 3, 2),
-                           Event(Event::Type::kFunctionExit, 3, 3),
-                           Event(Event::Type::kFunctionEntry, 3, 4),
-                           Event(Event::Type::kFunctionExit, 3, 5),
-                           Event(Event::Type::kFunctionExit, 2, 6),
-                           Event(Event::Type::kFunctionExit, 1, 7)};
+  const std::array<Event, 8> events{
+      {{.steady_clock_timestamp = 0,
+        .payload_1 = 1,
+        .type = static_cast<EventType>(Event::Type::kFunctionEntry),
+        .payload_2 = 0},
+       {.steady_clock_timestamp = 1,
+        .payload_1 = 2,
+        .type = static_cast<EventType>(Event::Type::kFunctionEntry),
+        .payload_2 = 0},
+       {.steady_clock_timestamp = 2,
+        .payload_1 = 3,
+        .type = static_cast<EventType>(Event::Type::kFunctionEntry),
+        .payload_2 = 0},
+       {.steady_clock_timestamp = 3,
+        .payload_1 = 3,
+        .type = static_cast<EventType>(Event::Type::kFunctionExit),
+        .payload_2 = 0},
+       {.steady_clock_timestamp = 4,
+        .payload_1 = 3,
+        .type = static_cast<EventType>(Event::Type::kFunctionEntry),
+        .payload_2 = 0},
+       {.steady_clock_timestamp = 5,
+        .payload_1 = 3,
+        .type = static_cast<EventType>(Event::Type::kFunctionExit),
+        .payload_2 = 0},
+       {.steady_clock_timestamp = 6,
+        .payload_1 = 2,
+        .type = static_cast<EventType>(Event::Type::kFunctionExit),
+        .payload_2 = 0},
+       {.steady_clock_timestamp = 7,
+        .payload_1 = 1,
+        .type = static_cast<EventType>(Event::Type::kFunctionExit),
+        .payload_2 = 0}}};
   const SizeType capacity{events.size()};
   Pool pool{{.max_slice_capacity = capacity, .capacity = capacity}};
   Buffer buffer{{.buffer_slice_pool = &pool, .capacity = capacity}};
@@ -152,9 +176,8 @@ TEST(DiskFlushQueue, WritesEvents) {  // NOLINT
                       std::cbegin(*expected_events));
   };
   TraceWriterMock trace_writer{};
-  EXPECT_CALL(trace_writer,
-              Write(MatchesRegex(trace_file_pattern), Truly(matches_header),
-                    Truly(matches_events), kExpectedFooter))
+  EXPECT_CALL(trace_writer, Write(MatchesRegex(trace_file_pattern),
+                                  Truly(matches_header), Truly(matches_events)))
       .WillOnce(Return(TraceWriter::Result::Ok({})));
 
   DiskFlushQueue flush_queue{{.trace_file_path = kTraceFilePath,
@@ -188,8 +211,7 @@ TEST(DiskFlushQueue, Flush) {  // NOLINT
   }));
 
   TraceWriterMock trace_writer{};
-  EXPECT_CALL(trace_writer,
-              Write(MatchesRegex(kTraceFilePattern), _, _, kExpectedFooter))
+  EXPECT_CALL(trace_writer, Write(MatchesRegex(kTraceFilePattern), _, _))
       .WillOnce(Return(TraceWriter::Result::Ok({})));
 
   DiskFlushQueue flush_queue{{.trace_file_path = kTraceFilePath,
@@ -228,7 +250,7 @@ TEST(DiskFlushQueue, FlushCallback) {  // NOLINT
   }));
 
   TraceWriterMock trace_writer{};
-  EXPECT_CALL(trace_writer, Write(MatchesRegex(kTraceFilePattern), _, _, _))
+  EXPECT_CALL(trace_writer, Write(MatchesRegex(kTraceFilePattern), _, _))
       .WillOnce(Return(TraceWriter::Result::Ok({})));
 
   DiskFlushQueue flush_queue{{.trace_file_path = kTraceFilePath,
@@ -277,7 +299,7 @@ TEST(DiskFlushQueue, Clear) {  // NOLINT
   }));
 
   TraceWriterMock trace_writer{};
-  EXPECT_CALL(trace_writer, Write(_, _, _, _)).Times(0);
+  EXPECT_CALL(trace_writer, Write(_, _, _)).Times(0);
 
   DiskFlushQueue flush_queue{{.trace_file_path = kTraceFilePath,
                               .buffer_retention_duration = 1'000ns,
@@ -315,7 +337,7 @@ TEST(DiskFlushQueue, RetainsEventsUntilTimePoint) {  // NOLINT
   }));
 
   TraceWriterMock trace_writer{};
-  EXPECT_CALL(trace_writer, Write(_, _, _, _)).Times(0);
+  EXPECT_CALL(trace_writer, Write(_, _, _)).Times(0);
 
   constexpr auto retention_duration = 3ns;
   DiskFlushQueue flush_queue{{.trace_file_path = kTraceFilePath,
@@ -348,7 +370,7 @@ TEST(DiskFlushQueue, DropsEventsWhenNotRunning) {  // NOLINT
       .WillOnce(Return(MakeTimePoint<std::chrono::steady_clock>(0)));
 
   TraceWriterMock trace_writer{};
-  EXPECT_CALL(trace_writer, Write(_, _, _, _)).Times(0);
+  EXPECT_CALL(trace_writer, Write(_, _, _)).Times(0);
 
   DiskFlushQueue flush_queue{{.trace_file_path = kTraceFilePath,
                               .buffer_retention_duration = 1'000ns,
@@ -381,12 +403,12 @@ TEST(DiskFlushQueue, FlushesOnLastAttempt) {  // NOLINT
     TraceWriterMock trace_writer{};
     InSequence in_sequence{};
     if (1 < max_attempts) {
-      EXPECT_CALL(trace_writer, Write(MatchesRegex(kTraceFilePattern), _, _, _))
+      EXPECT_CALL(trace_writer, Write(MatchesRegex(kTraceFilePattern), _, _))
           .Times(max_attempts - 1)
           .WillRepeatedly(Return(TraceWriter::Error::kFailedToOpenFile))
           .RetiresOnSaturation();
     }
-    EXPECT_CALL(trace_writer, Write(MatchesRegex(kTraceFilePattern), _, _, _))
+    EXPECT_CALL(trace_writer, Write(MatchesRegex(kTraceFilePattern), _, _))
         .WillOnce(Return(TraceWriter::Result::Ok({})))
         .RetiresOnSaturation();
 
@@ -421,7 +443,7 @@ TEST(DiskFlushQueue, DropsEventsAfterMaxFlushAttempts) {  // NOLINT
 
     TraceWriterMock trace_writer{};
     InSequence in_sequence{};
-    EXPECT_CALL(trace_writer, Write(MatchesRegex(kTraceFilePattern), _, _, _))
+    EXPECT_CALL(trace_writer, Write(MatchesRegex(kTraceFilePattern), _, _))
         .Times(std::max(1, max_attempts))
         .WillRepeatedly(Return(TraceWriter::Error::kFailedToOpenFile))
         .RetiresOnSaturation();
@@ -452,7 +474,7 @@ TEST(DiskFlushQueue, HandlesConsecutiveCallsToRunAndDrainAndStop) {  // NOLINT
   EXPECT_CALL(steady_clock, Now()).Times(0);
 
   TraceWriterMock trace_writer{};
-  EXPECT_CALL(trace_writer, Write(MatchesRegex(kTraceFilePattern), _, _, _))
+  EXPECT_CALL(trace_writer, Write(MatchesRegex(kTraceFilePattern), _, _))
       .Times(0);
 
   DiskFlushQueue flush_queue{{.trace_file_path = kTraceFilePath,

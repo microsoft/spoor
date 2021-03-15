@@ -7,18 +7,31 @@
 #include <utility>
 
 #include "gsl/gsl"
+#include "spoor/runtime/trace/trace.h"
 #include "util/memory/owned_ptr.h"
 
 namespace spoor::runtime::event_logger {
 
-EventLogger::EventLogger(const Options options)
-    : options_{options}, pool_{nullptr} {
-  options_.event_logger_notifier->Subscribe(this);
+EventLogger::EventLogger(const Options options,
+                         EventLoggerNotifier* event_logger_notifier)
+    : options_{options},
+      event_logger_notifier_{event_logger_notifier},
+      pool_{nullptr} {
+  if (event_logger_notifier_ != nullptr) {
+    event_logger_notifier_->Subscribe(this);
+  }
 }
 
 EventLogger::~EventLogger() {
   Flush();
-  options_.event_logger_notifier->Unsubscribe(this);
+  if (event_logger_notifier_ != nullptr) {
+    event_logger_notifier_->Unsubscribe(this);
+  }
+}
+
+auto EventLogger::SetEventLoggerNotifier(
+    EventLoggerNotifier* event_logger_notifier) -> void {
+  event_logger_notifier_ = event_logger_notifier;
 }
 
 auto EventLogger::SetPool(Pool* pool) -> void {
@@ -32,17 +45,10 @@ auto EventLogger::SetPool(Pool* pool) -> void {
   pool_ = pool;
 }
 
-auto EventLogger::LogEvent(trace::Event::Type type,
-                           trace::FunctionId function_id) -> void {
-  const auto now = options_.steady_clock->Now();
+auto EventLogger::LogEvent(const trace::Event event) -> void {
   if (pool_ == nullptr || !buffer_.has_value()) return;
-  const auto now_nanoseconds =
-      std::chrono::duration_cast<std::chrono::nanoseconds>(
-          now.time_since_epoch())
-          .count();
-  const trace::Event event{type, function_id, now_nanoseconds};
   buffer_->Push(event);
-  if (options_.flush_buffer_when_full && buffer_->WillWrapOnNextPush()) Flush();
+  if (options_.flush_buffer_when_full && buffer_->Full()) Flush();
 }
 
 auto EventLogger::Flush() -> void {

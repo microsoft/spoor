@@ -18,7 +18,6 @@ namespace {
 
 using spoor::runtime::flush_queue::BlackHoleFlushQueue;
 using spoor::runtime::runtime_manager::RuntimeManager;
-using spoor::runtime::trace::Event;
 
 constexpr bool kFlushAllEvents{true};
 // NOLINTNEXTLINE(fuchsia-statically-constructed-objects)
@@ -43,14 +42,14 @@ auto FibonacciInstrumented(const uint64 n,
                            gsl::not_null<RuntimeManager*> runtime_manager)
     -> uint64 {
   constexpr uint64 function_id{42};
-  runtime_manager->LogEvent(Event::Type::kFunctionEntry, function_id);
+  runtime_manager->LogFunctionEntry(function_id);
   if (n < 2) {
-    runtime_manager->LogEvent(Event::Type::kFunctionExit, function_id);
+    runtime_manager->LogFunctionExit(function_id);
     return n;
   }
   const auto result = FibonacciInstrumented(n - 1, runtime_manager) +
                       FibonacciInstrumented(n - 2, runtime_manager);
-  runtime_manager->LogEvent(Event::Type::kFunctionExit, function_id);
+  runtime_manager->LogFunctionExit(function_id);
   return result;
 }
 

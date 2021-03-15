@@ -10,6 +10,7 @@
 #include <cstddef>
 #include <filesystem>
 #include <system_error>
+#include <type_traits>
 #include <utility>
 
 #include "absl/strings/str_format.h"
@@ -27,6 +28,15 @@
 namespace {
 
 using spoor::runtime::runtime_manager::RuntimeManager;
+
+static_assert(
+    std::is_same_v<_spoor_runtime_EventType, spoor::runtime::trace::EventType>);
+static_assert(std::is_same_v<_spoor_runtime_FunctionId,
+                             spoor::runtime::trace::FunctionId>);
+static_assert(
+    std::is_same_v<_spoor_runtime_SessionId, spoor::runtime::trace::SessionId>);
+static_assert(std::is_same_v<_spoor_runtime_TimestampNanoseconds,
+                             spoor::runtime::trace::TimestampNanoseconds>);
 
 // NOLINTNEXTLINE(fuchsia-statically-constructed-objects)
 const auto kConfig = spoor::runtime::config::Config::FromEnv();
@@ -86,16 +96,27 @@ auto _spoor_runtime_DisableRuntime() -> void { runtime_.Disable(); }
 
 auto _spoor_runtime_RuntimeEnabled() -> bool { return runtime_.Enabled(); }
 
+auto _spoor_runtime_LogEventWithTimestamp(
+    const _spoor_runtime_EventType event,
+    const _spoor_runtime_TimestampNanoseconds steady_clock_timestamp,
+    const uint64_t payload_1, const uint32_t payload_2) -> void {
+  runtime_.LogEvent(event, steady_clock_timestamp, payload_1, payload_2);
+}
+
+auto _spoor_runtime_LogEvent(const _spoor_runtime_EventType event,
+                             const uint64_t payload_1, const uint32_t payload_2)
+    -> void {
+  runtime_.LogEvent(event, payload_1, payload_2);
+}
+
 auto _spoor_runtime_LogFunctionEntry(
     const _spoor_runtime_FunctionId function_id) -> void {
-  runtime_.LogEvent(spoor::runtime::trace::Event::Type::kFunctionEntry,
-                    function_id);
+  runtime_.LogFunctionEntry(function_id);
 }
 
 auto _spoor_runtime_LogFunctionExit(const _spoor_runtime_FunctionId function_id)
     -> void {
-  runtime_.LogEvent(spoor::runtime::trace::Event::Type::kFunctionExit,
-                    function_id);
+  runtime_.LogFunctionExit(function_id);
 }
 
 auto _spoor_runtime_FlushTraceEvents(

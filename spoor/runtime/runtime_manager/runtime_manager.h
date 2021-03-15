@@ -63,7 +63,14 @@ class RuntimeManager final : public event_logger::EventLoggerNotifier {
   auto Unsubscribe(gsl::not_null<event_logger::EventLogger*> subscriber)
       -> void override;
 
-  auto LogEvent(trace::Event::Type type, trace::FunctionId function_id) -> void;
+  auto LogEvent(trace::Event event) -> void;
+  auto LogEvent(trace::EventType type,
+                trace::TimestampNanoseconds steady_clock_timestamp,
+                uint64 payload_1, uint32 payload_2) -> void;
+  auto LogEvent(trace::EventType type, uint64 payload_1, uint32 payload_2)
+      -> void;
+  auto LogFunctionEntry(trace::FunctionId function_id) -> void;
+  auto LogFunctionExit(trace::FunctionId function_id) -> void;
 
   auto Flush(const std::function<void()>& completion) -> void;
   auto Clear() -> void;

@@ -28,7 +28,7 @@ class TraceWriter {
   virtual ~TraceWriter() = default;
 
   virtual auto Write(const std::filesystem::path& file, Header header,
-                     Events* events, Footer footer) const -> Result = 0;
+                     Events* events) const -> Result = 0;
 };
 
 }  // namespace spoor::runtime::trace

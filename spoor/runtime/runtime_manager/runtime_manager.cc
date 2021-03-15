@@ -52,6 +52,7 @@ auto RuntimeManager::Deinitialize() -> void {
     if (!initialized_) return;
     initialized_ = false;
     for (auto* event_logger : event_loggers_) {
+      event_logger->SetEventLoggerNotifier(nullptr);
       event_logger->SetPool(nullptr);
     }
   }
@@ -89,16 +90,47 @@ auto RuntimeManager::Unsubscribe(
   event_loggers_.erase(subscriber);
 }
 
-auto RuntimeManager::LogEvent(const trace::Event::Type type,
-                              const trace::FunctionId function_id) -> void {
+auto RuntimeManager::LogEvent(const trace::Event event) -> void {
   thread_local event_logger::EventLogger event_logger{
-      {.steady_clock = options_.steady_clock,
-       .event_logger_notifier = this,
-       .flush_queue = options_.flush_queue,
+      {.flush_queue = options_.flush_queue,
        .preferred_capacity = options_.thread_event_buffer_capacity,
-       .flush_buffer_when_full = options_.flush_all_events}};
+       .flush_buffer_when_full = options_.flush_all_events},
+      this};
   if (!Enabled()) return;
-  event_logger.LogEvent(type, function_id);
+  event_logger.LogEvent(event);
+}
+
+auto RuntimeManager::LogEvent(
+    const trace::EventType type,
+    const trace::TimestampNanoseconds steady_clock_timestamp,
+    const uint64 payload_1, const uint32 payload_2) -> void {
+  LogEvent({.steady_clock_timestamp = steady_clock_timestamp,
+            .payload_1 = payload_1,
+            .type = type,
+            .payload_2 = payload_2});
+}
+
+auto RuntimeManager::LogEvent(const trace::EventType type,
+                              const uint64 payload_1, const uint32 payload_2)
+    -> void {
+  const auto now = options_.steady_clock->Now();
+  const auto now_nanoseconds =
+      std::chrono::duration_cast<std::chrono::nanoseconds>(
+          now.time_since_epoch())
+          .count();
+  LogEvent(type, now_nanoseconds, payload_1, payload_2);
+}
+
+auto RuntimeManager::LogFunctionEntry(const trace::FunctionId function_id)
+    -> void {
+  LogEvent(static_cast<trace::EventType>(trace::Event::Type::kFunctionEntry),
+           function_id, 0);
+}
+
+auto RuntimeManager::LogFunctionExit(const trace::FunctionId function_id)
+    -> void {
+  LogEvent(static_cast<trace::EventType>(trace::Event::Type::kFunctionExit),
+           function_id, 0);
 }
 
 auto RuntimeManager::Flush(const std::function<void()>& completion) -> void {

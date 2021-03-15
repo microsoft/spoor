@@ -67,7 +67,7 @@ auto DiskFlushQueue::Run() -> void {
       }
       const auto result = options_.trace_writer->Write(
           TraceFilePath(flush_info), TraceFileHeader(flush_info),
-          &flush_info.buffer, trace::Footer{});
+          &flush_info.buffer);
       --flush_info.remaining_flush_attempts;
       if (result.IsErr() && 0 < flush_info.remaining_flush_attempts) {
         std::unique_lock lock{lock_};

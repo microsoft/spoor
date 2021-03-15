@@ -9,35 +9,12 @@ namespace {
 
 using spoor::runtime::trace::Deserialize;
 using spoor::runtime::trace::Event;
-using spoor::runtime::trace::Footer;
+using spoor::runtime::trace::EventType;
 using spoor::runtime::trace::FunctionId;
 using spoor::runtime::trace::Header;
 using spoor::runtime::trace::Serialize;
 using spoor::runtime::trace::TimestampNanoseconds;
 using Type = spoor::runtime::trace::Event::Type;
-
-TEST(Event, StoresProperties) {  // NOLINT
-  const FunctionId function_id{0xffffffffffffffff};
-  const TimestampNanoseconds timestamp{0x7fffffffffffffff};
-  for (const auto type : {Type::kFunctionEntry, Type::kFunctionExit}) {
-    const Event event{type, function_id, timestamp};
-    ASSERT_EQ(event.GetType(), type);
-    ASSERT_EQ(event.GetFunctionId(), function_id);
-    ASSERT_EQ(event.GetTimestamp(), timestamp);
-  }
-}
-
-TEST(Event, DropsMostSignificantTimestampBit) {  // NOLINT
-  const FunctionId function_id{0xffffffffffffffff};
-  const auto timestamp = static_cast<TimestampNanoseconds>(0xffffffffffffffff);
-  const TimestampNanoseconds expected_timestamp{0x7fffffffffffffff};
-  for (const auto type : {Type::kFunctionEntry, Type::kFunctionExit}) {
-    const Event event{type, function_id, timestamp};
-    ASSERT_EQ(event.GetType(), type);
-    ASSERT_EQ(event.GetFunctionId(), function_id);
-    ASSERT_EQ(event.GetTimestamp(), expected_timestamp);
-  }
-}
 
 TEST(Header, Serialization) {  // NOLINT
   Header expected_header{.version = 1,
@@ -53,17 +30,13 @@ TEST(Header, Serialization) {  // NOLINT
 }
 
 TEST(Event, Serialization) {  // NOLINT
-  Event expected_event{Type::kFunctionEntry, 42, 7};
+  Event expected_event{.steady_clock_timestamp = 1,
+                       .payload_1 = 2,
+                       .type = static_cast<EventType>(Type::kFunctionEntry),
+                       .payload_2 = 3};
   const auto serialized_event = Serialize(expected_event);
   const auto deserialized_event = Deserialize(serialized_event);
   ASSERT_EQ(deserialized_event, expected_event);
-}
-
-TEST(Footer, Serialization) {  // NOLINT
-  Footer expected_footer{};
-  const auto serialized_footer = Serialize(expected_footer);
-  const auto deserialized_footer = Deserialize(serialized_footer);
-  ASSERT_EQ(deserialized_footer, expected_footer);
 }
 
 }  // namespace

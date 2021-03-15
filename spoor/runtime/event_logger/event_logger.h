@@ -23,23 +23,23 @@ class EventLogger {
   using SizeType = Buffer::SizeType;
 
   struct Options {
-    gsl::not_null<util::time::SteadyClock*> steady_clock;
-    gsl::not_null<EventLoggerNotifier*> event_logger_notifier;
     gsl::not_null<flush_queue::FlushQueue<Buffer>*> flush_queue;
     SizeType preferred_capacity;
     bool flush_buffer_when_full;
   };
 
   EventLogger() = delete;
-  explicit EventLogger(Options options);
+  EventLogger(Options options, EventLoggerNotifier* event_logger_notifier);
   EventLogger(const EventLogger&) = delete;
   EventLogger(EventLogger&&) noexcept = delete;
   auto operator=(const EventLogger&) = delete;
   auto operator=(EventLogger&&) noexcept = delete;
   ~EventLogger();
 
+  auto SetEventLoggerNotifier(EventLoggerNotifier* event_logger_notifier)
+      -> void;
   auto SetPool(Pool* pool) -> void;
-  auto LogEvent(trace::Event::Type type, trace::FunctionId function_id) -> void;
+  auto LogEvent(trace::Event event) -> void;
 
   auto Flush() -> void;
   auto Clear() -> void;
@@ -51,6 +51,7 @@ class EventLogger {
 
  private:
   Options options_;
+  EventLoggerNotifier* event_logger_notifier_;
   Pool* pool_;
   std::optional<Buffer> buffer_;
 };
