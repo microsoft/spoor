@@ -15,6 +15,15 @@ auto _spoor_runtime_DisableRuntime() -> void {}
 
 auto _spoor_runtime_RuntimeEnabled() -> bool { return false; }
 
+auto _spoor_runtime_LogEventWithTimestamp(
+    _spoor_runtime_EventType /*unused*/,
+    _spoor_runtime_TimestampNanoseconds /*unused*/, uint64_t /*unused*/,
+    uint32_t /*unused*/) -> void {}
+
+auto _spoor_runtime_LogEvent(_spoor_runtime_EventType /*unused*/,
+                             uint64_t /*unused*/, uint32_t /*unused*/) -> void {
+}
+
 auto _spoor_runtime_LogFunctionEntry(const _spoor_runtime_FunctionId /*unused*/)
     -> void {}
 

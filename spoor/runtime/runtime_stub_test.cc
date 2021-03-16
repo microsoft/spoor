@@ -28,6 +28,13 @@ TEST(Runtime, Enable) {  // NOLINT
   ASSERT_FALSE(_spoor_runtime_RuntimeEnabled());
 }
 
+TEST(Runtime, LogEvent) {  // NOLINT
+  _spoor_runtime_LogEventWithTimestamp(1, 2, 3, 4);
+  _spoor_runtime_LogEvent(1, 2, 3);
+  _spoor_runtime_LogFunctionEntry(1);
+  _spoor_runtime_LogFunctionExit(1);
+}
+
 namespace flush_trace_events_test {
 
 // clang-format off NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects) clang-format on

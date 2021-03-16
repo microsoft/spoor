@@ -12,8 +12,8 @@
 namespace spoor::runtime::trace {
 
 auto TraceFileWriter::Write(const std::filesystem::path& file_path,
-                            const Header header, Events* events,
-                            const Footer footer) const -> Result {
+                            const Header header, Events* events) const
+    -> Result {
   std::ofstream file{file_path, std::ios::trunc | std::ios::binary};
   if (!file.is_open()) return Error::kFailedToOpenFile;
   const auto serialized_header = Serialize(header);
@@ -24,8 +24,6 @@ auto TraceFileWriter::Write(const std::filesystem::path& file_path,
       file.write(serialized_event.data(), serialized_event.size());
     }
   }
-  const auto serialized_footer = Serialize(footer);
-  file.write(serialized_footer.data(), serialized_footer.size());
   return Result::Ok({});
 }
 

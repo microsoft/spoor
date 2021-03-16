@@ -11,11 +11,13 @@ extern "C" {
 #include <stdint.h>
 #endif
 
-typedef uint64_t _spoor_runtime_SizeType;
+typedef int64_t _spoor_runtime_DurationNanoseconds;
+typedef uint32_t _spoor_runtime_EventType;
 typedef uint64_t _spoor_runtime_FunctionId;
 typedef uint64_t _spoor_runtime_SessionId;
-typedef int64_t _spoor_runtime_DurationNanoseconds;
+typedef uint64_t _spoor_runtime_SizeType;
 typedef int64_t _spoor_runtime_SystemTimestampSeconds;
+typedef int64_t _spoor_runtime_TimestampNanoseconds;
 
 typedef struct _spoor_runtime_TraceFiles {
   _spoor_runtime_SizeType file_paths_size;
@@ -73,6 +75,19 @@ void _spoor_runtime_DisableRuntime();
 
 // Check if runtime logging is enabled.
 bool _spoor_runtime_RuntimeEnabled();
+
+// Log that the program generated an event. The function internally checks if
+// the runtime is enabled before logging the event.
+void _spoor_runtime_LogEventWithTimestamp(
+    _spoor_runtime_EventType event,
+    _spoor_runtime_TimestampNanoseconds steady_clock_timestamp,
+    uint64_t payload_1, uint32_t payload_2);
+
+// Log that the program generated an event. The function internally checks if
+// the runtime is enabled before collecting the current timestamp and logging
+// the event.
+void _spoor_runtime_LogEvent(_spoor_runtime_EventType event, uint64_t payload_1,
+                             uint32_t payload_2);
 
 // Log that the program entered a function. The function internally checks if
 // the runtime is enabled before collecting the current timestamp and logging
