@@ -8,6 +8,7 @@
 #include <fstream>
 #include <regex>
 
+#include "absl/base/internal/endian.h"
 #include "spoor/runtime/trace/trace.h"
 
 namespace spoor::runtime::trace {
@@ -33,9 +34,24 @@ auto TraceFileReader::ReadHeader(const std::filesystem::path& file) const
   if (!file_stream.is_open()) return Error::kFailedToOpenFile;
   std::array<char, sizeof(Header)> header_buffer{};
   file_stream.read(header_buffer.data(), header_buffer.size());
-  const auto header = Deserialize(header_buffer);
-  if (header.version != kTraceFileVersion) return Error::kUnknownVersion;
-  return header;
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+  auto* header = reinterpret_cast<Header*>(header_buffer.data());
+  if (header->magic_number != kMagicNumber) {
+    return Error::kMagicNumberDoesNotMatch;
+  }
+  if (kEndianness != header->endianness) {
+    header->version = absl::gbswap_32(header->version);
+    header->session_id = absl::gbswap_64(header->session_id);
+    header->process_id = absl::gbswap_64(header->process_id);
+    header->thread_id = absl::gbswap_64(header->thread_id);
+    header->system_clock_timestamp =
+        absl::gbswap_64(header->system_clock_timestamp);
+    header->steady_clock_timestamp =
+        absl::gbswap_64(header->steady_clock_timestamp);
+    header->event_count = absl::gbswap_32(header->event_count);
+  }
+  if (header->version != kTraceFileVersion) return Error::kUnknownVersion;
+  return *header;
 }
 
 }  // namespace spoor::runtime::trace

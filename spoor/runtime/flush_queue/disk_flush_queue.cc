@@ -169,13 +169,15 @@ auto DiskFlushQueue::TraceFileHeader(const FlushInfo& flush_info) const
           .count();
   const auto event_count =
       gsl::narrow_cast<trace::EventCount>(flush_info.buffer.Size());
-  return trace::Header{.version = trace::kTraceFileVersion,
-                       .session_id = options_.session_id,
-                       .process_id = options_.process_id,
-                       .thread_id = flush_info.thread_id,
-                       .system_clock_timestamp = system_clock_timestamp,
-                       .steady_clock_timestamp = steady_clock_timestamp,
-                       .event_count = event_count};
+  return trace::Header{
+      .compression_strategy = trace::CompressionStrategy::kNone,
+      .version = trace::kTraceFileVersion,
+      .session_id = options_.session_id,
+      .process_id = options_.process_id,
+      .thread_id = flush_info.thread_id,
+      .system_clock_timestamp = system_clock_timestamp,
+      .steady_clock_timestamp = steady_clock_timestamp,
+      .event_count = event_count};
 }
 
 }  // namespace spoor::runtime::flush_queue
