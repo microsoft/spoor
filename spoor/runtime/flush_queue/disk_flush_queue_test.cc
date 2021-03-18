@@ -26,9 +26,13 @@ namespace {
 
 using spoor::runtime::flush_queue::DiskFlushQueue;
 using spoor::runtime::flush_queue::kTraceFileExtension;
+using spoor::runtime::trace::CompressionStrategy;
 using spoor::runtime::trace::Event;
 using spoor::runtime::trace::EventType;
 using spoor::runtime::trace::Header;
+using spoor::runtime::trace::kEndianness;
+using spoor::runtime::trace::kMagicNumber;
+using spoor::runtime::trace::kTraceFileVersion;
 using spoor::runtime::trace::TimestampNanoseconds;
 using spoor::runtime::trace::TraceWriter;
 using spoor::runtime::trace::testing::TraceWriterMock;
@@ -161,7 +165,10 @@ TEST(DiskFlushQueue, WritesEvents) {  // NOLINT
   const auto matches_header = [&](const Header& header) {
     // Ignore the `thread_id` because it reflects the hash of the true value
     // which cannot be determined.
-    return header.version == spoor::runtime::trace::kTraceFileVersion &&
+    return header.magic_number == kMagicNumber &&
+           header.endianness == kEndianness &&
+           header.compression_strategy == CompressionStrategy::kNone &&
+           header.version == kTraceFileVersion &&
            header.session_id == kSessionId && header.process_id == kProcessId &&
            header.system_clock_timestamp == system_clock_timestamp &&
            header.steady_clock_timestamp == steady_clock_timestamp &&

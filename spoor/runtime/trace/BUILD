@@ -21,6 +21,7 @@ cc_library(
     deps = [
         "//spoor/runtime/buffer",
         "//util:numeric",
+        "//util/compression",
         "//util/file_system",
         "@com_google_absl//absl/base:endian",
         "@com_google_absl//absl/strings",

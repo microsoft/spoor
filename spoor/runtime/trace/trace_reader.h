@@ -15,6 +15,7 @@ class TraceReader {
  public:
   enum class Error {
     kFailedToOpenFile,
+    kMagicNumberDoesNotMatch,
     kUnknownVersion,
   };
 

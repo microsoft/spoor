@@ -30,10 +30,10 @@ namespace {
 
 using spoor::runtime::event_logger::EventLogger;
 using spoor::runtime::runtime_manager::RuntimeManager;
+using spoor::runtime::trace::CompressionStrategy;
 using spoor::runtime::trace::Event;
 using spoor::runtime::trace::EventType;
 using spoor::runtime::trace::Header;
-using spoor::runtime::trace::kTraceFileVersion;
 using spoor::runtime::trace::TimestampNanoseconds;
 using spoor::runtime::trace::testing::TraceReaderMock;
 using testing::_;
@@ -286,7 +286,7 @@ TEST(RuntimeManager, DeleteFlushedTraceFilesOlderThan) {  // NOLINT
   };
   const auto make_timestamp = [](const int64 n) { return n * 1'000'000; };
   const auto make_header = [](TimestampNanoseconds system_clock_timestamp) {
-    return Header{.version = kTraceFileVersion,
+    return Header{.compression_strategy = CompressionStrategy::kNone,
                   .session_id = 0,
                   .process_id = 0,
                   .thread_id = 0,

@@ -16,13 +16,11 @@ auto TraceFileWriter::Write(const std::filesystem::path& file_path,
     -> Result {
   std::ofstream file{file_path, std::ios::trunc | std::ios::binary};
   if (!file.is_open()) return Error::kFailedToOpenFile;
-  const auto serialized_header = Serialize(header);
-  file.write(serialized_header.data(), serialized_header.size());
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+  file.write(reinterpret_cast<const char*>(&header), sizeof(header));
   for (auto& chunk : events->ContiguousMemoryChunks()) {
-    for (const auto event : chunk) {
-      const auto serialized_event = Serialize(event);
-      file.write(serialized_event.data(), serialized_event.size());
-    }
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+    file.write(reinterpret_cast<const char*>(chunk.data()), chunk.size_bytes());
   }
   return Result::Ok({});
 }
