@@ -34,8 +34,7 @@ auto GetEnvOrDefault(const char* key, const bool default_value,
   const auto* user_value = get_env(key);
   if (user_value == nullptr) return default_value;
   std::string value{user_value};
-  std::transform(value.begin(), value.end(), value.begin(),
-                 [](unsigned char c) { return std::tolower(c); });
+  absl::AsciiStrToLower(&value);
   bool result{};
   const auto success = absl::SimpleAtob(value, &result);
   return success ? result : default_value;

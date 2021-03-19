@@ -12,7 +12,9 @@
 
 namespace {
 
+using spoor::runtime::config::CompressionStrategy;
 using spoor::runtime::config::Config;
+using spoor::runtime::config::kCompressionStrategyKey;
 using spoor::runtime::config::kDynamicEventPoolCapacityKey;
 using spoor::runtime::config::kDynamicEventSliceBorrowCasAttemptsKey;
 using spoor::runtime::config::kEventBufferRetentionDurationNanosecondsKey;
@@ -31,6 +33,7 @@ TEST(Config, GetsUserProvidedValue) {  // NOLINT
   const auto get_env = [](const char* key) {
     const std::unordered_map<std::string_view, std::string_view> environment{
         {kTraceFilePathKey, "/path/to/file.extension"},
+        {kCompressionStrategyKey, "   SnApPy   "},
         {kSessionIdKey, "42"},
         {kThreadEventBufferCapacityKey, "42"},
         {kMaxReservedEventBufferSliceCapacityKey, "42"},
@@ -45,6 +48,7 @@ TEST(Config, GetsUserProvidedValue) {  // NOLINT
   };
   const Config expected_options{
       .trace_file_path = "/path/to/file.extension",
+      .compression_strategy = CompressionStrategy::kSnappy,
       .session_id = 42,
       .thread_event_buffer_capacity = 42,
       .max_reserved_event_buffer_slice_capacity = 42,
@@ -64,6 +68,7 @@ TEST(Config, UsesDefaultValueWhenNotSpecified) {  // NOLINT
   };
   Config expected_options{
       .trace_file_path{"."},
+      .compression_strategy = CompressionStrategy::kSnappy,
       .session_id = 0,  // Ignored
       .thread_event_buffer_capacity = 10'000,
       .max_reserved_event_buffer_slice_capacity = 1'000,

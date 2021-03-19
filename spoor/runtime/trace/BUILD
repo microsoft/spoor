@@ -37,7 +37,23 @@ cc_test(
     visibility = ["//visibility:private"],
     deps = [
         ":trace",
+        "//spoor/runtime/buffer",
         "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "trace_file_writer_test",
+    size = "small",
+    srcs = ["trace_file_writer_test.cc"],
+    copts = ["-Werror"],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":trace",
+        "//util/compression",
+        "//util/file_system:file_system_mock",
+        "@com_google_googletest//:gtest_main",
+        "@com_microsoft_gsl//:gsl",
     ],
 )
 

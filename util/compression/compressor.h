@@ -14,6 +14,9 @@ enum class Strategy : uint8 {
   kSnappy = 1,
 };
 
+constexpr std::array<Strategy, 2> kStrategies{
+    {Strategy::kNone, Strategy::kSnappy}};
+
 class Compressor {
  public:
   enum class CompressError {};

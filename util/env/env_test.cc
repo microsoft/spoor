@@ -4,7 +4,10 @@
 #include "util/env/env.h"
 
 #include <string>
+#include <unordered_map>
 
+#include "absl/strings/ascii.h"
+#include "absl/strings/str_cat.h"
 #include "gtest/gtest.h"
 #include "util/numeric.h"
 
@@ -96,6 +99,40 @@ TEST(GetEnvOrDefault, Bool) {  // NOLINT
       ASSERT_EQ(retrieved_value, default_value);
     }
   }
+}
+
+TEST(GetEnvOrDefault, ValueMap) {  // NOLINT
+  constexpr uint32 default_value{3};
+  const std::unordered_map<std::string_view, uint32> value_map{
+      {"zero", 0},
+      {"one", 1},
+      {"two", 2},
+  };
+  for (const auto& [key_view, value] : value_map) {
+    const std::string key{key_view};
+    const auto messy_key =
+        absl::StrCat("   ", absl::AsciiStrToUpper(key), "    ");
+    const auto retrieved_env_value =
+        GetEnvOrDefault("KEY", default_value, value_map, false,
+                        [key](const char* /*unused*/) { return key.data(); });
+    ASSERT_EQ(retrieved_env_value, value);
+    const auto retrieved_env_value_not_normalized = GetEnvOrDefault(
+        "KEY", default_value, value_map, false,
+        [messy_key](const char* /*unused*/) { return messy_key.data(); });
+    ASSERT_EQ(retrieved_env_value_not_normalized, default_value);
+    const auto retrieved_env_value_normalized = GetEnvOrDefault(
+        "KEY", default_value, value_map, true,
+        [messy_key](const char* /*unused*/) { return messy_key.data(); });
+    ASSERT_EQ(retrieved_env_value_normalized, value);
+  }
+  const auto retrieved_env_value_nullptr =
+      GetEnvOrDefault("KEY", default_value, value_map, true,
+                      [](const char* /*unused*/) { return nullptr; });
+  ASSERT_EQ(retrieved_env_value_nullptr, default_value);
+  const auto retrieved_env_value_invalid =
+      GetEnvOrDefault("KEY", default_value, value_map, true,
+                      [](const char* /*unused*/) { return "invalid"; });
+  ASSERT_EQ(retrieved_env_value_invalid, default_value);
 }
 
 }  // namespace

@@ -170,7 +170,7 @@ auto DiskFlushQueue::TraceFileHeader(const FlushInfo& flush_info) const
   const auto event_count =
       gsl::narrow_cast<trace::EventCount>(flush_info.buffer.Size());
   return trace::Header{
-      .compression_strategy = trace::CompressionStrategy::kNone,
+      .compression_strategy = {},  // Set by the trace file writer.
       .version = trace::kTraceFileVersion,
       .session_id = options_.session_id,
       .process_id = options_.process_id,

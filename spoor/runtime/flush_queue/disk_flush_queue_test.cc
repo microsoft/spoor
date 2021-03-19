@@ -19,6 +19,7 @@
 #include "spoor/runtime/buffer/reserved_buffer_slice_pool.h"
 #include "spoor/runtime/trace/trace.h"
 #include "spoor/runtime/trace/trace_writer_mock.h"
+#include "util/compression/compressor.h"
 #include "util/numeric.h"
 #include "util/time/clock_mock.h"
 

@@ -19,6 +19,7 @@ cc_library(
         "//spoor/runtime/runtime_manager",
         "//spoor/runtime/trace",
         "//util:numeric",
+        "//util/compression",
         "@com_google_absl//absl/strings",
         "@com_microsoft_gsl//:gsl",
     ],
