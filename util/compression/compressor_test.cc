@@ -46,23 +46,39 @@ TEST(Compressor, CompressorFactory) {  // NOLINT
 }
 
 TEST(Compressor, CompressesAndUncompressesData) {  // NOLINT
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
   for (auto& compressor : MakeCompressors(0)) {
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
+std::cerr << "compressor: '" << compressor << "'\n";
     for (const auto original_data : kTestData) {
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
+std::cerr << "original data: '" << original_data << "'\n";
       const gsl::span<const char> original_span{original_data.data(),
                                                 original_data.size()};
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
       auto const compress_result =
           compressor->Compress({original_data.data(), original_data.size()});
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
       ASSERT_TRUE(compress_result.IsOk());
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
       const std::string compressed_data{compress_result.Ok().data(),
                                         compress_result.Ok().size()};
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
       const auto uncompress_result = compressor->Uncompress(
           {compressed_data.data(), compressed_data.size()});
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
       ASSERT_TRUE(uncompress_result.IsOk());
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
       const auto uncompressed_data = uncompress_result.Ok();
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
       ASSERT_TRUE(compress_result.IsOk());
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
       ASSERT_EQ(original_span, uncompressed_data);
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
     }
+  std::cerr << __FILE__ << ':' << __LINE__ << '\n';
   }
+  std::cerr << __FILE__ << ':' << __LINE__ << '\n';
 }
 
 TEST(NoneCompressor, CompressedIsUncompressed) {  // NOLINT
