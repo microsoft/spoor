@@ -49,20 +49,27 @@ MATCHER_P2(MatchesEvents, expected_events, compressor, "") {  // NOLINT
 }
 
 TEST(TraceFileWriter, Write) {  // NOLINT
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
   const std::filesystem::path path{"/path/to/file.spoor"};
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
   constexpr std::array<Event, 4> raw_events{{
       {.steady_clock_timestamp = 0, .payload_1 = 1, .type = 1, .payload_2 = 2},
       {.steady_clock_timestamp = 1, .payload_1 = 3, .type = 2, .payload_2 = 4},
       {.steady_clock_timestamp = 2, .payload_1 = 5, .type = 2, .payload_2 = 6},
       {.steady_clock_timestamp = 3, .payload_1 = 9, .type = 1, .payload_2 = 8},
   }};
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
   Pool pool{
       {.max_slice_capacity = raw_events.size(), .capacity = raw_events.size()}};
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
   CircularSliceBuffer events{
       {.buffer_slice_pool = &pool, .capacity = raw_events.size()}};
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
   std::for_each(std::cbegin(raw_events), std ::cend(raw_events),
                 [&events](const auto event) { events.Push(event); });
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
   for (const auto compression_strategy : util::compression::kStrategies) {
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
     const Header header{.magic_number = kMagicNumber,
                         .endianness = kEndianness,
                         .compression_strategy = compression_strategy,
@@ -73,22 +80,34 @@ TEST(TraceFileWriter, Write) {  // NOLINT
                         .system_clock_timestamp = 4,
                         .steady_clock_timestamp = 5,
                         .event_count = raw_events.size()};
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
     auto compressor =
         MakeCompressor(compression_strategy, raw_events.size() * sizeof(Event));
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
     FileWriterMock file_writer{};
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
     EXPECT_CALL(file_writer, Open(path, std::ios::trunc | std::ios::binary));
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
     EXPECT_CALL(file_writer, IsOpen()).WillOnce(Return(true));
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
     EXPECT_CALL(file_writer, Write(MatchesHeader(header)));
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
     EXPECT_CALL(file_writer,
                 Write(MatchesEvents(raw_events, compressor.get())));
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
     EXPECT_CALL(file_writer, Close());
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
     TraceFileWriter trace_file_writer{
         {.file_writer = &file_writer,
          .compression_strategy = compression_strategy,
          .initial_buffer_capacity = raw_events.size()}};
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
     const auto result = trace_file_writer.Write(path, header, &events);
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
     ASSERT_TRUE(result.IsOk());
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
   }
+std::cerr << __FILE__ << ':' << __LINE__ << '\n';
 }
 
 TEST(TraceFileWriter, SetsHeaderCompressionStrategy) {  // NOLINT
