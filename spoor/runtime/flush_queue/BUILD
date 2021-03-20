@@ -66,6 +66,7 @@ cc_test(
         ":black_hole_flush_queue",
         "//spoor/runtime/buffer",
         "//spoor/runtime/trace",
+        "//util/compression",
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
         "@com_google_googletest//:gtest_main",

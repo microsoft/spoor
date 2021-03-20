@@ -12,6 +12,9 @@ using util::env::GetEnvOrDefault;
 auto Config::FromEnv(const util::env::GetEnv& get_env) -> Config {
   return {.trace_file_path = GetEnvOrDefault(
               kTraceFilePathKey.data(), kTraceFilePathDefaultValue, get_env),
+          .compression_strategy = GetEnvOrDefault(
+              kCompressionStrategyKey.data(), kCompressionStrategyDefaultValue,
+              kCompressionStrategyMap, true, get_env),
           .session_id = GetEnvOrDefault(kSessionIdKey.data(),
                                         kSessionIdDefaultValue(), get_env),
           .thread_event_buffer_capacity =
@@ -44,6 +47,7 @@ auto Config::FromEnv(const util::env::GetEnv& get_env) -> Config {
 
 auto operator==(const Config& lhs, const Config& rhs) -> bool {
   return lhs.trace_file_path == rhs.trace_file_path &&
+         lhs.compression_strategy == rhs.compression_strategy &&
          lhs.session_id == rhs.session_id &&
          lhs.thread_event_buffer_capacity == rhs.thread_event_buffer_capacity &&
          lhs.max_reserved_event_buffer_slice_capacity ==

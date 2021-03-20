@@ -5,6 +5,7 @@
 
 #include <filesystem>
 
+#include "gsl/gsl"
 #include "spoor/runtime/buffer/circular_slice_buffer.h"
 #include "spoor/runtime/trace/trace.h"
 #include "util/result.h"
@@ -28,7 +29,7 @@ class TraceWriter {
   virtual ~TraceWriter() = default;
 
   virtual auto Write(const std::filesystem::path& file, Header header,
-                     Events* events) const -> Result = 0;
+                     gsl::not_null<Events*> events) -> Result = 0;
 };
 
 }  // namespace spoor::runtime::trace

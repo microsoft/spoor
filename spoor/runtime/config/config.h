@@ -7,17 +7,29 @@
 #include <filesystem>
 #include <limits>
 #include <random>
+#include <string>
 #include <string_view>
+#include <unordered_map>
 
 #include "spoor/runtime/buffer/circular_buffer.h"
 #include "spoor/runtime/trace/trace.h"
+#include "util/compression/compressor.h"
 #include "util/env/env.h"
 
 namespace spoor::runtime::config {
 
+using CompressionStrategy = util::compression::Strategy;
+
 constexpr std::string_view kTraceFilePathKey{"SPOOR_RUNTIME_TRACE_FILE_PATH"};
 // NOLINTNEXTLINE(fuchsia-statically-constructed-objects)
 const std::string kTraceFilePathDefaultValue{"."};
+constexpr std::string_view kCompressionStrategyKey{
+    "SPOOR_RUNTIME_COMPRESSION_STRATEGY"};
+// NOLINTNEXTLINE(fuchsia-statically-constructed-objects)
+const std::unordered_map<std::string_view, CompressionStrategy>
+    kCompressionStrategyMap{{"none", CompressionStrategy::kNone},
+                            {"snappy", CompressionStrategy::kSnappy}};
+constexpr auto kCompressionStrategyDefaultValue{CompressionStrategy::kSnappy};
 constexpr std::string_view kSessionIdKey{"SPOOR_RUNTIME_SESSION_ID"};
 // NOLINTNEXTLINE(fuchsia-statically-constructed-objects)
 constexpr auto kSessionIdDefaultValue = [] {
@@ -69,6 +81,7 @@ struct Config {
   }) -> Config;
 
   std::filesystem::path trace_file_path;
+  CompressionStrategy compression_strategy;
   trace::SessionId session_id;
   SizeType thread_event_buffer_capacity;
   SizeType max_reserved_event_buffer_slice_capacity;

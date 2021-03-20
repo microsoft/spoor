@@ -13,6 +13,7 @@ cc_library(
         "//spoor/runtime/buffer",
         "//spoor/runtime/trace",
         "//util:numeric",
+        "//util/compression",
         "//util/env",
         "@com_microsoft_gsl//:gsl",
     ],

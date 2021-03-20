@@ -17,14 +17,11 @@
 namespace {
 
 using util::compression::Compressor;
+using util::compression::kStrategies;
 using util::compression::MakeCompressor;
 using util::compression::NoneCompressor;
 using util::compression::SnappyCompressor;
-using util::compression::Strategy;
 using SizeType = util::compression::Compressor::SizeType;
-
-constexpr std::array<Strategy, 2> kCompressionStrategies{
-    {Strategy::kNone, Strategy::kSnappy}};
 
 constexpr std::array<std::string_view, 5> kTestData{
     {"", "abc", "xxxxxxxxxxxxxxxxx", "Hello, world!"}};
@@ -32,9 +29,9 @@ constexpr std::array<std::string_view, 5> kTestData{
 auto MakeCompressors(const SizeType initial_capacity)
     -> std::vector<std::unique_ptr<Compressor>> {
   std::vector<std::unique_ptr<Compressor>> result{};
-  result.reserve(kCompressionStrategies.size());
-  std::transform(std::cbegin(kCompressionStrategies),
-                 std::cend(kCompressionStrategies), std::back_inserter(result),
+  result.reserve(kStrategies.size());
+  std::transform(std::cbegin(kStrategies), std::cend(kStrategies),
+                 std::back_inserter(result),
                  [initial_capacity](const auto strategy) {
                    return MakeCompressor(strategy, initial_capacity);
                  });
@@ -42,7 +39,7 @@ auto MakeCompressors(const SizeType initial_capacity)
 }
 
 TEST(Compressor, CompressorFactory) {  // NOLINT
-  for (const auto strategy : kCompressionStrategies) {
+  for (const auto strategy : kStrategies) {
     const auto compressor = MakeCompressor(strategy, 0);
     ASSERT_EQ(compressor->Strategy(), strategy);
   }

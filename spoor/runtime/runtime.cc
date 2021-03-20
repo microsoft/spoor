@@ -21,7 +21,9 @@
 #include "spoor/runtime/trace/trace.h"
 #include "spoor/runtime/trace/trace_file_reader.h"
 #include "spoor/runtime/trace/trace_file_writer.h"
+#include "util/compression/compressor_factory.h"
 #include "util/file_system/local_file_system.h"
+#include "util/file_system/local_file_writer.h"
 #include "util/numeric.h"
 #include "util/time/clock.h"
 
@@ -47,10 +49,15 @@ util::time::SteadyClock steady_clock_{};
 // clang-format off NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects) clang-format on
 util::file_system::LocalFileSystem file_system_{};
 // clang-format off NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects) clang-format on
+util::file_system::LocalFileWriter file_writer_{};
+// clang-format off NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects) clang-format on
 spoor::runtime::trace::TraceFileReader trace_reader_{
     {.file_system = &file_system_}};
 // clang-format off NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects) clang-format on
-spoor::runtime::trace::TraceFileWriter trace_writer_{};
+spoor::runtime::trace::TraceFileWriter trace_writer_{
+    {.file_writer = &file_writer_,
+     .compression_strategy = kConfig.compression_strategy,
+     .initial_buffer_capacity = kConfig.thread_event_buffer_capacity}};
 // clang-format off NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects) clang-format on
 spoor::runtime::flush_queue::DiskFlushQueue flush_queue_{
     {.trace_file_path = kConfig.trace_file_path,
