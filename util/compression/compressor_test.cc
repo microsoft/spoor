@@ -23,7 +23,7 @@ using util::compression::NoneCompressor;
 using util::compression::SnappyCompressor;
 using SizeType = util::compression::Compressor::SizeType;
 
-constexpr std::array<std::string_view, 5> kTestData{
+constexpr std::array<std::string_view, 4> kTestData{
     {"", "abc", "xxxxxxxxxxxxxxxxx", "Hello, world!"}};
 
 auto MakeCompressors(const SizeType initial_capacity)

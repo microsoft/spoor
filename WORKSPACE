@@ -6,17 +6,6 @@ workspace(name = "spoor")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
-    name = "rules_foreign_cc",
-    sha256 = "2215d55b9a818af7281cba054a897c0f28f34b7fba3365964fa28b10f64963c3",
-    strip_prefix = "rules_foreign_cc-eae19778d5fe8605f0f37332a712f05d4a17dc3b",
-    urls = ["https://github.com/bazelbuild/rules_foreign_cc/archive/eae19778d5fe8605f0f37332a712f05d4a17dc3b.tar.gz"],
-)
-
-load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_dependencies")
-
-rules_foreign_cc_dependencies()
-
-http_archive(
     name = "com_microsoft_gsl",
     build_file = "//toolchain:gsl.BUILD",
     sha256 = "ca3f015ea80a8d9163714dbf6b377a424e196bd5c8b254fdb5e5770ea3f84a55",
@@ -75,17 +64,9 @@ load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 
 protobuf_deps()
 
-_ALL_CONTENT = """\
-filegroup(
-    name = "all_srcs",
-    srcs = glob(["**"]),
-    visibility = ["//visibility:public"],
-)
-"""
-
 http_archive(
     name = "com_google_snappy",
-    build_file_content = _ALL_CONTENT,
+    build_file = "//toolchain:snappy.BUILD",
     sha256 = "16b677f07832a612b0836178db7f374e414f94657c138e6993cbfc5dcc58651f",
     strip_prefix = "snappy-1.1.8",
     urls = ["https://github.com/google/snappy/archive/1.1.8.tar.gz"],

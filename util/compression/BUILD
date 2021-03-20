@@ -2,14 +2,6 @@
 # Licensed under the MIT License.
 
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
-load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake")
-
-cmake(
-    name = "snappy",
-    lib_source = "@com_google_snappy//:all_srcs",
-    out_static_libs = ["libsnappy.a"],
-    visibility = ["//visibility:private"],
-)
 
 cc_library(
     name = "compression",
@@ -27,9 +19,9 @@ cc_library(
     copts = ["-Werror"],
     visibility = ["//visibility:public"],
     deps = [
-        ":snappy",
         "//util:numeric",
         "//util:result",
+        "@com_google_snappy//:snappy",
         "@com_microsoft_gsl//:gsl",
     ],
 )
