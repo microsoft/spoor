@@ -28,7 +28,8 @@ const std::unordered_map<std::string, std::string> kFileExtensionComment{
     {"bzl", "#"},          {"c", "//"},         {"cc", "//"},
     {"clang-format", "#"}, {"clang-tidy", "#"}, {"eslintignore", "#"},
     {"gitignore", "#"},    {"h", "//"},         {"ll", ";"},
-    {"proto", "//"},       {"sh", "#"},         {"yml", "#"}};
+    {"m", "//"},           {"proto", "//"},     {"sh", "#"},
+    {"yml", "#"}};
 // NOLINTNEXTLINE(fuchsia-statically-constructed-objects)
 const std::unordered_set<std::string> kPathBlocklist{
     ".git",           "bazel-bin", "bazel-out",   "bazel-spoor",
