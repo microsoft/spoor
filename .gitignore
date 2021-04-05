@@ -76,3 +76,8 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Objective-C
+xcuserdata/
+*.hmap
+*.ipa

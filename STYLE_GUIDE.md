@@ -120,6 +120,10 @@ ABSL_FLAG(  // NOLINT
     std::string, my_flag, {}, "Description...");
 ```
 
+## Objective-C
+
+Follow Google's [Objective-C Style Guide](https://google.github.io/styleguide/objcguide.html).
+
 ## Starlark (Bazel)
 
 Follow [Starlark's Style Guide][starlark-style-guide].
@@ -172,6 +176,7 @@ Follow
 [clang-format]: https://clang.llvm.org/docs/ClangFormat.html
 [clang-tidy]: https://clang.llvm.org/extra/clang-tidy/
 [google-cpp-style-guide]: https://google.github.io/styleguide/cppguide.html
+[google-objc-style-guide]: https://google.github.io/styleguide/objcguide.html
 [google-markdown-style-guide]: https://google.github.io/styleguide/docguide/style.html#document-layout
 [google-shell-style-guide]: https://google.github.io/styleguide/shellguide.html
 [microsoft-writing-style-guide]: https://docs.microsoft.com/en-us/style-guide/welcome/
