@@ -122,7 +122,7 @@ ABSL_FLAG(  // NOLINT
 
 ## Objective-C
 
-Follow Google's [Objective-C Style Guide](https://google.github.io/styleguide/objcguide.html).
+Follow Google's [Objective-C Style Guide][google-objc-style-guide].
 
 ## Starlark (Bazel)
 
@@ -176,8 +176,8 @@ Follow
 [clang-format]: https://clang.llvm.org/docs/ClangFormat.html
 [clang-tidy]: https://clang.llvm.org/extra/clang-tidy/
 [google-cpp-style-guide]: https://google.github.io/styleguide/cppguide.html
-[google-objc-style-guide]: https://google.github.io/styleguide/objcguide.html
 [google-markdown-style-guide]: https://google.github.io/styleguide/docguide/style.html#document-layout
+[google-objc-style-guide]: https://google.github.io/styleguide/objcguide.html
 [google-shell-style-guide]: https://google.github.io/styleguide/shellguide.html
 [microsoft-writing-style-guide]: https://docs.microsoft.com/en-us/style-guide/welcome/
 [rust-result]: https://doc.rust-lang.org/std/result/
