@@ -7,7 +7,8 @@ load("//toolchain:cc_static_library.bzl", "cc_static_library")
 objc_library(
     name = "runtime",
     deps = ["//spoor/runtime:runtime"],
-    toolchains = ["//toolchain/crosstool:llvm_toolchain"]
+    toolchains = ["//toolchain/crosstool:llvm_toolchain"],
+    copts = ["-std=c++2a"],
 )
 
 apple_static_library(
