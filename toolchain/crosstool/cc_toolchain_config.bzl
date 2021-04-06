@@ -43,9 +43,9 @@ UNIVERSAL_CXX_COMPILER_FLAGS = [
 
 APPLE_LLVM_HOMEBREW_INCLUDE_DIRECTORIES = [
     "/usr/local/opt/llvm/include/c++/v1",
-    "/usr/local/Cellar/llvm/11.1.0/include/",
-    "/usr/local/Cellar/llvm/11.1.0/lib/clang/11.1.0/include",
-    "/usr/local/Cellar/llvm/11.1.0/lib/clang/11.1.0/share",
+    "/usr/local/Cellar/llvm/11.1.0_1/include/",
+    "/usr/local/Cellar/llvm/11.1.0_1/lib/clang/11.1.0/include",
+    "/usr/local/Cellar/llvm/11.1.0_1/lib/clang/11.1.0/share",
 ]
 
 MACOS_X86_64_INCLUDE_DIRECTORIES = [
