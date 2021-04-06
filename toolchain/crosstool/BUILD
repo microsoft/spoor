@@ -13,6 +13,7 @@ cc_toolchain_suite(
     name = "llvm_toolchain",
     toolchains = {
         "darwin": ":macos_x86_64_llvm_toolchain",
+        "darwin_x86_64": ":macos_x86_64_llvm_toolchain",
         "ios_arm64": ":ios_arm64_llvm_toolchain",
         "ios_x86_64": ":ios_x86_64_llvm_toolchain",
         "k8": ":linux_llvm_toolchain",
