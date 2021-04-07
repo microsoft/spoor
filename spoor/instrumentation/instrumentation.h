@@ -7,7 +7,7 @@
 
 namespace spoor::instrumentation {
 
-constexpr std::string_view kPluginName{"inject-spoor-runtime"};
+constexpr std::string_view kPluginName{"inject-spoor-instrumentation"};
 constexpr std::string_view kPluginVersion{"0.0.0"};
 
 }  // namespace spoor::instrumentation
