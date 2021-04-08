@@ -16,3 +16,10 @@ cc_proto_library(
     visibility = ["//visibility:public"],
     deps = [":spoor_proto"],
 )
+
+cc_proto_library(
+    name = "perfetto_trace_track_event_cc_proto",
+    visibility = ["//visibility:public"],
+    deps = ["@perfetto//:protos_perfetto_trace_track_event_protos"],
+)
+

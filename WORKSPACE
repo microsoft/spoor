@@ -81,6 +81,21 @@ http_archive(
 )
 
 http_archive(
+    # Perfetto's build config requires deviating from the naming convention.
+    name = "perfetto",
+    sha256 = "3df104b2e9a4d6deb077260442f8c12b6787db21b150635d6838be7abcfd7495",
+    strip_prefix = "perfetto-14.0",
+    urls = ["https://github.com/google/perfetto/archive/v14.0.tar.gz"],
+)
+
+new_local_repository(
+    # Perfetto's build config requires deviating from the naming convention.
+    name = "perfetto_cfg",
+    path = "toolchain/perfetto_overrides",
+    build_file_content = "",
+)
+
+http_archive(
     name = "com_google_googletest",
     sha256 = "9dc9157a9a1551ec7a7e43daea9a694a0bb5fb8bec81235d8a1e6ef64c716dcb",
     strip_prefix = "googletest-release-1.10.0",

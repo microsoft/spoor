@@ -10,6 +10,7 @@ cc_library(
     copts = ["-Werror"],
     visibility = ["//spoor/instrumentation:__pkg__"],
     deps = [
+        "//spoor/proto:perfetto_trace_track_event_cc_proto",
         "//spoor/proto:spoor_cc_proto",
         "//util:numeric",
         "//util/time:clock",

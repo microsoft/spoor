@@ -29,7 +29,7 @@
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
-#include "spoor/proto/spoor.pb.h"
+#include "protos/perfetto/trace/track_event/source_location.pb.h"  // TODO
 #include "swift/Demangling/Demangle.h"
 #include "swift/Demangling/Demangler.h"
 #include "util/time/clock.h"
@@ -67,7 +67,7 @@ auto InjectRuntime::run(llvm::Module& llvm_module, llvm::ModuleAnalysisManager&
   }();
   *instrumented_function_map.mutable_created_at() = now;
 
-  const auto file_name = [&] {
+  const auto output_function_map_file_name = [&] {
     std::string buffer{};
     const auto module_id =
         options_.module_id.value_or(llvm_module.getModuleIdentifier());
@@ -78,7 +78,8 @@ auto InjectRuntime::run(llvm::Module& llvm_module, llvm::ModuleAnalysisManager&
         << '.' << kInstrumentedFunctionMapFileExtension;
     return buffer;
   }();
-  const auto path = options_.instrumented_function_map_output_path / file_name;
+  const auto path = options_.instrumented_function_map_output_path /
+                    output_function_map_file_name;
   std::error_code error{};
   auto output_stream =
       options_.instrumented_function_map_output_stream(path.c_str(), &error);
