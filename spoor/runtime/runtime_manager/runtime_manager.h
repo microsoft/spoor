@@ -112,9 +112,11 @@ auto RuntimeManager::FlushedTraceFiles(
                completion{std::move(completion)}] {
     std::vector<std::filesystem::path> trace_file_paths{};
     for (auto file{directory_begin}; file != directory_end; ++file) {
-      if (trace_reader->MatchesTraceFileConvention(file->path())) {
-        trace_file_paths.emplace_back(file->path());
-      }
+      (void)trace_reader; // TODO
+      // TODO
+      // if (trace_reader->MatchesTraceFileNameConvention(file->path())) {
+      //   trace_file_paths.emplace_back(file->path());
+      // }
     }
     if (completion != nullptr) completion(std::move(trace_file_paths));
   }}.detach();
@@ -131,10 +133,11 @@ auto RuntimeManager::DeleteFlushedTraceFilesOlderThan(
                timestamp, completion{std::move(completion)}] {
     DeletedFilesInfo deleted_files_info{.deleted_files = 0, .deleted_bytes = 0};
     for (auto file{directory_begin}; file != directory_end; ++file) {
-      if (!trace_reader->MatchesTraceFileConvention(file->path())) {
-        continue;
-      }
-      const auto result = trace_reader->ReadHeader(file->path());
+      // TODO
+      // if (!trace_reader->MatchesTraceFileNameConvention(file->path())) {
+      //   continue;
+      // }
+      const auto result = trace_reader->Read(file->path(), false);
       if (result.IsErr()) continue;
       const auto header = result.Ok();
       const auto header_system_clock_timestamp =

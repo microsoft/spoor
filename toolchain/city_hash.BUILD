@@ -11,8 +11,8 @@ cc_library(
         "src/city_patch.cc",
     ],
     hdrs = ["src/city.h"],
-    include_prefix = "city_hash",
     strip_include_prefix = "src",
+    include_prefix = "city_hash",
     visibility = ["//visibility:public"],
 )
 

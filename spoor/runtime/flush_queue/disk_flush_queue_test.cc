@@ -26,7 +26,7 @@
 namespace {
 
 using spoor::runtime::flush_queue::DiskFlushQueue;
-using spoor::runtime::flush_queue::kTraceFileExtension;
+using spoor::runtime::trace::kTraceFileExtension;
 using spoor::runtime::trace::CompressionStrategy;
 using spoor::runtime::trace::Event;
 using spoor::runtime::trace::EventType;

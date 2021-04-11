@@ -17,7 +17,7 @@ cc_library(
         "trace_writer.h",
     ],
     copts = ["-Werror"],
-    visibility = ["//spoor/runtime:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [
         "//spoor/runtime/buffer",
         "//util:numeric",

@@ -15,7 +15,6 @@
 #include <vector>
 
 #include "gsl/gsl"
-#include "gsl/pointers"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/PassManager.h"
@@ -28,14 +27,17 @@
 namespace spoor::instrumentation::inject_runtime {
 
 constexpr std::string_view kInstrumentedFunctionMapFileExtension{
-    "spoor_function_map"};
+    ".spoor_function_map"};
 
 class InjectRuntime : public llvm::PassInfoMixin<InjectRuntime> {
  public:
   struct Options {
     bool inject_instrumentation;
     std::filesystem::path instrumented_function_map_output_path;
-    std::unique_ptr<std::ostream> instrumented_function_map_output_stream;
+    std::function<std::unique_ptr<llvm::raw_ostream>(
+        llvm::StringRef /*file_path*/,
+        gsl::not_null<std::error_code*> /*error*/)>
+        instrumented_function_map_output_stream;
     std::unique_ptr<util::time::SystemClock> system_clock;
     std::unordered_set<std::string> function_allow_list;
     std::unordered_set<std::string> function_blocklist;

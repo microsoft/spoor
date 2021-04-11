@@ -601,7 +601,7 @@ TEST(InjectRuntime, InstrumentedFunctionMapFileName) {  // NOLINT
                                          uninstrumented_module_context);
   ASSERT_NE(parsed_module, nullptr);
   constexpr std::string_view instrumented_function_map_output_path{
-      "/path/to/output"};
+      "/path/to/output/"};
   const std::vector<std::optional<std::string>> module_ids{{}, "", "module_id"};
   for (const auto& module_id : module_ids) {
     std::string file_name{};

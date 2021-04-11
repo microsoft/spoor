@@ -26,8 +26,6 @@
 
 namespace spoor::runtime::flush_queue {
 
-constexpr std::string_view kTraceFileExtension{"spoor_trace"};
-
 class DiskFlushQueue final
     : public FlushQueue<buffer::CircularSliceBuffer<trace::Event>> {
  public:

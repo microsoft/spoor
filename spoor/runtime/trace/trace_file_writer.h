@@ -18,7 +18,7 @@ class TraceFileWriter final : public TraceWriter {
  public:
   struct Options {
     gsl::not_null<util::file_system::FileWriter*> file_writer;
-    util::compression::Strategy compression_strategy;
+    util::compression::Strategy compression_strategy;  // TODO put this below capacity
     util::compression::Compressor::SizeType initial_buffer_capacity;
   };
 

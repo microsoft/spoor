@@ -7,12 +7,13 @@
 #include <cctype>
 #include <chrono>
 #include <cstdlib>
+#include <filesystem>
 #include <functional>
 #include <iterator>
 #include <string_view>
 #include <system_error>
-#include <utility>
 
+#include "absl/strings/str_cat.h"
 #include "city_hash/city.h"
 #include "google/protobuf/timestamp.pb.h"
 #include "google/protobuf/util/time_util.h"
@@ -29,7 +30,6 @@
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
-#include "protos/perfetto/trace/track_event/source_location.pb.h"  // TODO
 #include "swift/Demangling/Demangle.h"
 #include "swift/Demangling/Demangler.h"
 #include "util/time/clock.h"
@@ -53,11 +53,38 @@ constexpr std::string_view kLogFunctionExitFunctionName{
 InjectRuntime::InjectRuntime(Options&& options)
     : options_{std::move(options)} {}
 
-auto InjectRuntime::run(llvm::Module& llvm_module, llvm::ModuleAnalysisManager&
+// TODO
+// * Test path no file name or extension
+//   * Module ID override
+//   * Default module id
+// * Test path with file name with no, different, and correct extension
+
+auto InjectRuntime::run(llvm::Module& llvm_module, llvm::ModuleAnalysisManager &
                         /*unused*/) -> llvm::PreservedAnalyses {
   if (!options_.inject_instrumentation) return llvm::PreservedAnalyses::all();
 
+  const auto module_id =
+      options_.module_id.value_or(llvm_module.getModuleIdentifier());
+  llvm_module.setModuleIdentifier(module_id);
+
   auto [instrumented_function_map, modified] = InstrumentModule(&llvm_module);
+
+  const auto path = [&] {
+    auto path = options_.instrumented_function_map_output_path;
+    if (!path.has_filename()) {
+      auto file_name =
+          std::filesystem::path{module_id}.make_preferred().string();
+      std::replace(std::begin(file_name), std::end(file_name),
+                   std::filesystem::path::preferred_separator, '_');
+      path.replace_filename(file_name);
+    }
+    if (path.extension() != kInstrumentedFunctionMapFileExtension) {
+      const auto extension = absl::StrCat(
+          path.extension().string(), kInstrumentedFunctionMapFileExtension);
+      path.replace_extension(extension);
+    }
+    return path;
+  }();
 
   const auto now = [&] {
     const auto now = options_.system_clock->Now().time_since_epoch();
@@ -67,19 +94,6 @@ auto InjectRuntime::run(llvm::Module& llvm_module, llvm::ModuleAnalysisManager&
   }();
   *instrumented_function_map.mutable_created_at() = now;
 
-  const auto output_function_map_file_name = [&] {
-    std::string buffer{};
-    const auto module_id =
-        options_.module_id.value_or(llvm_module.getModuleIdentifier());
-    const auto module_id_hash = CityHash64(module_id.data(), module_id.size());
-    llvm::raw_string_ostream{buffer}
-        << llvm::format_hex_no_prefix(module_id_hash,
-                                      sizeof(module_id_hash) * 2)
-        << '.' << kInstrumentedFunctionMapFileExtension;
-    return buffer;
-  }();
-  const auto path = options_.instrumented_function_map_output_path /
-                    output_function_map_file_name;
   std::error_code error{};
   auto output_stream =
       options_.instrumented_function_map_output_stream(path.c_str(), &error);

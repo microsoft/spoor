@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <fstream>
 #include <ios>
+#include <iostream>  // TODO
 
 #include "gsl/gsl"
 #include "spoor/runtime/trace/trace.h"
@@ -37,9 +38,28 @@ auto TraceFileWriter::Write(const std::filesystem::path& file_path,
                             std::back_inserter(buffer_));
                 });
   const auto buffer_size_bytes = buffer_.size() * sizeof(Event);
+  // TODO
+  switch (compressor_->Strategy()) {
+    case CompressionStrategy::kNone: {
+      std::cout << "compression strategy: none\n";
+      break;
+    }
+    case CompressionStrategy::kSnappy: {
+      std::cout << "compression strategy: snappy\n";
+      break;
+    }
+  }
   const auto compression_result = compressor_->Compress(
       // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
       {reinterpret_cast<const char*>(buffer_.data()), buffer_size_bytes});
+  if (compression_result.IsErr()) {
+    std::cout << "compression error\n";
+  }
+  if (buffer_size_bytes <= compression_result.Ok().size_bytes()) {
+    std::cout << "inefficient compression\n";
+  }
+  std::cout << "uncompressed size: " << buffer_size_bytes << "\n";
+  std::cout << "compressed size: " << compression_result.Ok().size_bytes() << "\n";
   if (compression_result.IsErr() ||
       buffer_size_bytes <= compression_result.Ok().size_bytes()) {
     header.compression_strategy = util::compression::Strategy::kNone;

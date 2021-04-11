@@ -18,8 +18,8 @@ cc_proto_library(
 )
 
 cc_proto_library(
-    name = "perfetto_trace_track_event_cc_proto",
+    name = "perfetto_trace_cc_proto",
     visibility = ["//visibility:public"],
-    deps = ["@perfetto//:protos_perfetto_trace_track_event_protos"],
+    deps = ["@perfetto//:protos_perfetto_trace_non_minimal_protos"],
 )
 

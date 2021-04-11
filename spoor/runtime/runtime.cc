@@ -21,11 +21,11 @@
 #include "spoor/runtime/trace/trace.h"
 #include "spoor/runtime/trace/trace_file_reader.h"
 #include "spoor/runtime/trace/trace_file_writer.h"
-#include "util/compression/compressor_factory.h"
 #include "util/file_system/local_file_system.h"
 #include "util/file_system/local_file_writer.h"
 #include "util/numeric.h"
 #include "util/time/clock.h"
+#include "util/compression/compressor.h"
 
 namespace {
 
@@ -52,7 +52,9 @@ util::file_system::LocalFileSystem file_system_{};
 util::file_system::LocalFileWriter file_writer_{};
 // clang-format off NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects) clang-format on
 spoor::runtime::trace::TraceFileReader trace_reader_{
-    {.file_system = &file_system_}};
+  {.initial_buffer_capacity = 0}};
+  // TODO
+    // {.file_system = &file_system_}};
 // clang-format off NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects) clang-format on
 spoor::runtime::trace::TraceFileWriter trace_writer_{
     {.file_writer = &file_writer_,
