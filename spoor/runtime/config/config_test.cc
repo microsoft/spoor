@@ -5,10 +5,10 @@
 
 #include <limits>
 #include <string_view>
-#include <unordered_map>
 
 #include "gtest/gtest.h"
 #include "spoor/runtime/buffer/circular_buffer.h"
+#include "util/flat_map/flat_map.h"
 
 namespace {
 
@@ -31,20 +31,20 @@ using SizeType = spoor::runtime::buffer::CircularBuffer<
 
 TEST(Config, GetsUserProvidedValue) {  // NOLINT
   const auto get_env = [](const char* key) {
-    const std::unordered_map<std::string_view, std::string_view> environment{
-        {kTraceFilePathKey, "/path/to/file.extension"},
-        {kCompressionStrategyKey, "   SnApPy   "},
-        {kSessionIdKey, "42"},
-        {kThreadEventBufferCapacityKey, "42"},
-        {kMaxReservedEventBufferSliceCapacityKey, "42"},
-        {kMaxDynamicEventBufferSliceCapacityKey, "42"},
-        {kReservedEventPoolCapacityKey, "42"},
-        {kDynamicEventPoolCapacityKey, "42"},
-        {kDynamicEventSliceBorrowCasAttemptsKey, "42"},
-        {kEventBufferRetentionDurationNanosecondsKey, "42"},
-        {kMaxFlushBufferToFileAttemptsKey, "42"},
-        {kFlushAllEventsKey, "false"}};
-    return environment.at(key).data();
+    constexpr util::flat_map::FlatMap<std::string_view, std::string_view, 12>
+        environment{{kTraceFilePathKey, "/path/to/file.extension"},
+                    {kCompressionStrategyKey, "   SnApPy   "},
+                    {kSessionIdKey, "42"},
+                    {kThreadEventBufferCapacityKey, "42"},
+                    {kMaxReservedEventBufferSliceCapacityKey, "42"},
+                    {kMaxDynamicEventBufferSliceCapacityKey, "42"},
+                    {kReservedEventPoolCapacityKey, "42"},
+                    {kDynamicEventPoolCapacityKey, "42"},
+                    {kDynamicEventSliceBorrowCasAttemptsKey, "42"},
+                    {kEventBufferRetentionDurationNanosecondsKey, "42"},
+                    {kMaxFlushBufferToFileAttemptsKey, "42"},
+                    {kFlushAllEventsKey, "false"}};
+    return environment.At(key).value_or(nullptr).data();
   };
   const Config expected_options{
       .trace_file_path = "/path/to/file.extension",

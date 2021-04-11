@@ -4,7 +4,6 @@
 #include "util/env/env.h"
 
 #include <string>
-#include <unordered_map>
 
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
@@ -103,11 +102,8 @@ TEST(GetEnvOrDefault, Bool) {  // NOLINT
 
 TEST(GetEnvOrDefault, ValueMap) {  // NOLINT
   constexpr uint32 default_value{3};
-  const std::unordered_map<std::string_view, uint32> value_map{
-      {"zero", 0},
-      {"one", 1},
-      {"two", 2},
-  };
+  const util::flat_map::FlatMap<std::string_view, uint32, 3> value_map{
+      {"zero", 0}, {"one", 1}, {"two", 2}};
   for (const auto& [key_view, value] : value_map) {
     const std::string key{key_view};
     const auto messy_key =

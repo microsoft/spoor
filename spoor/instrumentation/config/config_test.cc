@@ -4,9 +4,9 @@
 #include "spoor/instrumentation/config/config.h"
 
 #include <limits>
-#include <unordered_map>
 
 #include "gtest/gtest.h"
+#include "util/flat_map/flat_map.h"
 #include "util/numeric.h"
 
 namespace {
@@ -22,15 +22,15 @@ using spoor::instrumentation::config::kModuleIdKey;
 
 TEST(Config, GetsUserProvidedValue) {  // NOLINT
   const auto get_env = [](const char* key) {
-    const std::unordered_map<std::string_view, std::string_view> environment{
-        {kInstrumentedFunctionMapOutputPathKey, "/path/to/output/"},
-        {kInitializeRuntimeKey, "false"},
-        {kEnableRuntimeKey, "false"},
-        {kMinInstructionThresholdKey, "42"},
-        {kModuleIdKey, "ModuleId"},
-        {kFunctionAllowListFileKey, "/path/to/allow_list.txt"},
-        {kFunctionBlocklistFileKey, "/path/to/blocklist.txt"}};
-    return environment.at(key).data();
+    constexpr util::flat_map::FlatMap<std::string_view, std::string_view, 7>
+        environment{{kInstrumentedFunctionMapOutputPathKey, "/path/to/output/"},
+                    {kInitializeRuntimeKey, "false"},
+                    {kEnableRuntimeKey, "false"},
+                    {kMinInstructionThresholdKey, "42"},
+                    {kModuleIdKey, "ModuleId"},
+                    {kFunctionAllowListFileKey, "/path/to/allow_list.txt"},
+                    {kFunctionBlocklistFileKey, "/path/to/blocklist.txt"}};
+    return environment.At(key).value_or(nullptr).data();
   };
   const Config expected_options{
       .instrumented_function_map_output_path = "/path/to/output/",
@@ -59,15 +59,15 @@ TEST(Config, UsesDefaultValueWhenNotSpecified) {  // NOLINT
 
 TEST(Config, UsesDefaultValueForEmptyStringValues) {  // NOLINT
   const auto get_env = [](const char* key) {
-    const std::unordered_map<std::string_view, std::string_view> environment{
-        {kInstrumentedFunctionMapOutputPathKey, ""},
-        {kInitializeRuntimeKey, ""},
-        {kEnableRuntimeKey, ""},
-        {kMinInstructionThresholdKey, ""},
-        {kModuleIdKey, ""},
-        {kFunctionAllowListFileKey, ""},
-        {kFunctionBlocklistFileKey, ""}};
-    return environment.at(key).data();
+    constexpr util::flat_map::FlatMap<std::string_view, std::string_view, 7>
+        environment{{kInstrumentedFunctionMapOutputPathKey, ""},
+                    {kInitializeRuntimeKey, ""},
+                    {kEnableRuntimeKey, ""},
+                    {kMinInstructionThresholdKey, ""},
+                    {kModuleIdKey, ""},
+                    {kFunctionAllowListFileKey, ""},
+                    {kFunctionBlocklistFileKey, ""}};
+    return environment.At(key).value_or(nullptr).data();
   };
   const Config expected_options{.instrumented_function_map_output_path = "",
                                 .initialize_runtime = true,

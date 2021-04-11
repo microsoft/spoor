@@ -10,25 +10,26 @@ namespace spoor::instrumentation::config {
 using util::env::GetEnvOrDefault;
 
 auto Config::FromEnv(const util::env::GetEnv& get_env) -> Config {
-  return {.instrumented_function_map_output_path = GetEnvOrDefault(
-              kInstrumentedFunctionMapOutputPathKey.data(),
-              kInstrumentedFunctionMapOutputPathDefaultValue, get_env),
-          .initialize_runtime =
-              GetEnvOrDefault(kInitializeRuntimeKey.data(),
-                              kInitializeRuntimeDefaultValue, get_env),
-          .enable_runtime = GetEnvOrDefault(
-              kEnableRuntimeKey.data(), kEnableRuntimeDefaultValue, get_env),
-          .min_instruction_threshold =
-              GetEnvOrDefault(kMinInstructionThresholdKey.data(),
-                              kMinInstructionThresholdDefaultValue, get_env),
-          .module_id = GetEnvOrDefault(kModuleIdKey.data(),
-                                       kModuleIdDefaultValue, true, get_env),
-          .function_allow_list_file = GetEnvOrDefault(
-              kFunctionAllowListFileKey.data(),
-              kFunctionAllowListFileDefaultValue, true, get_env),
-          .function_blocklist_file = GetEnvOrDefault(
-              kFunctionBlocklistFileKey.data(),
-              kFunctionBlocklistFileDefaultValue, true, get_env)};
+  return {
+      .instrumented_function_map_output_path = GetEnvOrDefault(
+          kInstrumentedFunctionMapOutputPathKey.data(),
+          std::string{kInstrumentedFunctionMapOutputPathDefaultValue}, get_env),
+      .initialize_runtime =
+          GetEnvOrDefault(kInitializeRuntimeKey.data(),
+                          kInitializeRuntimeDefaultValue, get_env),
+      .enable_runtime = GetEnvOrDefault(kEnableRuntimeKey.data(),
+                                        kEnableRuntimeDefaultValue, get_env),
+      .min_instruction_threshold =
+          GetEnvOrDefault(kMinInstructionThresholdKey.data(),
+                          kMinInstructionThresholdDefaultValue, get_env),
+      .module_id = GetEnvOrDefault(kModuleIdKey.data(), kModuleIdDefaultValue,
+                                   true, get_env),
+      .function_allow_list_file =
+          GetEnvOrDefault(kFunctionAllowListFileKey.data(),
+                          kFunctionAllowListFileDefaultValue, true, get_env),
+      .function_blocklist_file =
+          GetEnvOrDefault(kFunctionBlocklistFileKey.data(),
+                          kFunctionBlocklistFileDefaultValue, true, get_env)};
 }
 
 auto operator==(const Config& lhs, const Config& rhs) -> bool {

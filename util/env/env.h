@@ -6,11 +6,12 @@
 #include <functional>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <type_traits>
-#include <unordered_map>
 
 #include "absl/strings/ascii.h"
 #include "absl/strings/numbers.h"
+#include "util/flat_map/flat_map.h"
 
 namespace util::env {
 
@@ -30,10 +31,11 @@ template <class T>
 auto GetEnvOrDefault(const char* key, T default_value, const GetEnv& get_env)
     -> T requires(std::is_integral_v<T> && !std::is_same_v<T, bool>);
 
-template <class T>
-auto GetEnvOrDefault(const char* key, const T& default_value,
-                     const std::unordered_map<std::string_view, T>& value_map,
-                     bool normalize, const GetEnv& get_env) -> T;
+template <class T, std::size_t Size>
+auto GetEnvOrDefault(
+    const char* key, const T& default_value,
+    const util::flat_map::FlatMap<std::string_view, T, Size>& value_map,
+    bool normalize, const GetEnv& get_env) -> T;
 
 template <class T>
 auto GetEnvOrDefault(const char* key, const T default_value,
@@ -46,10 +48,11 @@ auto GetEnvOrDefault(const char* key, const T default_value,
   return success ? value : default_value;
 }
 
-template <class T>
-auto GetEnvOrDefault(const char* key, const T& default_value,
-                     const std::unordered_map<std::string_view, T>& value_map,
-                     const bool normalize, const GetEnv& get_env) -> T {
+template <class T, std::size_t Size>
+auto GetEnvOrDefault(
+    const char* key, const T& default_value,
+    const util::flat_map::FlatMap<std::string_view, T, Size>& value_map,
+    const bool normalize, const GetEnv& get_env) -> T {
   const auto* user_value = get_env(key);
   if (user_value == nullptr) return default_value;
   auto value = std::string{user_value};
@@ -57,9 +60,7 @@ auto GetEnvOrDefault(const char* key, const T& default_value,
     absl::StripAsciiWhitespace(&value);
     absl::AsciiStrToLower(&value);
   }
-  const auto iterator = value_map.find(value);
-  if (iterator == std::cend(value_map)) return default_value;
-  return iterator->second;
+  return value_map.At(value).value_or(default_value);
 }
 
 }  // namespace util::env
