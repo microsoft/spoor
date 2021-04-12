@@ -13,6 +13,7 @@
 #include <system_error>
 #include <utility>
 
+#include "city_hash/city.h"
 #include "google/protobuf/timestamp.pb.h"
 #include "google/protobuf/util/time_util.h"
 #include "gsl/gsl"
@@ -68,7 +69,7 @@ auto InjectRuntime::run(llvm::Module& llvm_module, llvm::ModuleAnalysisManager&
     std::string buffer{};
     const auto module_id =
         options_.module_id.value_or(llvm_module.getModuleIdentifier());
-    const auto module_id_hash = std::hash<std::string>{}(module_id);
+    const auto module_id_hash = CityHash64(module_id.data(), module_id.size());
     llvm::raw_string_ostream{buffer}
         << llvm::format_hex_no_prefix(module_id_hash,
                                       sizeof(module_id_hash) * 2)
@@ -99,8 +100,9 @@ auto InjectRuntime::run(llvm::Module& llvm_module, llvm::ModuleAnalysisManager&
 
 auto InjectRuntime::InstrumentModule(gsl::not_null<llvm::Module*> llvm_module)
     const -> std::pair<InstrumentedFunctionMap, bool> {
+  const auto& module_id = llvm_module->getModuleIdentifier();
   InstrumentedFunctionMap instrumented_function_map{};
-  instrumented_function_map.set_module_id(llvm_module->getModuleIdentifier());
+  instrumented_function_map.set_module_id(module_id);
   auto& function_map = *instrumented_function_map.mutable_function_map();
 
   auto& context = llvm_module->getContext();
@@ -126,11 +128,11 @@ auto InjectRuntime::InstrumentModule(gsl::not_null<llvm::Module*> llvm_module)
   const auto log_function_exit = llvm_module->getOrInsertFunction(
       kLogFunctionExitFunctionName.data(), log_function_type);
 
-  const auto module_id_hash = static_cast<uint64>(
-      std::hash<std::string>{}(llvm_module->getModuleIdentifier()));
-  const auto make_function_id = [&module_id_hash](const uint32 counter) {
+  const auto make_function_id = [&module_id](const uint64 counter) {
+    const auto module_id_hash = CityHash32(module_id.data(), module_id.size());
     constexpr uint64 partition{32};
-    return (module_id_hash << partition) | static_cast<uint64>(counter);
+    static_assert(sizeof(module_id_hash) * 8 == partition);
+    return (static_cast<uint64>(module_id_hash) << partition) | counter;
   };
 
   uint64 counter{0};
