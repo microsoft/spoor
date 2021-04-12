@@ -7,7 +7,6 @@
 #include <filesystem>
 #include <fstream>
 #include <regex>
-#include <iostream>  // TODO
 
 #include "absl/base/internal/endian.h"
 #include "spoor/runtime/trace/trace.h"
@@ -66,16 +65,6 @@ auto TraceFileReader::Read(const std::filesystem::path& path,
     const auto events_size_bytes = header.event_count * sizeof(Event);
     auto compressor = CompressorForStrategy(
         header.compression_strategy, events_size_bytes);
-    switch (header.compression_strategy) {
-      case CompressionStrategy::kNone: {
-        std::cout << "Compression: none\n";
-        break;
-      }
-      case CompressionStrategy::kSnappy: {
-        std::cout << "Compression: snappy\n";
-        break;
-      }
-    }
     auto uncompress_result = compressor->Uncompress(compressed_buffer);
     if (uncompress_result.IsErr()) return Error::kUncompressError;
     auto uncompressed_buffer = uncompress_result.Ok();

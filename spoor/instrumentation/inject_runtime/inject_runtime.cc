@@ -34,6 +34,8 @@
 #include "swift/Demangling/Demangler.h"
 #include "util/time/clock.h"
 
+// TODO handle protobuf optionals
+
 namespace spoor::instrumentation::inject_runtime {
 
 using google::protobuf::util::TimeUtil;
