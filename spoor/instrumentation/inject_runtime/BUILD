@@ -10,11 +10,12 @@ cc_library(
     copts = ["-Werror"],
     visibility = ["//spoor/instrumentation:__pkg__"],
     deps = [
+        "@com_google_absl//absl/strings",
+        "@com_google_cityhash//:city_hash",
         "//spoor/proto:spoor_cc_proto",
         "//util:numeric",
         "//util/time:clock",
         "@com_apple_swift//:demangle",
-        "@com_google_cityhash//:city_hash",
         "@com_microsoft_gsl//:gsl",
         "@llvm//11.0.0",
     ],
