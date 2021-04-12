@@ -12,6 +12,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "city_hash/city.h"
 #include "gmock/gmock.h"
 #include "google/protobuf/util/message_differencer.h"
 #include "google/protobuf/util/time_util.h"
@@ -150,13 +151,19 @@ TEST(InjectRuntime, InstrumentsModule) {  // NOLINT
 }
 
 TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
+  const auto make_module_id_hash = [](const std::string_view& module_id) {
+    return static_cast<uint64>(CityHash32(module_id.data(), module_id.size()))
+           << 32ULL;
+  };
   std::vector<std::pair<std::string_view, InstrumentedFunctionMap>> test_cases{
       {
           kUninstrumentedIrFile,
           [&] {
+            constexpr auto module_id{kUninstrumentedIrFile};
+            const auto module_id_hash = make_module_id_hash(module_id);
+
             InstrumentedFunctionMap expected_instrumented_function_map{};
-            expected_instrumented_function_map.set_module_id(
-                kUninstrumentedIrFile.data());
+            expected_instrumented_function_map.set_module_id(module_id.data());
             *expected_instrumented_function_map.mutable_created_at() =
                 TimeUtil::NanosecondsToTimestamp(0);
             auto& function_map =
@@ -166,13 +173,13 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             fibonacci_function_info.set_linkage_name("_Z9Fibonaccii");
             fibonacci_function_info.set_demangled_name("Fibonacci(int)");
             fibonacci_function_info.set_instrumented(true);
-            function_map[0x73c43c2b00000000] = fibonacci_function_info;
+            function_map[module_id_hash | 0ULL] = fibonacci_function_info;
 
             FunctionInfo main_function_info{};
             main_function_info.set_linkage_name("main");
             main_function_info.set_demangled_name("main");
             main_function_info.set_instrumented(true);
-            function_map[0x73c43c2b00000001] = main_function_info;
+            function_map[module_id_hash | 1ULL] = main_function_info;
 
             return expected_instrumented_function_map;
           }(),
@@ -180,9 +187,11 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
       {
           kUninstrumentedIrWithDebugInfoCSourceFile,
           [&] {
+            constexpr auto module_id{kUninstrumentedIrWithDebugInfoCSourceFile};
+            const auto module_id_hash = make_module_id_hash(module_id);
+
             InstrumentedFunctionMap expected_instrumented_function_map{};
-            expected_instrumented_function_map.set_module_id(
-                kUninstrumentedIrWithDebugInfoCSourceFile.data());
+            expected_instrumented_function_map.set_module_id(module_id.data());
             *expected_instrumented_function_map.mutable_created_at() =
                 TimeUtil::NanosecondsToTimestamp(0);
             auto& function_map =
@@ -195,7 +204,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             fibonacci_function_info.set_directory("/path/to/file");
             fibonacci_function_info.set_line(1);
             fibonacci_function_info.set_instrumented(true);
-            function_map[0x753f031f00000000] = fibonacci_function_info;
+            function_map[module_id_hash | 0ULL] = fibonacci_function_info;
 
             FunctionInfo main_function_info{};
             main_function_info.set_linkage_name("main");
@@ -204,7 +213,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             main_function_info.set_directory("/path/to/file");
             main_function_info.set_line(6);
             main_function_info.set_instrumented(true);
-            function_map[0x753f031f00000001] = main_function_info;
+            function_map[module_id_hash | 1ULL] = main_function_info;
 
             return expected_instrumented_function_map;
           }(),
@@ -212,9 +221,12 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
       {
           kUninstrumentedIrWithDebugInfoCppSourceFile,
           [&] {
+            constexpr auto module_id{
+                kUninstrumentedIrWithDebugInfoCppSourceFile};
+            const auto module_id_hash = make_module_id_hash(module_id);
+
             InstrumentedFunctionMap expected_instrumented_function_map{};
-            expected_instrumented_function_map.set_module_id(
-                kUninstrumentedIrWithDebugInfoCppSourceFile.data());
+            expected_instrumented_function_map.set_module_id(module_id.data());
             *expected_instrumented_function_map.mutable_created_at() =
                 TimeUtil::NanosecondsToTimestamp(0);
             auto& function_map =
@@ -227,7 +239,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             fibonacci_function_info.set_directory("/path/to/file");
             fibonacci_function_info.set_line(1);
             fibonacci_function_info.set_instrumented(true);
-            function_map[0xc373298f00000000] = fibonacci_function_info;
+            function_map[module_id_hash | 0ULL] = fibonacci_function_info;
 
             FunctionInfo main_function_info{};
             main_function_info.set_linkage_name("main");
@@ -236,7 +248,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             main_function_info.set_directory("/path/to/file");
             main_function_info.set_line(6);
             main_function_info.set_instrumented(true);
-            function_map[0xc373298f00000001] = main_function_info;
+            function_map[module_id_hash | 1ULL] = main_function_info;
 
             return expected_instrumented_function_map;
           }(),
@@ -244,9 +256,12 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
       {
           kUninstrumentedIrWithDebugInfoObjcSourceFile,
           [&] {
+            constexpr auto module_id{
+                kUninstrumentedIrWithDebugInfoObjcSourceFile};
+            const auto module_id_hash = make_module_id_hash(module_id);
+
             InstrumentedFunctionMap expected_instrumented_function_map{};
-            expected_instrumented_function_map.set_module_id(
-                kUninstrumentedIrWithDebugInfoObjcSourceFile.data());
+            expected_instrumented_function_map.set_module_id(module_id.data());
             *expected_instrumented_function_map.mutable_created_at() =
                 TimeUtil::NanosecondsToTimestamp(0);
             auto& function_map =
@@ -260,7 +275,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             fibonacci_function_info.set_directory("/path/to/file");
             fibonacci_function_info.set_line(6);
             fibonacci_function_info.set_instrumented(true);
-            function_map[0x0917362100000000] = fibonacci_function_info;
+            function_map[module_id_hash | 0ULL] = fibonacci_function_info;
 
             FunctionInfo main_function_info{};
             main_function_info.set_linkage_name("main");
@@ -269,7 +284,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             main_function_info.set_directory("/path/to/file");
             main_function_info.set_line(12);
             main_function_info.set_instrumented(true);
-            function_map[0x0917362100000001] = main_function_info;
+            function_map[module_id_hash | 1ULL] = main_function_info;
 
             return expected_instrumented_function_map;
           }(),
@@ -277,9 +292,12 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
       {
           kUninstrumentedIrWithDebugInfoSwiftSourceFile,
           [&] {
+            constexpr auto module_id{
+                kUninstrumentedIrWithDebugInfoSwiftSourceFile};
+            const auto module_id_hash = make_module_id_hash(module_id);
+
             InstrumentedFunctionMap expected_instrumented_function_map{};
-            expected_instrumented_function_map.set_module_id(
-                kUninstrumentedIrWithDebugInfoSwiftSourceFile.data());
+            expected_instrumented_function_map.set_module_id(module_id.data());
             *expected_instrumented_function_map.mutable_created_at() =
                 TimeUtil::NanosecondsToTimestamp(0);
             auto& function_map =
@@ -293,7 +311,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             fibonacci_function_info.set_directory("/path/to/file");
             fibonacci_function_info.set_line(1);
             fibonacci_function_info.set_instrumented(true);
-            function_map[0x88a7c6bf00000001] = fibonacci_function_info;
+            function_map[module_id_hash | 1ULL] = fibonacci_function_info;
 
             FunctionInfo main_function_info{};
             main_function_info.set_linkage_name("main");
@@ -304,7 +322,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
             // number.
             main_function_info.set_line(1);
             main_function_info.set_instrumented(true);
-            function_map[0x88a7c6bf00000000] = main_function_info;
+            function_map[module_id_hash | 0ULL] = main_function_info;
 
             return expected_instrumented_function_map;
           }(),
@@ -549,7 +567,7 @@ TEST(InjectRuntime, InstrumentedFunctionMapFileName) {  // NOLINT
     const auto expected_file_name = [&] {
       std::string buffer{};
       const auto id = module_id.value_or(parsed_module->getModuleIdentifier());
-      const auto module_id_hash = std::hash<std::string>{}(id);
+      const auto module_id_hash = CityHash64(id.data(), id.size());
       llvm::raw_string_ostream{buffer}
           << instrumented_function_map_output_path << '/'
           << llvm::format_hex_no_prefix(module_id_hash,

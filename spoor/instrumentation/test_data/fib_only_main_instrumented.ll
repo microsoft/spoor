@@ -16,9 +16,9 @@ define i32 @_Z9Fibonaccii(i32 %0) {
 }
 
 define i32 @main() {
-  call void @_spoor_runtime_LogFunctionEntry(i64 8341858565178261505)
+  call void @_spoor_runtime_LogFunctionEntry(i64 7304034947084320769)
   %1 = tail call i32 @_Z9Fibonaccii(i32 7)
-  call void @_spoor_runtime_LogFunctionExit(i64 8341858565178261505)
+  call void @_spoor_runtime_LogFunctionExit(i64 7304034947084320769)
   call void @_spoor_runtime_DeinitializeRuntime()
   ret i32 %1
 }
