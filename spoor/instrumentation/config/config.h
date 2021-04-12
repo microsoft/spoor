@@ -15,8 +15,7 @@ namespace spoor::instrumentation::config {
 
 constexpr std::string_view kInstrumentedFunctionMapOutputPathKey{
     "SPOOR_INSTRUMENTATION_INSTRUMENTED_FUNCTION_MAP_OUTPUT_PATH"};
-// NOLINTNEXTLINE(fuchsia-statically-constructed-objects)
-const std::string kInstrumentedFunctionMapOutputPathDefaultValue{"."};
+constexpr std::string_view kInstrumentedFunctionMapOutputPathDefaultValue{"."};
 constexpr std::string_view kInitializeRuntimeKey{
     "SPOOR_INSTRUMENTATION_RUNTIME_INITIALIZE_RUNTIME"};
 constexpr bool kInitializeRuntimeDefaultValue{true};
@@ -39,9 +38,7 @@ constexpr std::string_view kFunctionBlocklistFileKey{
 const std::optional<std::string> kFunctionBlocklistFileDefaultValue{};
 
 struct Config {
-  static auto FromEnv(const util::env::GetEnv& get_env = [](const char* key) {
-    return std::getenv(key);
-  }) -> Config;
+  static auto FromEnv(const util::env::GetEnv& get_env = std::getenv) -> Config;
 
   std::string instrumented_function_map_output_path;
   bool initialize_runtime;

@@ -10,8 +10,9 @@ namespace spoor::runtime::config {
 using util::env::GetEnvOrDefault;
 
 auto Config::FromEnv(const util::env::GetEnv& get_env) -> Config {
-  return {.trace_file_path = GetEnvOrDefault(
-              kTraceFilePathKey.data(), kTraceFilePathDefaultValue, get_env),
+  return {.trace_file_path =
+              GetEnvOrDefault(kTraceFilePathKey.data(),
+                              std::string{kTraceFilePathDefaultValue}, get_env),
           .compression_strategy = GetEnvOrDefault(
               kCompressionStrategyKey.data(), kCompressionStrategyDefaultValue,
               kCompressionStrategyMap, true, get_env),
