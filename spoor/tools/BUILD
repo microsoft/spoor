@@ -15,6 +15,7 @@ cc_binary(
         "//util/env",
         "//util/compression",
         "@com_microsoft_gsl//:gsl",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],

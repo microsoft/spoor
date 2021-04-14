@@ -14,6 +14,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "absl/flags/flag.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "google/protobuf/repeated_field.h"
@@ -50,11 +51,14 @@ using SpoorEvent = spoor::runtime::trace::Event;
 using SourceLocationMap = std::unordered_map<FunctionId, SourceLocation>;
 using CompressionStrategy = util::compression::Strategy;
 
+ABSL_FLAG(std::string, format, "proto", "Output trace format. Options: proto, textproto");
+
 namespace spoor::tools {
 
 constexpr uint32 kTrustedPacketSequenceId{1};
-constexpr uint64 kLargest31BitPrime{2'147'483'647};
+// constexpr uint64 kLargest31BitPrime{2'147'483'647};
 // constexpr uint64 kLargest32BitPrime{4'294'967'291};
+// constexpr uint64 kLargest64BitPrime{18'446'744'073'709'551'557};
 constexpr std::string_view kUnknown{"unknown"};
 
 enum class Error {
@@ -124,11 +128,11 @@ auto MakeFunctionName(const FunctionId function_id,
   if (function_info.has_linkage_name()) {
     return function_info.linkage_name();
   }
-  return absl::StrFormat("%#016x", function_id);
+  return absl::StrFormat("Function ID: %#016x", function_id);
 };
 
 auto MakeFunctionName(const FunctionId function_id,
-                      const std::vector<FunctionInfo> function_infos)
+                      const std::vector<FunctionInfo>& function_infos)
     -> std::string {
   std::vector<std::string> function_names{};
   function_names.reserve(function_infos.size());
@@ -149,7 +153,7 @@ auto MakeFileName(const FunctionInfo& function_info, const bool append_line)
   }
   if (function_info.has_file_name()) {
     path /= function_info.file_name();
-    if (append_line && function_info.has_line() && function_info.line() != 0) {
+    if (append_line && function_info.has_line()) {
       path += absl::StrFormat(":%d", function_info.line());
     }
   }
@@ -171,69 +175,65 @@ auto MakeFileName(const std::vector<FunctionInfo>& function_infos)
 }
 
 auto TransformSpoorFunctionInfoMapToPerfettoSourceLocation(
-    const std::pair<FunctionId, std::vector<FunctionInfo>>& function_info)
-    -> SourceLocation {
-  const auto& [function_id, function_infos] = function_info;
-
+    const FunctionId function_id,
+    const std::vector<FunctionInfo>& function_info) -> SourceLocation {
   SourceLocation source_location{};
-  // source_location.set_iid(function_id);
-  if (function_infos.empty()) return source_location;
-  source_location.set_file_name(MakeFileName(function_infos));
+  source_location.set_iid(function_id);
+  if (function_info.empty()) return source_location;
+  source_location.set_file_name(MakeFileName(function_info));
   source_location.set_function_name(
-      MakeFunctionName(function_id, function_infos));
-  if (function_infos.size() == 1) {
-    const auto& function_info = function_infos.front();
-    if (function_info.has_line()) {
-      source_location.set_line_number(function_info.line());
-    }
+      MakeFunctionName(function_id, function_info));
+  if (function_info.size() == 1) {
+    const auto& info = function_info.front();
+    if (info.has_line()) source_location.set_line_number(info.line());
   }
-
   return source_location;
 }
 
-auto TransformSpoorEventsToPerfettoTracePackets(
-    const TraceFile& trace_file,
-    const std::unordered_map<FunctionId, std::vector<FunctionInfo>>&
-        function_info_map) -> std::vector<TracePacket> {
+auto TransformSpoorFunctionInfoMapToPerfettoEventName(
+    const FunctionId function_id,
+    const std::vector<FunctionInfo>& function_info) -> EventName {
+  EventName event_name{};
+  event_name.set_iid(function_id);
+  event_name.set_name(MakeFunctionName(function_id, function_info));
+  return event_name;
+}
+
+auto TransformSpoorEventsToPerfettoTracePackets(const TraceFile& trace_file)
+    -> std::vector<TracePacket> {
   std::vector<TracePacket> trace_packets{};
   trace_packets.reserve(trace_file.events.size());
   std::transform(
       std::cbegin(trace_file.events), std::cend(trace_file.events),
       std::back_inserter(trace_packets),
-      [&trace_file, &function_info_map](const auto& spoor_event) {
+      [&trace_file](const auto& spoor_event) {
         TracePacket trace_packet{};
         trace_packet.set_trusted_packet_sequence_id(kTrustedPacketSequenceId);
-        // trace_packet.set_sequence_flags(
-        //     TracePacket::SEQ_NEEDS_INCREMENTAL_STATE);
-
-        auto* track_descriptor = trace_packet.mutable_track_descriptor();
-        auto* thread_descriptor = track_descriptor->mutable_thread();
-        thread_descriptor->set_pid(
-            static_cast<int32>(trace_file.process_id % kLargest31BitPrime));
-        thread_descriptor->set_tid(
-            static_cast<int32>(trace_file.thread_id % kLargest31BitPrime));
         trace_packet.set_timestamp(spoor_event.steady_clock_timestamp);
+        trace_packet.set_sequence_flags(
+            TracePacket::SEQ_NEEDS_INCREMENTAL_STATE);
+
+        // auto* track_descriptor = trace_packet.mutable_track_descriptor();
+        // auto* thread_descriptor = track_descriptor->mutable_thread();
+        // thread_descriptor->set_pid(
+        //     static_cast<int32>(trace_file.process_id % kLargest31BitPrime));
+        // thread_descriptor->set_tid(
+        //     static_cast<int32>(trace_file.thread_id % kLargest31BitPrime));
 
         auto* track_event = trace_packet.mutable_track_event();
+        // TODO make this better
+        const auto track_uuid = trace_file.process_id ^ trace_file.thread_id;
+        track_event->set_track_uuid(track_uuid);
         switch (static_cast<SpoorEvent::Event::Type>(spoor_event.type)) {
           case SpoorEvent::Type::kFunctionEntry: {
             const auto function_id = spoor_event.payload_1;
             track_event->set_type(TrackEvent::TYPE_SLICE_BEGIN);
-            auto it = function_info_map.find(function_id);
-            if (it != std::cend(function_info_map)) {
-              const auto function_infos = it->second;
-              track_event->set_name(
-                MakeFunctionName(function_id, function_infos));
-            }
-            // track_event->set_name_iid(function_id);
+            track_event->set_name_iid(function_id);
             track_event->set_source_location_iid(function_id);
             break;
           }
           case SpoorEvent::Type::kFunctionExit: {
-            // const auto function_id = spoor_event.payload_1;
             track_event->set_type(TrackEvent::TYPE_SLICE_END);
-            // track_event->set_name_iid(function_id);
-            // track_event->set_source_location_iid(function_id);
             break;
           }
         }
@@ -361,41 +361,86 @@ auto main(const int argc, const char** argv) -> int {
                 });
   std::cerr << "# function infos = " << function_info_map.size() << '\n';
 
+  std::unordered_set<FunctionId> missing_function_info{};
+  std::for_each(
+      std::cbegin(trace_files), std::cend(trace_files),
+      [&](const auto& trace_file) {
+        std::for_each(
+            std::cbegin(trace_file.events), std::cend(trace_file.events),
+            [&](const auto& event) {
+              switch (static_cast<SpoorEvent::Event::Type>(event.type)) {
+                case SpoorEvent::Type::kFunctionEntry: {
+                  const auto function_id = event.payload_1;
+                  if (!function_info_map.contains(function_id)) {
+                    missing_function_info.emplace(function_id);
+                  }
+                  break;
+                }
+                case SpoorEvent::Type::kFunctionExit: {
+                  const auto function_id = event.payload_1;
+                  if (!function_info_map.contains(function_id)) {
+                    missing_function_info.emplace(function_id);
+                  }
+                  break;
+                }
+              }
+            });
+      });
+  std::cerr << "# missing function infos = " << missing_function_info.size()
+            << '\n';
+
+  std::for_each(
+      std::cbegin(missing_function_info), std::cend(missing_function_info),
+      [&function_info_map](const auto function_id) {
+        FunctionInfo function_info{};
+        function_info.set_demangled_name(
+            absl::StrFormat("Function ID: %#016x", function_id));
+        function_info_map.insert({function_id, {function_info}});
+      });
+  std::cerr << "# function infos = " << function_info_map.size() << '\n';
+
+  // TracePacket first_trace_packet{};
+  // first_trace_packet.set_trusted_packet_sequence_id(
+  //    spoor::tools::kTrustedPacketSequenceId);
+  // first_trace_packet.set_previous_packet_dropped(true);
+  // first_trace_packet.set_sequence_flags(
+  //    TracePacket::SEQ_INCREMENTAL_STATE_CLEARED);
+
   TracePacket interned_data_trace_packet{};
   interned_data_trace_packet.set_trusted_packet_sequence_id(
       spoor::tools::kTrustedPacketSequenceId);
-  // interned_data_trace_packet.set_sequence_flags(
-  //     TracePacket::SEQ_NEEDS_INCREMENTAL_STATE);
+  interned_data_trace_packet.set_previous_packet_dropped(true);
+  interned_data_trace_packet.set_sequence_flags(
+      TracePacket::SEQ_INCREMENTAL_STATE_CLEARED);
+
   auto* interned_data = interned_data_trace_packet.mutable_interned_data();
   auto* event_names = interned_data->mutable_event_names();
   event_names->Reserve(function_info_map.size());
-  std::for_each(std::cbegin(function_info_map), std::cend(function_info_map),
-                [&called_function_ids, event_names](const auto& key_value) {
-                  const auto& [function_id, function_info] = key_value;
-                  if (!called_function_ids.contains(function_id)) return;
-                  const auto name = spoor::tools::MakeFunctionName(
-                      function_id, function_info);
-                  EventName event_name{};
-                  event_name.set_iid(function_id);
-                  event_name.set_name(name);
-                  event_names->Add(std::move(event_name));
-                });
+  std::for_each(
+      std::cbegin(function_info_map), std::cend(function_info_map),
+      [&called_function_ids, event_names](const auto& key_value) {
+        const auto& [function_id, function_info] = key_value;
+        if (!called_function_ids.contains(function_id)) return;
+        event_names->Add(
+            spoor::tools::TransformSpoorFunctionInfoMapToPerfettoEventName(
+                function_id, function_info));
+      });
   std::cerr << "# event names = " << event_names->size() << '\n';
   auto* source_locations = interned_data->mutable_source_locations();
   source_locations->Reserve(function_info_map.size());
   std::for_each(
       std::cbegin(function_info_map), std::cend(function_info_map),
       [&called_function_ids, source_locations](const auto& key_value) {
-        const auto& [function_id, _] = key_value;
+        const auto& [function_id, function_info] = key_value;
         if (!called_function_ids.contains(function_id)) return;
         source_locations->Add(
             spoor::tools::TransformSpoorFunctionInfoMapToPerfettoSourceLocation(
-                key_value));
+                function_id, function_info));
       });
   // std::transform(
   //     std::cbegin(function_info_map), std::cend(function_info_map),
   //     RepeatedFieldBackInserter(source_locations),
-  // spoor::tools::TransformSpoorFunctionInfoMapToPerfettoSourceLocation);
+  //     spoor::tools::TransformSpoorFunctionInfoMapToPerfettoSourceLocation);
   std::cerr << "# source locations = " << source_locations->size() << '\n';
 
   Trace trace{};
@@ -403,10 +448,10 @@ auto main(const int argc, const char** argv) -> int {
   packets->Reserve(1 + events_size);
   packets->Add(std::move(interned_data_trace_packet));
   std::for_each(std::cbegin(trace_files), std::cend(trace_files),
-                [packets, &function_info_map](const auto& trace_file) {
+                [packets](const auto& trace_file) {
                   const auto new_packets =
                       spoor::tools::TransformSpoorEventsToPerfettoTracePackets(
-                          trace_file, function_info_map);
+                          trace_file);
                   // TODO transform and pass in extra info to avoid copy
                   std::copy(std::cbegin(new_packets), std::cend(new_packets),
                             RepeatedFieldBackInserter(packets));
@@ -421,6 +466,8 @@ auto main(const int argc, const char** argv) -> int {
   //    "/Users/lelandjansen/Desktop/trace.perfetto"};
   // std::ofstream out_file{};
   // out_file.open(output_path);
+  // trace.SerializeToOstream(&out_file);
+
   trace.SerializeToOstream(&std::cout);
 
   std::cerr << "done\n";
