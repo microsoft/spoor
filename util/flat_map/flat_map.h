@@ -21,8 +21,15 @@ class FlatMap {
 
   constexpr FlatMap(std::initializer_list<ValueType> data);
 
-  [[nodiscard]] constexpr auto At(const Key& key) const -> std::optional<Value>;
+  [[nodiscard]] constexpr auto FirstValueForKey(const Key& key) const
+      -> std::optional<Value>;
+  [[nodiscard]] constexpr auto FirstKeyForValue(const Value& value) const
+      -> std::optional<Key>;
+  [[nodiscard]] constexpr auto Keys() const -> std::array<Key, Size>;
+  [[nodiscard]] constexpr auto Values() const -> std::array<Value, Size>;
 
+  // NOLINTNEXTLINE(readability-identifier-naming)
+  [[nodiscard]] constexpr auto size() const -> decltype(Size);
   // NOLINTNEXTLINE(readability-identifier-naming)
   constexpr auto begin() const -> ConstIterator;
   // NOLINTNEXTLINE(readability-identifier-naming)
@@ -57,13 +64,46 @@ constexpr FlatMap<Key, Value, Size>::FlatMap(
     : data_{*(data.begin() + Indices)...} {}
 
 template <class Key, class Value, std::size_t Size>
-constexpr auto FlatMap<Key, Value, Size>::At(const Key& key) const
+constexpr auto FlatMap<Key, Value, Size>::FirstValueForKey(const Key& key) const
     -> std::optional<Value> {
   const auto iterator = std::find_if(
       std::cbegin(data_), std::cend(data_),
       [&key](const auto& key_value) { return key_value.first == key; });
   if (iterator == std::cend(data_)) return {};
   return iterator->second;
+}
+
+template <class Key, class Value, std::size_t Size>
+constexpr auto FlatMap<Key, Value, Size>::FirstKeyForValue(
+    const Value& value) const -> std::optional<Key> {
+  const auto iterator = std::find_if(
+      std::cbegin(data_), std::cend(data_),
+      [&value](const auto& key_value) { return key_value.second == value; });
+  if (iterator == std::cend(data_)) return {};
+  return iterator->first;
+}
+
+template <class Key, class Value, std::size_t Size>
+constexpr auto FlatMap<Key, Value, Size>::Keys() const
+    -> std::array<Key, Size> {
+  std::array<Key, Size> keys{};
+  std::transform(std::cbegin(data_), std::cend(data_), std::begin(keys),
+                 [](const auto& key_value) { return key_value.first; });
+  return keys;
+}
+
+template <class Key, class Value, std::size_t Size>
+constexpr auto FlatMap<Key, Value, Size>::Values() const
+    -> std::array<Value, Size> {
+  std::array<Value, Size> values{};
+  std::transform(std::cbegin(data_), std::cend(data_), std::begin(values),
+                 [](const auto& key_value) { return key_value.second; });
+  return values;
+}
+
+template <class Key, class Value, std::size_t Size>
+constexpr auto FlatMap<Key, Value, Size>::size() const -> decltype(Size) {
+  return Size;
 }
 
 template <class Key, class Value, std::size_t Size>

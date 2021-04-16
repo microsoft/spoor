@@ -60,7 +60,7 @@ auto GetEnvOrDefault(
     absl::StripAsciiWhitespace(&value);
     absl::AsciiStrToLower(&value);
   }
-  return value_map.At(value).value_or(default_value);
+  return value_map.FirstValueForKey(value).value_or(default_value);
 }
 
 }  // namespace util::env

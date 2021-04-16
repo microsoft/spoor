@@ -44,7 +44,7 @@ TEST(Config, GetsUserProvidedValue) {  // NOLINT
                     {kEventBufferRetentionDurationNanosecondsKey, "42"},
                     {kMaxFlushBufferToFileAttemptsKey, "42"},
                     {kFlushAllEventsKey, "false"}};
-    return environment.At(key).value_or(nullptr).data();
+    return environment.FirstValueForKey(key).value_or(nullptr).data();
   };
   const Config expected_options{
       .trace_file_path = "/path/to/file.extension",

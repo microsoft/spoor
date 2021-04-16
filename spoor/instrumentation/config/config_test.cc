@@ -30,7 +30,7 @@ TEST(Config, GetsUserProvidedValue) {  // NOLINT
                     {kModuleIdKey, "ModuleId"},
                     {kFunctionAllowListFileKey, "/path/to/allow_list.txt"},
                     {kFunctionBlocklistFileKey, "/path/to/blocklist.txt"}};
-    return environment.At(key).value_or(nullptr).data();
+    return environment.FirstValueForKey(key).value_or(nullptr).data();
   };
   const Config expected_options{
       .instrumented_function_map_output_path = "/path/to/output/",
@@ -67,7 +67,7 @@ TEST(Config, UsesDefaultValueForEmptyStringValues) {  // NOLINT
                     {kModuleIdKey, ""},
                     {kFunctionAllowListFileKey, ""},
                     {kFunctionBlocklistFileKey, ""}};
-    return environment.At(key).value_or(nullptr).data();
+    return environment.FirstValueForKey(key).value_or(nullptr).data();
   };
   const Config expected_options{.instrumented_function_map_output_path = "",
                                 .initialize_runtime = true,
