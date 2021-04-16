@@ -55,6 +55,8 @@ InjectRuntime::InjectRuntime(Options&& options)
 
 auto InjectRuntime::run(llvm::Module& llvm_module, llvm::ModuleAnalysisManager&
                         /*unused*/) -> llvm::PreservedAnalyses {
+  if (!options_.inject_instrumentation) return llvm::PreservedAnalyses::all();
+
   auto [instrumented_function_map, modified] = InstrumentModule(&llvm_module);
 
   const auto now = [&] {

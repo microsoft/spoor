@@ -32,6 +32,7 @@ constexpr std::string_view kInstrumentedFunctionMapFileExtension{
 class InjectRuntime : public llvm::PassInfoMixin<InjectRuntime> {
  public:
   struct Options {
+    bool inject_instrumentation;
     std::filesystem::path instrumented_function_map_output_path;
     std::function<std::unique_ptr<llvm::raw_ostream>(
         llvm::StringRef /*file_path*/,
@@ -54,6 +55,7 @@ class InjectRuntime : public llvm::PassInfoMixin<InjectRuntime> {
   auto operator=(InjectRuntime&&) noexcept -> InjectRuntime& = default;
   ~InjectRuntime() = default;
 
+  // LLVM's pass interface require deviating from Spoor's naming convention.
   // NOLINTNEXTLINE(google-runtime-references, readability-identifier-naming)
   auto run(llvm::Module& llvm_module,
            // NOLINTNEXTLINE(google-runtime-references)

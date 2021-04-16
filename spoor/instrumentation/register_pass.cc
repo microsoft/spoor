@@ -13,13 +13,15 @@
 #include <unordered_set>
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/IR/PassManager.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Support/WithColor.h"
 #include "llvm/Support/raw_ostream.h"
-#include "spoor/instrumentation/config/config.h"
+#include "spoor/instrumentation/config/env_config.h"
 #include "spoor/instrumentation/inject_runtime/inject_runtime.h"
 #include "spoor/instrumentation/instrumentation.h"
+#include "spoor/instrumentation/support/support.h"
 #include "util/time/clock.h"
 
 namespace spoor::instrumentation {
@@ -30,37 +32,30 @@ auto PluginInfo() -> llvm::PassPluginLibraryInfo {
         [](llvm::StringRef pass_name, llvm::ModulePassManager& pass_manager,
            llvm::ArrayRef<llvm::PassBuilder::PipelineElement> /*unused*/) {
           if (pass_name != kPluginName.data()) return false;
-          const auto config = config::Config::FromEnv();
+          const auto config = config::ConfigFromEnv();
 
           std::unordered_set<std::string> function_allow_list{};
           if (config.function_allow_list_file.has_value()) {
-            const auto& file_path = config.function_allow_list_file.value();
-            std::ifstream file_stream{file_path};
-            if (!file_stream.is_open()) {
+            std::ifstream file{config.function_allow_list_file.value()};
+            if (!file.is_open()) {
               llvm::WithColor::error();
-              llvm::errs() << "Failed to parse the function allow list file '"
-                           << file_path << "'.\n";
+              llvm::errs() << "Failed to read the function allow list file '"
+                           << config.function_allow_list_file.value() << "'.\n";
               exit(EXIT_FAILURE);
             }
-            std::copy(std::istream_iterator<std::string>(file_stream),
-                      std::istream_iterator<std::string>(),
-                      std::inserter(function_allow_list,
-                                    std::begin(function_allow_list)));
+            function_allow_list = support::ReadLinesToSet(&file);
           }
+
           std::unordered_set<std::string> function_blocklist{};
           if (config.function_blocklist_file.has_value()) {
-            const auto& file_path = config.function_allow_list_file.value();
-            std::ifstream file_stream{file_path};
-            if (!file_stream.is_open()) {
+            std::ifstream file{config.function_blocklist_file.value()};
+            if (!file.is_open()) {
               llvm::WithColor::error();
-              llvm::errs() << "Failed to open the function blocklist file '"
-                           << file_path << "'.\n";
+              llvm::errs() << "Failed to read the function allow list file '"
+                           << config.function_blocklist_file.value() << "'.\n";
               exit(EXIT_FAILURE);
             }
-            std::copy(std::istream_iterator<std::string>(file_stream),
-                      std::istream_iterator<std::string>(),
-                      std::inserter(function_blocklist,
-                                    std::begin(function_blocklist)));
+            function_blocklist = support::ReadLinesToSet(&file);
           }
 
           auto instrumented_function_map_output_stream =
@@ -71,13 +66,14 @@ auto PluginInfo() -> llvm::PassPluginLibraryInfo {
               };
           auto system_clock = std::make_unique<util::time::SystemClock>();
           pass_manager.addPass(inject_runtime::InjectRuntime{{
+              .inject_instrumentation = config.inject_instrumentation,
               .instrumented_function_map_output_path =
                   config.instrumented_function_map_output_path,
               .instrumented_function_map_output_stream =
                   std::move(instrumented_function_map_output_stream),
               .system_clock = std::move(system_clock),
-              .function_allow_list = function_allow_list,
-              .function_blocklist = function_blocklist,
+              .function_allow_list = std::move(function_allow_list),
+              .function_blocklist = std::move(function_blocklist),
               .module_id = config.module_id,
               .min_instruction_count_to_instrument =
                   config.min_instruction_threshold,
@@ -90,7 +86,7 @@ auto PluginInfo() -> llvm::PassPluginLibraryInfo {
   };
   return {.APIVersion = LLVM_PLUGIN_API_VERSION,
           .PluginName = kPluginName.data(),
-          .PluginVersion = kPluginVersion.data(),
+          .PluginVersion = kVersion.data(),
           .RegisterPassBuilderCallbacks = callback};
 }
 

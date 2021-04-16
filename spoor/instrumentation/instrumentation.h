@@ -8,6 +8,6 @@
 namespace spoor::instrumentation {
 
 constexpr std::string_view kPluginName{"inject-spoor-instrumentation"};
-constexpr std::string_view kPluginVersion{"0.0.0"};
+constexpr std::string_view kVersion{"0.0.0"};
 
 }  // namespace spoor::instrumentation
