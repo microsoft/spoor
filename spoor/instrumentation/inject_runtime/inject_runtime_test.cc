@@ -131,7 +131,8 @@ TEST(InjectRuntime, InstrumentsModule) {  // NOLINT
     EXPECT_CALL(*system_clock, Now())
         .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
     InjectRuntime inject_runtime{
-        {.instrumented_function_map_output_path = "/",
+        {.inject_instrumentation = true,
+         .instrumented_function_map_output_path = "/",
          .instrumented_function_map_output_stream = ostream,
          .system_clock = std::move(system_clock),
          .function_allow_list = {},
@@ -345,7 +346,8 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
     EXPECT_CALL(*system_clock, Now())
         .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
     InjectRuntime inject_runtime{
-        {.instrumented_function_map_output_path = "/",
+        {.inject_instrumentation = true,
+         .instrumented_function_map_output_path = "/",
          .instrumented_function_map_output_stream = ostream,
          .system_clock = std::move(system_clock),
          .function_allow_list = {},
@@ -388,7 +390,8 @@ TEST(InjectRuntime, FunctionBlocklist) {  // NOLINT
   EXPECT_CALL(*system_clock, Now())
       .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
   InjectRuntime inject_runtime{
-      {.instrumented_function_map_output_path = "/",
+      {.inject_instrumentation = true,
+       .instrumented_function_map_output_path = "/",
        .instrumented_function_map_output_stream = ostream,
        .system_clock = std::move(system_clock),
        .function_allow_list = {},
@@ -428,7 +431,8 @@ TEST(InjectRuntime, FunctionAllowListOverridesBlocklist) {  // NOLINT
   EXPECT_CALL(*system_clock, Now())
       .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
   InjectRuntime inject_runtime{
-      {.instrumented_function_map_output_path = "/",
+      {.inject_instrumentation = true,
+       .instrumented_function_map_output_path = "/",
        .instrumented_function_map_output_stream = ostream,
        .system_clock = std::move(system_clock),
        .function_allow_list = {"_Z9Fibonaccii"},
@@ -479,7 +483,8 @@ TEST(InjectRuntime, InstructionThreshold) {  // NOLINT
     EXPECT_CALL(*system_clock, Now())
         .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
     InjectRuntime inject_runtime{
-        {.instrumented_function_map_output_path = "/",
+        {.inject_instrumentation = true,
+         .instrumented_function_map_output_path = "/",
          .instrumented_function_map_output_stream = ostream,
          .system_clock = std::move(system_clock),
          .function_allow_list = {},
@@ -521,7 +526,8 @@ TEST(InjectRuntime, AlwaysInstrumentsMain) {  // NOLINT
   EXPECT_CALL(*system_clock, Now())
       .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
   InjectRuntime inject_runtime{
-      {.instrumented_function_map_output_path = "/",
+      {.inject_instrumentation = true,
+       .instrumented_function_map_output_path = "/",
        .instrumented_function_map_output_stream = ostream,
        .system_clock = std::move(system_clock),
        .function_allow_list = {},
@@ -536,6 +542,47 @@ TEST(InjectRuntime, AlwaysInstrumentsMain) {  // NOLINT
   {
     SCOPED_TRACE("Modules are not equal.");
     AssertModulesEqual(parsed_module.get(), expected_instrumented_module.get());
+  }
+}
+
+TEST(InjectRuntime, DoNotInjectInstrumentationConfig) {  // NOLINT
+  llvm::SMDiagnostic expected_module_diagnostic{};
+  llvm::LLVMContext expected_module_context{};
+  auto expected_uninstrumented_module =
+      llvm::parseIRFile(kUninstrumentedIrFile, expected_module_diagnostic,
+                        expected_module_context);
+  ASSERT_NE(expected_uninstrumented_module, nullptr);
+
+  llvm::SMDiagnostic uninstrumented_module_diagnostic{};
+  llvm::LLVMContext uninstrumented_module_context{};
+  auto parsed_module = llvm::parseIRFile(kUninstrumentedIrFile.data(),
+                                         uninstrumented_module_diagnostic,
+                                         uninstrumented_module_context);
+  ASSERT_NE(parsed_module, nullptr);
+
+  const auto ostream = [](const llvm::StringRef /*unused*/,
+                          gsl::not_null<std::error_code*> /*unused*/) {
+    return std::make_unique<llvm::raw_null_ostream>();
+  };
+  auto system_clock = std::make_unique<SystemClockMock>();
+  InjectRuntime inject_runtime{
+      {.inject_instrumentation = false,
+       .instrumented_function_map_output_path = "/",
+       .instrumented_function_map_output_stream = ostream,
+       .system_clock = std::move(system_clock),
+       .function_allow_list = {},
+       .function_blocklist = {},
+       .module_id = {},
+       .min_instruction_count_to_instrument =
+           std::numeric_limits<uint32>::max(),
+       .initialize_runtime = false,
+       .enable_runtime = false}};
+  llvm::ModuleAnalysisManager module_analysis_manager{};
+  inject_runtime.run(*parsed_module, module_analysis_manager);
+  {
+    SCOPED_TRACE("Modules are not equal.");
+    AssertModulesEqual(parsed_module.get(),
+                       expected_uninstrumented_module.get());
   }
 }
 
@@ -579,7 +626,8 @@ TEST(InjectRuntime, InstrumentedFunctionMapFileName) {  // NOLINT
     EXPECT_CALL(*system_clock, Now())
         .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
     InjectRuntime inject_runtime{
-        {.instrumented_function_map_output_path =
+        {.inject_instrumentation = true,
+         .instrumented_function_map_output_path =
              instrumented_function_map_output_path,
          .instrumented_function_map_output_stream = ostream,
          .system_clock = std::move(system_clock),
@@ -615,7 +663,8 @@ TEST(InjectRuntime, AddsTimestamp) {  // NOLINT
   EXPECT_CALL(*system_clock, Now())
       .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(nanoseconds)));
   InjectRuntime inject_runtime{
-      {.instrumented_function_map_output_path = "/path/to/output",
+      {.inject_instrumentation = true,
+       .instrumented_function_map_output_path = "/path/to/output",
        .instrumented_function_map_output_stream = ostream,
        .system_clock = std::move(system_clock),
        .function_allow_list = {},
@@ -658,7 +707,8 @@ TEST(InjectRuntime, ReturnValue) {  // NOLINT
     EXPECT_CALL(*system_clock, Now())
         .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
     InjectRuntime inject_runtime{
-        {.instrumented_function_map_output_path = "/",
+        {.inject_instrumentation = true,
+         .instrumented_function_map_output_path = "/",
          .instrumented_function_map_output_stream = ostream,
          .system_clock = std::move(system_clock),
          .function_allow_list = {},
@@ -698,7 +748,8 @@ TEST(InjectRuntime, ExitsOnOstreamError) {  // NOLINT
   };
   auto system_clock = std::make_unique<SystemClock>();
   InjectRuntime inject_runtime{
-      {.instrumented_function_map_output_path = "/",
+      {.inject_instrumentation = true,
+       .instrumented_function_map_output_path = "/",
        .instrumented_function_map_output_stream = ostream,
        .system_clock = std::move(system_clock),
        .function_allow_list = {},

@@ -53,14 +53,14 @@ auto GetEnvOrDefault(
     const char* key, const T& default_value,
     const util::flat_map::FlatMap<std::string_view, T, Size>& value_map,
     const bool normalize, const GetEnv& get_env) -> T {
-  const auto* user_value = get_env(key);
-  if (user_value == nullptr) return default_value;
-  auto value = std::string{user_value};
+  const auto* user_key = get_env(key);
+  if (user_key == nullptr) return default_value;
+  auto normalized_key = std::string{user_key};
   if (normalize) {
-    absl::StripAsciiWhitespace(&value);
-    absl::AsciiStrToLower(&value);
+    absl::StripAsciiWhitespace(&normalized_key);
+    absl::AsciiStrToLower(&normalized_key);
   }
-  return value_map.FirstValueForKey(value).value_or(default_value);
+  return value_map.FirstValueForKey(normalized_key).value_or(default_value);
 }
 
 }  // namespace util::env

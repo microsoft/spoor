@@ -25,8 +25,8 @@ constexpr std::string_view kTraceFilePathDefaultValue{"."};
 constexpr std::string_view kCompressionStrategyKey{
     "SPOOR_RUNTIME_COMPRESSION_STRATEGY"};
 constexpr util::flat_map::FlatMap<std::string_view, CompressionStrategy, 2>
-    kCompressionStrategyMap{{"none", CompressionStrategy::kNone},
-                            {"snappy", CompressionStrategy::kSnappy}};
+    kCompressionStrategies{{"none", CompressionStrategy::kNone},
+                           {"snappy", CompressionStrategy::kSnappy}};
 constexpr auto kCompressionStrategyDefaultValue{CompressionStrategy::kSnappy};
 constexpr std::string_view kSessionIdKey{"SPOOR_RUNTIME_SESSION_ID"};
 // NOLINTNEXTLINE(fuchsia-statically-constructed-objects)

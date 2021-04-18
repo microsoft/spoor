@@ -15,7 +15,7 @@ auto Config::FromEnv(const util::env::GetEnv& get_env) -> Config {
                               std::string{kTraceFilePathDefaultValue}, get_env),
           .compression_strategy = GetEnvOrDefault(
               kCompressionStrategyKey.data(), kCompressionStrategyDefaultValue,
-              kCompressionStrategyMap, true, get_env),
+              kCompressionStrategies, true, get_env),
           .session_id = GetEnvOrDefault(kSessionIdKey.data(),
                                         kSessionIdDefaultValue(), get_env),
           .thread_event_buffer_capacity =
