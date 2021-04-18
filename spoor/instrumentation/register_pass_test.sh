@@ -28,7 +28,7 @@ OUTPUT_IR_FILE="instrumented.ll"
 
 "$OPT" "$BASE_PATH/test_data/fib.ll" \
   -load-pass-plugin="$PLUGIN" \
-  -passes="inject-spoor-runtime" \
+  -passes="inject-spoor-instrumentation" \
   -S \
   -o "$OUTPUT_IR_FILE"
 

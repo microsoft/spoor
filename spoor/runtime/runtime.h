@@ -141,9 +141,7 @@ bool _spoor_runtime_ConfigEqual(const _spoor_runtime_Config* lhs,
 
 #ifdef __cplusplus
 }
-#endif
 
-#ifdef __cplusplus
 // Implemented in the stub.
 auto operator==(const _spoor_runtime_DeletedFilesInfo& lhs,
                 const _spoor_runtime_DeletedFilesInfo& rhs) -> bool;
