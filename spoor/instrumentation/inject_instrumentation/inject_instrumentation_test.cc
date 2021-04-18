@@ -1,8 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-#include "spoor/instrumentation/inject_runtime/inject_runtime.h"
+#include "spoor/instrumentation/inject_instrumentation/inject_instrumentation.h"
 
+#include <array>
 #include <cstdlib>
 #include <limits>
 #include <sstream>
@@ -36,8 +37,8 @@ using google::protobuf::util::MessageDifferencer;
 using google::protobuf::util::TimeUtil;
 using spoor::FunctionInfo;
 using spoor::InstrumentedFunctionMap;
-using spoor::instrumentation::inject_runtime::InjectRuntime;
-using spoor::instrumentation::inject_runtime::
+using spoor::instrumentation::inject_instrumentation::InjectInstrumentation;
+using spoor::instrumentation::inject_instrumentation::
     kInstrumentedFunctionMapFileExtension;
 using testing::MatchesRegex;
 using testing::Return;
@@ -96,17 +97,17 @@ auto AssertModulesEqual(gsl::not_null<llvm::Module*> computed_module,
   expected_module->setSourceFileName(expected_module_source_file);
 }
 
-TEST(InjectRuntime, InstrumentsModule) {  // NOLINT
-  struct TestCaseConfig {
+TEST(InjectInstrumentation, InstrumentsModule) {  // NOLINT
+  struct alignas(32) TestCaseConfig {
     std::string_view expected_ir_file;
     bool initialize_runtime;
     bool enable_runtime;
   };
-  const std::vector<TestCaseConfig> configs{
-      {kInstrumentedIrFile, false, false},
-      {kInstrumentedIrFile, false, true},
-      {kInstrumentedInitializedIrFile, true, false},
-      {kInstrumentedInitializedEnabledIrFile, true, true}};
+  constexpr std::array<TestCaseConfig, 4> configs{
+      {{kInstrumentedIrFile, false, false},
+       {kInstrumentedIrFile, false, true},
+       {kInstrumentedInitializedIrFile, true, false},
+       {kInstrumentedInitializedEnabledIrFile, true, true}}};
 
   for (const auto& config : configs) {
     llvm::SMDiagnostic instrumented_module_diagnostic{};
@@ -130,7 +131,7 @@ TEST(InjectRuntime, InstrumentsModule) {  // NOLINT
     auto system_clock = std::make_unique<SystemClockMock>();
     EXPECT_CALL(*system_clock, Now())
         .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
-    InjectRuntime inject_runtime{
+    InjectInstrumentation inject_instrumentation{
         {.inject_instrumentation = true,
          .instrumented_function_map_output_path = "/",
          .instrumented_function_map_output_stream = ostream,
@@ -142,7 +143,7 @@ TEST(InjectRuntime, InstrumentsModule) {  // NOLINT
          .initialize_runtime = config.initialize_runtime,
          .enable_runtime = config.enable_runtime}};
     llvm::ModuleAnalysisManager module_analysis_manager{};
-    inject_runtime.run(*parsed_module, module_analysis_manager);
+    inject_instrumentation.run(*parsed_module, module_analysis_manager);
     {
       SCOPED_TRACE("Modules are not equal.");
       AssertModulesEqual(parsed_module.get(),
@@ -151,184 +152,192 @@ TEST(InjectRuntime, InstrumentsModule) {  // NOLINT
   }
 }
 
-TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
+TEST(InjectInstrumentation, OutputsInstrumentedFunctionMap) {  // NOLINT
   const auto make_module_id_hash = [](const std::string_view& module_id) {
     return static_cast<uint64>(CityHash32(module_id.data(), module_id.size()))
            << 32ULL;
   };
-  std::vector<std::pair<std::string_view, InstrumentedFunctionMap>> test_cases{
-      {
-          kUninstrumentedIrFile,
-          [&] {
-            constexpr auto module_id{kUninstrumentedIrFile};
-            const auto module_id_hash = make_module_id_hash(module_id);
+  const std::vector<std::pair<std::string_view, InstrumentedFunctionMap>>
+      test_cases{
+          {
+              kUninstrumentedIrFile,
+              [&] {
+                constexpr auto module_id{kUninstrumentedIrFile};
+                const auto module_id_hash = make_module_id_hash(module_id);
 
-            InstrumentedFunctionMap expected_instrumented_function_map{};
-            expected_instrumented_function_map.set_module_id(module_id.data());
-            *expected_instrumented_function_map.mutable_created_at() =
-                TimeUtil::NanosecondsToTimestamp(0);
-            auto& function_map =
-                *expected_instrumented_function_map.mutable_function_map();
+                InstrumentedFunctionMap expected_instrumented_function_map{};
+                expected_instrumented_function_map.set_module_id(
+                    module_id.data());
+                *expected_instrumented_function_map.mutable_created_at() =
+                    TimeUtil::NanosecondsToTimestamp(0);
+                auto& function_map =
+                    *expected_instrumented_function_map.mutable_function_map();
 
-            FunctionInfo fibonacci_function_info{};
-            fibonacci_function_info.set_linkage_name("_Z9Fibonaccii");
-            fibonacci_function_info.set_demangled_name("Fibonacci(int)");
-            fibonacci_function_info.set_instrumented(true);
-            function_map[module_id_hash | 0ULL] = fibonacci_function_info;
+                FunctionInfo fibonacci_function_info{};
+                fibonacci_function_info.set_linkage_name("_Z9Fibonaccii");
+                fibonacci_function_info.set_demangled_name("Fibonacci(int)");
+                fibonacci_function_info.set_instrumented(true);
+                function_map[module_id_hash | 0ULL] = fibonacci_function_info;
 
-            FunctionInfo main_function_info{};
-            main_function_info.set_linkage_name("main");
-            main_function_info.set_demangled_name("main");
-            main_function_info.set_instrumented(true);
-            function_map[module_id_hash | 1ULL] = main_function_info;
+                FunctionInfo main_function_info{};
+                main_function_info.set_linkage_name("main");
+                main_function_info.set_demangled_name("main");
+                main_function_info.set_instrumented(true);
+                function_map[module_id_hash | 1ULL] = main_function_info;
 
-            return expected_instrumented_function_map;
-          }(),
-      },
-      {
-          kUninstrumentedIrWithDebugInfoCSourceFile,
-          [&] {
-            constexpr auto module_id{kUninstrumentedIrWithDebugInfoCSourceFile};
-            const auto module_id_hash = make_module_id_hash(module_id);
+                return expected_instrumented_function_map;
+              }(),
+          },
+          {
+              kUninstrumentedIrWithDebugInfoCSourceFile,
+              [&] {
+                constexpr auto module_id{
+                    kUninstrumentedIrWithDebugInfoCSourceFile};
+                const auto module_id_hash = make_module_id_hash(module_id);
 
-            InstrumentedFunctionMap expected_instrumented_function_map{};
-            expected_instrumented_function_map.set_module_id(module_id.data());
-            *expected_instrumented_function_map.mutable_created_at() =
-                TimeUtil::NanosecondsToTimestamp(0);
-            auto& function_map =
-                *expected_instrumented_function_map.mutable_function_map();
+                InstrumentedFunctionMap expected_instrumented_function_map{};
+                expected_instrumented_function_map.set_module_id(
+                    module_id.data());
+                *expected_instrumented_function_map.mutable_created_at() =
+                    TimeUtil::NanosecondsToTimestamp(0);
+                auto& function_map =
+                    *expected_instrumented_function_map.mutable_function_map();
 
-            FunctionInfo fibonacci_function_info{};
-            fibonacci_function_info.set_linkage_name("Fibonacci");
-            fibonacci_function_info.set_demangled_name("Fibonacci");
-            fibonacci_function_info.set_file_name("fibonacci.c");
-            fibonacci_function_info.set_directory("/path/to/file");
-            fibonacci_function_info.set_line(1);
-            fibonacci_function_info.set_instrumented(true);
-            function_map[module_id_hash | 0ULL] = fibonacci_function_info;
+                FunctionInfo fibonacci_function_info{};
+                fibonacci_function_info.set_linkage_name("Fibonacci");
+                fibonacci_function_info.set_demangled_name("Fibonacci");
+                fibonacci_function_info.set_file_name("fibonacci.c");
+                fibonacci_function_info.set_directory("/path/to/file");
+                fibonacci_function_info.set_line(1);
+                fibonacci_function_info.set_instrumented(true);
+                function_map[module_id_hash | 0ULL] = fibonacci_function_info;
 
-            FunctionInfo main_function_info{};
-            main_function_info.set_linkage_name("main");
-            main_function_info.set_demangled_name("main");
-            main_function_info.set_file_name("fibonacci.c");
-            main_function_info.set_directory("/path/to/file");
-            main_function_info.set_line(6);
-            main_function_info.set_instrumented(true);
-            function_map[module_id_hash | 1ULL] = main_function_info;
+                FunctionInfo main_function_info{};
+                main_function_info.set_linkage_name("main");
+                main_function_info.set_demangled_name("main");
+                main_function_info.set_file_name("fibonacci.c");
+                main_function_info.set_directory("/path/to/file");
+                main_function_info.set_line(6);
+                main_function_info.set_instrumented(true);
+                function_map[module_id_hash | 1ULL] = main_function_info;
 
-            return expected_instrumented_function_map;
-          }(),
-      },
-      {
-          kUninstrumentedIrWithDebugInfoCppSourceFile,
-          [&] {
-            constexpr auto module_id{
-                kUninstrumentedIrWithDebugInfoCppSourceFile};
-            const auto module_id_hash = make_module_id_hash(module_id);
+                return expected_instrumented_function_map;
+              }(),
+          },
+          {
+              kUninstrumentedIrWithDebugInfoCppSourceFile,
+              [&] {
+                constexpr auto module_id{
+                    kUninstrumentedIrWithDebugInfoCppSourceFile};
+                const auto module_id_hash = make_module_id_hash(module_id);
 
-            InstrumentedFunctionMap expected_instrumented_function_map{};
-            expected_instrumented_function_map.set_module_id(module_id.data());
-            *expected_instrumented_function_map.mutable_created_at() =
-                TimeUtil::NanosecondsToTimestamp(0);
-            auto& function_map =
-                *expected_instrumented_function_map.mutable_function_map();
+                InstrumentedFunctionMap expected_instrumented_function_map{};
+                expected_instrumented_function_map.set_module_id(
+                    module_id.data());
+                *expected_instrumented_function_map.mutable_created_at() =
+                    TimeUtil::NanosecondsToTimestamp(0);
+                auto& function_map =
+                    *expected_instrumented_function_map.mutable_function_map();
 
-            FunctionInfo fibonacci_function_info{};
-            fibonacci_function_info.set_linkage_name("_Z9Fibonaccii");
-            fibonacci_function_info.set_demangled_name("Fibonacci(int)");
-            fibonacci_function_info.set_file_name("fibonacci.cc");
-            fibonacci_function_info.set_directory("/path/to/file");
-            fibonacci_function_info.set_line(1);
-            fibonacci_function_info.set_instrumented(true);
-            function_map[module_id_hash | 0ULL] = fibonacci_function_info;
+                FunctionInfo fibonacci_function_info{};
+                fibonacci_function_info.set_linkage_name("_Z9Fibonaccii");
+                fibonacci_function_info.set_demangled_name("Fibonacci(int)");
+                fibonacci_function_info.set_file_name("fibonacci.cc");
+                fibonacci_function_info.set_directory("/path/to/file");
+                fibonacci_function_info.set_line(1);
+                fibonacci_function_info.set_instrumented(true);
+                function_map[module_id_hash | 0ULL] = fibonacci_function_info;
 
-            FunctionInfo main_function_info{};
-            main_function_info.set_linkage_name("main");
-            main_function_info.set_demangled_name("main");
-            main_function_info.set_file_name("fibonacci.cc");
-            main_function_info.set_directory("/path/to/file");
-            main_function_info.set_line(6);
-            main_function_info.set_instrumented(true);
-            function_map[module_id_hash | 1ULL] = main_function_info;
+                FunctionInfo main_function_info{};
+                main_function_info.set_linkage_name("main");
+                main_function_info.set_demangled_name("main");
+                main_function_info.set_file_name("fibonacci.cc");
+                main_function_info.set_directory("/path/to/file");
+                main_function_info.set_line(6);
+                main_function_info.set_instrumented(true);
+                function_map[module_id_hash | 1ULL] = main_function_info;
 
-            return expected_instrumented_function_map;
-          }(),
-      },
-      {
-          kUninstrumentedIrWithDebugInfoObjcSourceFile,
-          [&] {
-            constexpr auto module_id{
-                kUninstrumentedIrWithDebugInfoObjcSourceFile};
-            const auto module_id_hash = make_module_id_hash(module_id);
+                return expected_instrumented_function_map;
+              }(),
+          },
+          {
+              kUninstrumentedIrWithDebugInfoObjcSourceFile,
+              [&] {
+                constexpr auto module_id{
+                    kUninstrumentedIrWithDebugInfoObjcSourceFile};
+                const auto module_id_hash = make_module_id_hash(module_id);
 
-            InstrumentedFunctionMap expected_instrumented_function_map{};
-            expected_instrumented_function_map.set_module_id(module_id.data());
-            *expected_instrumented_function_map.mutable_created_at() =
-                TimeUtil::NanosecondsToTimestamp(0);
-            auto& function_map =
-                *expected_instrumented_function_map.mutable_function_map();
+                InstrumentedFunctionMap expected_instrumented_function_map{};
+                expected_instrumented_function_map.set_module_id(
+                    module_id.data());
+                *expected_instrumented_function_map.mutable_created_at() =
+                    TimeUtil::NanosecondsToTimestamp(0);
+                auto& function_map =
+                    *expected_instrumented_function_map.mutable_function_map();
 
-            FunctionInfo fibonacci_function_info{};
-            fibonacci_function_info.set_linkage_name(
-                "\001+[Fibonacci compute:]");
-            fibonacci_function_info.set_demangled_name("+[Fibonacci compute:]");
-            fibonacci_function_info.set_file_name("fibonacci.m");
-            fibonacci_function_info.set_directory("/path/to/file");
-            fibonacci_function_info.set_line(6);
-            fibonacci_function_info.set_instrumented(true);
-            function_map[module_id_hash | 0ULL] = fibonacci_function_info;
+                FunctionInfo fibonacci_function_info{};
+                fibonacci_function_info.set_linkage_name(
+                    "\001+[Fibonacci compute:]");
+                fibonacci_function_info.set_demangled_name(
+                    "+[Fibonacci compute:]");
+                fibonacci_function_info.set_file_name("fibonacci.m");
+                fibonacci_function_info.set_directory("/path/to/file");
+                fibonacci_function_info.set_line(6);
+                fibonacci_function_info.set_instrumented(true);
+                function_map[module_id_hash | 0ULL] = fibonacci_function_info;
 
-            FunctionInfo main_function_info{};
-            main_function_info.set_linkage_name("main");
-            main_function_info.set_demangled_name("main");
-            main_function_info.set_file_name("fibonacci.m");
-            main_function_info.set_directory("/path/to/file");
-            main_function_info.set_line(12);
-            main_function_info.set_instrumented(true);
-            function_map[module_id_hash | 1ULL] = main_function_info;
+                FunctionInfo main_function_info{};
+                main_function_info.set_linkage_name("main");
+                main_function_info.set_demangled_name("main");
+                main_function_info.set_file_name("fibonacci.m");
+                main_function_info.set_directory("/path/to/file");
+                main_function_info.set_line(12);
+                main_function_info.set_instrumented(true);
+                function_map[module_id_hash | 1ULL] = main_function_info;
 
-            return expected_instrumented_function_map;
-          }(),
-      },
-      {
-          kUninstrumentedIrWithDebugInfoSwiftSourceFile,
-          [&] {
-            constexpr auto module_id{
-                kUninstrumentedIrWithDebugInfoSwiftSourceFile};
-            const auto module_id_hash = make_module_id_hash(module_id);
+                return expected_instrumented_function_map;
+              }(),
+          },
+          {
+              kUninstrumentedIrWithDebugInfoSwiftSourceFile,
+              [&] {
+                constexpr auto module_id{
+                    kUninstrumentedIrWithDebugInfoSwiftSourceFile};
+                const auto module_id_hash = make_module_id_hash(module_id);
 
-            InstrumentedFunctionMap expected_instrumented_function_map{};
-            expected_instrumented_function_map.set_module_id(module_id.data());
-            *expected_instrumented_function_map.mutable_created_at() =
-                TimeUtil::NanosecondsToTimestamp(0);
-            auto& function_map =
-                *expected_instrumented_function_map.mutable_function_map();
+                InstrumentedFunctionMap expected_instrumented_function_map{};
+                expected_instrumented_function_map.set_module_id(
+                    module_id.data());
+                *expected_instrumented_function_map.mutable_created_at() =
+                    TimeUtil::NanosecondsToTimestamp(0);
+                auto& function_map =
+                    *expected_instrumented_function_map.mutable_function_map();
 
-            FunctionInfo fibonacci_function_info{};
-            fibonacci_function_info.set_linkage_name("$s9fibonacciAAyS2iF");
-            fibonacci_function_info.set_demangled_name(
-                "fibonacci.fibonacci(Swift.Int) -> Swift.Int");
-            fibonacci_function_info.set_file_name("fibonacci.swift");
-            fibonacci_function_info.set_directory("/path/to/file");
-            fibonacci_function_info.set_line(1);
-            fibonacci_function_info.set_instrumented(true);
-            function_map[module_id_hash | 1ULL] = fibonacci_function_info;
+                FunctionInfo fibonacci_function_info{};
+                fibonacci_function_info.set_linkage_name("$s9fibonacciAAyS2iF");
+                fibonacci_function_info.set_demangled_name(
+                    "fibonacci.fibonacci(Swift.Int) -> Swift.Int");
+                fibonacci_function_info.set_file_name("fibonacci.swift");
+                fibonacci_function_info.set_directory("/path/to/file");
+                fibonacci_function_info.set_line(1);
+                fibonacci_function_info.set_instrumented(true);
+                function_map[module_id_hash | 1ULL] = fibonacci_function_info;
 
-            FunctionInfo main_function_info{};
-            main_function_info.set_linkage_name("main");
-            main_function_info.set_demangled_name("main");
-            main_function_info.set_file_name("fibonacci.swift");
-            main_function_info.set_directory("/path/to/file");
-            // Swift automatically adds a `main` function and picks the line
-            // number.
-            main_function_info.set_line(1);
-            main_function_info.set_instrumented(true);
-            function_map[module_id_hash | 0ULL] = main_function_info;
+                FunctionInfo main_function_info{};
+                main_function_info.set_linkage_name("main");
+                main_function_info.set_demangled_name("main");
+                main_function_info.set_file_name("fibonacci.swift");
+                main_function_info.set_directory("/path/to/file");
+                // Swift automatically adds a `main` function and picks the line
+                // number.
+                main_function_info.set_line(1);
+                main_function_info.set_instrumented(true);
+                function_map[module_id_hash | 0ULL] = main_function_info;
 
-            return expected_instrumented_function_map;
-          }(),
-      },
-  };
+                return expected_instrumented_function_map;
+              }(),
+          },
+      };
   for (const auto& [ir_file, expected_instrumented_function_map] : test_cases) {
     llvm::SMDiagnostic instrumented_module_diagnostic{};
     llvm::LLVMContext instrumented_module_context{};
@@ -345,7 +354,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
     auto system_clock = std::make_unique<SystemClockMock>();
     EXPECT_CALL(*system_clock, Now())
         .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
-    InjectRuntime inject_runtime{
+    InjectInstrumentation inject_instrumentation{
         {.inject_instrumentation = true,
          .instrumented_function_map_output_path = "/",
          .instrumented_function_map_output_stream = ostream,
@@ -357,7 +366,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
          .initialize_runtime = false,
          .enable_runtime = false}};
     llvm::ModuleAnalysisManager module_analysis_manager{};
-    inject_runtime.run(*parsed_module, module_analysis_manager);
+    inject_instrumentation.run(*parsed_module, module_analysis_manager);
 
     InstrumentedFunctionMap instrumented_function_map{};
     instrumented_function_map.ParseFromString(buffer);
@@ -367,7 +376,7 @@ TEST(InjectRuntime, OutputsInstrumentedFunctionMap) {  // NOLINT
   }
 }
 
-TEST(InjectRuntime, FunctionBlocklist) {  // NOLINT
+TEST(InjectInstrumentation, FunctionBlocklist) {  // NOLINT
   llvm::SMDiagnostic expected_module_diagnostic{};
   llvm::LLVMContext expected_module_context{};
   auto expected_instrumented_module =
@@ -389,7 +398,7 @@ TEST(InjectRuntime, FunctionBlocklist) {  // NOLINT
   auto system_clock = std::make_unique<SystemClockMock>();
   EXPECT_CALL(*system_clock, Now())
       .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
-  InjectRuntime inject_runtime{
+  InjectInstrumentation inject_instrumentation{
       {.inject_instrumentation = true,
        .instrumented_function_map_output_path = "/",
        .instrumented_function_map_output_stream = ostream,
@@ -401,14 +410,14 @@ TEST(InjectRuntime, FunctionBlocklist) {  // NOLINT
        .initialize_runtime = false,
        .enable_runtime = false}};
   llvm::ModuleAnalysisManager module_analysis_manager{};
-  inject_runtime.run(*parsed_module, module_analysis_manager);
+  inject_instrumentation.run(*parsed_module, module_analysis_manager);
   {
     SCOPED_TRACE("Modules are not equal.");
     AssertModulesEqual(parsed_module.get(), expected_instrumented_module.get());
   }
 }
 
-TEST(InjectRuntime, FunctionAllowListOverridesBlocklist) {  // NOLINT
+TEST(InjectInstrumentation, FunctionAllowListOverridesBlocklist) {  // NOLINT
   llvm::SMDiagnostic expected_module_diagnostic{};
   llvm::LLVMContext expected_module_context{};
   auto expected_instrumented_module =
@@ -430,7 +439,7 @@ TEST(InjectRuntime, FunctionAllowListOverridesBlocklist) {  // NOLINT
   auto system_clock = std::make_unique<SystemClockMock>();
   EXPECT_CALL(*system_clock, Now())
       .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
-  InjectRuntime inject_runtime{
+  InjectInstrumentation inject_instrumentation{
       {.inject_instrumentation = true,
        .instrumented_function_map_output_path = "/",
        .instrumented_function_map_output_stream = ostream,
@@ -442,24 +451,24 @@ TEST(InjectRuntime, FunctionAllowListOverridesBlocklist) {  // NOLINT
        .initialize_runtime = false,
        .enable_runtime = false}};
   llvm::ModuleAnalysisManager module_analysis_manager{};
-  inject_runtime.run(*parsed_module, module_analysis_manager);
+  inject_instrumentation.run(*parsed_module, module_analysis_manager);
   {
     SCOPED_TRACE("Modules are not equal.");
     AssertModulesEqual(parsed_module.get(), expected_instrumented_module.get());
   }
 }
 
-TEST(InjectRuntime, InstructionThreshold) {  // NOLINT
-  struct TestCaseConfig {
+TEST(InjectInstrumentation, InstructionThreshold) {  // NOLINT
+  struct alignas(32) TestCaseConfig {
     std::string_view expected_ir_file;
     uint32 instruction_threshold;
   };
-  const std::vector<TestCaseConfig> configs{
-      {kInstrumentedIrFile, 0},
-      {kInstrumentedIrFile, 8},
-      {kInstrumentedIrFile, 9},
-      {kOnlyMainFunctionInstrumentedIrFile, 10},
-      {kOnlyMainFunctionInstrumentedIrFile, 11}};
+  constexpr std::array<TestCaseConfig, 5> configs{
+      {{kInstrumentedIrFile, 0},
+       {kInstrumentedIrFile, 8},
+       {kInstrumentedIrFile, 9},
+       {kOnlyMainFunctionInstrumentedIrFile, 10},
+       {kOnlyMainFunctionInstrumentedIrFile, 11}}};
   for (const auto& config : configs) {
     llvm::SMDiagnostic expected_module_diagnostic{};
     llvm::LLVMContext expected_module_context{};
@@ -482,7 +491,7 @@ TEST(InjectRuntime, InstructionThreshold) {  // NOLINT
     auto system_clock = std::make_unique<SystemClockMock>();
     EXPECT_CALL(*system_clock, Now())
         .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
-    InjectRuntime inject_runtime{
+    InjectInstrumentation inject_instrumentation{
         {.inject_instrumentation = true,
          .instrumented_function_map_output_path = "/",
          .instrumented_function_map_output_stream = ostream,
@@ -494,7 +503,7 @@ TEST(InjectRuntime, InstructionThreshold) {  // NOLINT
          .initialize_runtime = false,
          .enable_runtime = false}};
     llvm::ModuleAnalysisManager module_analysis_manager{};
-    inject_runtime.run(*parsed_module, module_analysis_manager);
+    inject_instrumentation.run(*parsed_module, module_analysis_manager);
     {
       SCOPED_TRACE("Modules are not equal.");
       AssertModulesEqual(parsed_module.get(),
@@ -503,7 +512,7 @@ TEST(InjectRuntime, InstructionThreshold) {  // NOLINT
   }
 }
 
-TEST(InjectRuntime, AlwaysInstrumentsMain) {  // NOLINT
+TEST(InjectInstrumentation, AlwaysInstrumentsMain) {  // NOLINT
   llvm::SMDiagnostic expected_module_diagnostic{};
   llvm::LLVMContext expected_module_context{};
   auto expected_instrumented_module =
@@ -525,7 +534,7 @@ TEST(InjectRuntime, AlwaysInstrumentsMain) {  // NOLINT
   auto system_clock = std::make_unique<SystemClockMock>();
   EXPECT_CALL(*system_clock, Now())
       .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
-  InjectRuntime inject_runtime{
+  InjectInstrumentation inject_instrumentation{
       {.inject_instrumentation = true,
        .instrumented_function_map_output_path = "/",
        .instrumented_function_map_output_stream = ostream,
@@ -538,14 +547,14 @@ TEST(InjectRuntime, AlwaysInstrumentsMain) {  // NOLINT
        .initialize_runtime = false,
        .enable_runtime = false}};
   llvm::ModuleAnalysisManager module_analysis_manager{};
-  inject_runtime.run(*parsed_module, module_analysis_manager);
+  inject_instrumentation.run(*parsed_module, module_analysis_manager);
   {
     SCOPED_TRACE("Modules are not equal.");
     AssertModulesEqual(parsed_module.get(), expected_instrumented_module.get());
   }
 }
 
-TEST(InjectRuntime, DoNotInjectInstrumentationConfig) {  // NOLINT
+TEST(InjectInstrumentation, DoNotInjectInstrumentationConfig) {  // NOLINT
   llvm::SMDiagnostic expected_module_diagnostic{};
   llvm::LLVMContext expected_module_context{};
   auto expected_uninstrumented_module =
@@ -565,7 +574,7 @@ TEST(InjectRuntime, DoNotInjectInstrumentationConfig) {  // NOLINT
     return std::make_unique<llvm::raw_null_ostream>();
   };
   auto system_clock = std::make_unique<SystemClockMock>();
-  InjectRuntime inject_runtime{
+  InjectInstrumentation inject_instrumentation{
       {.inject_instrumentation = false,
        .instrumented_function_map_output_path = "/",
        .instrumented_function_map_output_stream = ostream,
@@ -578,7 +587,7 @@ TEST(InjectRuntime, DoNotInjectInstrumentationConfig) {  // NOLINT
        .initialize_runtime = false,
        .enable_runtime = false}};
   llvm::ModuleAnalysisManager module_analysis_manager{};
-  inject_runtime.run(*parsed_module, module_analysis_manager);
+  inject_instrumentation.run(*parsed_module, module_analysis_manager);
   {
     SCOPED_TRACE("Modules are not equal.");
     AssertModulesEqual(parsed_module.get(),
@@ -586,7 +595,7 @@ TEST(InjectRuntime, DoNotInjectInstrumentationConfig) {  // NOLINT
   }
 }
 
-TEST(InjectRuntime, InstrumentedFunctionMapFileName) {  // NOLINT
+TEST(InjectInstrumentation, InstrumentedFunctionMapFileName) {  // NOLINT
   llvm::SMDiagnostic expected_module_diagnostic{};
   llvm::LLVMContext expected_module_context{};
   auto expected_instrumented_module =
@@ -625,7 +634,7 @@ TEST(InjectRuntime, InstrumentedFunctionMapFileName) {  // NOLINT
     auto system_clock = std::make_unique<SystemClockMock>();
     EXPECT_CALL(*system_clock, Now())
         .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
-    InjectRuntime inject_runtime{
+    InjectInstrumentation inject_instrumentation{
         {.inject_instrumentation = true,
          .instrumented_function_map_output_path =
              instrumented_function_map_output_path,
@@ -638,7 +647,7 @@ TEST(InjectRuntime, InstrumentedFunctionMapFileName) {  // NOLINT
          .initialize_runtime = false,
          .enable_runtime = false}};
     llvm::ModuleAnalysisManager module_analysis_manager{};
-    inject_runtime.run(*parsed_module, module_analysis_manager);
+    inject_instrumentation.run(*parsed_module, module_analysis_manager);
     const std::string pattern{
         R"(/path/to/output/[a-f0-9]{16}\.spoor_function_map)"};
     ASSERT_THAT(file_name, MatchesRegex(pattern));
@@ -646,7 +655,7 @@ TEST(InjectRuntime, InstrumentedFunctionMapFileName) {  // NOLINT
   }
 }
 
-TEST(InjectRuntime, AddsTimestamp) {  // NOLINT
+TEST(InjectInstrumentation, AddsTimestamp) {  // NOLINT
   llvm::SMDiagnostic module_diagnostic{};
   llvm::LLVMContext module_context{};
   auto parsed_module = llvm::parseIRFile(kUninstrumentedIrFile.data(),
@@ -662,7 +671,7 @@ TEST(InjectRuntime, AddsTimestamp) {  // NOLINT
   auto system_clock = std::make_unique<SystemClockMock>();
   EXPECT_CALL(*system_clock, Now())
       .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(nanoseconds)));
-  InjectRuntime inject_runtime{
+  InjectInstrumentation inject_instrumentation{
       {.inject_instrumentation = true,
        .instrumented_function_map_output_path = "/path/to/output",
        .instrumented_function_map_output_stream = ostream,
@@ -673,7 +682,7 @@ TEST(InjectRuntime, AddsTimestamp) {  // NOLINT
        .initialize_runtime = false,
        .enable_runtime = false}};
   llvm::ModuleAnalysisManager module_analysis_manager{};
-  inject_runtime.run(*parsed_module, module_analysis_manager);
+  inject_instrumentation.run(*parsed_module, module_analysis_manager);
 
   InstrumentedFunctionMap instrumented_function_map{};
   instrumented_function_map.ParseFromString(buffer);
@@ -683,14 +692,13 @@ TEST(InjectRuntime, AddsTimestamp) {  // NOLINT
       nanoseconds);
 }
 
-TEST(InjectRuntime, ReturnValue) {  // NOLINT
-  struct TestCaseConfig {
+TEST(InjectInstrumentation, ReturnValue) {  // NOLINT
+  struct alignas(64) TestCaseConfig {
     std::unordered_set<std::string> function_blocklist;
     bool are_all_preserved;
   };
   const std::vector<TestCaseConfig> configs{{{}, false},
                                             {{"_Z9Fibonaccii"}, true}};
-
   for (const auto& config : configs) {
     llvm::SMDiagnostic module_diagnostic{};
     llvm::LLVMContext module_context{};
@@ -698,7 +706,6 @@ TEST(InjectRuntime, ReturnValue) {  // NOLINT
                                            module_diagnostic, module_context);
     ASSERT_NE(parsed_module, nullptr);
 
-    const std::string path{"/"};
     const auto ostream = [](const llvm::StringRef /*unused*/,
                             gsl::not_null<std::error_code*> /*unused*/) {
       return std::make_unique<llvm::raw_null_ostream>();
@@ -706,7 +713,7 @@ TEST(InjectRuntime, ReturnValue) {  // NOLINT
     auto system_clock = std::make_unique<SystemClockMock>();
     EXPECT_CALL(*system_clock, Now())
         .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
-    InjectRuntime inject_runtime{
+    InjectInstrumentation inject_instrumentation{
         {.inject_instrumentation = true,
          .instrumented_function_map_output_path = "/",
          .instrumented_function_map_output_stream = ostream,
@@ -719,12 +726,12 @@ TEST(InjectRuntime, ReturnValue) {  // NOLINT
          .enable_runtime = false}};
     llvm::ModuleAnalysisManager module_analysis_manager{};
     const auto result =
-        inject_runtime.run(*parsed_module, module_analysis_manager);
+        inject_instrumentation.run(*parsed_module, module_analysis_manager);
     ASSERT_EQ(result.areAllPreserved(), config.are_all_preserved);
   }
 }
 
-TEST(InjectRuntime, ExitsOnOstreamError) {  // NOLINT
+TEST(InjectInstrumentation, ExitsOnOstreamError) {  // NOLINT
   llvm::SMDiagnostic expected_module_diagnostic{};
   llvm::LLVMContext expected_module_context{};
   auto expected_instrumented_module =
@@ -747,7 +754,7 @@ TEST(InjectRuntime, ExitsOnOstreamError) {  // NOLINT
     return std::make_unique<llvm::raw_null_ostream>();
   };
   auto system_clock = std::make_unique<SystemClock>();
-  InjectRuntime inject_runtime{
+  InjectInstrumentation inject_instrumentation{
       {.inject_instrumentation = true,
        .instrumented_function_map_output_path = "/",
        .instrumented_function_map_output_stream = ostream,
@@ -763,7 +770,7 @@ TEST(InjectRuntime, ExitsOnOstreamError) {  // NOLINT
       ".*Failed to open/create the instrumentation map output file '.*'\\. "
       "Permission denied\\..*"};
   ASSERT_DEATH(  // NOLINT
-      inject_runtime.run(*parsed_module, module_analysis_manager),
+      inject_instrumentation.run(*parsed_module, module_analysis_manager),
       MatchesRegex(pattern));
 }
 

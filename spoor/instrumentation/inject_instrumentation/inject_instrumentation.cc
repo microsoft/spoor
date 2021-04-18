@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-#include "spoor/instrumentation/inject_runtime/inject_runtime.h"
+#include "spoor/instrumentation/inject_instrumentation/inject_instrumentation.h"
 
 #include <algorithm>
 #include <cctype>
@@ -37,7 +37,7 @@
 #include "swift/Demangling/Demangler.h"
 #include "util/time/clock.h"
 
-namespace spoor::instrumentation::inject_runtime {
+namespace spoor::instrumentation::inject_instrumentation {
 
 using google::protobuf::util::TimeUtil;
 
@@ -53,11 +53,12 @@ constexpr std::string_view kLogFunctionEntryFunctionName{
 constexpr std::string_view kLogFunctionExitFunctionName{
     "_spoor_runtime_LogFunctionExit"};
 
-InjectRuntime::InjectRuntime(Options&& options)
+InjectInstrumentation::InjectInstrumentation(Options&& options)
     : options_{std::move(options)} {}
 
-auto InjectRuntime::run(llvm::Module& llvm_module, llvm::ModuleAnalysisManager&
-                        /*unused*/) -> llvm::PreservedAnalyses {
+auto InjectInstrumentation::run(llvm::Module& llvm_module,
+                                llvm::ModuleAnalysisManager&
+                                /*unused*/) -> llvm::PreservedAnalyses {
   if (!options_.inject_instrumentation) return llvm::PreservedAnalyses::all();
 
   auto [instrumented_function_map, modified] = InstrumentModule(&llvm_module);
@@ -106,8 +107,9 @@ auto InjectRuntime::run(llvm::Module& llvm_module, llvm::ModuleAnalysisManager&
 }
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
-auto InjectRuntime::InstrumentModule(gsl::not_null<llvm::Module*> llvm_module)
-    const -> std::pair<InstrumentedFunctionMap, bool> {
+auto InjectInstrumentation::InstrumentModule(
+    gsl::not_null<llvm::Module*> llvm_module) const
+    -> std::pair<InstrumentedFunctionMap, bool> {
   const auto& module_id = llvm_module->getModuleIdentifier();
   InstrumentedFunctionMap instrumented_function_map{};
   instrumented_function_map.set_module_id(module_id);
@@ -214,4 +216,4 @@ auto InjectRuntime::InstrumentModule(gsl::not_null<llvm::Module*> llvm_module)
   return {instrumented_function_map, modified};
 }
 
-}  // namespace spoor::instrumentation::inject_runtime
+}  // namespace spoor::instrumentation::inject_instrumentation

@@ -4,9 +4,9 @@
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 cc_library(
-    name = "inject_runtime",
-    srcs = ["inject_runtime.cc"],
-    hdrs = ["inject_runtime.h"],
+    name = "inject_instrumentation",
+    srcs = ["inject_instrumentation.cc"],
+    hdrs = ["inject_instrumentation.h"],
     copts = ["-Werror"],
     visibility = ["//spoor/instrumentation:__pkg__"],
     deps = [
@@ -22,14 +22,14 @@ cc_library(
 )
 
 cc_test(
-    name = "inject_runtime_test",
+    name = "inject_instrumentation_test",
     size = "small",
-    srcs = ["inject_runtime_test.cc"],
+    srcs = ["inject_instrumentation_test.cc"],
     copts = ["-Werror"],
     data = ["//spoor/instrumentation/test_data"],
     visibility = ["//visibility:private"],
     deps = [
-        ":inject_runtime",
+        ":inject_instrumentation",
         "//spoor/proto:spoor_cc_proto",
         "//util:numeric",
         "//util/time:clock",

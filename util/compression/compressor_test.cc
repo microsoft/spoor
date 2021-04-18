@@ -47,7 +47,7 @@ TEST(Compressor, CompressorFactory) {  // NOLINT
 
 TEST(Compressor, CompressesAndUncompressesData) {  // NOLINT
   for (auto& compressor : MakeCompressors(0)) {
-    for (const auto original_data : kTestData) {
+    for (const auto& original_data : kTestData) {
       const gsl::span<const char> original_span{original_data.data(),
                                                 original_data.size()};
       auto const compress_result =
@@ -67,7 +67,7 @@ TEST(Compressor, CompressesAndUncompressesData) {  // NOLINT
 
 TEST(NoneCompressor, CompressedIsUncompressed) {  // NOLINT
   NoneCompressor compressor{};
-  for (const auto original_data : kTestData) {
+  for (const auto& original_data : kTestData) {
     const gsl::span<const char> original_span{original_data.data(),
                                               original_data.size()};
     const auto compressed_result =
@@ -84,7 +84,7 @@ TEST(SnappyCompressor, CompressesData) {  // NOLINT
   constexpr std::string_view abc{"abcabcabcabcabcabcabcabcabcabcabcabc"};
   constexpr std::string_view x{"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"};
   SnappyCompressor compressor{0};
-  for (const auto original_data : {abc, x}) {
+  for (const auto& original_data : {abc, x}) {
     const auto compressed_result =
         compressor.Compress({original_data.data(), original_data.size()});
     ASSERT_TRUE(compressed_result.IsOk());

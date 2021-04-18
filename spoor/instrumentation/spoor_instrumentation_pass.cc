@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-// Register `InjectRuntime` with LLVM's pass manager.
+// Register `InjectInstrumentation` with LLVM's pass manager.
 
 #include <algorithm>
 #include <cstdlib>
@@ -21,7 +21,7 @@
 #include "llvm/Support/WithColor.h"
 #include "llvm/Support/raw_ostream.h"
 #include "spoor/instrumentation/config/env_config.h"
-#include "spoor/instrumentation/inject_runtime/inject_runtime.h"
+#include "spoor/instrumentation/inject_instrumentation/inject_instrumentation.h"
 #include "spoor/instrumentation/instrumentation.h"
 #include "spoor/instrumentation/support/support.h"
 #include "util/time/clock.h"
@@ -67,7 +67,7 @@ auto PluginInfo() -> llvm::PassPluginLibraryInfo {
                                                               *error);
               };
           auto system_clock = std::make_unique<util::time::SystemClock>();
-          pass_manager.addPass(inject_runtime::InjectRuntime{{
+          pass_manager.addPass(inject_instrumentation::InjectInstrumentation{{
               .inject_instrumentation = config.inject_instrumentation,
               .instrumented_function_map_output_path =
                   config.instrumented_function_map_output_path,

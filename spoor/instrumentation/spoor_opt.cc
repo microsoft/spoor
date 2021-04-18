@@ -28,7 +28,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "spoor/instrumentation/config/command_line_config.h"
 #include "spoor/instrumentation/config/config.h"
-#include "spoor/instrumentation/inject_runtime/inject_runtime.h"
+#include "spoor/instrumentation/inject_instrumentation/inject_instrumentation.h"
 #include "spoor/instrumentation/instrumentation.h"
 #include "spoor/instrumentation/support/support.h"
 #include "util/time/clock.h"
@@ -131,22 +131,24 @@ auto main(int argc, char** argv) -> int {
     function_blocklist = ReadLinesToSet(&file);
   }
 
-  spoor::instrumentation::inject_runtime::InjectRuntime inject_runtime{{
-      .inject_instrumentation = config.inject_instrumentation,
-      .instrumented_function_map_output_path =
-          config.instrumented_function_map_output_path,
-      .instrumented_function_map_output_stream =
-          std::move(instrumented_function_map_output_stream),
-      .system_clock = std::move(system_clock),
-      .function_allow_list = std::move(function_allow_list),
-      .function_blocklist = std::move(function_blocklist),
-      .module_id = config.module_id,
-      .min_instruction_count_to_instrument = config.min_instruction_threshold,
-      .initialize_runtime = config.initialize_runtime,
-      .enable_runtime = config.enable_runtime,
-  }};
+  spoor::instrumentation::inject_instrumentation::InjectInstrumentation
+      inject_instrumentation{{
+          .inject_instrumentation = config.inject_instrumentation,
+          .instrumented_function_map_output_path =
+              config.instrumented_function_map_output_path,
+          .instrumented_function_map_output_stream =
+              std::move(instrumented_function_map_output_stream),
+          .system_clock = std::move(system_clock),
+          .function_allow_list = std::move(function_allow_list),
+          .function_blocklist = std::move(function_blocklist),
+          .module_id = config.module_id,
+          .min_instruction_count_to_instrument =
+              config.min_instruction_threshold,
+          .initialize_runtime = config.initialize_runtime,
+          .enable_runtime = config.enable_runtime,
+      }};
   llvm::ModuleAnalysisManager module_analysis_manager{};
-  inject_runtime.run(*llvm_module, module_analysis_manager);
+  inject_instrumentation.run(*llvm_module, module_analysis_manager);
 
   std::error_code create_ostream_error{};
   llvm::raw_fd_ostream ostream{config.output_file, create_ostream_error};
