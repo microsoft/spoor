@@ -154,20 +154,20 @@ TEST(EventLogger, RaiiSubscribeToAndUnsubscribeFromNotifier) {  // NOLINT
 
 TEST(EventLogger, FlushWhenFull) {  // NOLINT
   constexpr SizeType capacity{5};
-  for (const SizeType multiplier : {1, 2, 5, 10}) {
+  for (const auto multiplier : {1, 2, 5, 10}) {
     EventLoggerNotifierMock event_logger_notifier{};
     EXPECT_CALL(event_logger_notifier, Subscribe).RetiresOnSaturation();
     EXPECT_CALL(event_logger_notifier, Unsubscribe).RetiresOnSaturation();
     FlushQueueMock flush_queue{};
     EXPECT_CALL(flush_queue, Enqueue).Times(multiplier).RetiresOnSaturation();
-    Pool pool{
-        {.max_slice_capacity = capacity, .capacity = multiplier * capacity}};
+    Pool pool{{.max_slice_capacity = capacity,
+               .capacity = static_cast<SizeType>(multiplier) * capacity}};
     EventLogger event_logger{{.flush_queue = &flush_queue,
                               .preferred_capacity = capacity,
                               .flush_buffer_when_full = true},
                              &event_logger_notifier};
     event_logger.SetPool(&pool);
-    for (SizeType i{0}; i < multiplier * capacity; ++i) {
+    for (SizeType i{0}; i < static_cast<SizeType>(multiplier) * capacity; ++i) {
       event_logger.LogEvent({});
       ASSERT_EQ(event_logger.Empty(), (i + 1) % capacity == 0);
     }

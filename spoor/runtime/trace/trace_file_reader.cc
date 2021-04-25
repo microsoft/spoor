@@ -42,13 +42,15 @@ auto TraceFileReader::ReadHeader(const std::filesystem::path& file) const
   if (kEndianness != header->endianness) {
     header->version = absl::gbswap_32(header->version);
     header->session_id = absl::gbswap_64(header->session_id);
-    header->process_id = absl::gbswap_64(header->process_id);
+    header->process_id = static_cast<ProcessId>(
+        absl::gbswap_64(static_cast<uint64>(header->process_id)));
     header->thread_id = absl::gbswap_64(header->thread_id);
-    header->system_clock_timestamp =
-        absl::gbswap_64(header->system_clock_timestamp);
-    header->steady_clock_timestamp =
-        absl::gbswap_64(header->steady_clock_timestamp);
-    header->event_count = absl::gbswap_32(header->event_count);
+    header->system_clock_timestamp = static_cast<TimestampNanoseconds>(
+        absl::gbswap_64(static_cast<uint64>(header->system_clock_timestamp)));
+    header->steady_clock_timestamp = static_cast<TimestampNanoseconds>(
+        absl::gbswap_64(static_cast<uint64>(header->steady_clock_timestamp)));
+    header->event_count = static_cast<EventCount>(
+        absl::gbswap_32(static_cast<uint32>(header->event_count)));
   }
   if (header->version != kTraceFileVersion) return Error::kUnknownVersion;
   return *header;

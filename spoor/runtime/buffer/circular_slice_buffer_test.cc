@@ -4,7 +4,6 @@
 #include "spoor/runtime/buffer/circular_slice_buffer.h"
 
 #include <algorithm>
-#include <initializer_list>
 
 #include "gmock/gmock.h"
 #include "gsl/gsl"
@@ -15,7 +14,7 @@
 namespace {
 
 using SlicePool = spoor::runtime::buffer::BufferSlicePool<uint64>;
-using CircularBuffer = spoor::runtime::buffer::CircularBuffer<int64>;
+using CircularBuffer = spoor::runtime::buffer::CircularBuffer<uint64>;
 using ValueType = CircularBuffer::ValueType;
 using SizeType = CircularBuffer::SizeType;
 using CircularSliceBuffer =

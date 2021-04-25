@@ -22,7 +22,7 @@ cc_binary(
         "@com_google_absl//absl/flags:usage",
         "@com_google_absl//absl/strings",
         "@com_microsoft_gsl//:gsl",
-        "@llvm//11.0.0",
+        "@llvm//12.0.0",
     ],
 )
 
@@ -46,7 +46,7 @@ SHARED_LIBRARY_DEPS = [
     "//spoor/instrumentation/inject_runtime",
     "//spoor/instrumentation/support",
     "//util/time:clock",
-    "@llvm//11.0.0",
+    "@llvm//12.0.0",
 ]
 
 cc_binary(

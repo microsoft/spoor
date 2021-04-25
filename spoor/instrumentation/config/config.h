@@ -17,7 +17,7 @@ enum class OutputLanguage {
   kIr,
 };
 
-struct Config {
+struct alignas(128) Config {
   // Alphabetized to match the order printed in --help.
   bool enable_runtime;
   bool force_binary_output;

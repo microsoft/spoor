@@ -9,6 +9,8 @@
 #include <string_view>
 #include <vector>
 
+#include "external/com_microsoft_gsl/_virtual_includes/gsl/gsl/util"
+#include "gsl/gsl"
 #include "gtest/gtest.h"
 #include "spoor/instrumentation/config/config.h"
 #include "spoor/instrumentation/config/env_config.h"
@@ -68,8 +70,8 @@ TEST(CommandLineConfig, ParsesCommandLine) {  // NOLINT
        "--min_instruction_threshold=42", "--module_id=ModuleId",
        "--output_file=/path/to/output_file.ll", "--output_language=ir"});
   const auto expected_positional_args = MakeArgv({argv.front()});
-  const auto [config, positional_args] =
-      ConfigFromCommandLineOrEnv(argv.size(), argv.data(), get_env);
+  const auto [config, positional_args] = ConfigFromCommandLineOrEnv(
+      gsl::narrow_cast<int>(argv.size()), argv.data(), get_env);
   ASSERT_EQ(config, expected_config);
   ASSERT_EQ(positional_args, expected_positional_args);
 }
@@ -90,8 +92,8 @@ TEST(CommandLineConfig, UsesDefaultValueWhenNotSpecified) {  // NOLINT
                                .output_file = "-",
                                .output_language = OutputLanguage::kBitcode};
   auto argv = MakeArgv({"spoor_opt"});
-  const auto [config, positional_args] =
-      ConfigFromCommandLineOrEnv(argv.size(), argv.data(), get_env);
+  const auto [config, positional_args] = ConfigFromCommandLineOrEnv(
+      gsl::narrow_cast<int>(argv.size()), argv.data(), get_env);
   ASSERT_EQ(config, expected_config);
   ASSERT_EQ(positional_args, argv);
 }
@@ -125,8 +127,8 @@ TEST(CommandLineConfig, UsesEnvironmentValueWhenNotSpecified) {  // NOLINT
       .output_file = "/path/to/output_file.ll",
       .output_language = OutputLanguage::kIr};
   auto argv = MakeArgv({"spoor_opt"});
-  const auto [config, positional_args] =
-      ConfigFromCommandLineOrEnv(argv.size(), argv.data(), get_env);
+  const auto [config, positional_args] = ConfigFromCommandLineOrEnv(
+      gsl::narrow_cast<int>(argv.size()), argv.data(), get_env);
   ASSERT_EQ(config, expected_config);
   ASSERT_EQ(positional_args, argv);
 }
@@ -169,8 +171,8 @@ TEST(CommandLineConfig, OverridesEnvironment) {  // NOLINT
        "--min_instruction_threshold=42", "--module_id=ModuleId",
        "--output_file=/path/to/output_file.ll", "--output_language=ir"});
   const auto expected_positional_args = MakeArgv({argv.front()});
-  const auto [config, positional_args] =
-      ConfigFromCommandLineOrEnv(argv.size(), argv.data(), get_env);
+  const auto [config, positional_args] = ConfigFromCommandLineOrEnv(
+      gsl::narrow_cast<int>(argv.size()), argv.data(), get_env);
   ASSERT_EQ(config, expected_config);
   ASSERT_EQ(positional_args, expected_positional_args);
 }
@@ -183,8 +185,8 @@ TEST(CommandLineConfig, PositionalArguments) {  // NOLINT
                         "--enable_runtime=true"});
   auto expected_positional_args =
       MakeArgv({"spoor_opt", "-", "--enable_runtime=true"});
-  const auto [_, positional_args] =
-      ConfigFromCommandLineOrEnv(argv.size(), argv.data(), get_env);
+  const auto [_, positional_args] = ConfigFromCommandLineOrEnv(
+      gsl::narrow_cast<int>(argv.size()), argv.data(), get_env);
   ASSERT_EQ(positional_args, expected_positional_args);
 }
 

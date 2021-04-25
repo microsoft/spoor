@@ -41,7 +41,9 @@ auto PluginInfo() -> llvm::PassPluginLibraryInfo {
               llvm::WithColor::error();
               llvm::errs() << "Failed to read the function allow list file '"
                            << config.function_allow_list_file.value() << "'.\n";
-              exit(EXIT_FAILURE);
+              // TODO(#118): Investigate error handling techniques and thread
+              // safety.
+              std::exit(EXIT_FAILURE);  // NOLINT(concurrency-mt-unsafe)
             }
             function_allow_list = support::ReadLinesToSet(&file);
           }
@@ -53,7 +55,9 @@ auto PluginInfo() -> llvm::PassPluginLibraryInfo {
               llvm::WithColor::error();
               llvm::errs() << "Failed to read the function allow list file '"
                            << config.function_blocklist_file.value() << "'.\n";
-              exit(EXIT_FAILURE);
+              // TODO(#118): Investigate error handling techniques and thread
+              // safety.
+              std::exit(EXIT_FAILURE);  // NOLINT(concurrency-mt-unsafe)
             }
             function_blocklist = support::ReadLinesToSet(&file);
           }
