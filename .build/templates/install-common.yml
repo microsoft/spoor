@@ -14,11 +14,5 @@ steps:
     echo '##vso[task.prependpath]/usr/local/opt/llvm/bin'
   displayName: Install LLVM (macOS)
   condition: eq(variables['Agent.OS'], 'Darwin')
-- script: apt-get install protobuf-compiler
-  displayName: Install Protocol Buffer compiler (Linux)
-  condition: eq(variables['Agent.OS'], 'Linux')
-- script: brew install protobuf
-  displayName: Install Protocol Buffer compiler (macOS)
-  condition: eq(variables['Agent.OS'], 'Darwin')
 - script: cp ./.build/ci.bazelrc ./.bazelrc
   displayName: Copy .bazelrc
