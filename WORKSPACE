@@ -128,3 +128,17 @@ go_register_toolchains()
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
 
 gazelle_dependencies()
+
+http_archive(
+    name = "build_bazel_rules_apple",
+    sha256 = "0d95a266753e133302662721d0a924e0c57f198825d89813131a75e92ec6b1bb",
+    strip_prefix = "rules_apple-0.31.1",
+    url = "https://github.com/bazelbuild/rules_apple/archive/0.31.1.zip",
+)
+
+load(
+    "@build_bazel_rules_apple//apple:repositories.bzl",
+    "apple_rules_dependencies",
+)
+
+apple_rules_dependencies()

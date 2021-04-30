@@ -1,0 +1,33 @@
+
+<Scheme version="1.3" LastUpgradeVersion="1000">
+    <BuildAction buildImplicitDependencies="YES" parallelizeBuildables="YES">
+        <BuildActionEntries>
+            <BuildActionEntry buildForRunning="YES" buildForArchiving="YES" buildForProfiling="YES" buildForAnalyzing="YES" buildForTesting="YES">
+                <BuildableReference BuildableIdentifier="primary" BlueprintName="objc_runtime_wrapper_tests" ReferencedContainer="container:Spoor.xcodeproj" BlueprintIdentifier="758D42AB5C1C2B6000000000" BuildableName="objc_runtime_wrapper_tests.xctest"></BuildableReference>
+            </BuildActionEntry>
+        </BuildActionEntries>
+    </BuildAction>
+    <TestAction selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" shouldUseLaunchSchemeArgsEnv="YES" buildConfiguration="__TulsiTestRunner_Debug" customLLDBInitFile="$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB">
+        <Testables>
+            <TestableReference skipped="NO">
+                <BuildableReference ReferencedContainer="container:Spoor.xcodeproj" BuildableIdentifier="primary" BlueprintName="objc_runtime_wrapper_tests" BuildableName="objc_runtime_wrapper_tests.xctest" BlueprintIdentifier="758D42AB5C1C2B6000000000"></BuildableReference>
+            </TestableReference>
+        </Testables>
+        <BuildableProductRunnable runnableDebuggingMode="0">
+            <BuildableReference BlueprintIdentifier="758D42AB5C1C2B6000000000" ReferencedContainer="container:Spoor.xcodeproj" BuildableIdentifier="primary" BlueprintName="objc_runtime_wrapper_tests" BuildableName="objc_runtime_wrapper_tests.xctest"></BuildableReference>
+        </BuildableProductRunnable>
+    </TestAction>
+    <LaunchAction debugServiceExtension="internal" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" buildConfiguration="Debug" launchStyle="0" useCustomWorkingDirectory="NO" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" customLLDBInitFile="$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit" ignoresPersistentStateOnLaunch="NO" allowLocationSimulation="YES" debugDocumentVersioning="YES">
+        <EnvironmentVariables></EnvironmentVariables>
+        <MacroExpansion>
+            <BuildableReference BuildableIdentifier="primary" ReferencedContainer="container:Spoor.xcodeproj" BlueprintIdentifier="758D42AB5C1C2B6000000000" BuildableName="objc_runtime_wrapper_tests.xctest" BlueprintName="objc_runtime_wrapper_tests"></BuildableReference>
+        </MacroExpansion>
+    </LaunchAction>
+    <ProfileAction buildConfiguration="__TulsiTestRunner_Release" shouldUseLaunchSchemeArgsEnv="YES" debugDocumentVersioning="YES" useCustomWorkingDirectory="NO">
+        <MacroExpansion>
+            <BuildableReference BlueprintName="objc_runtime_wrapper_tests" ReferencedContainer="container:Spoor.xcodeproj" BuildableIdentifier="primary" BlueprintIdentifier="758D42AB5C1C2B6000000000" BuildableName="objc_runtime_wrapper_tests.xctest"></BuildableReference>
+        </MacroExpansion>
+    </ProfileAction>
+    <AnalyzeAction buildConfiguration="Debug"></AnalyzeAction>
+    <ArchiveAction revealArchiveInOrganizer="YES" buildConfiguration="Release"></ArchiveAction>
+</Scheme>
