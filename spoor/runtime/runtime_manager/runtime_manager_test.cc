@@ -322,14 +322,13 @@ TEST(RuntimeManager, DeleteFlushedTraceFilesOlderThan) {  // NOLINT
     const auto timestamp = make_timestamp(i) - 1'000;
 
     RuntimeManager::DeletedFilesInfo expected_deleted_files_info{
-        .deleted_bytes =
-            [&] {
-              // 2^0 + 2^1 + ... + 2^(n - 1) == 2^n - 1
-              const auto shift{static_cast<uint64>(
-                  std::min(std::max(i, 0), trace_files_size))};
-              return gsl::narrow_cast<int64>((1ULL << shift) - 1);
-            }(),
-        .deleted_files = std::max(0, std::min(i, trace_files_size))};
+        .deleted_files = std::max(0, std::min(i, trace_files_size)),
+        .deleted_bytes = [&] {
+          // 2^0 + 2^1 + ... + 2^(n - 1) == 2^n - 1
+          const auto shift{
+              static_cast<uint64>(std::min(std::max(i, 0), trace_files_size))};
+          return gsl::narrow_cast<int64>((1ULL << shift) - 1);
+        }()};
 
     MockFunction<void(RuntimeManager::DeletedFilesInfo)> callback{};
     absl::Notification done{};
@@ -346,12 +345,12 @@ TEST(RuntimeManager, DeleteFlushedTraceFilesOlderThan) {  // NOLINT
 }
 
 TEST(RuntimeManagerDeletedFilesInfo, Equality) {  // NOLINT
-  RuntimeManager::DeletedFilesInfo info_a{.deleted_bytes = 2,
-                                          .deleted_files = 1};
-  RuntimeManager::DeletedFilesInfo info_b{.deleted_bytes = 2,
-                                          .deleted_files = 1};
-  RuntimeManager::DeletedFilesInfo info_c{.deleted_bytes = 1,
-                                          .deleted_files = 2};
+  RuntimeManager::DeletedFilesInfo info_a{.deleted_files = 1,
+                                          .deleted_bytes = 2};
+  RuntimeManager::DeletedFilesInfo info_b{.deleted_files = 1,
+                                          .deleted_bytes = 2};
+  RuntimeManager::DeletedFilesInfo info_c{.deleted_files = 2,
+                                          .deleted_bytes = 1};
   ASSERT_EQ(info_a, info_b);
   ASSERT_NE(info_b, info_c);
 }

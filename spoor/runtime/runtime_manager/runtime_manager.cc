@@ -133,14 +133,14 @@ auto RuntimeManager::LogFunctionExit(const trace::FunctionId function_id)
            function_id, 0);
 }
 
-auto RuntimeManager::Flush(const std::function<void()>& completion) -> void {
+auto RuntimeManager::Flush(std::function<void()> completion) -> void {
   {
     std::unique_lock lock{lock_};
     for (auto* event_logger : event_loggers_) {
       event_logger->Flush();
     }
   }
-  options_.flush_queue->Flush(completion);
+  options_.flush_queue->Flush(std::move(completion));
 }
 
 auto RuntimeManager::Clear() -> void {

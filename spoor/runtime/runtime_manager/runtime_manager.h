@@ -42,8 +42,8 @@ class RuntimeManager final : public event_logger::EventLoggerNotifier {
   };
 
   struct alignas(16) DeletedFilesInfo {
-    int64 deleted_bytes;
     int32 deleted_files;
+    int64 deleted_bytes;
   };
 
   RuntimeManager() = delete;
@@ -72,7 +72,7 @@ class RuntimeManager final : public event_logger::EventLoggerNotifier {
   auto LogFunctionEntry(trace::FunctionId function_id) -> void;
   auto LogFunctionExit(trace::FunctionId function_id) -> void;
 
-  auto Flush(const std::function<void()>& completion) -> void;
+  auto Flush(std::function<void()> completion) -> void;
   auto Clear() -> void;
 
   [[nodiscard]] auto Initialized() const -> bool;
@@ -129,7 +129,7 @@ auto RuntimeManager::DeleteFlushedTraceFilesOlderThan(
     std::function<void(DeletedFilesInfo)> completion) -> void {
   std::thread{[directory_begin, directory_end, file_system, trace_reader,
                timestamp, completion{std::move(completion)}] {
-    DeletedFilesInfo deleted_files_info{.deleted_bytes = 0, .deleted_files = 0};
+    DeletedFilesInfo deleted_files_info{.deleted_files = 0, .deleted_bytes = 0};
     for (auto file{directory_begin}; file != directory_end; ++file) {
       if (!trace_reader->MatchesTraceFileConvention(file->path())) {
         continue;
