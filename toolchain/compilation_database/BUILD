@@ -8,6 +8,14 @@ load(
     "cc_proto_library",
     "cc_test",
 )
+load("@rules_proto//proto:defs.bzl", "proto_library")
+load(
+    "//toolchain:config.bzl",
+    "SPOOR_DEFAULT_COPTS",
+    "SPOOR_DEFAULT_LINKOPTS",
+    "SPOOR_DEFAULT_TEST_COPTS",
+    "SPOOR_DEFAULT_TEST_LINKOPTS",
+)
 
 cc_proto_library(
     name = "extra_actions_base_cc_proto",
@@ -32,7 +40,8 @@ cc_library(
     name = "compilation_database_util",
     srcs = ["compilation_database_util.cc"],
     hdrs = ["compilation_database_util.h"],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
     visibility = ["//visibility:private"],
     deps = [
         ":compile_commands_cc_proto",
@@ -48,7 +57,8 @@ cc_test(
     name = "compilation_database_util_test",
     size = "small",
     srcs = ["compilation_database_util_test.cc"],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_TEST_COPTS,
+    linkopts = SPOOR_DEFAULT_TEST_LINKOPTS,
     visibility = ["//visibility:private"],
     deps = [
         ":compilation_database_util",
@@ -62,7 +72,8 @@ cc_binary(
     srcs = [
         "extract_compile_command.cc",
     ],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
     visibility = ["//visibility:public"],
     deps = [
         ":compilation_database_util",
@@ -76,7 +87,8 @@ cc_binary(
 cc_binary(
     name = "concatenate_compile_commands",
     srcs = ["concatenate_compile_commands.cc"],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
     visibility = ["//visibility:public"],
     deps = [
         ":compilation_database_util",

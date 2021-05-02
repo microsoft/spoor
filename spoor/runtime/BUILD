@@ -3,6 +3,13 @@
 
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 load("//toolchain:cc_static_library.bzl", "cc_static_library")
+load(
+    "//toolchain:config.bzl",
+    "SPOOR_DEFAULT_COPTS",
+    "SPOOR_DEFAULT_LINKOPTS",
+    "SPOOR_DEFAULT_TEST_COPTS",
+    "SPOOR_DEFAULT_TEST_LINKOPTS",
+)
 
 cc_library(
     name = "runtime",
@@ -11,7 +18,8 @@ cc_library(
         "runtime_common.cc",
     ],
     hdrs = ["runtime.h"],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
     visibility = ["//visibility:public"],
     deps = [
         "//spoor/runtime/config",
@@ -38,7 +46,8 @@ cc_library(
         "runtime_stub.cc",
     ],
     hdrs = ["runtime.h"],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
     visibility = ["//visibility:public"],
     deps = ["@com_microsoft_gsl//:gsl"],
 )
@@ -56,7 +65,8 @@ cc_test(
         "runtime_common_test.cc",
         "runtime_test.cc",
     ],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_TEST_COPTS,
+    linkopts = SPOOR_DEFAULT_TEST_LINKOPTS,
     visibility = ["//visibility:private"],
     deps = [
         ":runtime",
@@ -71,7 +81,8 @@ cc_test(
     name = "runtime_stub_test",
     size = "small",
     srcs = ["runtime_stub_test.cc"],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_TEST_COPTS,
+    linkopts = SPOOR_DEFAULT_TEST_LINKOPTS,
     visibility = ["//visibility:private"],
     deps = [
         ":runtime_stub",

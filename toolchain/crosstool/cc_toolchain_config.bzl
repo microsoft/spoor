@@ -24,9 +24,9 @@ FEATURES = [
                 flag_groups = ([
                     flag_group(
                         flags = [
-                            "-lstdc++",
-                            "-lpthread",
+                            "-lc++",
                             "-lm",
+                            "-lpthread",
                             "-lz",
                         ],
                     ),
@@ -39,9 +39,7 @@ FEATURES = [
         enabled = True,
         flag_sets = [
             flag_set(
-                actions = [
-                    ACTION_NAMES.cpp_compile,
-                ],
+                actions = [ACTION_NAMES.cpp_compile],
                 flag_groups = ([
                     flag_group(
                         flags = [

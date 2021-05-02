@@ -2,6 +2,13 @@
 # Licensed under the MIT License.
 
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load(
+    "//toolchain:config.bzl",
+    "SPOOR_DEFAULT_COPTS",
+    "SPOOR_DEFAULT_LINKOPTS",
+    "SPOOR_DEFAULT_TEST_COPTS",
+    "SPOOR_DEFAULT_TEST_LINKOPTS",
+)
 
 cc_library(
     name = "trace",
@@ -16,7 +23,8 @@ cc_library(
         "trace_reader.h",
         "trace_writer.h",
     ],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
     visibility = ["//spoor/runtime:__subpackages__"],
     deps = [
         "//spoor/runtime/buffer",
@@ -33,7 +41,8 @@ cc_test(
     name = "trace_test",
     size = "small",
     srcs = ["trace_test.cc"],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_TEST_COPTS,
+    linkopts = SPOOR_DEFAULT_TEST_LINKOPTS,
     visibility = ["//visibility:private"],
     deps = [
         ":trace",
@@ -46,7 +55,8 @@ cc_test(
     name = "trace_file_writer_test",
     size = "small",
     srcs = ["trace_file_writer_test.cc"],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_TEST_COPTS,
+    linkopts = SPOOR_DEFAULT_TEST_LINKOPTS,
     visibility = ["//visibility:private"],
     deps = [
         ":trace",
@@ -64,7 +74,8 @@ cc_library(
         "trace_reader_mock.h",
         "trace_writer_mock.h",
     ],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
     visibility = ["//spoor/runtime:__subpackages__"],
     deps = [
         ":trace",

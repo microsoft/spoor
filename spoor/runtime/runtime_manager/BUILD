@@ -2,12 +2,20 @@
 # Licensed under the MIT License.
 
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load(
+    "//toolchain:config.bzl",
+    "SPOOR_DEFAULT_COPTS",
+    "SPOOR_DEFAULT_LINKOPTS",
+    "SPOOR_DEFAULT_TEST_COPTS",
+    "SPOOR_DEFAULT_TEST_LINKOPTS",
+)
 
 cc_library(
     name = "runtime_manager",
     srcs = ["runtime_manager.cc"],
     hdrs = ["runtime_manager.h"],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
     visibility = ["//spoor/runtime:__pkg__"],
     deps = [
         "//spoor/runtime/buffer",
@@ -25,7 +33,8 @@ cc_test(
     name = "runtime_manager_test",
     size = "small",
     srcs = ["runtime_manager_test.cc"],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_TEST_COPTS,
+    linkopts = SPOOR_DEFAULT_TEST_LINKOPTS,
     visibility = ["//visibility:private"],
     deps = [
         ":runtime_manager",
@@ -46,7 +55,8 @@ cc_test(
 cc_binary(
     name = "runtime_manager_benchmark",
     srcs = ["runtime_manager_benchmark.cc"],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
     visibility = ["//visibility:private"],
     deps = [
         ":runtime_manager",

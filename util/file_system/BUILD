@@ -1,6 +1,15 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load(
+    "//toolchain:config.bzl",
+    "SPOOR_DEFAULT_COPTS",
+    "SPOOR_DEFAULT_LINKOPTS",
+    "SPOOR_DEFAULT_TEST_COPTS",
+    "SPOOR_DEFAULT_TEST_LINKOPTS",
+)
+
 cc_library(
     name = "file_system",
     srcs = [
@@ -13,7 +22,8 @@ cc_library(
         "local_file_system.h",
         "local_file_writer.h",
     ],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
     visibility = ["//visibility:public"],
     deps = [
         "//util:result",
@@ -29,7 +39,8 @@ cc_library(
         "file_system_mock.h",
         "file_writer_mock.h",
     ],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_TEST_LINKOPTS,
     visibility = ["//visibility:public"],
     deps = [
         ":file_system",

@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
+load("//toolchain:config.bzl", "SPOOR_DEFAULT_COPTS", "SPOOR_DEFAULT_LINKOPTS")
 
 cc_library(
     name = "instrumentation_info",
@@ -13,7 +14,8 @@ cc_library(
 cc_binary(
     name = "spoor_opt",
     srcs = ["spoor_opt.cc"],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
     visibility = ["//visibility:public"],
     deps = [
         ":instrumentation_info",
@@ -27,17 +29,21 @@ cc_binary(
         "@com_google_absl//absl/flags:usage",
         "@com_google_absl//absl/strings",
         "@com_microsoft_gsl//:gsl",
-        "@llvm//12.0.0",
+        "@llvm-project//llvm:Core",
+        "@llvm-project//llvm:Passes",
+        "@llvm-project//llvm:Support",
     ],
 )
+
+# TODO(#131): Fix `opt` pass plugin support for IR instrumentation. Spoor pass
+# plugins are broken (see ticket) but are still built to prevent further
+# regression.
 
 # Hack to produce a shared library with the correct extension for each platform.
 
 SHARED_LIBRARY_NAME = "spoor_instrumentation"
 
 SHARED_LIBRARY_SRCS = ["spoor_instrumentation_pass.cc"]
-
-SHARED_LIBRARY_COPTS = ["-Werror"]
 
 SHARED_LIBRARY_LINKSHARED = True
 
@@ -50,13 +56,16 @@ SHARED_LIBRARY_DEPS = [
     "//spoor/instrumentation/support",
     "//util/time:clock",
     "@com_google_absl//absl/strings:str_format",
-    "@llvm//12.0.0",
+    "@llvm-project//llvm:Support",
+    "@llvm-project//llvm:Core",
+    "@llvm-project//llvm:Passes",
 ]
 
 cc_binary(
     name = "lib" + SHARED_LIBRARY_NAME + ".so",
     srcs = SHARED_LIBRARY_SRCS,
-    copts = SHARED_LIBRARY_COPTS,
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
     linkshared = SHARED_LIBRARY_LINKSHARED,
     visibility = SHARED_LIBRARY_VISIBILITY,
     deps = SHARED_LIBRARY_DEPS,
@@ -65,7 +74,8 @@ cc_binary(
 cc_binary(
     name = "lib" + SHARED_LIBRARY_NAME + ".dylib",
     srcs = SHARED_LIBRARY_SRCS,
-    copts = SHARED_LIBRARY_COPTS,
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
     linkshared = SHARED_LIBRARY_LINKSHARED,
     visibility = SHARED_LIBRARY_VISIBILITY,
     deps = SHARED_LIBRARY_DEPS,

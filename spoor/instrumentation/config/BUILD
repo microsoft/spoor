@@ -2,12 +2,20 @@
 # Licensed under the MIT License.
 
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load(
+    "//toolchain:config.bzl",
+    "SPOOR_DEFAULT_COPTS",
+    "SPOOR_DEFAULT_LINKOPTS",
+    "SPOOR_DEFAULT_TEST_COPTS",
+    "SPOOR_DEFAULT_TEST_LINKOPTS",
+)
 
 cc_library(
     name = "config",
     srcs = ["config.cc"],
     hdrs = ["config.h"],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
     visibility = ["//spoor/instrumentation:__pkg__"],
     deps = [
         "//util:numeric",
@@ -20,7 +28,8 @@ cc_library(
     name = "env_config",
     srcs = ["env_config.cc"],
     hdrs = ["env_config.h"],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
     visibility = ["//spoor/instrumentation:__pkg__"],
     deps = [
         ":config",
@@ -33,7 +42,8 @@ cc_library(
     name = "command_line_config",
     srcs = ["command_line_config.cc"],
     hdrs = ["command_line_config.h"],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
     visibility = ["//spoor/instrumentation:__pkg__"],
     deps = [
         ":config",
@@ -51,7 +61,8 @@ cc_test(
     name = "config_test",
     size = "small",
     srcs = ["config_test.cc"],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_TEST_COPTS,
+    linkopts = SPOOR_DEFAULT_TEST_LINKOPTS,
     visibility = ["//visibility:private"],
     deps = [
         ":config",
@@ -63,7 +74,8 @@ cc_test(
     name = "env_config_test",
     size = "small",
     srcs = ["env_config_test.cc"],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_TEST_COPTS,
+    linkopts = SPOOR_DEFAULT_TEST_LINKOPTS,
     visibility = ["//visibility:private"],
     deps = [
         ":config",
@@ -78,7 +90,8 @@ cc_test(
     name = "command_line_config_test",
     size = "small",
     srcs = ["command_line_config_test.cc"],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_TEST_COPTS,
+    linkopts = SPOOR_DEFAULT_TEST_LINKOPTS,
     visibility = ["//visibility:private"],
     deps = [
         ":command_line_config",
