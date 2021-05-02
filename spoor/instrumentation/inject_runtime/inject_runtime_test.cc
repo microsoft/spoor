@@ -764,8 +764,7 @@ TEST(InjectRuntime, ExitsOnOstreamError) {  // NOLINT
       "'.*'\\. Permission denied\\..*"};
   ASSERT_EXIT(  // NOLINT
       inject_runtime.run(*parsed_module, module_analysis_manager),
-      [](const int exit_code) { return exit_code != EXIT_SUCCESS; },
-      MatchesRegex(pattern));
+      testing::ExitedWithCode(EXIT_FAILURE), MatchesRegex(pattern));
 }
 
 }  // namespace

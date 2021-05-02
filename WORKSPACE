@@ -14,12 +14,12 @@ http_archive(
 )
 
 # TODO(#54): Migrate to the original repository when the fork's changes with
-# LLVM 11 support are checked in.
+# LLVM 12 support are checked in.
 http_archive(
     name = "llvm",
-    sha256 = "bd878e859227850e7e529d02bfa6ebf247c463671815ae73912fed8c373b8b44",
-    strip_prefix = "bazel_llvm-eb12c9841cae08461e0f1ca03fc43cd9e788064b",
-    urls = ["https://github.com/lelandjansen/bazel_llvm/archive/eb12c9841cae08461e0f1ca03fc43cd9e788064b.tar.gz"],
+    sha256 = "99181c717ca0d659c1b2a934642f7987ad93b17c2d7a211b773b627e35f90ab2",
+    strip_prefix = "bazel_llvm-lelandjansen-llvm-12",
+    urls = ["https://github.com/lelandjansen/bazel_llvm/archive/lelandjansen/llvm-12.tar.gz"],
 )
 
 load("@llvm//tools/bzl:deps.bzl", "llvm_deps")

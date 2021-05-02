@@ -29,6 +29,7 @@ DiskFlushQueue::DiskFlushQueue(Options options)
 
 DiskFlushQueue::~DiskFlushQueue() { DrainAndStop(); }
 
+// Sorry. NOLINTNEXTLINE(readability-function-cognitive-complexity)
 auto DiskFlushQueue::Run() -> void {
   if (running_.exchange(true)) return;
   draining_ = false;

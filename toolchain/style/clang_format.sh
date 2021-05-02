@@ -6,8 +6,8 @@ set -eu
 
 WORKSPACE="$(bazel info workspace)"
 
-if command -v clang-format-11 &> /dev/null; then
-  CLANG_FORMAT="clang-format-11"
+if command -v clang-format-12 &> /dev/null; then
+  CLANG_FORMAT="clang-format-12"
 elif command -v clang-format &> /dev/null; then
   CLANG_FORMAT="clang-format"
 else

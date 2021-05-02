@@ -28,7 +28,7 @@ class RuntimeManager final : public event_logger::EventLoggerNotifier {
   using Buffer = buffer::CircularSliceBuffer<trace::Event>;
   using SizeType = Buffer::SizeType;
 
-  struct Options {
+  struct alignas(128) Options {
     gsl::not_null<util::time::SteadyClock*> steady_clock;
     gsl::not_null<flush_queue::FlushQueue<Buffer>*> flush_queue;
     SizeType thread_event_buffer_capacity;
@@ -41,9 +41,9 @@ class RuntimeManager final : public event_logger::EventLoggerNotifier {
     bool flush_all_events;
   };
 
-  struct DeletedFilesInfo {
-    int32 deleted_files;
+  struct alignas(16) DeletedFilesInfo {
     int64 deleted_bytes;
+    int32 deleted_files;
   };
 
   RuntimeManager() = delete;
@@ -129,7 +129,7 @@ auto RuntimeManager::DeleteFlushedTraceFilesOlderThan(
     std::function<void(DeletedFilesInfo)> completion) -> void {
   std::thread{[directory_begin, directory_end, file_system, trace_reader,
                timestamp, completion{std::move(completion)}] {
-    DeletedFilesInfo deleted_files_info{.deleted_files = 0, .deleted_bytes = 0};
+    DeletedFilesInfo deleted_files_info{.deleted_bytes = 0, .deleted_files = 0};
     for (auto file{directory_begin}; file != directory_end; ++file) {
       if (!trace_reader->MatchesTraceFileConvention(file->path())) {
         continue;

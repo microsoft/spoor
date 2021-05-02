@@ -16,7 +16,7 @@ cc_library(
         "@com_apple_swift//:demangle",
         "@com_google_cityhash//:city_hash",
         "@com_microsoft_gsl//:gsl",
-        "@llvm//11.0.0",
+        "@llvm//12.0.0",
     ],
 )
 
@@ -37,6 +37,6 @@ cc_test(
         "@com_google_googletest//:gtest_main",
         "@com_google_protobuf//:protobuf",
         "@com_microsoft_gsl//:gsl",
-        "@llvm//11.0.0",
+        "@llvm//12.0.0",
     ],
 )

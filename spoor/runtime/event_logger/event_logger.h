@@ -22,7 +22,7 @@ class EventLogger {
   using Buffer = buffer::CircularSliceBuffer<trace::Event>;
   using SizeType = Buffer::SizeType;
 
-  struct Options {
+  struct alignas(32) Options {
     gsl::not_null<flush_queue::FlushQueue<Buffer>*> flush_queue;
     SizeType preferred_capacity;
     bool flush_buffer_when_full;

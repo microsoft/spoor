@@ -31,7 +31,7 @@ constexpr std::string_view kInstrumentedFunctionMapFileExtension{
 
 class InjectRuntime : public llvm::PassInfoMixin<InjectRuntime> {
  public:
-  struct Options {
+  struct alignas(128) Options {
     bool inject_instrumentation;
     std::filesystem::path instrumented_function_map_output_path;
     std::function<std::unique_ptr<llvm::raw_ostream>(

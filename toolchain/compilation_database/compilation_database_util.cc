@@ -97,8 +97,12 @@ auto SerializeCompileCommandsToOutputStream(
   // Hack: Isolate the array from the protobuf's JSON output to produce the
   // correct `compile_commands.json` format.
   std::ostream_iterator<char> output_iterator{*output_stream};
-  const auto begin = std::cbegin(json) + json.find('[');
-  const auto end = std::cbegin(json) + json.rfind(']') + 1;
+  const auto begin =
+      std::next(std::cbegin(json),
+                gsl::narrow_cast<std::string::difference_type>(json.find('[')));
+  const auto end = std::next(std::cbegin(json),
+                             gsl::narrow_cast<std::string::difference_type>(
+                                 json.find_last_of(']') + 1));
   std::copy(begin, end, output_iterator);
 
   return Result::Ok({});

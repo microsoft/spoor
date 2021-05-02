@@ -192,7 +192,7 @@ auto _spoor_runtime_DeleteFlushedTraceFilesOlderThan(
                                                       error_code};
   const auto error = static_cast<bool>(error_code);
   if (error) {
-    callback_adapter({.deleted_files = 0, .deleted_bytes = 0});
+    callback_adapter({.deleted_bytes = 0, .deleted_files = 0});
     return;
   }
   const auto system_timestamp =
