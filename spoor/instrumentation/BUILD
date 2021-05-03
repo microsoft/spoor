@@ -46,6 +46,7 @@ SHARED_LIBRARY_DEPS = [
     "//spoor/instrumentation/inject_runtime",
     "//spoor/instrumentation/support",
     "//util/time:clock",
+    "@com_google_absl//absl/strings:str_format",
     "@llvm//12.0.0",
 ]
 

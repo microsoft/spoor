@@ -14,6 +14,7 @@
 #include <system_error>
 #include <utility>
 
+#include "absl/strings/str_format.h"
 #include "city_hash/city.h"
 #include "google/protobuf/timestamp.pb.h"
 #include "google/protobuf/util/time_util.h"
@@ -28,6 +29,7 @@
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/Type.h"
 #include "llvm/Passes/PassPlugin.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include "spoor/proto/spoor.pb.h"
@@ -88,12 +90,10 @@ auto InjectRuntime::run(llvm::Module& llvm_module, llvm::ModuleAnalysisManager&
   auto output_stream =
       options_.instrumented_function_map_output_stream(path.c_str(), &error);
   if (error) {
-    llvm::WithColor::error();
-    llvm::errs()
-        << "Failed to open/create the instrumentation map output file '" << path
-        << "'. " << error.message() << ".\n";
-    // TODO(#118): Investigate error handling techniques and thread safety.
-    std::exit(EXIT_FAILURE);  // NOLINT(concurrency-mt-unsafe)
+    const auto message = absl::StrFormat(
+        "Failed to open/create the instrumentation map output file '%s'. %s.",
+        path, error.message());
+    llvm::report_fatal_error(message, false);
   }
 
   // LLVM passes do not support `std::ostream` so we're forced to bridge the

@@ -760,11 +760,11 @@ TEST(InjectRuntime, ExitsOnOstreamError) {  // NOLINT
        .enable_runtime = false}};
   llvm::ModuleAnalysisManager module_analysis_manager{};
   const std::string pattern{
-      "error: Failed to open/create the instrumentation map output file "
-      "'.*'\\. Permission denied\\..*"};
-  ASSERT_EXIT(  // NOLINT
+      ".*Failed to open/create the instrumentation map output file '.*'\\. "
+      "Permission denied\\..*"};
+  ASSERT_DEATH(  // NOLINT
       inject_runtime.run(*parsed_module, module_analysis_manager),
-      testing::ExitedWithCode(EXIT_FAILURE), MatchesRegex(pattern));
+      MatchesRegex(pattern));
 }
 
 }  // namespace

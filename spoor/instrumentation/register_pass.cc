@@ -12,10 +12,12 @@
 #include <system_error>
 #include <unordered_set>
 
+#include "absl/strings/str_format.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/WithColor.h"
 #include "llvm/Support/raw_ostream.h"
 #include "spoor/instrumentation/config/env_config.h"
@@ -38,12 +40,10 @@ auto PluginInfo() -> llvm::PassPluginLibraryInfo {
           if (config.function_allow_list_file.has_value()) {
             std::ifstream file{config.function_allow_list_file.value()};
             if (!file.is_open()) {
-              llvm::WithColor::error();
-              llvm::errs() << "Failed to read the function allow list file '"
-                           << config.function_allow_list_file.value() << "'.\n";
-              // TODO(#118): Investigate error handling techniques and thread
-              // safety.
-              std::exit(EXIT_FAILURE);  // NOLINT(concurrency-mt-unsafe)
+              const auto message = absl::StrFormat(
+                  "Failed to read the function allow list file '%s'.",
+                  config.function_allow_list_file.value());
+              llvm::report_fatal_error(message, false);
             }
             function_allow_list = support::ReadLinesToSet(&file);
           }
@@ -52,12 +52,10 @@ auto PluginInfo() -> llvm::PassPluginLibraryInfo {
           if (config.function_blocklist_file.has_value()) {
             std::ifstream file{config.function_blocklist_file.value()};
             if (!file.is_open()) {
-              llvm::WithColor::error();
-              llvm::errs() << "Failed to read the function allow list file '"
-                           << config.function_blocklist_file.value() << "'.\n";
-              // TODO(#118): Investigate error handling techniques and thread
-              // safety.
-              std::exit(EXIT_FAILURE);  // NOLINT(concurrency-mt-unsafe)
+              const auto message = absl::StrFormat(
+                  "Failed to read the function blocklist file '%s'.",
+                  config.function_blocklist_file.value());
+              llvm::report_fatal_error(message, false);
             }
             function_blocklist = support::ReadLinesToSet(&file);
           }
