@@ -4,11 +4,10 @@
 # Getting Started
 
 ## Requirements
-* Compiler instrumentation and runtime library
-  * A C++ compiler that supports [C++20][c++20-compiler] such as Clang 12.
-  * [Bazel][bazel].
-  * [Clang Format][clang-format] and [Clang Tidy][clang-tidy] to style and lint
-    code.
+* A C++ compiler that supports [C++20][c++20-compiler] such as Clang 12.
+* [Bazel][bazel].
+* [Clang Format][clang-format] and [Clang Tidy][clang-tidy] to style and lint
+  code.
 
 ## Build
 ```

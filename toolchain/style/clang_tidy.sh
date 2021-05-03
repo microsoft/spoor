@@ -2,8 +2,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-# TODO
-# set -e
+set -e
 
 WORKSPACE="$(bazel info workspace)"
 
