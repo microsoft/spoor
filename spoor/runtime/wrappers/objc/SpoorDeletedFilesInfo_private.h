@@ -9,7 +9,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property(readonly, assign, nonatomic) _spoor_runtime_DeletedFilesInfo deletedFilesInfo;
 
--(instancetype)initWithDeletedFilesInfo:(_spoor_runtime_DeletedFilesInfo)deletedFilesInfo;
+- (instancetype)initWithDeletedFilesInfo:(_spoor_runtime_DeletedFilesInfo)deletedFilesInfo;
 
 @end
 

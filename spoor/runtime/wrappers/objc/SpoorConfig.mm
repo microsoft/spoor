@@ -1,4 +1,4 @@
-// Copyright (c)Microsoft Corporation.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 #include "spoor/runtime/runtime.h"
@@ -6,7 +6,7 @@
 #import <Foundation/Foundation.h>
 #import "SpoorConfig.h"
 
-@interface SpoorConfig()
+@interface SpoorConfig ()
 
 @property(readwrite, assign, nonatomic) _spoor_runtime_Config config;
 
@@ -14,89 +14,69 @@
 
 @implementation SpoorConfig : NSObject
 
--(instancetype)initWithConfig:(_spoor_runtime_Config)config
-{
-  if (self = [super init])
-  {
+- (instancetype)initWithConfig:(_spoor_runtime_Config)config {
+  if (self = [super init]) {
     self.config = config;
   }
   return self;
 }
 
--(NSString * _Nullable)traceFilePath
-{
-  if (self.config.trace_file_path == nil)
-  {
+- (NSString* _Nullable)traceFilePath {
+  if (self.config.trace_file_path == nil) {
     return nil;
   }
 
   return [[NSString alloc] initWithUTF8String:self.config.trace_file_path];
 }
 
--(SpoorSessionId)sessionId
-{
+- (SpoorSessionId)sessionId {
   return self.config.session_id;
 }
 
--(SpoorSizeType)threadEventBufferCapacity
-{
+- (SpoorSizeType)threadEventBufferCapacity {
   return self.config.thread_event_buffer_capacity;
 }
 
--(SpoorSizeType)maxReservedEventBufferSliceCapacity
-{
+- (SpoorSizeType)maxReservedEventBufferSliceCapacity {
   return self.config.max_reserved_event_buffer_slice_capacity;
 }
 
--(SpoorSizeType)maxDynamicEventBufferSliceCapacity
-{
+- (SpoorSizeType)maxDynamicEventBufferSliceCapacity {
   return self.config.max_dynamic_event_buffer_slice_capacity;
 }
 
--(SpoorSizeType)reservedEventPoolCapacity
-{
+- (SpoorSizeType)reservedEventPoolCapacity {
   return self.config.reserved_event_pool_capacity;
 }
 
--(SpoorSizeType)dynamicEventPoolCapacity
-{
+- (SpoorSizeType)dynamicEventPoolCapacity {
   return self.config.dynamic_event_pool_capacity;
 }
 
--(SpoorSizeType)dynamicEventSliceBorrowCASAttempts
-{
+- (SpoorSizeType)dynamicEventSliceBorrowCASAttempts {
   return self.config.dynamic_event_slice_borrow_cas_attempts;
 }
 
--(SpoorDurationNanoseconds)eventBufferRetentionDuration
-{
+- (SpoorDurationNanoseconds)eventBufferRetentionDuration {
   return self.config.event_buffer_retention_duration_nanoseconds;
 }
 
--(int32_t)maxFlushBufferToFileAttempts
-{
+- (int32_t)maxFlushBufferToFileAttempts {
   return self.config.max_flush_buffer_to_file_attempts;
 }
 
--(BOOL)flushAllEvents
-{
+- (BOOL)flushAllEvents {
   return self.config.flush_all_events;
 }
 
--(BOOL)isEqual:(id)object
-{
-  if (object == self)
-  {
+- (BOOL)isEqual:(id)object {
+  if (object == self) {
     return YES;
-  }
-  else if (!object || ![object isKindOfClass:[self class]])
-  {
+  } else if (!object || ![object isKindOfClass:[self class]]) {
     return NO;
-  }
-  else
-  {
+  } else {
     const _spoor_runtime_Config& lhs = self.config;
-    const _spoor_runtime_Config& rhs = ((SpoorConfig *)object).config;
+    const _spoor_runtime_Config& rhs = ((SpoorConfig*)object).config;
     return _spoor_runtime_ConfigEqual(&lhs, &rhs);
   }
 }
