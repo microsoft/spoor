@@ -2,9 +2,7 @@
 // Licensed under the MIT License.
 
 #import "SpoorConfig.h"
-#import "SpoorTraceFiles.h"
 #import "SpoorDeletedFilesInfo.h"
-#import "SpoorTraceFiles.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -24,7 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  Check if the event tracing runtime is initialized.
  */
-+(bool)runtimeInitialized;
++(BOOL)isRuntimeInitialized;
 
 /**
  Enable runtime logging.
@@ -37,24 +35,24 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  Check if runtime logging is enabled.
  */
-+(bool)runtimeEnabled;
++(BOOL)isRuntimeEnabled;
 
 /**
  Log that the program generated an event. The function internally checks if
  the runtime is enabled before logging the event.
  */
-+(void)logEvent:(SpoorEventType)event
-      timestamp:(SpoorTimestampNanoseconds)steadyClockTimestamp
-       payload1:(uint64_t)payload1
-       payload2:(uint32_t)payload2;
++(void)logEvent:(const SpoorEventType)event
+      timestamp:(const SpoorTimestampNanoseconds)steadyClockTimestamp
+       payload1:(const uint64_t)payload1
+       payload2:(const uint32_t)payload2;
 /**
  Log that the program generated an event. The function internally checks if
  the runtime is enabled before collecting the current timestamp and logging
  the event.
  */
-+(void)logEvent:(SpoorEventType)event
-       payload1:(uint64_t)payload1
-       payload2:(uint32_t)payload2;
++(void)logEvent:(const SpoorEventType)event
+       payload1:(const uint64_t)payload1
+       payload2:(const uint32_t)payload2;
 
 /**
  Log that the program entered a function. The function internally checks if
@@ -62,14 +60,14 @@ NS_ASSUME_NONNULL_BEGIN
  the event. A call to this function is inserted at the start of every function
  by the compile-time instrumentation.
  */
-+(void)logFunctionEntryWithFunctionId:(SpoorFunctionId)functionId;
++(void)logFunctionEntryWithFunctionId:(const SpoorFunctionId)functionId;
 /**
  Log that the program exited a function. The function internally checks if the
  runtime is enabled before collecting the current timestamp and logging the
  event. A call to this function is inserted at the end of every function by
  the compile-time instrumentation.
  */
-+(void)logFunctionExitWithFunctionId:(SpoorFunctionId)functionId;
++(void)logFunctionExitWithFunctionId:(const SpoorFunctionId)functionId;
 
 /**
  Flush in-memory trace events to disk.
@@ -82,12 +80,12 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  Retrieve an array of all trace files on disk.
  */
-+(void)flushedTraceFilesWithCallback:(void (^)(SpoorTraceFiles *) _Nullable)callback;
++(void)flushedTraceFilesWithCallback:(void (^)(NSArray<NSString *> * _Nullable) _Nullable)callback;
 /**
- Delete all trace files older than a given timestamp.
+ Delete all trace files older than a given date.
  */
-+(void)deleteFlushedTraceFilesOlderThanTimestamp:(SpoorSystemTimestampSeconds)systemTimestamp
-                                        callback:(void (^)(SpoorDeletedFilesInfo *) _Nullable)callback;
++(void)deleteFlushedTraceFilesOlderThanDate:(const NSDate *)date
+                                   callback:(void (^)(const SpoorDeletedFilesInfo *) _Nullable)callback;
 
 /**
  Retrieve Spoor's configuration.
@@ -97,14 +95,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  Check if the runtime contains stub implementations.
  */
-+(bool)stubImplementation;
-
-/**
- Release the memory owned by a `SpoorTraceFiles` object (but not
- the object itself).
- Implemented in the stub.
- */
-+(void)releaseTraceFilePaths:(NSArray<SpoorTraceFiles *> *)traceFilePaths;
++(BOOL)isStubImplementation;
 
 @end
 

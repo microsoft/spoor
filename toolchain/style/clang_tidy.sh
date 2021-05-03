@@ -39,7 +39,7 @@ if [ $# -eq 0 ]; then
   # TODO(#86): Compilation database support for header-only libraries.
   find "$WORKSPACE" \
     -type f \
-    \( -iname "*.h" -o -iname "*.cc" \) \
+    \( -iname "*.h" -o -iname "*.cc" -o -iname "*.mm" \) \
     ! -name "event_logger_notifier_mock.h" \
     ! -name "flush_queue_mock.h" \
     ! -name "runtime.h" \

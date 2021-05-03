@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+#include <stdint.h>
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface SpoorDeletedFilesInfo : NSObject

@@ -131,9 +131,9 @@ gazelle_dependencies()
 
 http_archive(
     name = "build_bazel_rules_apple",
-    sha256 = "0d95a266753e133302662721d0a924e0c57f198825d89813131a75e92ec6b1bb",
+    sha256 = "9e81657e9d8b9a96c726e0ce26581f2f141197b504fffdbc0a2d755b688ec386",
     strip_prefix = "rules_apple-0.31.1",
-    url = "https://github.com/bazelbuild/rules_apple/archive/0.31.1.zip",
+    url = "https://github.com/bazelbuild/rules_apple/archive/0.31.1.tar.gz",
 )
 
 load(

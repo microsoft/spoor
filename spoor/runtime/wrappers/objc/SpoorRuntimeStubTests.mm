@@ -1,14 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wgnu-statement-expression"
-
 #include "spoor/runtime/runtime.h"
 
 #import <XCTest/XCTest.h>
 #import "SpoorRuntime.h"
-#import "SpoorTraceFiles_private.h"
 #import "SpoorDeletedFilesInfo_private.h"
 #import "SpoorConfig_private.h"
 
@@ -20,20 +16,20 @@
 
 -(void)testInitializeRuntime
 {
-  XCTAssertFalse([SpoorRuntime runtimeInitialized]);
+  XCTAssertFalse([SpoorRuntime isRuntimeInitialized]);
   [SpoorRuntime initializeRuntime];
-  XCTAssertFalse([SpoorRuntime runtimeInitialized]);
+  XCTAssertFalse([SpoorRuntime isRuntimeInitialized]);
   [SpoorRuntime initializeRuntime];
-  XCTAssertFalse([SpoorRuntime runtimeInitialized]);
+  XCTAssertFalse([SpoorRuntime isRuntimeInitialized]);
 }
 
 -(void)testEnableRuntime
 {
-  XCTAssertFalse([SpoorRuntime runtimeEnabled]);
+  XCTAssertFalse([SpoorRuntime isRuntimeEnabled]);
   [SpoorRuntime enableRuntime];
-  XCTAssertFalse([SpoorRuntime runtimeEnabled]);
+  XCTAssertFalse([SpoorRuntime isRuntimeEnabled]);
   [SpoorRuntime enableRuntime];
-  XCTAssertFalse([SpoorRuntime runtimeEnabled]);
+  XCTAssertFalse([SpoorRuntime isRuntimeEnabled]);
 }
 
 -(void)testLogEvent
@@ -47,7 +43,7 @@
 -(void)testFlushTraceEvents
 {
   [SpoorRuntime flushTraceEventsWithCallback:^{}];
-  __block BOOL invokedCallback;
+  __block BOOL invokedCallback = NO;
   [SpoorRuntime flushTraceEventsWithCallback:^{
     invokedCallback = YES;
   }];
@@ -61,30 +57,27 @@
 
 -(void)testFlushedTraceFiles
 {
-  [SpoorRuntime flushedTraceFilesWithCallback:^(SpoorTraceFiles * _Nonnull) {}];
+  [SpoorRuntime flushedTraceFilesWithCallback:^(NSArray<NSString *> * _Nullable) {}];
 
-  _spoor_runtime_TraceFiles expected_trace_files{
-    .file_paths_size = 0, .file_path_sizes = nullptr, .file_paths = nullptr};
-  SpoorTraceFiles *expectedTraceFiles = [[SpoorTraceFiles alloc] initWithTraceFiles:expected_trace_files];
-  __block BOOL invokedCallback;
-  [SpoorRuntime flushedTraceFilesWithCallback:^(SpoorTraceFiles * _Nonnull traceFiles) {
+  __block BOOL invokedCallback = NO;
+  [SpoorRuntime flushedTraceFilesWithCallback:^(NSArray<NSString *> * _Nullable traceFilePaths) {
     invokedCallback = YES;
-    XCTAssertEqualObjects(traceFiles, expectedTraceFiles);
+    XCTAssertNil(traceFilePaths);
   }];
   XCTAssertTrue(invokedCallback);
 }
 
 -(void)testDeleteFlushedTraceFilesOlderThan
 {
-  [SpoorRuntime deleteFlushedTraceFilesOlderThanTimestamp:std::numeric_limits<_spoor_runtime_SystemTimestampSeconds>::min()
-                                                 callback:^(SpoorDeletedFilesInfo * _Nonnull) {}];
+  [SpoorRuntime deleteFlushedTraceFilesOlderThanDate:[NSDate distantPast]
+                                            callback:^(const SpoorDeletedFilesInfo *) {}];
 
-  _spoor_runtime_DeletedFilesInfo expected_deleted_files_info{
+  constexpr _spoor_runtime_DeletedFilesInfo expected_deleted_files_info{
     .deleted_files = 0, .deleted_bytes = 0};
   SpoorDeletedFilesInfo *expectedDeletedFilesInfo = [[SpoorDeletedFilesInfo alloc] initWithDeletedFilesInfo:expected_deleted_files_info];
-  __block BOOL invokedCallback;
-  [SpoorRuntime deleteFlushedTraceFilesOlderThanTimestamp:std::numeric_limits<_spoor_runtime_SystemTimestampSeconds>::min()
-                                                 callback:^(SpoorDeletedFilesInfo * _Nonnull deletedFilesInfo) {
+  __block BOOL invokedCallback = NO;
+  [SpoorRuntime deleteFlushedTraceFilesOlderThanDate:[NSDate distantPast]
+                                            callback:^(const SpoorDeletedFilesInfo * deletedFilesInfo) {
     invokedCallback = YES;
     XCTAssertEqualObjects(deletedFilesInfo, expectedDeletedFilesInfo);
   }];
@@ -110,11 +103,9 @@
   XCTAssertEqualObjects(config, expectedConfig);
 }
 
--(void)testStubImplementation
+-(void)testIsStubImplementation
 {
-  XCTAssertTrue([SpoorRuntime stubImplementation]);
+  XCTAssertTrue([SpoorRuntime isStubImplementation]);
 }
 
 @end
-
-#pragma GCC diagnostic pop

@@ -23,11 +23,6 @@
   return self;
 }
 
--(SpoorSizeType)traceFilePathSize
-{
-  return self.config.trace_file_path_size;
-}
-
 -(NSString * _Nullable)traceFilePath
 {
   if (self.config.trace_file_path == nil)
@@ -35,7 +30,7 @@
     return nil;
   }
 
-  return [NSString stringWithUTF8String:self.config.trace_file_path];
+  return [[NSString alloc] initWithUTF8String:self.config.trace_file_path];
 }
 
 -(SpoorSessionId)sessionId
@@ -53,6 +48,11 @@
   return self.config.max_reserved_event_buffer_slice_capacity;
 }
 
+-(SpoorSizeType)maxDynamicEventBufferSliceCapacity
+{
+  return self.config.max_dynamic_event_buffer_slice_capacity;
+}
+
 -(SpoorSizeType)reservedEventPoolCapacity
 {
   return self.config.reserved_event_pool_capacity;
@@ -68,7 +68,7 @@
   return self.config.dynamic_event_slice_borrow_cas_attempts;
 }
 
--(SpoorDurationNanoseconds)eventBufferRetentionDurationNanoseconds
+-(SpoorDurationNanoseconds)eventBufferRetentionDuration
 {
   return self.config.event_buffer_retention_duration_nanoseconds;
 }
@@ -78,7 +78,7 @@
   return self.config.max_flush_buffer_to_file_attempts;
 }
 
--(bool)flushAllEvents
+-(BOOL)flushAllEvents
 {
   return self.config.flush_all_events;
 }
