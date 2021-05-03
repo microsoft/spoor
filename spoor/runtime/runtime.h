@@ -64,7 +64,7 @@ void _spoor_runtime_InitializeRuntime();
 // at the  end of `main` by the compile-time instrumentation.
 void _spoor_runtime_DeinitializeRuntime();
 
-// Check if the event tracing runtiem is initialized.
+// Check if the event tracing runtime is initialized.
 bool _spoor_runtime_RuntimeInitialized();
 
 // Enable runtime logging.
