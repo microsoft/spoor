@@ -14,6 +14,7 @@ cc_library(
         "//util:numeric",
         "//util/time:clock",
         "@com_apple_swift//:demangle",
+        "@com_google_absl//absl/strings:str_format",
         "@com_google_cityhash//:city_hash",
         "@com_microsoft_gsl//:gsl",
         "@llvm//12.0.0",
