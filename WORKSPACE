@@ -142,3 +142,12 @@ load(
 )
 
 apple_rules_dependencies()
+
+# TODO(#128): Remove this when the branch's changes with
+# Python3.9 support are checked in.
+http_archive(
+    name = "xctestrunner",
+    sha256 = "660f92df91044b1470a5f4ab8aa05c9375f52f8800f29834ba9181907b377d91",
+    strip_prefix = "xctestrunner-fix-compatibility-with-python-3.9",
+    url = "https://github.com/thii/xctestrunner/archive/refs/heads/fix-compatibility-with-python-3.9.tar.gz",
+)
