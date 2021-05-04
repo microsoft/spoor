@@ -52,11 +52,11 @@
 }
 
 - (void)testFlushedTraceFiles {
-  [SpoorRuntime flushedTraceFilesWithCallback:^(NSArray<NSString *> *_Nullable){
+  [SpoorRuntime flushedTraceFilesWithCallback:^(const NSArray<NSString*>* _Nullable){
   }];
 
   __block BOOL invokedCallback = NO;
-  [SpoorRuntime flushedTraceFilesWithCallback:^(NSArray<NSString *> *_Nullable traceFilePaths) {
+  [SpoorRuntime flushedTraceFilesWithCallback:^(const NSArray<NSString*>* _Nullable traceFilePaths) {
     invokedCallback = YES;
     XCTAssertNil(traceFilePaths);
   }];
@@ -65,17 +65,17 @@
 
 - (void)testDeleteFlushedTraceFilesOlderThan {
   [SpoorRuntime deleteFlushedTraceFilesOlderThanDate:[NSDate distantPast]
-                                            callback:^(const SpoorDeletedFilesInfo *){
+                                            callback:^(const SpoorDeletedFilesInfo*){
                                             }];
 
   constexpr _spoor_runtime_DeletedFilesInfo expected_deleted_files_info{.deleted_files = 0,
                                                                         .deleted_bytes = 0};
-  SpoorDeletedFilesInfo *expectedDeletedFilesInfo =
+  SpoorDeletedFilesInfo* expectedDeletedFilesInfo =
       [[SpoorDeletedFilesInfo alloc] initWithDeletedFilesInfo:expected_deleted_files_info];
   __block BOOL invokedCallback = NO;
   [SpoorRuntime
       deleteFlushedTraceFilesOlderThanDate:[NSDate distantPast]
-                                  callback:^(const SpoorDeletedFilesInfo *deletedFilesInfo) {
+                                  callback:^(const SpoorDeletedFilesInfo* deletedFilesInfo) {
                                     invokedCallback = YES;
                                     XCTAssertEqualObjects(deletedFilesInfo,
                                                           expectedDeletedFilesInfo);
@@ -95,8 +95,8 @@
                                                   .event_buffer_retention_duration_nanoseconds = 0,
                                                   .max_flush_buffer_to_file_attempts = 0,
                                                   .flush_all_events = false};
-  SpoorConfig *expectedConfig = [[SpoorConfig alloc] initWithConfig:expected_config];
-  SpoorConfig *config = [SpoorRuntime config];
+  SpoorConfig* expectedConfig = [[SpoorConfig alloc] initWithConfig:expected_config];
+  SpoorConfig* config = [SpoorRuntime config];
   XCTAssertEqualObjects(config, expectedConfig);
 }
 

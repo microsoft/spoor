@@ -26,7 +26,7 @@ function run_clang_format {
 if [ $# -eq 0 ]; then
   find "$WORKSPACE" \
     -type f \
-    \( -iname '*.h' -o -iname '*.cc' -o -iname '*.mm' -o -iname '*.proto' ! -iname 'bazel-' \) \
+    \( -iname '*.h' -o -iname '*.cc' -o -iname "*.m" -o -iname '*.mm' -o -iname '*.proto' ! -iname 'bazel-' \) \
     -print0 |
       while read -d $'\0' file_name; do
         run_clang_format "$file_name"

@@ -74,20 +74,20 @@ std::function<void()> flushTraceEventsWithCallback_{};
 // clang-format off NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects) clang-format on
 std::function<void(_spoor_runtime_TraceFiles)> flushedTraceFilesWithCallback_{};
 
-+ (void)flushedTraceFilesWithCallback:(void (^)(NSArray<NSString *> *_Nullable)_Nullable)callback {
++ (void)flushedTraceFilesWithCallback:(void (^)(const NSArray<NSString*>* _Nullable)_Nullable)callback {
   flushedTraceFilesWithCallback_ = [callback](_spoor_runtime_TraceFiles traceFiles) {
-    NSMutableArray<NSString *> *filePaths;
+    NSMutableArray<NSString*>* filePaths;
     if (traceFiles.file_paths != nil) {
       filePaths = [NSMutableArray arrayWithCapacity:traceFiles.file_paths_size];
       for (size_t i = 0; i < traceFiles.file_paths_size; ++i) {
-        char *charFilePath = traceFiles.file_paths[i];
+        char* charFilePath = traceFiles.file_paths[i];
         [filePaths addObject:[[NSString alloc] initWithUTF8String:charFilePath]];
       }
       _spoor_runtime_ReleaseTraceFilePaths(&traceFiles);
     }
 
     if (callback != nil) {
-      callback(filePaths);
+      callback(static_cast<const NSArray<NSString*>*>(filePaths));
     }
   };
 
@@ -99,9 +99,9 @@ std::function<void(_spoor_runtime_TraceFiles)> flushedTraceFilesWithCallback_{};
 std::function<void(_spoor_runtime_DeletedFilesInfo)>
     deleteFlushedTraceFilesOlderThanTimestampCallback_{};
 
-+ (void)deleteFlushedTraceFilesOlderThanDate:(const NSDate *)date
++ (void)deleteFlushedTraceFilesOlderThanDate:(const NSDate*)date
                                     callback:
-                                        (void (^)(const SpoorDeletedFilesInfo *)_Nullable)callback {
+                                        (void (^)(const SpoorDeletedFilesInfo*)_Nullable)callback {
   deleteFlushedTraceFilesOlderThanTimestampCallback_ =
       [callback](_spoor_runtime_DeletedFilesInfo deletedFilesInfo) {
         if (callback != nil)
@@ -114,7 +114,7 @@ std::function<void(_spoor_runtime_DeletedFilesInfo)>
       });
 }
 
-+ (SpoorConfig *)config {
++ (SpoorConfig*)config {
   _spoor_runtime_Config config = _spoor_runtime_GetConfig();
   return [[SpoorConfig alloc] initWithConfig:config];
 }

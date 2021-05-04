@@ -15,7 +15,8 @@
 @implementation SpoorConfig : NSObject
 
 - (instancetype)initWithConfig:(_spoor_runtime_Config)config {
-  if (self = [super init]) {
+  self = [super init];
+  if (self != nil) {
     self.config = config;
   }
   return self;
@@ -72,11 +73,11 @@
 - (BOOL)isEqual:(id)object {
   if (object == self) {
     return YES;
-  } else if (!object || ![object isKindOfClass:[self class]]) {
+  } else if (![object isKindOfClass:[self class]]) {
     return NO;
   } else {
-    const _spoor_runtime_Config& lhs = self.config;
-    const _spoor_runtime_Config& rhs = ((SpoorConfig*)object).config;
+    auto lhs = self.config;
+    auto rhs = static_cast<SpoorConfig*>(object).config;
     return _spoor_runtime_ConfigEqual(&lhs, &rhs);
   }
 }

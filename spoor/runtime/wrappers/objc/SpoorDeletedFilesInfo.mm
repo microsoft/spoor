@@ -15,7 +15,8 @@
 @implementation SpoorDeletedFilesInfo : NSObject
 
 - (instancetype)initWithDeletedFilesInfo:(_spoor_runtime_DeletedFilesInfo)deletedFilesInfo {
-  if (self = [super init]) {
+  self = [super init];
+  if (self != nil) {
     self.deletedFilesInfo = deletedFilesInfo;
   }
   return self;
@@ -32,11 +33,11 @@
 - (BOOL)isEqual:(id)object {
   if (object == self) {
     return YES;
-  } else if (!object || ![object isKindOfClass:[self class]]) {
+  } else if (![object isKindOfClass:[self class]]) {
     return NO;
   } else {
-    const _spoor_runtime_DeletedFilesInfo& lhs = self.deletedFilesInfo;
-    const _spoor_runtime_DeletedFilesInfo& rhs = ((SpoorDeletedFilesInfo*)object).deletedFilesInfo;
+    auto lhs = self.deletedFilesInfo;
+    auto rhs = static_cast<SpoorDeletedFilesInfo*>(object).deletedFilesInfo;
     return _spoor_runtime_DeletedFilesInfoEqual(&lhs, &rhs);
   }
 }

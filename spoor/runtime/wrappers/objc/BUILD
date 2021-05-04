@@ -5,25 +5,26 @@ load("@rules_cc//cc:defs.bzl", "objc_library")
 load("@build_bazel_rules_apple//apple:ios.bzl", "ios_unit_test")
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_unit_test")
 
-_minimum_ios_version = "9.0"
-_minimum_macos_version = "10.9"
+_MINIMUM_IOS_VERSION = "9.0"
+
+_MINIMUM_MACOS_VERSION = "10.9"
 
 objc_library(
     name = "runtime_stub",
-    module_name = "SpoorRuntime",
+    srcs = [
+        "SpoorConfig.mm",
+        "SpoorConfig_private.h",
+        "SpoorDeletedFilesInfo.mm",
+        "SpoorDeletedFilesInfo_private.h",
+        "SpoorRuntime.mm",
+    ],
     hdrs = [
-        "SpoorTypes.h",
         "SpoorConfig.h",
         "SpoorDeletedFilesInfo.h",
         "SpoorRuntime.h",
+        "SpoorTypes.h",
     ],
-    srcs = [
-        "SpoorDeletedFilesInfo_private.h",
-        "SpoorConfig_private.h",
-        "SpoorConfig.mm",
-        "SpoorDeletedFilesInfo.mm",
-        "SpoorRuntime.mm",
-    ],
+    module_name = "SpoorRuntime",
     visibility = ["//visibility:public"],
     deps = [
         "//spoor/runtime:runtime_stub",
@@ -34,7 +35,7 @@ objc_library(
 
 ios_unit_test(
     name = "ios_runtime_wrapper_test",
-    minimum_os_version = _minimum_ios_version,
+    minimum_os_version = _MINIMUM_IOS_VERSION,
     visibility = ["//visibility:private"],
     deps = [
         ":runtime_wrapper_test_lib",
@@ -43,7 +44,7 @@ ios_unit_test(
 
 macos_unit_test(
     name = "macos_runtime_wrapper_test",
-    minimum_os_version = _minimum_macos_version,
+    minimum_os_version = _MINIMUM_MACOS_VERSION,
     visibility = ["//visibility:private"],
     deps = [
         ":runtime_wrapper_test_lib",
@@ -52,7 +53,7 @@ macos_unit_test(
 
 ios_unit_test(
     name = "ios_runtime_stub_test",
-    minimum_os_version = _minimum_ios_version,
+    minimum_os_version = _MINIMUM_IOS_VERSION,
     visibility = ["//visibility:private"],
     deps = [
         ":runtime_stub_test_lib",
@@ -61,7 +62,7 @@ ios_unit_test(
 
 macos_unit_test(
     name = "macos_runtime_stub_test",
-    minimum_os_version = _minimum_macos_version,
+    minimum_os_version = _MINIMUM_MACOS_VERSION,
     visibility = ["//visibility:private"],
     deps = [
         ":runtime_stub_test_lib",
@@ -71,11 +72,14 @@ macos_unit_test(
 objc_library(
     name = "runtime_wrapper_test_lib",
     testonly = True,
-    copts = ["-Werror", "-Wno-gnu-statement-expression"],
     srcs = [
-        "SpoorDeletedFilesInfoTests.mm",
         "SpoorConfigTests.mm",
+        "SpoorDeletedFilesInfoTests.mm",
         "SpoorTypesTests.mm",
+    ],
+    copts = [
+        "-Werror",
+        "-Wno-gnu-statement-expression",
     ],
     visibility = ["//visibility:private"],
     deps = [
@@ -86,9 +90,12 @@ objc_library(
 objc_library(
     name = "runtime_stub_test_lib",
     testonly = True,
-    copts = ["-Werror", "-Wno-gnu-statement-expression"],
     srcs = [
         "SpoorRuntimeStubTests.mm",
+    ],
+    copts = [
+        "-Werror",
+        "-Wno-gnu-statement-expression",
     ],
     visibility = ["//visibility:private"],
     deps = [
