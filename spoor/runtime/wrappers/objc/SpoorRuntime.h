@@ -55,9 +55,7 @@ NS_ASSUME_NONNULL_BEGIN
  the runtime is enabled before collecting the current timestamp and logging
  the event.
  */
-+ (void)logEvent:(SpoorEventType)event
-        payload1:(uint64_t)payload1
-        payload2:(uint32_t)payload2;
++ (void)logEvent:(SpoorEventType)event payload1:(uint64_t)payload1 payload2:(uint32_t)payload2;
 
 /**
  Log that the program entered a function. The function internally checks if
@@ -78,7 +76,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  Flush in-memory trace events to disk.
  */
-+ (void)flushTraceEventsWithCallback:(void (^)(void)_Nullable)callback;
++ (void)flushTraceEventsWithCallback:(void (^)(void))callback;
 
 /**
  Clear the trace events from memory without flushing them to disk.
@@ -88,14 +86,13 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  Retrieve an array of all trace files on disk.
  */
-+ (void)flushedTraceFilesWithCallback:(void (^)(const NSArray<NSString*>* _Nullable)_Nullable)callback;
++ (void)flushedTraceFilesWithCallback:(void (^)(const NSArray<NSString*>* _Nullable))callback;
 
 /**
  Delete all trace files older than a given date.
  */
 + (void)deleteFlushedTraceFilesOlderThanDate:(const NSDate*)date
-                                    callback:
-                                        (void (^)(const SpoorDeletedFilesInfo*)_Nullable)callback;
+                                    callback:(void (^)(const SpoorDeletedFilesInfo*))callback;
 
 /**
  Retrieve Spoor's configuration.

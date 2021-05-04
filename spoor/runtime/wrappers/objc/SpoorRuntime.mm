@@ -60,7 +60,7 @@
 // clang-format off NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects) clang-format on
 std::function<void()> flushTraceEventsWithCallback_{};
 
-+ (void)flushTraceEventsWithCallback:(void (^)(void)_Nullable)callback {
++ (void)flushTraceEventsWithCallback:(void (^)(void))callback {
   flushTraceEventsWithCallback_ = [callback]() {
     if (callback != nil) callback();
   };
@@ -74,7 +74,7 @@ std::function<void()> flushTraceEventsWithCallback_{};
 // clang-format off NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects) clang-format on
 std::function<void(_spoor_runtime_TraceFiles)> flushedTraceFilesWithCallback_{};
 
-+ (void)flushedTraceFilesWithCallback:(void (^)(const NSArray<NSString*>* _Nullable)_Nullable)callback {
++ (void)flushedTraceFilesWithCallback:(void (^)(const NSArray<NSString*>* _Nullable))callback {
   flushedTraceFilesWithCallback_ = [callback](_spoor_runtime_TraceFiles traceFiles) {
     NSMutableArray<NSString*>* filePaths;
     if (traceFiles.file_paths != nil) {
@@ -100,8 +100,7 @@ std::function<void(_spoor_runtime_DeletedFilesInfo)>
     deleteFlushedTraceFilesOlderThanTimestampCallback_{};
 
 + (void)deleteFlushedTraceFilesOlderThanDate:(const NSDate*)date
-                                    callback:
-                                        (void (^)(const SpoorDeletedFilesInfo*)_Nullable)callback {
+                                    callback:(void (^)(const SpoorDeletedFilesInfo*))callback {
   deleteFlushedTraceFilesOlderThanTimestampCallback_ =
       [callback](_spoor_runtime_DeletedFilesInfo deletedFilesInfo) {
         if (callback != nil)

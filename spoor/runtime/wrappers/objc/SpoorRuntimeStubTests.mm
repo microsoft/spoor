@@ -40,6 +40,7 @@
 - (void)testFlushTraceEvents {
   [SpoorRuntime flushTraceEventsWithCallback:^{
   }];
+
   __block BOOL invokedCallback = NO;
   [SpoorRuntime flushTraceEventsWithCallback:^{
     invokedCallback = YES;
@@ -56,10 +57,11 @@
   }];
 
   __block BOOL invokedCallback = NO;
-  [SpoorRuntime flushedTraceFilesWithCallback:^(const NSArray<NSString*>* _Nullable traceFilePaths) {
-    invokedCallback = YES;
-    XCTAssertNil(traceFilePaths);
-  }];
+  [SpoorRuntime
+      flushedTraceFilesWithCallback:^(const NSArray<NSString*>* _Nullable traceFilePaths) {
+        invokedCallback = YES;
+        XCTAssertNil(traceFilePaths);
+      }];
   XCTAssertTrue(invokedCallback);
 }
 
