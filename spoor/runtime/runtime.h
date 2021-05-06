@@ -78,18 +78,6 @@ auto LogEvent(EventType event, TimestampNanoseconds steady_clock_timestamp,
 // the event.
 auto LogEvent(EventType event, uint64_t payload_1, uint64_t payload_2) -> void;
 
-// Log that the program entered a function. The function internally checks if
-// the runtime is enabled before collecting the current timestamp and logging
-// the event. A call to this function is inserted at the start of every function
-// by the compile-time instrumentation.
-auto LogFunctionEntry(FunctionId function_id) -> void;
-
-// Log that the program exited a function. The function internally checks if the
-// runtime is enabled before collecting the current timestamp and logging the
-// event. A call to this function is inserted at the end of every function by
-// the compile-time instrumentation.
-auto LogFunctionExit(FunctionId function_id) -> void;
-
 // Flush in-memory trace events to disk. The callback is invoked on a background
 // thread.
 auto FlushTraceEvents(std::function<void()> callback) -> void;
@@ -201,18 +189,6 @@ void _spoor_runtime_LogEventWithTimestamp(
 void _spoor_runtime_LogEvent(_spoor_runtime_EventType event, uint64_t payload_1,
                              uint32_t payload_2);
 
-// Log that the program entered a function. The function internally checks if
-// the runtime is enabled before collecting the current timestamp and logging
-// the event. A call to this function is inserted at the start of every function
-// by the compile-time instrumentation.
-void _spoor_runtime_LogFunctionEntry(_spoor_runtime_FunctionId function_id);
-
-// Log that the program exited a function. The function internally checks if the
-// runtime is enabled before collecting the current timestamp and logging the
-// event. A call to this function is inserted at the end of every function by
-// the compile-time instrumentation.
-void _spoor_runtime_LogFunctionExit(_spoor_runtime_FunctionId function_id);
-
 // Flush in-memory trace events to disk. The callback is invoked on a background
 // thread.
 void _spoor_runtime_FlushTraceEvents(
@@ -275,6 +251,19 @@ auto operator==(const _spoor_runtime_TraceFiles& lhs,
                 const _spoor_runtime_TraceFiles& rhs) -> bool;
 auto operator==(const _spoor_runtime_Config& lhs,
                 const _spoor_runtime_Config& rhs) -> bool;
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Internal.
+// Exposed for use by Spoor's instrumentation.
+void _spoor_runtime_LogFunctionEntry(_spoor_runtime_FunctionId function_id);
+void _spoor_runtime_LogFunctionExit(_spoor_runtime_FunctionId function_id);
+
+#ifdef __cplusplus
+}  // extern "C"
 #endif
 
 #endif  // SPOOR_RUNTIME_RUNTIME_H_

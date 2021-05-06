@@ -29,10 +29,6 @@ auto LogEvent(const EventType /*unused*/, const TimestampNanoseconds /*unused*/,
 auto LogEvent(const EventType /*unused*/, const uint64_t /*unused*/,
               const uint64_t /*unused*/) -> void {}
 
-auto LogFunctionEntry(const FunctionId /*unused*/) -> void {}
-
-auto LogFunctionExit(const FunctionId /*unused*/) -> void {}
-
 auto FlushTraceEvents(std::function<void()> callback) -> void {
   if (callback == nullptr) return;
   std::thread{std::move(callback)}.detach();

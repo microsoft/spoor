@@ -128,14 +128,6 @@ auto LogEvent(const EventType event, const uint64_t payload_1,
   runtime_.LogEvent(event, payload_1, payload_2);
 }
 
-auto LogFunctionEntry(const FunctionId function_id) -> void {
-  runtime_.LogFunctionEntry(function_id);
-}
-
-auto LogFunctionExit(const FunctionId function_id) -> void {
-  runtime_.LogFunctionExit(function_id);
-}
-
 auto FlushTraceEvents(std::function<void()> callback) -> void {
   runtime_.Flush(std::move(callback));
 }
