@@ -58,22 +58,6 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)logEvent:(SpoorEventType)event payload1:(uint64_t)payload1 payload2:(uint32_t)payload2;
 
 /**
- Log that the program entered a function. The function internally checks if
- the runtime is enabled before collecting the current timestamp and logging
- the event. A call to this function is inserted at the start of every function
- by the compile-time instrumentation.
- */
-+ (void)logFunctionEntryWithFunctionId:(SpoorFunctionId)functionId;
-
-/**
- Log that the program exited a function. The function internally checks if the
- runtime is enabled before collecting the current timestamp and logging the
- event. A call to this function is inserted at the end of every function by
- the compile-time instrumentation.
- */
-+ (void)logFunctionExitWithFunctionId:(SpoorFunctionId)functionId;
-
-/**
  Flush in-memory trace events to disk.
  */
 + (void)flushTraceEventsWithCallback:(void (^)(void))callback;
@@ -86,7 +70,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  Retrieve an array of all trace files on disk.
  */
-+ (void)flushedTraceFilesWithCallback:(void (^)(const NSArray<NSString*>* _Nullable))callback;
++ (void)flushedTraceFilesWithCallback:(void (^)(const NSArray<NSString*>*))callback;
 
 /**
  Delete all trace files older than a given date.

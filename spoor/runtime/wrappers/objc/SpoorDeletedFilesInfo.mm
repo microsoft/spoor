@@ -8,13 +8,13 @@
 
 @interface SpoorDeletedFilesInfo ()
 
-@property(assign, nonatomic) _spoor_runtime_DeletedFilesInfo deletedFilesInfo;
+@property(assign, nonatomic) spoor::runtime::DeletedFilesInfo deletedFilesInfo;
 
 @end
 
 @implementation SpoorDeletedFilesInfo : NSObject
 
-- (instancetype)initWithDeletedFilesInfo:(_spoor_runtime_DeletedFilesInfo)deletedFilesInfo {
+- (instancetype)initWithDeletedFilesInfo:(spoor::runtime::DeletedFilesInfo)deletedFilesInfo {
   self = [super init];
   if (self != nil) {
     self.deletedFilesInfo = deletedFilesInfo;
@@ -38,7 +38,7 @@
   } else {
     auto lhs = self.deletedFilesInfo;
     auto rhs = static_cast<SpoorDeletedFilesInfo*>(object).deletedFilesInfo;
-    return _spoor_runtime_DeletedFilesInfoEqual(&lhs, &rhs);
+    return lhs == rhs;
   }
 }
 

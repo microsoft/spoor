@@ -5,9 +5,9 @@ load("@rules_cc//cc:defs.bzl", "objc_library")
 load("@build_bazel_rules_apple//apple:ios.bzl", "ios_unit_test")
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_unit_test")
 
-_MINIMUM_IOS_VERSION = "9.0"
+_MINIMUM_IOS_VERSION = "13.0"
 
-_MINIMUM_MACOS_VERSION = "10.9"
+_MINIMUM_MACOS_VERSION = "10.15"
 
 objc_library(
     name = "runtime_stub",

@@ -143,8 +143,8 @@ load(
 
 apple_rules_dependencies()
 
-# TODO(#128): Remove this when the branch's changes with
-# Python3.9 support are checked in.
+# TODO(#128): Remove this custom `xctestrunner` in favor of the default runner
+# when the Python 3.9 support is checked in.
 http_archive(
     name = "xctestrunner",
     sha256 = "660f92df91044b1470a5f4ab8aa05c9375f52f8800f29834ba9181907b377d91",

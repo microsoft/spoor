@@ -1,15 +1,17 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+#include "spoor/runtime/runtime.h"
+
 #import "SpoorDeletedFilesInfo.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface SpoorDeletedFilesInfo (Private)
 
-@property(readonly, assign, nonatomic) _spoor_runtime_DeletedFilesInfo deletedFilesInfo;
+@property(readonly, assign, nonatomic) spoor::runtime::DeletedFilesInfo deletedFilesInfo;
 
-- (instancetype)initWithDeletedFilesInfo:(_spoor_runtime_DeletedFilesInfo)deletedFilesInfo;
+- (instancetype)initWithDeletedFilesInfo:(spoor::runtime::DeletedFilesInfo)deletedFilesInfo;
 
 @end
 

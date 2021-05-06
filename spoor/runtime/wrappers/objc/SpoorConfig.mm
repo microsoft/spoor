@@ -8,13 +8,13 @@
 
 @interface SpoorConfig ()
 
-@property(readwrite, assign, nonatomic) _spoor_runtime_Config config;
+@property(readwrite, assign, nonatomic) spoor::runtime::Config config;
 
 @end
 
 @implementation SpoorConfig : NSObject
 
-- (instancetype)initWithConfig:(_spoor_runtime_Config)config {
+- (instancetype)initWithConfig:(spoor::runtime::Config)config {
   self = [super init];
   if (self != nil) {
     self.config = config;
@@ -23,11 +23,11 @@
 }
 
 - (NSString* _Nullable)traceFilePath {
-  if (self.config.trace_file_path == nil) {
+  if (self.config.trace_file_path.empty()) {
     return nil;
   }
 
-  return [[NSString alloc] initWithUTF8String:self.config.trace_file_path];
+  return [[NSString alloc] initWithUTF8String:self.config.trace_file_path.string().c_str()];
 }
 
 - (SpoorSessionId)sessionId {
@@ -78,7 +78,7 @@
   } else {
     auto lhs = self.config;
     auto rhs = static_cast<SpoorConfig*>(object).config;
-    return _spoor_runtime_ConfigEqual(&lhs, &rhs);
+    return lhs == rhs;
   }
 }
 

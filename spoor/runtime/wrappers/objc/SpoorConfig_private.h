@@ -7,9 +7,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface SpoorConfig (Private)
 
-@property(readonly, assign, nonatomic) _spoor_runtime_Config config;
+@property(readonly, assign, nonatomic) spoor::runtime::Config config;
 
-- (instancetype)initWithConfig:(_spoor_runtime_Config)config;
+- (instancetype)initWithConfig:(spoor::runtime::Config)config;
 
 @end
 
