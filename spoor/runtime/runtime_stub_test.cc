@@ -56,8 +56,6 @@ TEST(Runtime, LogEvent) {  // NOLINT
 
   spoor::runtime::LogEvent(1, 2, 3, 4);
   spoor::runtime::LogEvent(1, 2, 3);
-  spoor::runtime::LogFunctionEntry(1);
-  spoor::runtime::LogFunctionExit(1);
 }
 
 namespace flush_trace_events_test {
