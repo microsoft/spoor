@@ -28,9 +28,9 @@ echo "Generating compilation database"
 ./toolchain/compilation_database/generate_compilation_database.sh
 
 echo "Building C++ and Objective-C targets"
-# Building all C++ targets before running Clang Tidy ensures that
+# Building all C++ and Objective-C targets before running Clang Tidy ensures that
 # `$(bazel info execution_root)` contains the necessary dependencies.
-bazel build $(bazel query 'kind(cc_.*, //...)')
+bazel build $(bazel query 'kind("(cc|objc)_.*", //...)')
 
 if [ $# -eq 0 ]; then
   # `runtime.h` is excluded because the header uses a C-style API which emits
