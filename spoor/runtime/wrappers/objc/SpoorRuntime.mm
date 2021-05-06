@@ -1,38 +1,41 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-#include <functional>
-#include <vector>
-#include "spoor/runtime/runtime.h"
+#import "SpoorRuntime.h"
 
 #import <Foundation/Foundation.h>
+
+#include <functional>
+#include <vector>
+
+#include "spoor/runtime/runtime.h"
+
 #import "SpoorConfig_private.h"
 #import "SpoorDeletedFilesInfo_private.h"
-#import "SpoorRuntime.h"
 
 @implementation SpoorRuntime : NSObject
 
-+ (void)initializeRuntime {
++ (void)setUp {
   spoor::runtime::Initialize();
 }
 
-+ (void)deinitializeRuntime {
++ (void)tearDown {
   spoor::runtime::Deinitialize();
 }
 
-+ (BOOL)isRuntimeInitialized {
++ (BOOL)isSetUp {
   return spoor::runtime::Initialized();
 }
 
-+ (void)enableRuntime {
++ (void)enableLogging {
   spoor::runtime::Enable();
 }
 
-+ (void)disableRuntime {
++ (void)disableLogging {
   spoor::runtime::Disable();
 }
 
-+ (BOOL)isRuntimeEnabled {
++ (BOOL)isLoggingEnabled {
   return spoor::runtime::Enabled();
 }
 
@@ -63,7 +66,7 @@
   spoor::runtime::FlushedTraceFiles([callback](std::vector<std::filesystem::path> paths) {
     NSMutableArray<NSString*>* convertedPaths = [NSMutableArray arrayWithCapacity:paths.size()];
     for (auto& path : paths) {
-      [convertedPaths addObject:[[NSString alloc] initWithUTF8String:path.string().c_str()]];
+      [convertedPaths addObject:[[NSString alloc] initWithUTF8String:path.c_str()]];
     }
 
     if (callback != nil) {

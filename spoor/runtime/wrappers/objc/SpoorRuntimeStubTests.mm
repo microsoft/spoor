@@ -1,9 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+#import <XCTest/XCTest.h>
+
 #include "spoor/runtime/runtime.h"
 
-#import <XCTest/XCTest.h>
 #import "SpoorConfig_private.h"
 #import "SpoorDeletedFilesInfo_private.h"
 #import "SpoorRuntime.h"
@@ -14,20 +15,22 @@
 
 @implementation SpoorRuntimeStubTests
 
-- (void)testInitializeRuntime {
-  XCTAssertFalse([SpoorRuntime isRuntimeInitialized]);
-  [SpoorRuntime initializeRuntime];
-  XCTAssertFalse([SpoorRuntime isRuntimeInitialized]);
-  [SpoorRuntime initializeRuntime];
-  XCTAssertFalse([SpoorRuntime isRuntimeInitialized]);
+NSTimeInterval const timeoutInterval = 5.0;
+
+- (void)testSetUp {
+  XCTAssertFalse([SpoorRuntime isSetUp]);
+  [SpoorRuntime setUp];
+  XCTAssertFalse([SpoorRuntime isSetUp]);
+  [SpoorRuntime setUp];
+  XCTAssertFalse([SpoorRuntime isSetUp]);
 }
 
-- (void)testEnableRuntime {
-  XCTAssertFalse([SpoorRuntime isRuntimeEnabled]);
-  [SpoorRuntime enableRuntime];
-  XCTAssertFalse([SpoorRuntime isRuntimeEnabled]);
-  [SpoorRuntime enableRuntime];
-  XCTAssertFalse([SpoorRuntime isRuntimeEnabled]);
+- (void)testEnableLogging {
+  XCTAssertFalse([SpoorRuntime isLoggingEnabled]);
+  [SpoorRuntime enableLogging];
+  XCTAssertFalse([SpoorRuntime isLoggingEnabled]);
+  [SpoorRuntime enableLogging];
+  XCTAssertFalse([SpoorRuntime isLoggingEnabled]);
 }
 
 - (void)testLogEvent {
@@ -44,9 +47,9 @@
   [SpoorRuntime flushTraceEventsWithCallback:^{
     [expectation fulfill];
   }];
-  [self waitForExpectationsWithTimeout:5.0
+  [self waitForExpectationsWithTimeout:timeoutInterval
                                handler:^(NSError* error) {
-                                 if (error) {
+                                 if (error != nil) {
                                    XCTFail(@"Expectation Failed with error: %@", error);
                                  }
                                }];
@@ -66,9 +69,9 @@
     XCTAssertEqual(traceFilePaths.count, static_cast<unsigned long>(0));
     [expectation fulfill];
   }];
-  [self waitForExpectationsWithTimeout:5.0
+  [self waitForExpectationsWithTimeout:timeoutInterval
                                handler:^(NSError* error) {
-                                 if (error) {
+                                 if (error != nil) {
                                    XCTFail(@"Expectation Failed with error: %@", error);
                                  }
                                }];
@@ -81,7 +84,7 @@
 
   constexpr spoor::runtime::DeletedFilesInfo expected_deleted_files_info{.deleted_files = 0,
                                                                          .deleted_bytes = 0};
-  SpoorDeletedFilesInfo* expectedDeletedFilesInfo =
+  const auto* expectedDeletedFilesInfo =
       [[SpoorDeletedFilesInfo alloc] initWithDeletedFilesInfo:expected_deleted_files_info];
   XCTestExpectation* expectation =
       [self expectationWithDescription:@"Delete flushed trace files callback invoked"];
@@ -92,9 +95,9 @@
                                                           expectedDeletedFilesInfo);
                                     [expectation fulfill];
                                   }];
-  [self waitForExpectationsWithTimeout:5.0
+  [self waitForExpectationsWithTimeout:timeoutInterval
                                handler:^(NSError* error) {
-                                 if (error) {
+                                 if (error != nil) {
                                    XCTFail(@"Expectation Failed with error: %@", error);
                                  }
                                }];
@@ -112,8 +115,8 @@
                                                .event_buffer_retention_duration_nanoseconds = 0,
                                                .max_flush_buffer_to_file_attempts = 0,
                                                .flush_all_events = false};
-  SpoorConfig* expectedConfig = [[SpoorConfig alloc] initWithConfig:expected_config];
-  const SpoorConfig* config = [SpoorRuntime config];
+  const auto* expectedConfig = [[SpoorConfig alloc] initWithConfig:expected_config];
+  const auto* config = [SpoorRuntime config];
   XCTAssertEqualObjects(config, expectedConfig);
 }
 

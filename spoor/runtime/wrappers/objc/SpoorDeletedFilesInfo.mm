@@ -1,10 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-#include "spoor/runtime/runtime.h"
+#import "SpoorDeletedFilesInfo_private.h"
 
 #import <Foundation/Foundation.h>
-#import "SpoorDeletedFilesInfo_private.h"
+
+#include "spoor/runtime/runtime.h"
 
 @interface SpoorDeletedFilesInfo ()
 
@@ -17,7 +18,7 @@
 - (instancetype)initWithDeletedFilesInfo:(spoor::runtime::DeletedFilesInfo)deletedFilesInfo {
   self = [super init];
   if (self != nil) {
-    self.deletedFilesInfo = deletedFilesInfo;
+    self.deletedFilesInfo = std::move(deletedFilesInfo);
   }
   return self;
 }
@@ -36,8 +37,8 @@
   } else if (![object isKindOfClass:[self class]]) {
     return NO;
   } else {
-    auto lhs = self.deletedFilesInfo;
-    auto rhs = static_cast<SpoorDeletedFilesInfo*>(object).deletedFilesInfo;
+    const auto lhs = self.deletedFilesInfo;
+    const auto rhs = static_cast<SpoorDeletedFilesInfo*>(object).deletedFilesInfo;
     return lhs == rhs;
   }
 }

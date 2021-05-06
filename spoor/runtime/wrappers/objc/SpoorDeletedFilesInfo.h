@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+#import <Foundation/Foundation.h>
+
 #include <stdint.h>
 
 NS_ASSUME_NONNULL_BEGIN

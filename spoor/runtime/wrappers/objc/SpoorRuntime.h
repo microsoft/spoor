@@ -9,37 +9,37 @@ NS_ASSUME_NONNULL_BEGIN
 @interface SpoorRuntime : NSObject
 
 /**
- Initialize the event tracing runtime. A call to this function is inserted at
+ Set up the event tracing runtime. A call to this function is inserted at
  the start of `main` by the compile-time instrumentation unless configured
  otherwise.
  */
-+ (void)initializeRuntime;
++ (void)setUp;
 
 /**
- Deinitialize the event tracing runtime. A call to this function is inserted
- at the  end of `main` by the compile-time instrumentation.
+ Tear down the event tracing runtime. A call to this function is inserted
+ at the end of `main` by the compile-time instrumentation.
  */
-+ (void)deinitializeRuntime;
++ (void)tearDown;
 
 /**
- Check if the event tracing runtime is initialized.
+ Check if the event tracing runtime is set up.
  */
-+ (BOOL)isRuntimeInitialized;
++ (BOOL)isSetUp;
 
 /**
  Enable runtime logging.
  */
-+ (void)enableRuntime;
++ (void)enableLogging;
 
 /**
  Disable runtime logging.
  */
-+ (void)disableRuntime;
++ (void)disableLogging;
 
 /**
  Check if runtime logging is enabled.
  */
-+ (BOOL)isRuntimeEnabled;
++ (BOOL)isLoggingEnabled;
 
 /**
  Log that the program generated an event. The function internally checks if

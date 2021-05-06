@@ -1,10 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-#include "spoor/runtime/runtime.h"
+#import "SpoorConfig_private.h"
 
 #import <XCTest/XCTest.h>
-#import "SpoorConfig_private.h"
+
+#include "spoor/runtime/runtime.h"
 
 @interface SpoorConfigTests : XCTestCase
 
@@ -24,7 +25,7 @@
                                              .event_buffer_retention_duration_nanoseconds = 30,
                                              .max_flush_buffer_to_file_attempts = 54,
                                              .flush_all_events = false};
-  SpoorConfig* config = [[SpoorConfig alloc] initWithConfig:backingConfig];
+  const auto* config = [[SpoorConfig alloc] initWithConfig:backingConfig];
   XCTAssertEqualObjects(config.traceFilePath, @"/path/to/file");
 }
 
@@ -40,7 +41,7 @@
                                              .event_buffer_retention_duration_nanoseconds = 30,
                                              .max_flush_buffer_to_file_attempts = 54,
                                              .flush_all_events = false};
-  SpoorConfig* config = [[SpoorConfig alloc] initWithConfig:backingConfig];
+  const auto* config = [[SpoorConfig alloc] initWithConfig:backingConfig];
   XCTAssertNil(config.traceFilePath);
 }
 
@@ -56,7 +57,7 @@
                                              .event_buffer_retention_duration_nanoseconds = 30,
                                              .max_flush_buffer_to_file_attempts = 54,
                                              .flush_all_events = false};
-  SpoorConfig* config = [[SpoorConfig alloc] initWithConfig:backingConfig];
+  const auto* config = [[SpoorConfig alloc] initWithConfig:backingConfig];
   XCTAssertEqual(config.sessionId, (SpoorSessionId)7);
 }
 
@@ -72,7 +73,7 @@
                                              .event_buffer_retention_duration_nanoseconds = 30,
                                              .max_flush_buffer_to_file_attempts = 54,
                                              .flush_all_events = false};
-  SpoorConfig* config = [[SpoorConfig alloc] initWithConfig:backingConfig];
+  const auto* config = [[SpoorConfig alloc] initWithConfig:backingConfig];
   XCTAssertEqual(config.threadEventBufferCapacity, static_cast<SpoorSizeType>(10));
 }
 
@@ -88,7 +89,7 @@
                                              .event_buffer_retention_duration_nanoseconds = 30,
                                              .max_flush_buffer_to_file_attempts = 54,
                                              .flush_all_events = false};
-  SpoorConfig* config = [[SpoorConfig alloc] initWithConfig:backingConfig];
+  const auto* config = [[SpoorConfig alloc] initWithConfig:backingConfig];
   XCTAssertEqual(config.maxReservedEventBufferSliceCapacity, static_cast<SpoorSizeType>(12));
 }
 
@@ -104,7 +105,7 @@
                                              .event_buffer_retention_duration_nanoseconds = 30,
                                              .max_flush_buffer_to_file_attempts = 54,
                                              .flush_all_events = false};
-  SpoorConfig* config = [[SpoorConfig alloc] initWithConfig:backingConfig];
+  const auto* config = [[SpoorConfig alloc] initWithConfig:backingConfig];
   XCTAssertEqual(config.maxDynamicEventBufferSliceCapacity, static_cast<SpoorSizeType>(15));
 }
 
@@ -120,7 +121,7 @@
                                              .event_buffer_retention_duration_nanoseconds = 30,
                                              .max_flush_buffer_to_file_attempts = 54,
                                              .flush_all_events = false};
-  SpoorConfig* config = [[SpoorConfig alloc] initWithConfig:backingConfig];
+  const auto* config = [[SpoorConfig alloc] initWithConfig:backingConfig];
   XCTAssertEqual(config.reservedEventPoolCapacity, static_cast<SpoorSizeType>(20));
 }
 
@@ -136,7 +137,7 @@
                                              .event_buffer_retention_duration_nanoseconds = 30,
                                              .max_flush_buffer_to_file_attempts = 54,
                                              .flush_all_events = false};
-  SpoorConfig* config = [[SpoorConfig alloc] initWithConfig:backingConfig];
+  const auto* config = [[SpoorConfig alloc] initWithConfig:backingConfig];
   XCTAssertEqual(config.dynamicEventPoolCapacity, static_cast<SpoorSizeType>(23));
 }
 
@@ -152,7 +153,7 @@
                                              .event_buffer_retention_duration_nanoseconds = 30,
                                              .max_flush_buffer_to_file_attempts = 54,
                                              .flush_all_events = false};
-  SpoorConfig* config = [[SpoorConfig alloc] initWithConfig:backingConfig];
+  const auto* config = [[SpoorConfig alloc] initWithConfig:backingConfig];
   XCTAssertEqual(config.dynamicEventSliceBorrowCASAttempts, static_cast<SpoorSizeType>(25));
 }
 
@@ -168,7 +169,7 @@
                                              .event_buffer_retention_duration_nanoseconds = 30,
                                              .max_flush_buffer_to_file_attempts = 54,
                                              .flush_all_events = false};
-  SpoorConfig* config = [[SpoorConfig alloc] initWithConfig:backingConfig];
+  const auto* config = [[SpoorConfig alloc] initWithConfig:backingConfig];
   XCTAssertEqual(config.eventBufferRetentionDuration, static_cast<SpoorDurationNanoseconds>(30));
 }
 
@@ -184,7 +185,7 @@
                                              .event_buffer_retention_duration_nanoseconds = 30,
                                              .max_flush_buffer_to_file_attempts = 54,
                                              .flush_all_events = false};
-  SpoorConfig* config = [[SpoorConfig alloc] initWithConfig:backingConfig];
+  const auto* config = [[SpoorConfig alloc] initWithConfig:backingConfig];
   XCTAssertEqual(config.maxFlushBufferToFileAttempts, static_cast<int32_t>(54));
 }
 
@@ -200,7 +201,7 @@
                                              .event_buffer_retention_duration_nanoseconds = 30,
                                              .max_flush_buffer_to_file_attempts = 54,
                                              .flush_all_events = true};
-  SpoorConfig* config = [[SpoorConfig alloc] initWithConfig:backingConfig];
+  const auto* config = [[SpoorConfig alloc] initWithConfig:backingConfig];
   XCTAssertTrue(config.flushAllEvents);
 }
 
@@ -216,7 +217,7 @@
                                              .event_buffer_retention_duration_nanoseconds = 30,
                                              .max_flush_buffer_to_file_attempts = 54,
                                              .flush_all_events = false};
-  SpoorConfig* config = [[SpoorConfig alloc] initWithConfig:backingConfig];
+  const auto* config = [[SpoorConfig alloc] initWithConfig:backingConfig];
   XCTAssertFalse(config.flushAllEvents);
 }
 
@@ -232,8 +233,8 @@
                                              .event_buffer_retention_duration_nanoseconds = 30,
                                              .max_flush_buffer_to_file_attempts = 54,
                                              .flush_all_events = false};
-  SpoorConfig* config1 = [[SpoorConfig alloc] initWithConfig:backingConfig];
-  SpoorConfig* config2 = [[SpoorConfig alloc] initWithConfig:backingConfig];
+  const auto* config1 = [[SpoorConfig alloc] initWithConfig:backingConfig];
+  const auto* config2 = [[SpoorConfig alloc] initWithConfig:backingConfig];
   XCTAssertEqualObjects(config1, config2);
 }
 
@@ -260,8 +261,8 @@
                                               .event_buffer_retention_duration_nanoseconds = 30,
                                               .max_flush_buffer_to_file_attempts = 54,
                                               .flush_all_events = false};
-  SpoorConfig* config1 = [[SpoorConfig alloc] initWithConfig:backingConfig1];
-  SpoorConfig* config2 = [[SpoorConfig alloc] initWithConfig:backingConfig2];
+  const auto* config1 = [[SpoorConfig alloc] initWithConfig:backingConfig1];
+  const auto* config2 = [[SpoorConfig alloc] initWithConfig:backingConfig2];
   XCTAssertEqualObjects(config1, config2);
 }
 
@@ -288,8 +289,8 @@
                                               .event_buffer_retention_duration_nanoseconds = 30,
                                               .max_flush_buffer_to_file_attempts = 54,
                                               .flush_all_events = true};
-  SpoorConfig* config1 = [[SpoorConfig alloc] initWithConfig:backingConfig1];
-  SpoorConfig* config2 = [[SpoorConfig alloc] initWithConfig:backingConfig2];
+  const auto* config1 = [[SpoorConfig alloc] initWithConfig:backingConfig1];
+  const auto* config2 = [[SpoorConfig alloc] initWithConfig:backingConfig2];
   XCTAssertNotEqualObjects(config1, config2);
 }
 @end

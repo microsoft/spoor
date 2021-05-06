@@ -1,9 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+#import <Foundation/Foundation.h>
+
 #include <stdint.h>
 
-#import <Foundation/Foundation.h>
 #import "SpoorTypes.h"
 
 NS_ASSUME_NONNULL_BEGIN

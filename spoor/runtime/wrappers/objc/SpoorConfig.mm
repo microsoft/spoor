@@ -1,10 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-#include "spoor/runtime/runtime.h"
+#import "SpoorConfig.h"
 
 #import <Foundation/Foundation.h>
-#import "SpoorConfig.h"
+
+#include "spoor/runtime/runtime.h"
 
 @interface SpoorConfig ()
 
@@ -17,7 +18,7 @@
 - (instancetype)initWithConfig:(spoor::runtime::Config)config {
   self = [super init];
   if (self != nil) {
-    self.config = config;
+    self.config = std::move(config);
   }
   return self;
 }
@@ -27,7 +28,7 @@
     return nil;
   }
 
-  return [[NSString alloc] initWithUTF8String:self.config.trace_file_path.string().c_str()];
+  return [[NSString alloc] initWithUTF8String:self.config.trace_file_path.c_str()];
 }
 
 - (SpoorSessionId)sessionId {
@@ -76,8 +77,8 @@
   } else if (![object isKindOfClass:[self class]]) {
     return NO;
   } else {
-    auto lhs = self.config;
-    auto rhs = static_cast<SpoorConfig*>(object).config;
+    const auto lhs = self.config;
+    const auto rhs = static_cast<SpoorConfig*>(object).config;
     return lhs == rhs;
   }
 }

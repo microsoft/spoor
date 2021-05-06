@@ -1,10 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-#include <type_traits>
-#include "spoor/runtime/runtime.h"
-
 #import "SpoorTypes.h"
+
+#include <type_traits>
+
+#include "spoor/runtime/runtime.h"
 
 static_assert(std::is_same_v<SpoorDurationNanoseconds, spoor::runtime::DurationNanoseconds>);
 static_assert(std::is_same_v<SpoorEventType, spoor::runtime::EventType>);
