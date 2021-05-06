@@ -82,7 +82,7 @@
       });
 }
 
-+ (SpoorConfig*)config {
++ (const SpoorConfig*)config {
   spoor::runtime::Config config = spoor::runtime::GetConfig();
   return [[SpoorConfig alloc] initWithConfig:config];
 }

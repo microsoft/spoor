@@ -22,7 +22,7 @@
   return self;
 }
 
-- (NSString* _Nullable)traceFilePath {
+- (const NSString* _Nullable)traceFilePath {
   if (self.config.trace_file_path.empty()) {
     return nil;
   }

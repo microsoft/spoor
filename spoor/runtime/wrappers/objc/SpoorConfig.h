@@ -10,7 +10,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface SpoorConfig : NSObject
 
-@property(nullable, readonly) NSString* traceFilePath;
+@property(nullable, readonly) const NSString* traceFilePath;
 @property(readonly) SpoorSessionId sessionId;
 @property(readonly) SpoorSizeType threadEventBufferCapacity;
 @property(readonly) SpoorSizeType maxReservedEventBufferSliceCapacity;

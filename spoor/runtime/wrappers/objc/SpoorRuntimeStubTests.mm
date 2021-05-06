@@ -113,7 +113,7 @@
                                                .max_flush_buffer_to_file_attempts = 0,
                                                .flush_all_events = false};
   SpoorConfig* expectedConfig = [[SpoorConfig alloc] initWithConfig:expected_config];
-  SpoorConfig* config = [SpoorRuntime config];
+  const SpoorConfig* config = [SpoorRuntime config];
   XCTAssertEqualObjects(config, expectedConfig);
 }
 

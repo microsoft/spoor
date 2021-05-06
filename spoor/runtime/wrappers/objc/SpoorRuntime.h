@@ -81,7 +81,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  Retrieve Spoor's configuration.
  */
-+ (SpoorConfig*)config;
++ (const SpoorConfig*)config;
 
 /**
  Check if the runtime contains stub implementations.
