@@ -147,7 +147,7 @@ apple_rules_dependencies()
 # when the Python 3.9 support is checked in.
 http_archive(
     name = "xctestrunner",
-    sha256 = "660f92df91044b1470a5f4ab8aa05c9375f52f8800f29834ba9181907b377d91",
+    sha256 = "adcf171ef05af1e7d75cf89373fad9b40f23068531087ddce614ad82b0385f5d",
     strip_prefix = "xctestrunner-fix-compatibility-with-python-3.9",
     url = "https://github.com/thii/xctestrunner/archive/refs/heads/fix-compatibility-with-python-3.9.tar.gz",
 )
