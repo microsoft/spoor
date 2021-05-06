@@ -43,11 +43,10 @@ using google::protobuf::util::TimeUtil;
 
 constexpr std::string_view kMainFunctionName{"main"};
 constexpr std::string_view kInitializeRuntimeFunctionName{
-    "_spoor_runtime_InitializeRuntime"};
+    "_spoor_runtime_Initialize"};
 constexpr std::string_view kDeinitializeRuntimeFunctionName{
-    "_spoor_runtime_DeinitializeRuntime"};
-constexpr std::string_view kEnableRuntimeFunctionName{
-    "_spoor_runtime_EnableRuntime"};
+    "_spoor_runtime_Deinitialize"};
+constexpr std::string_view kEnableRuntimeFunctionName{"_spoor_runtime_Enable"};
 constexpr std::string_view kLogFunctionEntryFunctionName{
     "_spoor_runtime_LogFunctionEntry"};
 constexpr std::string_view kLogFunctionExitFunctionName{

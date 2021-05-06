@@ -83,7 +83,10 @@ def _cc_static_library_impl(ctx):
         env = env,
     )
 
-    default_info = DefaultInfo(files = depset(direct = [output_file]))
+    default_info = DefaultInfo(
+        files = depset([output_file]),
+        runfiles = ctx.runfiles(files = [output_file]),
+    )
     this_cc_info = CcInfo(
         compilation_context = compilation_context,
         linking_context = linking_context,
