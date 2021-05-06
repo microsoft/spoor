@@ -284,7 +284,9 @@ TEST(RuntimeManager, DeleteFlushedTraceFilesOlderThan) {  // NOLINT
   const auto make_path = [](const SizeType n) {
     return std::filesystem::path{absl::StrFormat("%d.spoor", n)};
   };
-  const auto make_timestamp = [](const int64 n) { return n * 1'000'000; };
+  const auto make_timestamp = [](const int64 n) -> TimestampNanoseconds {
+    return n * 1'000'000;
+  };
   const auto make_header = [](TimestampNanoseconds system_clock_timestamp) {
     return Header{.compression_strategy = CompressionStrategy::kNone,
                   .session_id = 0,
@@ -301,7 +303,7 @@ TEST(RuntimeManager, DeleteFlushedTraceFilesOlderThan) {  // NOLINT
   directory_entries.reserve(trace_files_size);
   for (SizeType i{0}; i < trace_files_size; ++i) {
     const auto path = make_path(i);
-    const auto timestamp = make_timestamp(i);
+    const auto timestamp = make_timestamp(gsl::narrow_cast<int64>(i));
     const auto header = make_header(timestamp);
     const auto file_size = make_file_size(i);
     directory_entries.emplace_back(path);
@@ -321,11 +323,11 @@ TEST(RuntimeManager, DeleteFlushedTraceFilesOlderThan) {  // NOLINT
 
     RuntimeManager::DeletedFilesInfo expected_deleted_files_info{
         .deleted_files = std::max(0, std::min(i, trace_files_size)),
-        .deleted_bytes = [&]() -> int64 {
+        .deleted_bytes = [&] {
           // 2^0 + 2^1 + ... + 2^(n - 1) == 2^n - 1
           const auto shift{
               static_cast<uint64>(std::min(std::max(i, 0), trace_files_size))};
-          return (1ULL << shift) - 1;
+          return gsl::narrow_cast<int64>((1ULL << shift) - 1);
         }()};
 
     MockFunction<void(RuntimeManager::DeletedFilesInfo)> callback{};

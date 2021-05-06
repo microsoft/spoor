@@ -73,6 +73,8 @@ cc_test(
     visibility = ["//visibility:private"],
     deps = [
         ":runtime_stub",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/time",
         "@com_google_googletest//:gtest_main",
         "@com_microsoft_gsl//:gsl",
     ],

@@ -6,6 +6,8 @@
 #include <filesystem>
 #include <ios>
 
+#include "gsl/gsl"
+
 namespace util::file_system {
 
 auto LocalFileWriter::Open(const std::filesystem::path& path,
@@ -16,7 +18,8 @@ auto LocalFileWriter::Open(const std::filesystem::path& path,
 auto LocalFileWriter::IsOpen() const -> bool { return ofstream_.is_open(); }
 
 auto LocalFileWriter::Write(const gsl::span<const char> data) -> void {
-  ofstream_.write(data.data(), data.size_bytes());
+  ofstream_.write(data.data(),
+                  gsl::narrow_cast<std::streamsize>(data.size_bytes()));
 }
 
 auto LocalFileWriter::Close() -> void { ofstream_.close(); }

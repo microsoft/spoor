@@ -71,7 +71,7 @@ constexpr int32 kMaxFlushBufferToFileAttemptsDefaultValue{2};
 constexpr std::string_view kFlushAllEventsKey{"SPOOR_RUNTIME_FLUSH_ALL_EVENTS"};
 constexpr bool kFlushAllEventsDefaultValue{true};
 
-struct Config {
+struct alignas(128) Config {
   using SizeType = buffer::CircularBuffer<trace::Event>::SizeType;
 
   static auto FromEnv(const util::env::GetEnv& get_env = std::getenv) -> Config;

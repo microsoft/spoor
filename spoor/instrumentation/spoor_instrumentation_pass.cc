@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-// Register `InjectRuntime` with LLVM's pass manager.
+// Register `InjectInstrumentation` with LLVM's pass manager.
 
 #include <algorithm>
 #include <cstdlib>
@@ -12,14 +12,16 @@
 #include <system_error>
 #include <unordered_set>
 
+#include "absl/strings/str_format.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/WithColor.h"
 #include "llvm/Support/raw_ostream.h"
 #include "spoor/instrumentation/config/env_config.h"
-#include "spoor/instrumentation/inject_runtime/inject_runtime.h"
+#include "spoor/instrumentation/inject_instrumentation/inject_instrumentation.h"
 #include "spoor/instrumentation/instrumentation.h"
 #include "spoor/instrumentation/support/support.h"
 #include "util/time/clock.h"
@@ -38,10 +40,10 @@ auto PluginInfo() -> llvm::PassPluginLibraryInfo {
           if (config.function_allow_list_file.has_value()) {
             std::ifstream file{config.function_allow_list_file.value()};
             if (!file.is_open()) {
-              llvm::WithColor::error();
-              llvm::errs() << "Failed to read the function allow list file '"
-                           << config.function_allow_list_file.value() << "'.\n";
-              exit(EXIT_FAILURE);
+              const auto message = absl::StrFormat(
+                  "Failed to read the function allow list file '%s'.",
+                  config.function_allow_list_file.value());
+              llvm::report_fatal_error(message, false);
             }
             function_allow_list = support::ReadLinesToSet(&file);
           }
@@ -50,10 +52,10 @@ auto PluginInfo() -> llvm::PassPluginLibraryInfo {
           if (config.function_blocklist_file.has_value()) {
             std::ifstream file{config.function_blocklist_file.value()};
             if (!file.is_open()) {
-              llvm::WithColor::error();
-              llvm::errs() << "Failed to read the function allow list file '"
-                           << config.function_blocklist_file.value() << "'.\n";
-              exit(EXIT_FAILURE);
+              const auto message = absl::StrFormat(
+                  "Failed to read the function blocklist file '%s'.",
+                  config.function_blocklist_file.value());
+              llvm::report_fatal_error(message, false);
             }
             function_blocklist = support::ReadLinesToSet(&file);
           }
@@ -65,7 +67,7 @@ auto PluginInfo() -> llvm::PassPluginLibraryInfo {
                                                               *error);
               };
           auto system_clock = std::make_unique<util::time::SystemClock>();
-          pass_manager.addPass(inject_runtime::InjectRuntime{{
+          pass_manager.addPass(inject_instrumentation::InjectInstrumentation{{
               .inject_instrumentation = config.inject_instrumentation,
               .instrumented_function_map_output_path =
                   config.instrumented_function_map_output_path,

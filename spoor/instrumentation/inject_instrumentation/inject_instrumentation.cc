@@ -1,18 +1,20 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-#include "spoor/instrumentation/inject_runtime/inject_runtime.h"
+#include "spoor/instrumentation/inject_instrumentation/inject_instrumentation.h"
 
 #include <algorithm>
 #include <cctype>
 #include <chrono>
 #include <cstdlib>
 #include <functional>
+#include <ios>
 #include <iterator>
 #include <string_view>
 #include <system_error>
 #include <utility>
 
+#include "absl/strings/str_format.h"
 #include "city_hash/city.h"
 #include "google/protobuf/timestamp.pb.h"
 #include "google/protobuf/util/time_util.h"
@@ -27,6 +29,7 @@
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/Type.h"
 #include "llvm/Passes/PassPlugin.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include "spoor/proto/spoor.pb.h"
@@ -34,7 +37,7 @@
 #include "swift/Demangling/Demangler.h"
 #include "util/time/clock.h"
 
-namespace spoor::instrumentation::inject_runtime {
+namespace spoor::instrumentation::inject_instrumentation {
 
 using google::protobuf::util::TimeUtil;
 
@@ -50,14 +53,19 @@ constexpr std::string_view kLogFunctionEntryFunctionName{
 constexpr std::string_view kLogFunctionExitFunctionName{
     "_spoor_runtime_LogFunctionExit"};
 
-InjectRuntime::InjectRuntime(Options&& options)
+InjectInstrumentation::InjectInstrumentation(Options&& options)
     : options_{std::move(options)} {}
 
-auto InjectRuntime::run(llvm::Module& llvm_module, llvm::ModuleAnalysisManager&
-                        /*unused*/) -> llvm::PreservedAnalyses {
+auto InjectInstrumentation::run(llvm::Module& llvm_module,
+                                llvm::ModuleAnalysisManager&
+                                /*unused*/) -> llvm::PreservedAnalyses {
   if (!options_.inject_instrumentation) return llvm::PreservedAnalyses::all();
 
   auto [instrumented_function_map, modified] = InstrumentModule(&llvm_module);
+  auto preserved_analyses = [modified = modified] {
+    if (modified) return llvm::PreservedAnalyses::none();
+    return llvm::PreservedAnalyses::all();
+  }();
 
   const auto now = [&] {
     const auto now = options_.system_clock->Now().time_since_epoch();
@@ -83,11 +91,10 @@ auto InjectRuntime::run(llvm::Module& llvm_module, llvm::ModuleAnalysisManager&
   auto output_stream =
       options_.instrumented_function_map_output_stream(path.c_str(), &error);
   if (error) {
-    llvm::WithColor::error();
-    llvm::errs()
-        << "Failed to open/create the instrumentation map output file '" << path
-        << "'. " << error.message() << ".\n";
-    exit(EXIT_FAILURE);
+    const auto message = absl::StrFormat(
+        "Failed to open/create the instrumentation map output file '%s'. %s.",
+        path, error.message());
+    llvm::report_fatal_error(message, false);
   }
 
   // LLVM passes do not support `std::ostream` so we're forced to bridge the
@@ -96,12 +103,13 @@ auto InjectRuntime::run(llvm::Module& llvm_module, llvm::ModuleAnalysisManager&
   instrumented_function_map.SerializeToString(&buffer);
   *output_stream << buffer;
 
-  if (modified) return llvm::PreservedAnalyses::none();
-  return llvm::PreservedAnalyses::all();
+  return preserved_analyses;
 }
 
-auto InjectRuntime::InstrumentModule(gsl::not_null<llvm::Module*> llvm_module)
-    const -> std::pair<InstrumentedFunctionMap, bool> {
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
+auto InjectInstrumentation::InstrumentModule(
+    gsl::not_null<llvm::Module*> llvm_module) const
+    -> std::pair<InstrumentedFunctionMap, bool> {
   const auto& module_id = llvm_module->getModuleIdentifier();
   InstrumentedFunctionMap instrumented_function_map{};
   instrumented_function_map.set_module_id(module_id);
@@ -109,7 +117,7 @@ auto InjectRuntime::InstrumentModule(gsl::not_null<llvm::Module*> llvm_module)
 
   auto& context = llvm_module->getContext();
   auto* void_return_type = llvm::Type::getVoidTy(context);
-  constexpr bool variadic{true};
+  constexpr auto variadic{true};
 
   auto* initialization_function_type =
       llvm::FunctionType::get(void_return_type, {}, !variadic);
@@ -138,7 +146,7 @@ auto InjectRuntime::InstrumentModule(gsl::not_null<llvm::Module*> llvm_module)
   };
 
   uint64 counter{0};
-  bool modified{false};
+  auto modified{false};
   for (auto& function : llvm_module->functions()) {
     if (function.isDeclaration()) continue;
     const auto function_id = make_function_id(counter);
@@ -160,19 +168,14 @@ auto InjectRuntime::InstrumentModule(gsl::not_null<llvm::Module*> llvm_module)
 
     const auto is_main = function_name == kMainFunctionName;
     const auto instrument_function = [&] {
-      if (is_main ||
-          std::find(std::cbegin(options_.function_allow_list),
-                    std::cend(options_.function_allow_list),
-                    function_name) != std::cend(options_.function_allow_list)) {
+      if (is_main || options_.function_allow_list.contains(function_name)) {
         return true;
       }
       const auto instruction_count = function.getInstructionCount();
       if (instruction_count < options_.min_instruction_count_to_instrument) {
         return false;
       }
-      return std::find(std::cbegin(options_.function_blocklist),
-                       std::cend(options_.function_blocklist),
-                       function_name) == std::cend(options_.function_blocklist);
+      return !options_.function_blocklist.contains(function_name);
     }();
 
     FunctionInfo function_info{};
@@ -182,7 +185,7 @@ auto InjectRuntime::InstrumentModule(gsl::not_null<llvm::Module*> llvm_module)
     if (subprogram != nullptr) {
       function_info.set_file_name(subprogram->getFilename().str());
       function_info.set_directory(subprogram->getDirectory().str());
-      function_info.set_line(subprogram->getLine());
+      function_info.set_line(gsl::narrow_cast<int32>(subprogram->getLine()));
     }
     function_info.set_instrumented(instrument_function);
     function_map[function_id] = function_info;
@@ -192,11 +195,9 @@ auto InjectRuntime::InstrumentModule(gsl::not_null<llvm::Module*> llvm_module)
 
     llvm::IRBuilder builder{context};
     builder.SetInsertPoint(&*function.getEntryBlock().getFirstInsertionPt());
-    if (is_main) {
-      if (options_.initialize_runtime) {
-        builder.CreateCall(initialize_runtime);
-        if (options_.enable_runtime) builder.CreateCall(enable_runtime);
-      }
+    if (is_main && options_.initialize_runtime) {
+      builder.CreateCall(initialize_runtime);
+      if (options_.enable_runtime) builder.CreateCall(enable_runtime);
     }
     builder.CreateCall(log_function_entry, {builder.getInt64(function_id)});
     for (auto& basic_block : function) {
@@ -215,4 +216,4 @@ auto InjectRuntime::InstrumentModule(gsl::not_null<llvm::Module*> llvm_module)
   return {instrumented_function_map, modified};
 }
 
-}  // namespace spoor::instrumentation::inject_runtime
+}  // namespace spoor::instrumentation::inject_instrumentation

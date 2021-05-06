@@ -6,8 +6,8 @@ set -e
 
 WORKSPACE="$(bazel info workspace)"
 
-if command -v clang-tidy-11 &> /dev/null; then
-  CLANG_TIDY="clang-tidy-11"
+if command -v clang-tidy-12 &> /dev/null; then
+  CLANG_TIDY="clang-tidy-12"
 elif command -v clang-tidy &> /dev/null; then
   CLANG_TIDY="clang-tidy"
 else

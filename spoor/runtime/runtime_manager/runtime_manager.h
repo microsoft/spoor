@@ -28,7 +28,7 @@ class RuntimeManager final : public event_logger::EventLoggerNotifier {
   using Buffer = buffer::CircularSliceBuffer<trace::Event>;
   using SizeType = Buffer::SizeType;
 
-  struct Options {
+  struct alignas(128) Options {
     gsl::not_null<util::time::SteadyClock*> steady_clock;
     gsl::not_null<flush_queue::FlushQueue<Buffer>*> flush_queue;
     SizeType thread_event_buffer_capacity;
@@ -41,7 +41,7 @@ class RuntimeManager final : public event_logger::EventLoggerNotifier {
     bool flush_all_events;
   };
 
-  struct DeletedFilesInfo {
+  struct alignas(16) DeletedFilesInfo {
     int32 deleted_files;
     int64 deleted_bytes;
   };
@@ -72,7 +72,7 @@ class RuntimeManager final : public event_logger::EventLoggerNotifier {
   auto LogFunctionEntry(trace::FunctionId function_id) -> void;
   auto LogFunctionExit(trace::FunctionId function_id) -> void;
 
-  auto Flush(const std::function<void()>& completion) -> void;
+  auto Flush(std::function<void()> completion) -> void;
   auto Clear() -> void;
 
   [[nodiscard]] auto Initialized() const -> bool;

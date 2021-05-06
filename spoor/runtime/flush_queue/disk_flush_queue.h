@@ -34,7 +34,7 @@ class DiskFlushQueue final
   using Buffer = buffer::CircularSliceBuffer<trace::Event>;
   using SizeType = Buffer::SizeType;
 
-  struct Options {
+  struct alignas(128) Options {
     std::filesystem::path trace_file_path;
     std::chrono::nanoseconds buffer_retention_duration;
     gsl::not_null<util::time::SystemClock*> system_clock;
@@ -66,7 +66,7 @@ class DiskFlushQueue final
   [[nodiscard]] auto Empty() const -> bool;
 
  private:
-  struct FlushInfo {
+  struct alignas(128) FlushInfo {
     Buffer buffer;
     std::chrono::time_point<std::chrono::steady_clock> flush_timestamp;
     trace::ThreadId thread_id;

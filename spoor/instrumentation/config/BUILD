@@ -86,5 +86,6 @@ cc_test(
         ":env_config",
         "//util:numeric",
         "@com_google_googletest//:gtest_main",
+        "@com_microsoft_gsl//:gsl",
     ],
 )

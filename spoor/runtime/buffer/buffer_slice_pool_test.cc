@@ -20,7 +20,7 @@
 
 namespace {
 
-using Slice = spoor::runtime::buffer::CircularBuffer<int64>;
+using Slice = spoor::runtime::buffer::CircularBuffer<uint64>;
 using ValueType = Slice::ValueType;
 using SizeType = Slice::SizeType;
 using BufferSlicePool = spoor::runtime::buffer::BufferSlicePool<ValueType>;
@@ -30,7 +30,7 @@ using CombinedPool = spoor::runtime::buffer::CombinedBufferSlicePool<ValueType>;
 using DynamicPool = spoor::runtime::buffer::DynamicBufferSlicePool<ValueType>;
 using ReservedPool = spoor::runtime::buffer::ReservedBufferSlicePool<ValueType>;
 
-struct Options {
+struct alignas(32) Options {
   SizeType max_slice_capacity;
   SizeType capacity;
   SizeType borrow_cas_attempts;

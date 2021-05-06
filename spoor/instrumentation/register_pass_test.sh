@@ -4,8 +4,8 @@
 
 set -e
 
-if command -v opt-11 &> /dev/null; then
-  OPT="opt-11"
+if command -v opt-12 &> /dev/null; then
+  OPT="opt-12"
 elif command -v opt &> /dev/null; then
   OPT="opt"
 else

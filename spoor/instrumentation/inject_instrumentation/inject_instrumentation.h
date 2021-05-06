@@ -24,14 +24,15 @@
 #include "util/numeric.h"
 #include "util/time/clock.h"
 
-namespace spoor::instrumentation::inject_runtime {
+namespace spoor::instrumentation::inject_instrumentation {
 
 constexpr std::string_view kInstrumentedFunctionMapFileExtension{
     "spoor_function_map"};
 
-class InjectRuntime : public llvm::PassInfoMixin<InjectRuntime> {
+class InjectInstrumentation
+    : public llvm::PassInfoMixin<InjectInstrumentation> {
  public:
-  struct Options {
+  struct alignas(128) Options {
     bool inject_instrumentation;
     std::filesystem::path instrumented_function_map_output_path;
     std::function<std::unique_ptr<llvm::raw_ostream>(
@@ -47,13 +48,15 @@ class InjectRuntime : public llvm::PassInfoMixin<InjectRuntime> {
     bool enable_runtime;
   };
 
-  InjectRuntime() = delete;
-  explicit InjectRuntime(Options&& options);
-  InjectRuntime(const InjectRuntime&) = delete;
-  InjectRuntime(InjectRuntime&&) noexcept = default;
-  auto operator=(const InjectRuntime&) -> InjectRuntime& = delete;
-  auto operator=(InjectRuntime&&) noexcept -> InjectRuntime& = default;
-  ~InjectRuntime() = default;
+  InjectInstrumentation() = delete;
+  explicit InjectInstrumentation(Options&& options);
+  InjectInstrumentation(const InjectInstrumentation&) = delete;
+  InjectInstrumentation(InjectInstrumentation&&) noexcept = default;
+  auto operator=(const InjectInstrumentation&)
+      -> InjectInstrumentation& = delete;
+  auto operator=(InjectInstrumentation&&) noexcept
+      -> InjectInstrumentation& = default;
+  ~InjectInstrumentation() = default;
 
   // LLVM's pass interface require deviating from Spoor's naming convention.
   // NOLINTNEXTLINE(google-runtime-references, readability-identifier-naming)
@@ -69,4 +72,4 @@ class InjectRuntime : public llvm::PassInfoMixin<InjectRuntime> {
   Options options_;
 };
 
-}  // namespace spoor::instrumentation::inject_runtime
+}  // namespace spoor::instrumentation::inject_instrumentation

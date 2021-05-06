@@ -14,7 +14,7 @@
 
 namespace {
 
-using BufferSlice = spoor::runtime::buffer::CircularBuffer<int64>;
+using BufferSlice = spoor::runtime::buffer::CircularBuffer<uint64>;
 using ValueType = BufferSlice::ValueType;
 using OwnedBufferSlice = spoor::runtime::buffer::OwnedBufferSlice<ValueType>;
 using UnownedBufferSlice =

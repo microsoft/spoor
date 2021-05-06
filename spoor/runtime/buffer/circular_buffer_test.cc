@@ -20,7 +20,7 @@
 
 namespace {
 
-using CircularBuffer = spoor::runtime::buffer::CircularBuffer<int64>;
+using CircularBuffer = spoor::runtime::buffer::CircularBuffer<uint64>;
 using ValueType = CircularBuffer::ValueType;
 using SizeType = CircularBuffer::SizeType;
 using Pool = spoor::runtime::buffer::ReservedBufferSlicePool<ValueType>;
@@ -58,9 +58,9 @@ TEST(CircularBuffer, PushCopyValue) {  // NOLINT
   using Pool = spoor::runtime::buffer::ReservedBufferSlicePool<std::string>;
   const auto assert_chunks_equal_to_expected =
       [](const std::vector<gsl::span<Pool::ValueType>>& chunks,
-         const Pool::SizeType capacity, const int64 start_value) {
+         const Pool::SizeType capacity, const ValueType start_value) {
         ASSERT_EQ(chunks.size(), 1);
-        std::vector<int64> expected_chunk_numbers(capacity);
+        std::vector<ValueType> expected_chunk_numbers(capacity);
         std::iota(std::begin(expected_chunk_numbers),
                   std::end(expected_chunk_numbers), start_value);
         std::vector<std::string> expected_chunk{};

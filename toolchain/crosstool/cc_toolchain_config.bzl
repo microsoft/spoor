@@ -67,35 +67,35 @@ def linux_llvm_toolchain_impl(ctx):
     tool_paths = [
         tool_path(
             name = "gcc",
-            path = "/usr/bin/clang-11",
+            path = "/usr/bin/clang-12",
         ),
         tool_path(
             name = "ld",
-            path = "/usr/bin/lld-11",
+            path = "/usr/bin/lld-12",
         ),
         tool_path(
             name = "ar",
-            path = "/usr/bin/llvm-ar-11",
+            path = "/usr/bin/llvm-ar-12",
         ),
         tool_path(
             name = "cpp",
-            path = "/usr/bin/clang++-11",
+            path = "/usr/bin/clang++-12",
         ),
         tool_path(
             name = "gcov",
-            path = "/usr/bin/llvm-cov-11",
+            path = "/usr/bin/llvm-cov-12",
         ),
         tool_path(
             name = "nm",
-            path = "/usr/bin/llvm-nm-11",
+            path = "/usr/bin/llvm-nm-12",
         ),
         tool_path(
             name = "objdump",
-            path = "/usr/bin/llvm-objdump-11",
+            path = "/usr/bin/llvm-objdump-12",
         ),
         tool_path(
             name = "strip",
-            path = "/usr/bin/llvm-strip-11",
+            path = "/usr/bin/llvm-strip-12",
         ),
     ]
     return cc_common.create_cc_toolchain_config_info(
@@ -103,9 +103,9 @@ def linux_llvm_toolchain_impl(ctx):
         features = FEATURES,
         cxx_builtin_include_directories = [
             "/usr/include",
-            "/usr/lib/llvm-11/include/c++/v1/",
-            "/usr/lib/llvm-11/lib/clang/11.1.0_1/include",
-            "/usr/lib/llvm-11/lib/clang/11.1.0_1/share",
+            "/usr/lib/llvm-12/include/c++/v1/",
+            "/usr/lib/llvm-12/lib/clang/12.0.0/include",
+            "/usr/lib/llvm-12/lib/clang/12.0.0/share",
         ],
         toolchain_identifier = "linux-llvm-toolchain",
         host_system_name = "local",
@@ -159,9 +159,9 @@ def darwin_llvm_toolchain_impl(ctx):
         features = FEATURES,
         cxx_builtin_include_directories = [
             "/usr/local/opt/llvm/include/c++/v1",
-            "/usr/local/Cellar/llvm/11.1.0_1/include/",
-            "/usr/local/Cellar/llvm/11.1.0_1/lib/clang/11.1.0/include",
-            "/usr/local/Cellar/llvm/11.1.0_1/lib/clang/11.1.0/share",
+            "/usr/local/Cellar/llvm/12.0.0/include/",
+            "/usr/local/Cellar/llvm/12.0.0/lib/clang/12.0.0/include",
+            "/usr/local/Cellar/llvm/12.0.0/lib/clang/12.0.0/share",
             "/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/include",
             "/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/System/Library/Frameworks",
         ],

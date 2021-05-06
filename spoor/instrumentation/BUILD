@@ -14,7 +14,7 @@ cc_binary(
     deps = [
         "//spoor/instrumentation/config",
         "//spoor/instrumentation/config:command_line_config",
-        "//spoor/instrumentation/inject_runtime",
+        "//spoor/instrumentation/inject_instrumentation",
         "//spoor/instrumentation/support",
         "//util/time:clock",
         "@com_google_absl//absl/flags:config",
@@ -22,7 +22,7 @@ cc_binary(
         "@com_google_absl//absl/flags:usage",
         "@com_google_absl//absl/strings",
         "@com_microsoft_gsl//:gsl",
-        "@llvm//11.0.0",
+        "@llvm//12.0.0",
     ],
 )
 
@@ -32,7 +32,7 @@ SHARED_LIBRARY_NAME = "spoor_instrumentation"
 
 SHARED_LIBRARY_SRCS = [
     "instrumentation.h",
-    "register_pass.cc",
+    "spoor_instrumentation_pass.cc",
 ]
 
 SHARED_LIBRARY_COPTS = ["-Werror"]
@@ -43,10 +43,11 @@ SHARED_LIBRARY_VISIBILITY = ["//visibility:public"]
 
 SHARED_LIBRARY_DEPS = [
     "//spoor/instrumentation/config:env_config",
-    "//spoor/instrumentation/inject_runtime",
+    "//spoor/instrumentation/inject_instrumentation",
     "//spoor/instrumentation/support",
     "//util/time:clock",
-    "@llvm//11.0.0",
+    "@com_google_absl//absl/strings:str_format",
+    "@llvm//12.0.0",
 ]
 
 cc_binary(
