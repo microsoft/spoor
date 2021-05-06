@@ -27,6 +27,7 @@ cc_library(
 
 cc_static_library(
     name = "spoor_runtime",
+    visibility = ["//visibility:public"],
     deps = [":runtime"],
 )
 
@@ -44,6 +45,7 @@ cc_library(
 
 cc_static_library(
     name = "spoor_runtime_stub",
+    visibility = ["//visibility:public"],
     deps = [":runtime_stub"],
 )
 

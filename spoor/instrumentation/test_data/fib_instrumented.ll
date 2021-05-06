@@ -22,12 +22,12 @@ define i32 @main() {
   call void @_spoor_runtime_LogFunctionEntry(i64 7304034947084320769)
   %1 = tail call i32 @_Z9Fibonaccii(i32 7)
   call void @_spoor_runtime_LogFunctionExit(i64 7304034947084320769)
-  call void @_spoor_runtime_DeinitializeRuntime()
+  call void @_spoor_runtime_Deinitialize()
   ret i32 %1
 }
 
-declare void @_spoor_runtime_InitializeRuntime()
-declare void @_spoor_runtime_DeinitializeRuntime()
-declare void @_spoor_runtime_EnableRuntime()
+declare void @_spoor_runtime_Initialize()
+declare void @_spoor_runtime_Deinitialize()
+declare void @_spoor_runtime_Enable()
 declare void @_spoor_runtime_LogFunctionEntry(i64)
 declare void @_spoor_runtime_LogFunctionExit(i64)
