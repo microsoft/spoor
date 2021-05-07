@@ -11,5 +11,6 @@ steps:
 - script: echo '##vso[task.prependpath]/usr/local/opt/llvm/bin'
   displayName: Install LLVM (macOS)
   condition: eq(variables['Agent.OS'], 'Darwin')
-- script: cp ./.build/ci.bazelrc ./.bazelrc
-  displayName: Copy .bazelrc
+- script: cat .build/macos-ci.bazelrc .build/ci.bazelrc > .bazelrc
+  displayName: Create .bazelrc (macOS)
+  condition: eq(variables['Agent.OS'], 'Darwin')

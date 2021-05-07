@@ -4,12 +4,13 @@
 trigger:
 - master
 
+# TODO(#58): Support Linux in CI and reintroduce UBSAN (Linux only).
+
 jobs:
 - job: build_and_test
   timeoutInMinutes: 75
   strategy:
     matrix:
-      # TODO(#58): Support Linux in CI and reintroduce UBSAN (Linux only).
       mac:
         imageName: 'macos-10.15'
   pool:
@@ -22,6 +23,22 @@ jobs:
     displayName: Test
   - script: ./toolchain/benchmark/run_benchmarks.sh
     displayName: Benchmark
+- job: build_and_test_llvm
+  timeoutInMinutes: 75
+  strategy:
+    matrix:
+      mac:
+        imageName: 'macos-10.15'
+  pool:
+    vmImage: $(imageName)
+  steps:
+  - template: ./templates/install-common.yml
+  - script: |
+      bazel build //... --crosstool_top=//toolchain/crosstool:llvm_toolchain
+    displayName: Build (LLVM toolchain)
+  - script: |
+      bazel test //... --crosstool_top=//toolchain/crosstool:llvm_toolchain
+    displayName: Test (LLVM toolchain)
 - job: address_sanitizer
   timeoutInMinutes: 75
   strategy:
@@ -61,7 +78,8 @@ jobs:
       git diff --exit-code
     displayName: Copyright header
   - script: |
-      bazel build //... --aspects toolchain/style/style.bzl%clang_format \
+      bazel build //... \
+          --aspects toolchain/style/style.bzl%clang_format \
           --output_groups=report
       git diff --exit-code
     displayName: Clang Format
@@ -70,6 +88,9 @@ jobs:
       git diff --exit-code
     displayName: Buildifier
   - script: |
-      bazel build //... --aspects toolchain/style/style.bzl%clang_tidy \
-          --output_groups=report --keep_going
+      bazel build //... \
+          --crosstool_top=//toolchain/crosstool:llvm_toolchain \
+          --aspects toolchain/style/style.bzl%clang_tidy \
+          --output_groups=report \
+          --keep_going
     displayName: Clang Tidy
