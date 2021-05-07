@@ -13,11 +13,11 @@ namespace spoor::runtime::flush_queue::testing {
 template <class T>
 class FlushQueueMock : public FlushQueue<T> {
  public:
-  MOCK_METHOD(void, Run, (), (override));
-  MOCK_METHOD(void, Enqueue, (T && item), (override));
-  MOCK_METHOD(void, DrainAndStop, (), (override));
-  MOCK_METHOD(void, Flush, (std::function<void()>), (override));
-  MOCK_METHOD(void, Clear, (), (override));
+  MOCK_METHOD(void, Run, (), (override));                         // NOLINT
+  MOCK_METHOD(void, Enqueue, (T && item), (override));            // NOLINT
+  MOCK_METHOD(void, DrainAndStop, (), (override));                // NOLINT
+  MOCK_METHOD(void, Flush, (std::function<void()>), (override));  // NOLINT
+  MOCK_METHOD(void, Clear, (), (override));                       // NOLINT
 };
 
 }  // namespace spoor::runtime::flush_queue::testing

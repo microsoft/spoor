@@ -30,7 +30,7 @@ class ReservedBufferSlicePool final : public BufferSlicePool<T> {
   using BorrowResult = util::result::Result<OwnedSlicePtr, BorrowError>;
   using ReturnResult = typename util::memory::PtrOwner<Slice>::Result;
 
-  struct Options {
+  struct alignas(16) Options {
     SizeType max_slice_capacity;
     SizeType capacity;
   };
@@ -46,7 +46,7 @@ class ReservedBufferSlicePool final : public BufferSlicePool<T> {
   // Although C++20 declares `std::vector`'s destructor as `constexpr`, it is
   // not yet implemented in some versions of the STL. Therefore, this class'
   // destructor cannot be virtual.
-  ~ReservedBufferSlicePool();
+  ~ReservedBufferSlicePool() override;
 
   // Borrow a buffer slice from the object pool with its intrinsic capacity
   // (i.e. ignores the preferred slice capacity).

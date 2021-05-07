@@ -1,17 +1,22 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_test")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
+
+cc_library(
+    name = "instrumentation_info",
+    hdrs = ["instrumentation.h"],
+    copts = ["-Werror"],
+    visibility = ["//visibility:private"],
+)
 
 cc_binary(
     name = "spoor_opt",
-    srcs = [
-        "instrumentation.h",
-        "spoor_opt.cc",
-    ],
+    srcs = ["spoor_opt.cc"],
     copts = ["-Werror"],
     visibility = ["//visibility:public"],
     deps = [
+        ":instrumentation_info",
         "//spoor/instrumentation/config",
         "//spoor/instrumentation/config:command_line_config",
         "//spoor/instrumentation/inject_instrumentation",
@@ -30,10 +35,7 @@ cc_binary(
 
 SHARED_LIBRARY_NAME = "spoor_instrumentation"
 
-SHARED_LIBRARY_SRCS = [
-    "instrumentation.h",
-    "spoor_instrumentation_pass.cc",
-]
+SHARED_LIBRARY_SRCS = ["spoor_instrumentation_pass.cc"]
 
 SHARED_LIBRARY_COPTS = ["-Werror"]
 
@@ -42,6 +44,7 @@ SHARED_LIBRARY_LINKSHARED = True
 SHARED_LIBRARY_VISIBILITY = ["//visibility:public"]
 
 SHARED_LIBRARY_DEPS = [
+    ":instrumentation_info",
     "//spoor/instrumentation/config:env_config",
     "//spoor/instrumentation/inject_instrumentation",
     "//spoor/instrumentation/support",

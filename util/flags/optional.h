@@ -20,9 +20,7 @@ class Optional {
   constexpr Optional(const T& item);  // NOLINT(google-explicit-constructor)
   constexpr Optional(T&& item);       // NOLINT(google-explicit-constructor)
   // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr Optional(const std::optional<T>& optional);
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr Optional(std::optional<T>&& optional);
+  constexpr Optional(std::optional<T> optional);
 
   [[nodiscard]] constexpr auto HasValue() const -> bool;
   [[nodiscard]] constexpr auto Value() const& -> const T&;
@@ -51,12 +49,8 @@ template <class T>
 constexpr Optional<T>::Optional(T&& item) : item_{std::move(item)} {}
 
 template <class T>
-constexpr Optional<T>::Optional(const std::optional<T>& optional)
-    : item_{optional} {}
-
-template <class T>
-constexpr Optional<T>::Optional(std::optional<T>&& optional)
-    : item_{optional} {}
+constexpr Optional<T>::Optional(std::optional<T> optional)
+    : item_{std::move(optional)} {}
 
 template <class T>
 constexpr auto Optional<T>::HasValue() const -> bool {

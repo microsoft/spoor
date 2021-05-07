@@ -23,7 +23,7 @@ class OwnedBufferSlice final : public CircularBuffer<T> {
   constexpr OwnedBufferSlice(OwnedBufferSlice&& other) noexcept = default;
   auto operator=(const OwnedBufferSlice&) -> OwnedBufferSlice& = delete;
   auto operator=(OwnedBufferSlice&&) noexcept -> OwnedBufferSlice& = delete;
-  constexpr ~OwnedBufferSlice() = default;
+  constexpr ~OwnedBufferSlice() override = default;
 
   constexpr auto Push(const T& item) -> void override;
   constexpr auto Push(T&& item) -> void override;

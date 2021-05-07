@@ -94,6 +94,8 @@ Checks: '
   -llvm-qualified-auto,
   '
 WarningsAsErrors: '*'
+# Exclusions in //toolchain/style/style.bzl
+HeaderFilterRegex: '(spoor|toolchain|util)/.*'
 FormatStyle: file
 CheckOptions:
   - key: readability-braces-around-statements.ShortStatementLines
