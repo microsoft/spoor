@@ -8,33 +8,48 @@ jobs:
 - job: build_and_test
   strategy:
     matrix:
-      # TODO(#58): Support Linux in CI.
+      # TODO(#58): Support Linux in CI and reintroduce UBSAN (Linux only).
       mac:
         imageName: 'macos-10.15'
   pool:
     vmImage: $(imageName)
   steps:
   - template: ./templates/install-common.yml
-  - script: |
-      bazel build //...
+  - script: bazel build //...
     displayName: Build
-  - script: |
-      bazel test //...
+  - script: bazel test //...
     displayName: Test
   - script: ./toolchain/benchmark/run_benchmarks.sh
     displayName: Benchmark
-  - script: ./toolchain/compilation_database/generate_compilation_database.sh
-    displayName: Generate compilation database
+- job: address_sanitizer
+  strategy:
+    matrix:
+      mac:
+        imageName: 'macos-10.15'
+  pool:
+    vmImage: $(imageName)
+  steps:
+  - template: ./templates/install-common.yml
   - script: bazel test --config=asan $(bazel query 'kind(cc_.*, tests(//...))')
     displayName: Address sanitizer
+- job: thread_sanitizer
+  strategy:
+    matrix:
+      mac:
+        imageName: 'macos-10.15'
+  pool:
+    vmImage: $(imageName)
+  steps:
+  - template: ./templates/install-common.yml
   - script: bazel test --config=tsan $(bazel query 'kind(cc_.*, tests(//...))')
     displayName: Thread sanitizer
-  - script: bazel test --config=ubsan $(bazel query 'kind(cc_.*, tests(//...))')
-    displayName: Undefined behavior sanitizer
-    condition: eq(variables['Agent.OS'], 'Linux')
 - job: style_and_lint
+  strategy:
+    matrix:
+      mac:
+        imageName: 'macos-10.15'
   pool:
-    vmImage: 'macos-10.15'
+    vmImage: $(imageName)
   steps:
   - template: ./templates/install-common.yml
   - script: |
