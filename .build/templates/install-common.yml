@@ -8,10 +8,7 @@ steps:
     sudo ./llvm.sh 12
   displayName: Install LLVM (Linux)
   condition: eq(variables['Agent.OS'], 'Linux')
-- script: |
-    brew update
-    brew upgrade --force llvm@12
-    echo '##vso[task.prependpath]/usr/local/opt/llvm/bin'
+- script: echo '##vso[task.prependpath]/usr/local/opt/llvm/bin'
   displayName: Install LLVM (macOS)
   condition: eq(variables['Agent.OS'], 'Darwin')
 - script: cp ./.build/ci.bazelrc ./.bazelrc
