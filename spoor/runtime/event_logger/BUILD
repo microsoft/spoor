@@ -2,6 +2,13 @@
 # Licensed under the MIT License.
 
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load(
+    "//toolchain:config.bzl",
+    "SPOOR_DEFAULT_COPTS",
+    "SPOOR_DEFAULT_LINKOPTS",
+    "SPOOR_DEFAULT_TEST_COPTS",
+    "SPOOR_DEFAULT_TEST_LINKOPTS",
+)
 
 cc_library(
     name = "event_logger",
@@ -10,7 +17,8 @@ cc_library(
         "event_logger.h",
         "event_logger_notifier.h",
     ],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
     visibility = ["//spoor/runtime:__subpackages__"],
     deps = [
         "//spoor/runtime/buffer",
@@ -25,7 +33,8 @@ cc_library(
     name = "event_logger_notifier_mock",
     testonly = True,
     hdrs = ["event_logger_notifier_mock.h"],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
     visibility = ["//spoor/runtime:__subpackages__"],
     deps = [
         ":event_logger",
@@ -38,7 +47,8 @@ cc_test(
     name = "event_logger_test",
     size = "small",
     srcs = ["event_logger_test.cc"],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_TEST_COPTS,
+    linkopts = SPOOR_DEFAULT_TEST_LINKOPTS,
     visibility = ["//visibility:private"],
     deps = [
         ":event_logger",

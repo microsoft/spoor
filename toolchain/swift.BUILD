@@ -17,9 +17,11 @@ cc_library(
     copts = [
         "-Wno-dollar-in-identifier-extension",
         "-Wno-unused-parameter",
-        "-Werror",
     ],
     strip_include_prefix = "include",
     visibility = ["//visibility:public"],
-    deps = ["@llvm//12.0.0"],
+    deps = [
+        "@llvm-project//llvm:Demangle",
+        "@llvm-project//llvm:Support",
+    ],
 )

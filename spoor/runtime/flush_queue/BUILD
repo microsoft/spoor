@@ -2,6 +2,13 @@
 # Licensed under the MIT License.
 
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load(
+    "//toolchain:config.bzl",
+    "SPOOR_DEFAULT_COPTS",
+    "SPOOR_DEFAULT_LINKOPTS",
+    "SPOOR_DEFAULT_TEST_COPTS",
+    "SPOOR_DEFAULT_TEST_LINKOPTS",
+)
 
 cc_library(
     name = "flush_queue",
@@ -10,7 +17,8 @@ cc_library(
         "disk_flush_queue.h",
         "flush_queue.h",
     ],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
     visibility = ["//spoor/runtime:__subpackages__"],
     deps = [
         "//spoor/runtime/buffer",
@@ -26,7 +34,8 @@ cc_test(
     name = "disk_flush_queue_test",
     size = "small",
     srcs = ["disk_flush_queue_test.cc"],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_TEST_COPTS,
+    linkopts = SPOOR_DEFAULT_TEST_LINKOPTS,
     visibility = ["//visibility:private"],
     deps = [
         ":flush_queue",
@@ -47,7 +56,8 @@ cc_library(
     name = "black_hole_flush_queue",
     srcs = ["black_hole_flush_queue.cc"],
     hdrs = ["black_hole_flush_queue.h"],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
     visibility = ["//spoor/runtime:__subpackages__"],
     deps = [
         ":flush_queue",
@@ -60,7 +70,8 @@ cc_test(
     name = "black_hole_flush_queue_test",
     size = "small",
     srcs = ["black_hole_flush_queue_test.cc"],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_TEST_COPTS,
+    linkopts = SPOOR_DEFAULT_TEST_LINKOPTS,
     visibility = ["//visibility:private"],
     deps = [
         ":black_hole_flush_queue",
@@ -77,7 +88,8 @@ cc_library(
     name = "flush_queue_mock",
     testonly = True,
     hdrs = ["flush_queue_mock.h"],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
     visibility = ["//spoor/runtime:__subpackages__"],
     deps = [
         ":flush_queue",
