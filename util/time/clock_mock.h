@@ -33,10 +33,6 @@ constexpr auto MakeTimePoint(const int64 timestamp_nanoseconds)
   const auto duration =
       std::chrono::duration_cast<typename ChronoClock::duration>(
           duration_nanoseconds);
-  // `ChronoClock` might have a different duration than
-  // `std::chrono::nanoseconds` resulting in a loss of precision.
-  assert(std::chrono::duration_cast<std::chrono::nanoseconds>(duration) ==
-         duration_nanoseconds);
   return std::chrono::time_point<ChronoClock>{duration};
 }
 

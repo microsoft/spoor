@@ -65,6 +65,7 @@ class Result {
 
  private:
   template <class T1, class T2, class E1, class E2>
+  // False positive. NOLINTNEXTLINE(readability-redundant-declaration)
   friend constexpr auto operator==(const Result<T1, E1>& lhs,
                                    const Result<T2, E2>& rhs) -> bool;
 

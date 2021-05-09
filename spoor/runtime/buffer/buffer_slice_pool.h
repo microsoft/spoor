@@ -25,7 +25,11 @@ class BufferSlicePool : public util::memory::PtrOwner<CircularBuffer<T>> {
     kCasAttemptsExhausted,
   };
 
-  virtual constexpr ~BufferSlicePool() = default;
+  constexpr BufferSlicePool(BufferSlicePool&&) noexcept = delete;
+  constexpr auto operator=(BufferSlicePool&&) noexcept
+      -> BufferSlicePool& = delete;
+  constexpr ~BufferSlicePool() override = default;
+
   [[nodiscard]] virtual constexpr auto Borrow(SizeType preferred_slice_capacity)
       -> BorrowResult = 0;
 
@@ -37,10 +41,7 @@ class BufferSlicePool : public util::memory::PtrOwner<CircularBuffer<T>> {
  protected:
   constexpr BufferSlicePool() = default;
   constexpr BufferSlicePool(const BufferSlicePool&) = default;
-  constexpr BufferSlicePool(BufferSlicePool&&) noexcept = default;
   constexpr auto operator=(const BufferSlicePool&)
-      -> BufferSlicePool& = default;
-  constexpr auto operator=(BufferSlicePool&&) noexcept
       -> BufferSlicePool& = default;
 };
 

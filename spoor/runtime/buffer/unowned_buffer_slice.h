@@ -24,7 +24,7 @@ class UnownedBufferSlice final : public CircularBuffer<T> {
   constexpr UnownedBufferSlice(UnownedBufferSlice&& other) noexcept = default;
   auto operator=(const UnownedBufferSlice&) -> UnownedBufferSlice& = delete;
   auto operator=(UnownedBufferSlice&&) noexcept -> UnownedBufferSlice& = delete;
-  constexpr ~UnownedBufferSlice() = default;
+  constexpr ~UnownedBufferSlice() override = default;
 
   constexpr auto Push(const T& item) -> void override;
   constexpr auto Push(T&& item) -> void override;

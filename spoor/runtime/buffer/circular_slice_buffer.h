@@ -32,19 +32,19 @@ class CircularSliceBuffer final : public CircularBuffer<T> {
   using SlicePool = BufferSlicePool<T>;
   using SlicesType = std::vector<OwnedSlicePtr>;
 
-  struct Options {
+  struct alignas(16) Options {
     gsl::not_null<SlicePool*> buffer_slice_pool;
     SizeType capacity;
   };
 
   CircularSliceBuffer() = delete;
-  constexpr explicit CircularSliceBuffer(const Options& options);
+  constexpr explicit CircularSliceBuffer(Options options);
   CircularSliceBuffer(const CircularSliceBuffer&) = delete;
   constexpr CircularSliceBuffer(CircularSliceBuffer&&) noexcept = default;
   auto operator=(const CircularSliceBuffer&) -> CircularSliceBuffer& = delete;
   constexpr auto operator=(CircularSliceBuffer&&) noexcept
       -> CircularSliceBuffer& = default;
-  constexpr ~CircularSliceBuffer() = default;
+  constexpr ~CircularSliceBuffer() override = default;
 
   constexpr auto Push(const T& item) -> void override;
   constexpr auto Push(T&& item) -> void override;
@@ -72,8 +72,8 @@ class CircularSliceBuffer final : public CircularBuffer<T> {
 };
 
 template <class T>
-constexpr CircularSliceBuffer<T>::CircularSliceBuffer(const Options& options)
-    : options_{options},
+constexpr CircularSliceBuffer<T>::CircularSliceBuffer(Options options)
+    : options_{std::move(options)},
       slices_{},
       size_{0},
       acquired_slices_capacity_{0},

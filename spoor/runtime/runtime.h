@@ -28,12 +28,12 @@ using SizeType = uint64_t;
 using SystemTimestampSeconds = int64_t;
 using TimestampNanoseconds = int64_t;
 
-struct DeletedFilesInfo {
+struct alignas(16) DeletedFilesInfo {
   int32_t deleted_files;
   int64_t deleted_bytes;
 };
 
-struct Config {
+struct alignas(128) Config {
   std::filesystem::path trace_file_path;
   SessionId session_id;
   SizeType thread_event_buffer_capacity;

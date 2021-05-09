@@ -57,14 +57,15 @@ jobs:
       git diff --exit-code
     displayName: Copyright header
   - script: |
-      ./toolchain/style/clang_format.sh
+      bazel build //... --aspects toolchain/style/style.bzl%clang_format \
+          --output_groups=report
       git diff --exit-code
     displayName: Clang Format
   - script: |
       bazel run //toolchain/style:buildifier
       git diff --exit-code
     displayName: Buildifier
-  - script: ./toolchain/style/clang_tidy.sh
+  - script: |
+      bazel build //... --aspects toolchain/style/style.bzl%clang_tidy \
+          --output_groups=report --keep_going
     displayName: Clang Tidy
-    env:
-      AZURE_PIPELINES_OS: $(Agent.OS)
