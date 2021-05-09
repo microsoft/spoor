@@ -1,8 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-build:llvm_config --crosstool_top=//toolchain/crosstool:llvm_toolchain
-build --config=llvm_config
 build --output_filter='^external/*'
 test --test_output=all
 
@@ -11,6 +9,7 @@ build:asan --copt -fsanitize=address
 build:asan --copt -O1
 build:asan --copt -g
 build:asan --copt -fno-omit-frame-pointer
+build:asan --copt -Wno-macro-redefined
 build:asan --linkopt -fsanitize=address
 
 build:tsan --strip=never
