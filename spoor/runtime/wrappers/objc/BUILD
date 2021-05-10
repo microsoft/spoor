@@ -4,10 +4,21 @@
 load("@rules_cc//cc:defs.bzl", "objc_library")
 load("@build_bazel_rules_apple//apple:ios.bzl", "ios_unit_test")
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_unit_test")
+load("//toolchain:config.bzl", "SPOOR_DEFAULT_COPTS", "SPOOR_DEFAULT_TEST_COPTS")
 
 _MINIMUM_IOS_VERSION = "13.0"
 
 _MINIMUM_MACOS_VERSION = "10.15"
+
+_BUILD_COPTS = SPOOR_DEFAULT_COPTS + [
+    "-std=c++2a",
+]
+
+_TEST_COPTS = SPOOR_DEFAULT_TEST_COPTS + [
+     "-std=c++2a",
+    "-Wno-gnu-statement-expression",
+]
+
 
 objc_library(
     name = "runtime_stub",
@@ -29,6 +40,7 @@ objc_library(
     deps = [
         "//spoor/runtime:runtime_stub",
     ],
+    copts = _BUILD_COPTS,
 )
 
 # Tests
@@ -77,14 +89,11 @@ objc_library(
         "SpoorDeletedFilesInfoTests.mm",
         "SpoorTypesTests.mm",
     ],
-    copts = [
-        "-Werror",
-        "-Wno-gnu-statement-expression",
-    ],
     visibility = ["//visibility:private"],
     deps = [
         ":runtime_stub",
     ],
+    copts = _TEST_COPTS,
 )
 
 objc_library(
@@ -93,12 +102,9 @@ objc_library(
     srcs = [
         "SpoorRuntimeStubTests.mm",
     ],
-    copts = [
-        "-Werror",
-        "-Wno-gnu-statement-expression",
-    ],
     visibility = ["//visibility:private"],
     deps = [
         ":runtime_stub",
     ],
+    copts = _TEST_COPTS,
 )

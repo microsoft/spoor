@@ -65,8 +65,6 @@ def _run_clang_tidy(
         struct(name = ".pb.h", lines = exclude),
         struct(name = ".cc"),
         struct(name = ".h"),
-        struct(name = ".m"),
-        struct(name = ".mm"),
     ]).to_json()[len("{\"key\":"):(-1 * len("}"))]
 
     args = ctx.actions.args()
