@@ -60,7 +60,7 @@ constexpr NSTimeInterval timeoutInterval{5.0};
 }
 
 - (void)testFlushedTraceFiles {
-  [SpoorRuntime flushedTraceFilesWithCallback:^(const NSArray<NSString*>* _Nullable){
+  [SpoorRuntime flushedTraceFilesWithCallback:^(const NSArray<NSString*>*){
   }];
 
   XCTestExpectation* expectation =
