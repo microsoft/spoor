@@ -80,8 +80,9 @@
   spoor::runtime::SystemTimestampSeconds systemTimestamp = date.timeIntervalSince1970;
   spoor::runtime::DeleteFlushedTraceFilesOlderThan(
       systemTimestamp, [callback](spoor::runtime::DeletedFilesInfo deletedFilesInfo) {
-        if (callback != nil)
+        if (callback != nil) {
           callback([[SpoorDeletedFilesInfo alloc] initWithDeletedFilesInfo:deletedFilesInfo]);
+        }
       });
 }
 

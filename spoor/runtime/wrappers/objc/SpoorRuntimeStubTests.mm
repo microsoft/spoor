@@ -15,7 +15,7 @@
 
 @implementation SpoorRuntimeStubTests
 
-NSTimeInterval const timeoutInterval = 5.0;
+constexpr NSTimeInterval timeoutInterval{5.0};
 
 - (void)testSetUp {
   XCTAssertFalse([SpoorRuntime isSetUp]);
