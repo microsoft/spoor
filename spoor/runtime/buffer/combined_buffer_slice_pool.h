@@ -28,7 +28,7 @@ class CombinedBufferSlicePool final : public BufferSlicePool<T> {
   using ReservedPool = ReservedBufferSlicePool<T>;
   using DynamicPool = DynamicBufferSlicePool<T>;
 
-  struct Options {
+  struct alignas(64) Options {
     typename ReservedPool::Options reserved_pool_options;
     typename DynamicPool::Options dynamic_pool_options;
   };
@@ -41,7 +41,7 @@ class CombinedBufferSlicePool final : public BufferSlicePool<T> {
       -> CombinedBufferSlicePool& = delete;
   auto operator=(CombinedBufferSlicePool&&) noexcept
       -> CombinedBufferSlicePool& = delete;
-  constexpr ~CombinedBufferSlicePool() = default;
+  constexpr ~CombinedBufferSlicePool() override = default;
 
   // Borrow a buffer from the reserved pool if available. Otherwise, borrow a
   // buffer from the dynamic pool if available.

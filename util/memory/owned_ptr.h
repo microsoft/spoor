@@ -68,7 +68,7 @@ constexpr auto OwnedPtr<T>::Ptr() const -> T* {
 
 template <class T>
 constexpr auto OwnedPtr<T>::Take() -> T* {
-  auto ptr = ptr_;
+  auto* ptr = ptr_;
   ptr_ = nullptr;
   owner_ = nullptr;
   return ptr;

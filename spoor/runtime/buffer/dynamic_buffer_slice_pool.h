@@ -28,7 +28,7 @@ class DynamicBufferSlicePool final : public BufferSlicePool<T> {
   using BorrowResult = util::result::Result<OwnedSlicePtr, BorrowError>;
   using ReturnResult = typename util::memory::PtrOwner<Slice>::Result;
 
-  struct Options {
+  struct alignas(32) Options {
     SizeType max_slice_capacity;
     SizeType capacity;
     SizeType borrow_cas_attempts;
@@ -42,7 +42,7 @@ class DynamicBufferSlicePool final : public BufferSlicePool<T> {
       -> DynamicBufferSlicePool& = delete;
   auto operator=(DynamicBufferSlicePool&&) noexcept
       -> DynamicBufferSlicePool& = delete;
-  constexpr ~DynamicBufferSlicePool();
+  constexpr ~DynamicBufferSlicePool() override;
 
   // Borrow a buffer slice from the object pool whose size is the minimum of:
   // - The preferred slice size.

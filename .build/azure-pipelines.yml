@@ -4,11 +4,29 @@
 trigger:
 - master
 
+# TODO(#58): Support Linux in CI and reintroduce UBSAN (Linux only).
+
 jobs:
 - job: build_and_test
+  timeoutInMinutes: 75
   strategy:
     matrix:
-      # TODO(#58): Support Linux in CI.
+      mac:
+        imageName: 'macos-10.15'
+  pool:
+    vmImage: $(imageName)
+  steps:
+  - template: ./templates/install-common.yml
+  - script: bazel build //...
+    displayName: Build
+  - script: bazel test //...
+    displayName: Test
+  - script: ./toolchain/benchmark/run_benchmarks.sh
+    displayName: Benchmark
+- job: build_and_test_llvm
+  timeoutInMinutes: 75
+  strategy:
+    matrix:
       mac:
         imageName: 'macos-10.15'
   pool:
@@ -16,25 +34,43 @@ jobs:
   steps:
   - template: ./templates/install-common.yml
   - script: |
-      bazel build //...
-    displayName: Build
+      bazel build //... --crosstool_top=//toolchain/crosstool:llvm_toolchain
+    displayName: Build (LLVM toolchain)
   - script: |
-      bazel test //...
-    displayName: Test
-  - script: ./toolchain/benchmark/run_benchmarks.sh
-    displayName: Benchmark
-  - script: ./toolchain/compilation_database/generate_compilation_database.sh
-    displayName: Generate compilation database
+      bazel test //... --crosstool_top=//toolchain/crosstool:llvm_toolchain
+    displayName: Test (LLVM toolchain)
+- job: address_sanitizer
+  timeoutInMinutes: 75
+  strategy:
+    matrix:
+      mac:
+        imageName: 'macos-10.15'
+  pool:
+    vmImage: $(imageName)
+  steps:
+  - template: ./templates/install-common.yml
   - script: bazel test --config=asan $(bazel query 'kind(cc_.*, tests(//...))')
     displayName: Address sanitizer
+- job: thread_sanitizer
+  timeoutInMinutes: 75
+  strategy:
+    matrix:
+      mac:
+        imageName: 'macos-10.15'
+  pool:
+    vmImage: $(imageName)
+  steps:
+  - template: ./templates/install-common.yml
   - script: bazel test --config=tsan $(bazel query 'kind(cc_.*, tests(//...))')
     displayName: Thread sanitizer
-  - script: bazel test --config=ubsan $(bazel query 'kind(cc_.*, tests(//...))')
-    displayName: Undefined behavior sanitizer
-    condition: eq(variables['Agent.OS'], 'Linux')
 - job: style_and_lint
+  timeoutInMinutes: 75
+  strategy:
+    matrix:
+      mac:
+        imageName: 'macos-10.15'
   pool:
-    vmImage: 'macos-10.15'
+    vmImage: $(imageName)
   steps:
   - template: ./templates/install-common.yml
   - script: |
@@ -42,14 +78,19 @@ jobs:
       git diff --exit-code
     displayName: Copyright header
   - script: |
-      ./toolchain/style/clang_format.sh
+      bazel build //... \
+          --aspects toolchain/style/style.bzl%clang_format \
+          --output_groups=report
       git diff --exit-code
     displayName: Clang Format
   - script: |
       bazel run //toolchain/style:buildifier
       git diff --exit-code
     displayName: Buildifier
-  - script: ./toolchain/style/clang_tidy.sh
+  - script: |
+      bazel build //... \
+          --crosstool_top=//toolchain/crosstool:llvm_toolchain \
+          --aspects toolchain/style/style.bzl%clang_tidy \
+          --output_groups=report \
+          --keep_going
     displayName: Clang Tidy
-    env:
-      AZURE_PIPELINES_OS: $(Agent.OS)

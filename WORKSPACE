@@ -13,18 +13,43 @@ http_archive(
     url = "https://github.com/microsoft/GSL/archive/ec6cd75d57f68b6566e1d406de20e59636a881e7.tar.gz",
 )
 
-# TODO(#54): Migrate to the original repository when the fork's changes with
-# LLVM 12 support are checked in.
+# TODO(#133): Use LLVM's Bazel build configuration when it is checked in.
 http_archive(
-    name = "llvm",
-    sha256 = "99181c717ca0d659c1b2a934642f7987ad93b17c2d7a211b773b627e35f90ab2",
-    strip_prefix = "bazel_llvm-lelandjansen-llvm-12",
-    url = "https://github.com/lelandjansen/bazel_llvm/archive/lelandjansen/llvm-12.tar.gz",
+    name = "com_google_llvm_bazel",
+    sha256 = "65bc90fba5355fdd605d7f8d7281470e4110648b566276b6a93a9e28d100a26d",
+    strip_prefix = "llvm-bazel-lelandjansen-release-12.x/llvm-bazel",
+    url = "https://github.com/lelandjansen/llvm-bazel/archive/refs/heads/lelandjansen/release-12.x.tar.gz",
 )
 
-load("@llvm//tools/bzl:deps.bzl", "llvm_deps")
+http_archive(
+    name = "org_llvm_llvm_project",
+    build_file_content = "#empty",
+    sha256 = "02429cc77358ec3a25a4652900b29efafa4513c690d8402c7124a13de2290d63",
+    strip_prefix = "llvm-project-d28af7c654d8db0b68c175db5ce212d74fb5e9bc",
+    url = "https://github.com/llvm/llvm-project/archive/d28af7c654d8db0b68c175db5ce212d74fb5e9bc.tar.gz",
+)
 
-llvm_deps()
+load("@com_google_llvm_bazel//:terminfo.bzl", "llvm_terminfo_disable")
+
+llvm_terminfo_disable(
+    name = "llvm_terminfo",
+)
+
+load("@com_google_llvm_bazel//:zlib.bzl", "llvm_zlib_disable")
+
+llvm_zlib_disable(
+    name = "llvm_zlib",
+)
+
+load("@com_google_llvm_bazel//:configure.bzl", "llvm_configure")
+
+llvm_configure(
+    # The LLVM Bazel project's configuration requires deviating from Spoor's
+    # project naming convention.
+    name = "llvm-project",
+    src_path = ".",
+    src_workspace = "@org_llvm_llvm_project//:WORKSPACE",
+)
 
 http_archive(
     name = "com_apple_swift",
@@ -46,11 +71,13 @@ http_archive(
     url = "https://github.com/apple/swift/archive/swift-5.4-RELEASE.tar.gz",
 )
 
+# TODO(#132): Upgrade Abseil when the linker issue is resolved in a later
+# release.
 http_archive(
     name = "com_google_absl",
-    sha256 = "441db7c09a0565376ecacf0085b2d4c2bbedde6115d7773551bc116212c2a8d6",
-    strip_prefix = "abseil-cpp-20210324.1",
-    url = "https://github.com/abseil/abseil-cpp/archive/20210324.1.tar.gz",
+    sha256 = "ebe2ad1480d27383e4bf4211e2ca2ef312d5e6a09eba869fd2e8a5c5d553ded2",
+    strip_prefix = "abseil-cpp-20200923.3",
+    url = "https://github.com/abseil/abseil-cpp/archive/20200923.3.tar.gz",
 )
 
 http_archive(
@@ -102,14 +129,14 @@ http_archive(
 )
 
 http_archive(
-    # Dependencies require deviating from the naming convention.
+    # Dependencies require deviating from Spoor's project naming convention.
     name = "io_bazel_rules_go",
     sha256 = "52d0a57ea12139d727883c2fef03597970b89f2cc2a05722c42d1d7d41ec065b",
     url = "https://github.com/bazelbuild/rules_go/releases/download/v0.24.13/rules_go-v0.24.13.tar.gz",
 )
 
 http_archive(
-    # Dependencies require deviating from the naming convention.
+    # Dependencies require deviating from Spoor's project naming convention.
     name = "bazel_gazelle",
     sha256 = "222e49f034ca7a1d1231422cdb67066b885819885c356673cb1f72f748a3c9d4",
     url = "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.22.3/bazel-gazelle-v0.22.3.tar.gz",

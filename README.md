@@ -20,11 +20,25 @@ $ bazel test //...
 ```
 
 ## Style and lint
+
+### Format C++, Objective-C, and Protobuf files
 ```
-$ bazel run //toolchain/style:buildifier                # Format Starlark files
-$ ./toolchain/style/clang_format.sh                     # Format C++, Objective-C, and Protobuf files
-$ ./toolchain/style/clang_tidy.sh                       # Lint C++ and Objective-C files
-$ ./toolchain/copyright_header/add_copyright_header.sh  # Add copyright header
+$ bazel build //... --aspects toolchain/style/style.bzl%clang_format --output_groups=report
+```
+
+### Format
+```
+$ bazel run //toolchain/style:buildifier
+```
+
+### Lint C++ and Objective-C files
+```
+$ bazel build //... --aspects toolchain/style/style.bzl%clang_tidy --output_groups=report
+```
+
+### Add copyright header
+```
+$ ./toolchain/copyright_header/add_copyright_header.sh
 ```
 
 ## Compilation database

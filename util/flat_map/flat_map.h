@@ -31,17 +31,17 @@ class FlatMap {
   // NOLINTNEXTLINE(readability-identifier-naming)
   [[nodiscard]] constexpr auto size() const -> decltype(Size);
   // NOLINTNEXTLINE(readability-identifier-naming)
-  constexpr auto begin() const -> ConstIterator;
+  [[nodiscard]] constexpr auto begin() const -> ConstIterator;
   // NOLINTNEXTLINE(readability-identifier-naming)
-  constexpr auto begin() -> Iterator;
+  [[nodiscard]] constexpr auto begin() -> Iterator;
   // NOLINTNEXTLINE(readability-identifier-naming)
-  constexpr auto cbegin() const -> ConstIterator;
+  [[nodiscard]] constexpr auto cbegin() const -> ConstIterator;
   // NOLINTNEXTLINE(readability-identifier-naming)
-  constexpr auto end() const -> ConstIterator;
+  [[nodiscard]] constexpr auto end() const -> ConstIterator;
   // NOLINTNEXTLINE(readability-identifier-naming)
-  constexpr auto end() -> Iterator;
+  [[nodiscard]] constexpr auto end() -> Iterator;
   // NOLINTNEXTLINE(readability-identifier-naming)
-  constexpr auto cend() const -> ConstIterator;
+  [[nodiscard]] constexpr auto cend() const -> ConstIterator;
 
  private:
   std::array<ValueType, Size> data_;
@@ -61,7 +61,7 @@ template <std::size_t... Indices>
 constexpr FlatMap<Key, Value, Size>::FlatMap(
     std::initializer_list<ValueType>& data,
     std::index_sequence<Indices...> /*unused*/)
-    : data_{*(data.begin() + Indices)...} {}
+    : data_{*(std::next(data.begin(), Indices))...} {}
 
 template <class Key, class Value, std::size_t Size>
 constexpr auto FlatMap<Key, Value, Size>::FirstValueForKey(const Key& key) const

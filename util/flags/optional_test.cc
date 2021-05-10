@@ -30,21 +30,7 @@ TEST(Optional, RvalueConstructor) {  // NOLINT
   ASSERT_EQ(optional.Value(), 42);
 }
 
-TEST(Optional, StdOptionalLvalueConstructor) {  // NOLINT
-  {
-    constexpr std::optional<int64> std_optional{42};
-    constexpr Optional optional{std_optional};
-    ASSERT_TRUE(optional.HasValue());
-    ASSERT_EQ(optional.Value(), std_optional);
-  }
-  {
-    constexpr std::optional<int64> std_optional{};
-    constexpr Optional optional{std_optional};
-    ASSERT_FALSE(optional.HasValue());
-  }
-}
-
-TEST(Optional, StdOptionalRvalueConstructor) {  // NOLINT
+TEST(Optional, StdOptionalConstructor) {  // NOLINT
   {
     constexpr Optional optional{std::optional<int64>{42}};
     ASSERT_TRUE(optional.HasValue());

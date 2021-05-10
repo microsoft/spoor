@@ -2,9 +2,10 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-set -e
+# Usage:
+# `clang_tidy.sh input_file --export-fixes output_file -- args...`
 
-WORKSPACE="$(bazel info workspace)"
+set -eu
 
 if command -v clang-tidy-12 &> /dev/null; then
   CLANG_TIDY="clang-tidy-12"
@@ -15,42 +16,10 @@ else
   exit 1
 fi
 
-function run_clang_tidy {
-  echo "Tidying $1"
-  "$CLANG_TIDY" \
-    -p="$WORKSPACE" \
-    --checks='' \
-    --config="$(cat "$WORKSPACE"/.clang-tidy)" \
-    "$1"
-}
+OUTPUT_FILE="$3"
 
-echo "Generating compilation database"
-./toolchain/compilation_database/generate_compilation_database.sh
+# The clang_tidy Aspect requires an output file, however, Clang Tidy does not
+# create an output file if there are no errors.
+touch "$OUTPUT_FILE"
 
-echo "Building C++ and Objective-C targets"
-# Building all C++ and Objective-C targets before running Clang Tidy ensures that
-# `$(bazel info execution_root)` contains the necessary dependencies.
-bazel build $(bazel query 'kind("(cc|objc)_.*", //...)')
-
-if [ $# -eq 0 ]; then
-  # `runtime.h` is excluded because the header uses a C-style API which emits
-  # numerous warnings. Suppressing the warnings via NOLINT adds a considerable
-  # amount of visual noise.
-  # TODO(#86): Compilation database support for header-only libraries.
-  find "$WORKSPACE" \
-    -type f \
-    \( -iname "*.h" -o -iname "*.cc" -o -iname "*.m" -o -iname "*.mm" \) \
-    ! -name "event_logger_notifier_mock.h" \
-    ! -name "flush_queue_mock.h" \
-    ! -name "runtime.h" \
-    ! -name "trace_reader_mock.h" \
-    ! -name "trace_writer_mock.h" \
-    -print0 |
-      while read -d $'\0' file_name; do
-        run_clang_tidy "$file_name"
-      done
-else
-  for file_name in "$@"; do
-    run_clang_tidy "$file_name"
-  done
-fi
+"$CLANG_TIDY" "$@"
