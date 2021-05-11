@@ -20,5 +20,5 @@ OUTPUT_FILE="$1"
 shift
 INPUT_FILE="$1"
 
-"$CLANG_FORMAT" "$@" 
+"$CLANG_FORMAT" "$@"
 cp "$INPUT_FILE" "$OUTPUT_FILE"

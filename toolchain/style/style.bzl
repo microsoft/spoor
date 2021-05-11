@@ -58,16 +58,44 @@ def _run_clang_tidy(
     )
     output_file = ctx.actions.declare_file(output_file_name)
 
+    source_exclusions = [
+        "spoor/runtime/wrappers/objc/SpoorConfig.h",
+        "spoor/runtime/wrappers/objc/SpoorConfig.mm",
+        "spoor/runtime/wrappers/objc/SpoorConfigTests.mm",
+        "spoor/runtime/wrappers/objc/SpoorConfig_private.h",
+        "spoor/runtime/wrappers/objc/SpoorDeletedFilesInfo.h",
+        "spoor/runtime/wrappers/objc/SpoorDeletedFilesInfo.mm",
+        "spoor/runtime/wrappers/objc/SpoorDeletedFilesInfoTests.mm",
+        "spoor/runtime/wrappers/objc/SpoorDeletedFilesInfo_private.h",
+        "spoor/runtime/wrappers/objc/SpoorRuntime.h",
+        "spoor/runtime/wrappers/objc/SpoorRuntime.mm",
+        "spoor/runtime/wrappers/objc/SpoorRuntimeStubTests.mm",
+        "spoor/runtime/wrappers/objc/SpoorTypes.h",
+        "spoor/runtime/wrappers/objc/SpoorTypesTests.mm",
+    ]
+    if input_file.path in source_exclusions:
+        ctx.actions.run_shell(
+            outputs = [output_file],
+            mnemonic = "CreateEmptyFile",
+            progress_message = "Creating {}".format(input_file.short_path),
+            command = "touch {}".format(output_file.path),
+        )
+        return output_file
+
     # Exclude files by only linting lines out of its range.
     exclude = [[100000, 100000]]
-    line_filter = struct(key = [
-        struct(name = "spoor/runtime/runtime.h", lines = exclude),
-        struct(name = ".pb.h", lines = exclude),
-        struct(name = ".cc"),
-        struct(name = ".h"),
-        struct(name = ".m"),
-        struct(name = ".mm"),
-    ]).to_json()[len("{\"key\":"):(-1 * len("}"))]
+    filter_exclusions = [
+        ".pb.h",
+        "spoor/runtime/runtime.h",
+    ]
+    filter_inclusions = [
+        ".cc",
+        ".h",
+    ]
+    line_filter = struct(
+        key = [struct(name = e, lines = exclude) for e in filter_exclusions] +
+              [struct(name = i) for i in filter_inclusions],
+    ).to_json()[len("{\"key\":"):(-1 * len("}"))]
 
     args = ctx.actions.args()
     args.add(input_file.path)

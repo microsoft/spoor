@@ -124,6 +124,17 @@ ABSL_FLAG(  // NOLINT
 
 Follow Google's [Objective-C Style Guide][google-objc-style-guide].
 
+### Nil checks
+Exception: Do not use implicit `nil` checks
+
+```objc
+// ✅ Do this
+if (a != nil)
+
+// ❌ Not this
+if (a)
+```
+
 ## Starlark (Bazel)
 
 Follow [Starlark's Style Guide][starlark-style-guide].

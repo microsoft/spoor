@@ -7,4 +7,9 @@ BasedOnStyle: Google
 Language: Cpp
 AllowShortLoopsOnASingleLine: false
 DerivePointerAlignment: false
+---
+Language: ObjC
+AllowShortLoopsOnASingleLine: false
+DerivePointerAlignment: false
+ObjCSpaceAfterProperty: false
 ...
