@@ -80,7 +80,8 @@ jobs:
   - script: |
       bazel build //... \
           --aspects toolchain/style/style.bzl%clang_format \
-          --output_groups=report
+          --output_groups=report \
+          --keep_going
       git diff --exit-code
     displayName: Clang Format
   - script: |
