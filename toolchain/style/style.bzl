@@ -70,6 +70,7 @@ def _run_clang_tidy(
         "spoor/runtime/wrappers/objc/SpoorRuntime.h",
         "spoor/runtime/wrappers/objc/SpoorRuntime.mm",
         "spoor/runtime/wrappers/objc/SpoorRuntimeStubTests.mm",
+        "spoor/runtime/wrappers/objc/SpoorRuntimeTests.mm",
         "spoor/runtime/wrappers/objc/SpoorTypes.h",
         "spoor/runtime/wrappers/objc/SpoorTypesTests.mm",
     ]

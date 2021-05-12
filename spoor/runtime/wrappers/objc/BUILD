@@ -19,23 +19,39 @@ _TEST_COPTS = SPOOR_DEFAULT_TEST_COPTS + [
     "-Wno-gnu-statement-expression",
 ]
 
+_LIB_HDRS = [
+    "SpoorConfig.h",
+    "SpoorDeletedFilesInfo.h",
+    "SpoorRuntime.h",
+    "SpoorTypes.h",
+]
+
+_LIB_SRCS = [
+    "SpoorConfig.mm",
+    "SpoorConfig_private.h",
+    "SpoorDeletedFilesInfo.mm",
+    "SpoorDeletedFilesInfo_private.h",
+    "SpoorRuntime.mm",
+]
+
 objc_library(
-    name = "runtime_stub",
-    srcs = [
-        "SpoorConfig.mm",
-        "SpoorConfig_private.h",
-        "SpoorDeletedFilesInfo.mm",
-        "SpoorDeletedFilesInfo_private.h",
-        "SpoorRuntime.mm",
-    ],
-    hdrs = [
-        "SpoorConfig.h",
-        "SpoorDeletedFilesInfo.h",
-        "SpoorRuntime.h",
-        "SpoorTypes.h",
-    ],
+    name = "runtime",
+    srcs = _LIB_SRCS,
+    hdrs = _LIB_HDRS,
     copts = _LIB_COPTS,
     module_name = "SpoorRuntime",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//spoor/runtime",
+    ],
+)
+
+objc_library(
+    name = "runtime_stub",
+    srcs = _LIB_SRCS,
+    hdrs = _LIB_HDRS,
+    copts = _LIB_COPTS,
+    module_name = "SpoorRuntimeStub",
     visibility = ["//visibility:public"],
     deps = [
         "//spoor/runtime:runtime_stub",
@@ -59,6 +75,24 @@ macos_unit_test(
     visibility = ["//visibility:private"],
     deps = [
         ":runtime_wrapper_test_lib",
+    ],
+)
+
+ios_unit_test(
+    name = "ios_runtime_test",
+    minimum_os_version = _MINIMUM_IOS_VERSION,
+    visibility = ["//visibility:private"],
+    deps = [
+        ":runtime_test_lib",
+    ],
+)
+
+macos_unit_test(
+    name = "macos_runtime_test",
+    minimum_os_version = _MINIMUM_MACOS_VERSION,
+    visibility = ["//visibility:private"],
+    deps = [
+        ":runtime_test_lib",
     ],
 )
 
@@ -92,6 +126,19 @@ objc_library(
     visibility = ["//visibility:private"],
     deps = [
         ":runtime_stub",
+    ],
+)
+
+objc_library(
+    name = "runtime_test_lib",
+    testonly = True,
+    srcs = [
+        "SpoorRuntimeTests.mm",
+    ],
+    copts = _TEST_COPTS,
+    visibility = ["//visibility:private"],
+    deps = [
+        ":runtime",
     ],
 )
 
