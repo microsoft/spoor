@@ -68,7 +68,7 @@ constexpr NSTimeInterval timeoutInterval{5.0};
 
 - (void)testFlushedTraceFiles {
   XCTestExpectation* expectation =
-    [self expectationWithDescription:@"Flushed trace files callback invoked"];
+      [self expectationWithDescription:@"Flushed trace files callback invoked"];
   [SpoorRuntime flushedTraceFilesWithCallback:^(const NSArray<NSString*>* traceFilePaths) {
     XCTAssertEqual(traceFilePaths.count, static_cast<unsigned long>(0));
     [expectation fulfill];
