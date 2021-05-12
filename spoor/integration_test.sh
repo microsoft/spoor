@@ -21,6 +21,7 @@ fi
 
 "$CLANGXX" \
   "$BASE_PATH/test_data/fib.cc" \
+  -std=c++11 \
   -g \
   -O0 \
   -emit-llvm \
