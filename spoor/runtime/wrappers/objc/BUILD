@@ -34,6 +34,12 @@ _LIB_SRCS = [
     "SpoorRuntime.mm",
 ]
 
+_WRAPPER_TEST_SRCS = [
+    "SpoorConfigTests.mm",
+    "SpoorDeletedFilesInfoTests.mm",
+    "SpoorTypesTests.mm",
+]
+
 objc_library(
     name = "runtime",
     srcs = _LIB_SRCS,
@@ -61,29 +67,12 @@ objc_library(
 # Tests
 
 ios_unit_test(
-    name = "ios_runtime_wrapper_test",
-    minimum_os_version = _MINIMUM_IOS_VERSION,
-    visibility = ["//visibility:private"],
-    deps = [
-        ":runtime_wrapper_test_lib",
-    ],
-)
-
-macos_unit_test(
-    name = "macos_runtime_wrapper_test",
-    minimum_os_version = _MINIMUM_MACOS_VERSION,
-    visibility = ["//visibility:private"],
-    deps = [
-        ":runtime_wrapper_test_lib",
-    ],
-)
-
-ios_unit_test(
     name = "ios_runtime_test",
     minimum_os_version = _MINIMUM_IOS_VERSION,
     visibility = ["//visibility:private"],
     deps = [
         ":runtime_test_lib",
+        ":runtime_wrapper_test_lib",
     ],
 )
 
@@ -93,6 +82,7 @@ macos_unit_test(
     visibility = ["//visibility:private"],
     deps = [
         ":runtime_test_lib",
+        ":runtime_wrapper_test_lib",
     ],
 )
 
@@ -102,6 +92,7 @@ ios_unit_test(
     visibility = ["//visibility:private"],
     deps = [
         ":runtime_stub_test_lib",
+        ":runtime_stub_wrapper_test_lib",
     ],
 )
 
@@ -111,17 +102,25 @@ macos_unit_test(
     visibility = ["//visibility:private"],
     deps = [
         ":runtime_stub_test_lib",
+        ":runtime_stub_wrapper_test_lib",
     ],
 )
 
 objc_library(
     name = "runtime_wrapper_test_lib",
     testonly = True,
-    srcs = [
-        "SpoorConfigTests.mm",
-        "SpoorDeletedFilesInfoTests.mm",
-        "SpoorTypesTests.mm",
+    srcs = _WRAPPER_TEST_SRCS,
+    copts = _TEST_COPTS,
+    visibility = ["//visibility:private"],
+    deps = [
+        ":runtime",
     ],
+)
+
+objc_library(
+    name = "runtime_stub_wrapper_test_lib",
+    testonly = True,
+    srcs = _WRAPPER_TEST_SRCS,
     copts = _TEST_COPTS,
     visibility = ["//visibility:private"],
     deps = [
