@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Aliases</key>
+    <array>
+      <string>Spoor</string>
+    </array>
+    <key>CFBundleIdentifier</key>
+    <string>com.microsoft.spoor</string>
+    <key>CompatibilityVersion</key>
+    <integer>2</integer>
+    <key>CompatibilityVersionDisplayString</key>
+    <string>Xcode 12.5+</string>
+    <key>DisplayName</key>
+    <string>Spoor</string>
+    <key>ReportProblemURL</key>
+    <string>https://github.com/microsoft/spoor</string>
+    <key>ShortDisplayName</key>
+    <string>Spoor</string>
+    <key>Version</key>
+    <string>0.0.0</string>
+  </dict>
+</plist>

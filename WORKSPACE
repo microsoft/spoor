@@ -192,6 +192,34 @@ load(
 
 apple_rules_dependencies()
 
+http_archive(
+    name = "org_wikimedia_wikipedia_ios",
+    build_file = "//toolchain:wikipedia_ios.BUILD",
+    patch_cmds = [
+        # Download the project's dependencies as a patch to leverage Bazel's
+        # `http_archive` caching.
+        """
+        xcodebuild clean build \
+          -resolvePackageDependencies \
+          -clonedSourcePackagesDirPath . \
+          -project Wikipedia.xcodeproj \
+          -scheme Wikipedia
+        """,
+        # Hack: Temporarily rename path names with spaces because they are not
+        # supported by Bazel's `filegroup`.
+        """
+        find . -name '* *' -print0 |
+          sort -rz |
+            while read -d $'\\0' f; do
+              mv \"$f\" \"$(dirname \"$f\")/$(basename \"${f// /__SPACE__}\")\"
+            done
+        """,
+    ],
+    sha256 = "dec60361d82b7d551ffe0f3e3d8d381047f91550c635accf2ec7b858483358ba",
+    strip_prefix = "wikipedia-ios-releases-6.8.1",
+    url = "https://github.com/wikimedia/wikipedia-ios/archive/refs/tags/releases/6.8.1.tar.gz",
+)
+
 http_file(
     name = "com_google_style_guide_pylintrc",
     downloaded_file_path = "pylintrc",
