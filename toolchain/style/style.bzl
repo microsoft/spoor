@@ -39,6 +39,39 @@ def _run_clang_format(
 
     return output_file
 
+def _run_yapf(
+        ctx,
+        yapf_config,
+        yapf_executable,
+        input_file):
+    inputs = depset(direct = yapf_config.to_list() + [input_file])
+
+    output_file_name = "{}.formatted.{}".format(
+        input_file.basename[:(-1 * (len(input_file.extension) + 1))],
+        input_file.extension,
+    )
+    output_file = ctx.actions.declare_file(output_file_name)
+
+    args = ctx.actions.args()
+    args.add(output_file.path)
+    args.add(input_file.path)
+    args.add("--in-place")
+
+    ctx.actions.run(
+        outputs = [output_file],
+        inputs = inputs,
+        executable = yapf_executable,
+        arguments = [args],
+        mnemonic = "YAPF",
+        progress_message = "Formatting {}".format(input_file.short_path),
+        use_default_shell_env = True,
+        execution_requirements = {
+            "no-sandbox": "True",  # Allow in-place source file modification.
+        },
+    )
+
+    return output_file
+
 def _run_clang_tidy(
         ctx,
         clang_tidy_config,
@@ -143,27 +176,37 @@ def _run_clang_tidy(
 
 def _clang_format_impl(target, ctx):
     clang_format_config = ctx.attr._clang_format_config.data_runfiles.files
+    yapf_config = ctx.attr._yapf_config.data_runfiles.files
     clang_format_executable = ctx.attr._clang_format_executable.files_to_run
+    yapf_executable = ctx.attr._yapf_executable.files_to_run
 
-    supported_extensions = ["cc", "h", "m", "mm", "proto"]
-    input_files = []
+    clang_format_extensions = ["cc", "h", "m", "mm", "proto"]
+    yapf_extensions = ["py"]
+    clang_format_input_files = []
+    yapf_input_files = []
     for input_target in getattr(ctx.rule.attr, "srcs", []):
         for file in input_target.files.to_list():
-            if file.is_source and file.extension in supported_extensions:
-                input_files.append(file)
+            if file.is_source:
+                if file.extension in clang_format_extensions:
+                    clang_format_input_files.append(file)
+                if file.extension in yapf_extensions:
+                    yapf_input_files.append(file)
     if CcInfo in target:
         for file in target[CcInfo].compilation_context.direct_headers:
-            if file.is_source and file.extension in supported_extensions:
-                input_files.append(file)
+            if file.is_source and file.extension in clang_format_extensions:
+                clang_format_input_files.append(file)
 
     output_files = []
-    for input_file in input_files:
+    for input_file in clang_format_input_files:
         output_file = _run_clang_format(
             ctx,
             clang_format_config,
             clang_format_executable,
             input_file,
         )
+        output_files.append(output_file)
+    for input_file in yapf_input_files:
+        output_file = _run_yapf(ctx, yapf_config, yapf_executable, input_file)
         output_files.append(output_file)
 
     return [OutputGroupInfo(report = depset(direct = output_files))]
@@ -215,7 +258,7 @@ def _clang_tidy_impl(target, ctx):
 
     return [OutputGroupInfo(report = depset(direct = output_files))]
 
-clang_format = aspect(
+format = aspect(
     implementation = _clang_format_impl,
     attrs = {
         "_clang_format_executable": attr.label(
@@ -224,11 +267,17 @@ clang_format = aspect(
         "_clang_format_config": attr.label(
             default = Label("//:clang_format_config"),
         ),
+        "_yapf_executable": attr.label(
+            default = Label("//toolchain/style:yapf"),
+        ),
+        "_yapf_config": attr.label(
+            default = Label("//:yapf_config"),
+        ),
     },
     doc = "Run Clang Format and apply changes.",
 )
 
-clang_tidy = aspect(
+lint = aspect(
     implementation = _clang_tidy_impl,
     fragments = ["cpp"],
     attrs = {

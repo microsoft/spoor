@@ -18,3 +18,10 @@ sh_binary(
     data = ["//:clang_tidy_config"],
     visibility = ["//visibility:public"],
 )
+
+sh_binary(
+    name = "yapf",
+    srcs = ["yapf.sh"],
+    data = ["//:yapf_config"],
+    visibility = ["//visibility:public"],
+)

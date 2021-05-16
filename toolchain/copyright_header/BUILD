@@ -20,5 +20,6 @@ cc_binary(
     deps = [
         "//util:numeric",
         "//util:result",
+        "//util/flat_map",
     ],
 )

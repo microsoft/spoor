@@ -8,10 +8,9 @@
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <unordered_map>
-#include <unordered_set>
 #include <utility>
 
+#include "util/flat_map/flat_map.h"
 #include "util/numeric.h"
 #include "util/result.h"
 
@@ -19,21 +18,33 @@ namespace {
 
 using Result = util::result::Result<util::result::None, util::result::None>;
 
-// NOLINTNEXTLINE(fuchsia-statically-constructed-objects)
-const std::string kCopyrightHeaderFile{
+constexpr std::string_view kCopyrightHeaderFile{
     "toolchain/copyright_header/copyright_header.txt"};
-// NOLINTNEXTLINE(fuchsia-statically-constructed-objects)
-const std::unordered_map<std::string, std::string> kFileExtensionComment{
-    {"BUILD", "#"},        {"WORKSPACE", "#"},  {"bazelrc", "#"},
-    {"bzl", "#"},          {"c", "//"},         {"cc", "//"},
-    {"clang-format", "#"}, {"clang-tidy", "#"}, {"eslintignore", "#"},
-    {"gitignore", "#"},    {"h", "//"},         {"ll", ";"},
-    {"m", "//"},           {"mm", "//"},        {"proto", "//"},
-    {"sh", "#"},           {"yml", "#"}};
-// NOLINTNEXTLINE(fuchsia-statically-constructed-objects)
-const std::unordered_set<std::string> kPathBlocklist{
-    ".git",           "bazel-bin", "bazel-out",   "bazel-spoor",
-    "bazel-testlogs", "dist",      "node_modules"};
+constexpr util::flat_map::FlatMap<std::string_view, std::string_view, 19>
+    kFileExtensionComment{
+        {"BUILD", "#"},
+        {"WORKSPACE", "#"},
+        {"bazelrc", "#"},
+        {"bzl", "#"},
+        {"c", "//"},
+        {"cc", "//"},
+        {".clang-format", "#"},
+        {".clang-tidy", "#"},
+        {".gitignore", "#"},
+        {"h", "//"},
+        {"ll", ";"},
+        {"m", "//"},
+        {"mm", "//"},
+        {"proto", "//"},
+        {"py", "#"},
+        {"sh", "#"},
+        {"requirements-dev.txt", "#"},
+        {"requirements.txt", "#"},
+        {"yapf", "#"},
+        {"yml", "#"},
+    };
+constexpr std::array<std::string_view, 6> kPathBlocklist{
+    ".git", "bazel-bin", "bazel-out", "bazel-spoor", "bazel-testlogs", "dist"};
 
 auto AddCopyrightHeaderToFile(const std::filesystem::path& path,
                               const std::string& copyright_header_text)
@@ -44,20 +55,21 @@ auto AddCopyrightHeaderToFile(const std::filesystem::path& path,
       return file_name.extension().string().substr(1);
     }
     return file_name.string();
-  }();
-  const auto extension_and_comment = kFileExtensionComment.find(extension);
-  if (extension_and_comment == std::end(kFileExtensionComment)) {
-    return Result::Ok({});
+  };
+  auto comment =
+      kFileExtensionComment.FirstValueForKey(path.filename().string());
+  if (!comment.has_value()) {
+    comment = kFileExtensionComment.FirstValueForKey(extension());
   }
+  if (!comment.has_value()) return Result::Ok({});
 
-  const auto [_, comment] = *extension_and_comment;
   const auto copyright_header = [comment = comment, &copyright_header_text] {
     std::istringstream stream{copyright_header_text};
     std::ostringstream copyright_header{};
     std::string line{};
     while (std::getline(stream, line)) {
-      copyright_header << comment;
-      if (!comment.empty()) copyright_header << ' ';
+      copyright_header << *comment;
+      if (!comment->empty()) copyright_header << ' ';
       copyright_header << line << '\n';
     }
     return copyright_header.str();
@@ -125,9 +137,10 @@ auto main(const int argc, const char** argv) -> int {
   for (auto iterator = std::filesystem::recursive_directory_iterator(path);
        iterator != std::filesystem::recursive_directory_iterator();
        ++iterator) {
-    auto entry = *iterator;
+    const auto entry = *iterator;
     if (entry.is_directory() &&
-        kPathBlocklist.contains(entry.path().filename())) {
+        std::find(std::cbegin(kPathBlocklist), std::cend(kPathBlocklist),
+                  entry.path().filename()) != std::cend(kPathBlocklist)) {
       iterator.disable_recursion_pending();
       continue;
     }

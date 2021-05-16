@@ -79,19 +79,16 @@ jobs:
     displayName: Copyright header
   - script: |
       bazel build //... \
-          --aspects toolchain/style/style.bzl%clang_format \
+          --aspects toolchain/style/style.bzl%format \
           --output_groups=report \
           --keep_going
-      git diff --exit-code
-    displayName: Clang Format
-  - script: |
       bazel run //toolchain/style:buildifier
       git diff --exit-code
-    displayName: Buildifier
+    displayName: Format
   - script: |
       bazel build //... \
           --crosstool_top=//toolchain/crosstool:llvm_toolchain \
-          --aspects toolchain/style/style.bzl%clang_tidy \
+          --aspects toolchain/style/style.bzl%lint \
           --output_groups=report \
           --keep_going
-    displayName: Clang Tidy
+    displayName: Lint
