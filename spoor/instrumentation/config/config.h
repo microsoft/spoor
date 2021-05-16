@@ -38,11 +38,11 @@ constexpr util::flat_map::FlatMap<std::string_view, OutputLanguage, 2>
 
 constexpr std::string_view kEnableRuntimeDoc{
     "Automatically enable Spoor's runtime."};
-constexpr bool kEnableRuntimeDefaultValue{true};
+constexpr auto kEnableRuntimeDefaultValue{true};
 
 constexpr std::string_view kForceBinaryOutputDoc{
     "Force printing binary data to the console."};
-constexpr bool kForceBinaryOutputDefaultValue{false};
+constexpr auto kForceBinaryOutputDefaultValue{false};
 
 constexpr std::string_view kFunctionAllowListFileDoc{
     "File path to the function allow list."};
@@ -60,7 +60,7 @@ const std::optional<std::string> kFunctionBlocklistFileDefaultValue{};
 
 constexpr std::string_view kInitializeRuntimeDoc{
     "Automatically initialize Spoor's runtime."};
-constexpr bool kInitializeRuntimeDefaultValue{true};
+constexpr auto kInitializeRuntimeDefaultValue{true};
 
 constexpr std::string_view kInjectInstrumentationDoc{
     "Inject Spoor instrumentation."};
@@ -82,10 +82,7 @@ constexpr std::string_view kModuleIdDoc{"Override the LLVM module's ID."};
 const std::optional<std::string> kModuleIdDefaultValue{};
 
 constexpr std::string_view kOutputFileDoc{"Output file."};
-// This statically-constructed object is safe because its value is the type's
-// default.
-// NOLINTNEXTLINE(fuchsia-statically-constructed-objects)
-const std::string_view kOutputFileDefaultValue{"-"};
+constexpr std::string_view kOutputFileDefaultValue{"-"};
 
 constexpr std::string_view kOutputLanguageDoc{
     "Language in which to output the transformed code. Options: %s."};

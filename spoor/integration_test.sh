@@ -10,6 +10,8 @@ UNINSTRUMENTED_IR_FILE="fib.ll"
 INSTRUMENTED_IR_FILE="fib_instrumented.ll"
 OUTPUT_SYMBOLS_FILE="fib.spoor_symbols"
 OUTPUT_EXECUTABLE_FILE="fib"
+OUTPUT_PERFETTO_FILE="trace.perfetto"
+TRACE_PROCESSOR_QUERY_FILE="query_result.txt"
 
 if command -v clang++-11 &> /dev/null; then
   CLANGXX="clang++-11"
@@ -41,14 +43,29 @@ fi
   -lspoor_runtime \
   -o "$OUTPUT_EXECUTABLE_FILE"
 
-RESULT="$($OUTPUT_EXECUTABLE_FILE)"
+FIB_RESULT="$($OUTPUT_EXECUTABLE_FILE)"
 
-EXPECTED_RESULT="13"
-if [ "$RESULT" != "$EXPECTED_RESULT" ]; then
+EXPECTED_FIB_RESULT="13"
+if [ "$FIB_RESULT" != "$EXPECTED_FIB_RESULT" ]; then
   echo "Unexpected result for Fibonacci(7)." \
-    "Expected $EXPECTED_RESULT, got $RESULT."
+    "Expected $EXPECTED_FIB_RESULT, got $FIB_RESULT."
   exit 1
 fi
 
-ls | grep "$OUTPUT_SYMBOLS_FILE" > /dev/null
-ls | grep ".spoor_trace" > /dev/null
+"$BASE_PATH/tools/spoor" \
+  *.spoor_trace \
+  "$OUTPUT_SYMBOLS_FILE" \
+  --output_file="$OUTPUT_PERFETTO_FILE"
+
+echo "SELECT COUNT(id) FROM slice;" >> "$TRACE_PROCESSOR_QUERY_FILE"
+
+TRACE_QUERY_RESULT="$("external/dev_perfetto_trace_processor/file/trace_processor" \
+  "$OUTPUT_PERFETTO_FILE" \
+  --query-file="$TRACE_PROCESSOR_QUERY_FILE" | tail -1)"
+
+EXPECTED_TRACE_QUERY_RESULT="42"
+if [ "$TRACE_QUERY_RESULT" != "$EXPECTED_TRACE_QUERY_RESULT" ]; then
+  echo "Unexpected result for query '$(cat "$TRACE_PROCESSOR_QUERY_FILE")'." \
+    "Expected $EXPECTED_TRACE_QUERY_RESULT, got $TRACE_QUERY_RESULT."
+  exit 1
+fi

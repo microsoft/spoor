@@ -9,6 +9,8 @@ sh_test(
         "//spoor/instrumentation:spoor_opt",
         "//spoor/runtime:spoor_runtime",
         "//spoor/test_data",
+        "//spoor/tools:spoor",
+        "@dev_perfetto_trace_processor//file:trace_processor",
     ],
     visibility = ["//visibility:private"],
 )

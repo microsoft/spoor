@@ -25,7 +25,7 @@ cc_library(
     ],
     copts = SPOOR_DEFAULT_COPTS,
     linkopts = SPOOR_DEFAULT_LINKOPTS,
-    visibility = ["//spoor/runtime:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [
         "//spoor/runtime/buffer",
         "//util:numeric",

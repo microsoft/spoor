@@ -16,6 +16,8 @@ class LocalFileSystem final : public FileSystem {
  public:
   [[nodiscard]] auto IsRegularFile(const std::filesystem::path& path) const
       -> util::result::Result<bool, std::error_code> override;
+  [[nodiscard]] auto IsDirectory(const std::filesystem::path& path) const
+      -> util::result::Result<bool, std::error_code> override;
   [[nodiscard]] auto FileSize(const std::filesystem::path& path) const
       -> util::result::Result<std::uintmax_t, std::error_code> override;
   [[nodiscard]] auto Remove(const std::filesystem::path& path) const

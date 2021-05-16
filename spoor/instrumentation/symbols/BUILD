@@ -109,3 +109,31 @@ cc_library(
         "@com_google_googletest//:gtest",
     ],
 )
+
+cc_library(
+    name = "symbols_utility",
+    srcs = ["symbols_utility.cc"],
+    hdrs = ["symbols_utility.h"],
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":symbols_cc_proto",
+        "@com_microsoft_gsl//:gsl",
+    ],
+)
+
+cc_test(
+    name = "symbols_utility_test",
+    size = "small",
+    srcs = ["symbols_utility_test.cc"],
+    copts = SPOOR_DEFAULT_TEST_COPTS,
+    linkopts = SPOOR_DEFAULT_TEST_LINKOPTS,
+    visibility = ["//visibility:private"],
+    deps = [
+        ":symbols_cc_proto",
+        ":symbols_utility",
+        "@com_google_googletest//:gtest_main",
+        "@com_google_protobuf//:protobuf",
+    ],
+)

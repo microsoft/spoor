@@ -4,6 +4,7 @@
 #include "spoor/instrumentation/symbols/symbols_file_reader.h"
 
 #include <filesystem>
+#include <memory>
 #include <sstream>
 
 #include "gmock/gmock.h"
@@ -45,12 +46,14 @@ TEST(SymbolsFileReader, Read) {  // NOLINT
   }();
   std::stringstream buffer{};
   expected_symbols.SerializeToOstream(&buffer);
-  FileReaderMock file_reader{};
-  EXPECT_CALL(file_reader, Open(file_path, std::ios::binary));
-  EXPECT_CALL(file_reader, IsOpen()).WillOnce(Return(true));
-  EXPECT_CALL(file_reader, Istream()).WillOnce(ReturnRef(buffer));
-  EXPECT_CALL(file_reader, Close());
-  SymbolsFileReader symbols_file_reader{{.file_reader = &file_reader}};
+  auto file_reader = std::make_unique<FileReaderMock>();
+  EXPECT_CALL(*file_reader, Open(file_path, std::ios::binary));
+  EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(true));
+  EXPECT_CALL(*file_reader, Istream()).WillOnce(ReturnRef(buffer));
+  EXPECT_CALL(*file_reader, Close());
+  SymbolsFileReader symbols_file_reader{{
+      .file_reader = std::move(file_reader),
+  }};
   const auto result = symbols_file_reader.Read(file_path);
   ASSERT_TRUE(result.IsOk());
   const auto& symbols = result.Ok();
@@ -59,10 +62,12 @@ TEST(SymbolsFileReader, Read) {  // NOLINT
 
 TEST(SymbolsFileReader, ReadHandlesFailedToOpenFile) {  // NOLINT
   const std::filesystem::path file_path{"/path/to/file.spoor_symbols"};
-  FileReaderMock file_reader{};
-  EXPECT_CALL(file_reader, Open(file_path, std::ios::binary));
-  EXPECT_CALL(file_reader, IsOpen()).WillOnce(Return(false));
-  SymbolsFileReader symbols_file_reader{{.file_reader = &file_reader}};
+  auto file_reader = std::make_unique<FileReaderMock>();
+  EXPECT_CALL(*file_reader, Open(file_path, std::ios::binary));
+  EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(false));
+  SymbolsFileReader symbols_file_reader{{
+      .file_reader = std::move(file_reader),
+  }};
   const auto result = symbols_file_reader.Read(file_path);
   ASSERT_TRUE(result.IsErr());
   ASSERT_EQ(result.Err(), Error::kFailedToOpenFile);
@@ -71,11 +76,13 @@ TEST(SymbolsFileReader, ReadHandlesFailedToOpenFile) {  // NOLINT
 TEST(SymbolsFileReader, ReadHandlesCorruptData) {  // NOLINT
   const std::filesystem::path file_path{"/path/to/file.spoor_symbols"};
   std::stringstream buffer{"bad data"};
-  FileReaderMock file_reader{};
-  EXPECT_CALL(file_reader, Open(file_path, std::ios::binary));
-  EXPECT_CALL(file_reader, IsOpen()).WillOnce(Return(true));
-  EXPECT_CALL(file_reader, Istream()).WillOnce(ReturnRef(buffer));
-  SymbolsFileReader symbols_file_reader{{.file_reader = &file_reader}};
+  auto file_reader = std::make_unique<FileReaderMock>();
+  EXPECT_CALL(*file_reader, Open(file_path, std::ios::binary));
+  EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(true));
+  EXPECT_CALL(*file_reader, Istream()).WillOnce(ReturnRef(buffer));
+  SymbolsFileReader symbols_file_reader{{
+      .file_reader = std::move(file_reader),
+  }};
   const auto result = symbols_file_reader.Read(file_path);
   ASSERT_TRUE(result.IsErr());
   ASSERT_EQ(result.Err(), Error::kCorruptData);

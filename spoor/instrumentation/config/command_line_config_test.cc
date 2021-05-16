@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-#include "command_line_config.h"
+#include "spoor/instrumentation/config/command_line_config.h"
 
 #include <algorithm>
 #include <cstddef>
@@ -37,11 +37,13 @@ using spoor::instrumentation::config::OutputLanguage;
 auto MakeArgv(const std::vector<std::string_view>& args) -> std::vector<char*> {
   std::vector<char*> argv{};
   argv.reserve(args.size());
-  std::transform(
-      std::begin(args), std::end(args), std::back_inserter(argv),
-      // `absl::ParseCommandLine` requires a (non-const) char** as an argument.
-      // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
-      [](auto string_view) { return const_cast<char*>(string_view.data()); });
+  std::transform(std::cbegin(args), std::cend(args), std::back_inserter(argv),
+                 [](const auto string_view) {
+                   // `absl::ParseCommandLine` requires a (non-const) char** as
+                   // an argument.
+                   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
+                   return const_cast<char*>(string_view.data());
+                 });
   return argv;
 }
 
@@ -223,7 +225,7 @@ TEST(CommandLineConfig, UnknownFlag) {  // NOLINT
       "Unknown command line flag 'unknown_flag'");
 }
 
-TEST(CommandLineconfig, AbslParseFlag) {  // NOLINT
+TEST(CommandLineConfig, AbslParseFlag) {  // NOLINT
   for (const auto& [key, value] : kOutputLanguages) {
     OutputLanguage language{};
     std::string error{};
@@ -240,7 +242,7 @@ TEST(CommandLineconfig, AbslParseFlag) {  // NOLINT
   ASSERT_EQ(error, "Unknown language 'invalid'. Options: bitcode, ir.");
 }
 
-TEST(CommandLineconfig, AbslUnparseFlag) {  // NOLINT
+TEST(CommandLineConfig, AbslUnparseFlag) {  // NOLINT
   for (const auto& [key, value] : kOutputLanguages) {
     const auto result = AbslUnparseFlag(value);
     ASSERT_EQ(result, key);
