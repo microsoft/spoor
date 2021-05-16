@@ -1,13 +1,13 @@
-# Spoor
-[![Build Status][build-status-badge]][build-status]
+# Spoor [![Build Status][build-status-badge]][build-status]
 
 # Getting Started
 
 ## Requirements
 * A C++ compiler that supports [C++20][c++20-compiler] such as Clang 12.
+* Python 3.
 * [Bazel][bazel].
-* [Clang Format][clang-format] and [Clang Tidy][clang-tidy] to style and lint
-  code.
+* [Clang Format][clang-format], [Clang Tidy][clang-tidy], and [YAPF][yapf] to
+  format and lint code.
 
 ## Build
 ```
@@ -21,19 +21,19 @@ $ bazel test //...
 
 ## Style and lint
 
-### Format C++, Objective-C, and Protobuf files
+### Format C++, Objective-C, Python
 ```
-$ bazel build //... --aspects toolchain/style/style.bzl%clang_format --output_groups=report
+$ bazel build //... --aspects toolchain/style/style.bzl%format --output_groups=report
 ```
 
-### Format
+### Format Starlark
 ```
 $ bazel run //toolchain/style:buildifier
 ```
 
-### Lint C++ and Objective-C files
+### Lint C++
 ```
-$ bazel build //... --aspects toolchain/style/style.bzl%clang_tidy --output_groups=report
+$ bazel build //... --aspects toolchain/style/style.bzl%lint --output_groups=report
 ```
 
 ### Add copyright header
@@ -89,4 +89,5 @@ comments.
 [opencode-email]: mailto:opencode@microsoft.com
 [protoc-installation]: https://grpc.io/docs/protoc-installation/
 [style-guide]: STYLE_GUIDE.md
+[yapf]: https://github.com/google/yapf
 [yarn]: https://classic.yarnpkg.com/

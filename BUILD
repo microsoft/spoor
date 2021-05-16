@@ -12,3 +12,9 @@ filegroup(
     data = [".clang-tidy"],
     visibility = ["//visibility:public"],
 )
+
+filegroup(
+    name = "yapf_config",
+    data = [".style.yapf"],
+    visibility = ["//visibility:public"],
+)

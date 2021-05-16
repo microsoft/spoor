@@ -19,7 +19,11 @@ compile_commands.json
 .DS_Store
 
 # Python
-venv
+.env
+.venv
+__pycache__/
+env/
+venv/
 
 # Testing
 coverage
