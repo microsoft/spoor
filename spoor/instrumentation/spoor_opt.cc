@@ -53,6 +53,8 @@ constexpr std::string_view kUsage{
 }  // namespace
 
 auto main(int argc, char** argv) -> int {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
   const auto short_program_invocation_name = [argc, argv] {
     const gsl::span<char*> args{argv,
                                 static_cast<gsl::span<char*>::size_type>(argc)};

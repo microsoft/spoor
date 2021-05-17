@@ -13,6 +13,7 @@
 #include <unordered_set>
 
 #include "absl/strings/str_format.h"
+#include "google/protobuf/stubs/common.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Passes/PassBuilder.h"
@@ -29,6 +30,8 @@
 namespace spoor::instrumentation {
 
 auto PluginInfo() -> llvm::PassPluginLibraryInfo {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
   const auto callback = [](llvm::PassBuilder& pass_builder) {
     const auto pipeline_parsing_callback =
         [](llvm::StringRef pass_name, llvm::ModulePassManager& pass_manager,
