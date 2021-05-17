@@ -11,7 +11,7 @@ steps:
 - script: echo '##vso[task.prependpath]/usr/local/opt/llvm/bin'
   displayName: Install LLVM (macOS)
   condition: eq(variables['Agent.OS'], 'Darwin')
-- script: pip install yapf
+- script: pip3 install yapf
   displayName: Install YAPF
 - script: cat .build/macos-ci.bazelrc .build/ci.bazelrc > .bazelrc
   displayName: Create .bazelrc (macOS)
