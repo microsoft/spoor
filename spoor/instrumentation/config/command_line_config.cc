@@ -47,11 +47,6 @@ ABSL_FLAG(  // NOLINT
     spoor::instrumentation::config::kInjectInstrumentationDefaultValue,
     spoor::instrumentation::config::kInjectInstrumentationDoc);
 ABSL_FLAG(  // NOLINT
-    std::string, instrumentation_map_output_path,
-    std::string{spoor::instrumentation::config::
-                    kInstrumentedFunctionMapOutputPathDefaultValue},
-    spoor::instrumentation::config::kInstrumentedFunctionMapOutputPathDoc);
-ABSL_FLAG(  // NOLINT
     uint32, min_instruction_threshold,
     spoor::instrumentation::config::kMinInstructionThresholdDefaultValue,
     spoor::instrumentation::config::kMinInstructionThresholdDoc);
@@ -64,6 +59,11 @@ ABSL_FLAG(  // NOLINT
     std::string, output_file,
     std::string{spoor::instrumentation::config::kOutputFileDefaultValue},
     spoor::instrumentation::config::kOutputFileDoc);
+ABSL_FLAG(  // NOLINT
+    std::string, output_function_map_file,
+    std::string{
+        spoor::instrumentation::config::kOutputFunctionMapFileDefaultValue},
+    spoor::instrumentation::config::kOutputFunctionMapFileDoc);
 ABSL_FLAG(  // NOLINT
     spoor::instrumentation::config::OutputLanguage, output_language,
     spoor::instrumentation::config::kOutputLanguageDefaultValue,
@@ -87,12 +87,12 @@ auto ConfigFromCommandLineOrEnv(const int argc, char** argv,
   absl::SetFlag(&FLAGS_initialize_runtime, env_config.initialize_runtime);
   absl::SetFlag(&FLAGS_inject_instrumentation,
                 env_config.inject_instrumentation);
-  absl::SetFlag(&FLAGS_instrumentation_map_output_path,
-                env_config.instrumented_function_map_output_path);
   absl::SetFlag(&FLAGS_min_instruction_threshold,
                 env_config.min_instruction_threshold);
   absl::SetFlag(&FLAGS_module_id, env_config.module_id);
   absl::SetFlag(&FLAGS_output_file, env_config.output_file);
+  absl::SetFlag(&FLAGS_output_function_map_file,
+                env_config.output_function_map_file);
   absl::SetFlag(&FLAGS_output_language, env_config.output_language);
   auto positional_args = absl::ParseCommandLine(argc, argv);
   Config config{
@@ -104,12 +104,11 @@ auto ConfigFromCommandLineOrEnv(const int argc, char** argv,
           absl::GetFlag(FLAGS_function_blocklist_file).StdOptional(),
       .initialize_runtime = absl::GetFlag(FLAGS_initialize_runtime),
       .inject_instrumentation = absl::GetFlag(FLAGS_inject_instrumentation),
-      .instrumented_function_map_output_path =
-          absl::GetFlag(FLAGS_instrumentation_map_output_path),
       .min_instruction_threshold =
           absl::GetFlag(FLAGS_min_instruction_threshold),
       .module_id = absl::GetFlag(FLAGS_module_id).StdOptional(),
       .output_file = absl::GetFlag(FLAGS_output_file),
+      .output_function_map_file = absl::GetFlag(FLAGS_output_function_map_file),
       .output_language = absl::GetFlag(FLAGS_output_language)};
   return std::make_pair(std::move(config), std::move(positional_args));
 }

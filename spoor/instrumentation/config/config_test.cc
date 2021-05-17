@@ -18,10 +18,10 @@ TEST(Config, ConfigEquality) {  // NOLINT
       .function_blocklist_file = "/path/to/blocklist.txt",
       .initialize_runtime = false,
       .inject_instrumentation = false,
-      .instrumented_function_map_output_path = "/path/to/output/",
       .min_instruction_threshold = 42,
       .module_id = "ModuleId",
       .output_file = "/path/to/output_file.ll",
+      .output_function_map_file = "/path/to/file.spoor_function_map",
       .output_language = OutputLanguage::kIr};
   const Config config_b{
       .enable_runtime = false,
@@ -30,10 +30,10 @@ TEST(Config, ConfigEquality) {  // NOLINT
       .function_blocklist_file = "/path/to/blocklist.txt",
       .initialize_runtime = false,
       .inject_instrumentation = false,
-      .instrumented_function_map_output_path = "/path/to/output/",
       .min_instruction_threshold = 42,
       .module_id = "ModuleId",
       .output_file = "/path/to/output_file.ll",
+      .output_function_map_file = "/path/to/file.spoor_function_map",
       .output_language = OutputLanguage::kIr};
   const Config config_c{.enable_runtime = true,
                         .force_binary_output = false,
@@ -41,10 +41,10 @@ TEST(Config, ConfigEquality) {  // NOLINT
                         .function_blocklist_file = "",
                         .initialize_runtime = true,
                         .inject_instrumentation = true,
-                        .instrumented_function_map_output_path = "",
                         .min_instruction_threshold = 0,
                         .module_id = "",
                         .output_file = "",
+                        .output_function_map_file = "",
                         .output_language = OutputLanguage::kBitcode};
   ASSERT_EQ(config_a, config_b);
   ASSERT_NE(config_a, config_c);

@@ -24,10 +24,10 @@ ABSL_DECLARE_FLAG(  // NOLINT
     util::flags::Optional<std::string>, function_blocklist_file);
 ABSL_DECLARE_FLAG(bool, initialize_runtime);                       // NOLINT
 ABSL_DECLARE_FLAG(bool, inject_instrumentation);                   // NOLINT
-ABSL_DECLARE_FLAG(std::string, instrumentation_map_output_path);   // NOLINT
 ABSL_DECLARE_FLAG(uint32, min_instruction_threshold);              // NOLINT
 ABSL_DECLARE_FLAG(util::flags::Optional<std::string>, module_id);  // NOLINT
 ABSL_DECLARE_FLAG(std::string, output_file);                       // NOLINT
+ABSL_DECLARE_FLAG(std::string, output_function_map_file);          // NOLINT
 ABSL_DECLARE_FLAG(                                                 // NOLINT
     spoor::instrumentation::config::OutputLanguage, output_language);
 

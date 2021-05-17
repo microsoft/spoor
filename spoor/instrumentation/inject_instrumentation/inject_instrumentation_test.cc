@@ -6,11 +6,12 @@
 #include <array>
 #include <cstdlib>
 #include <limits>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <system_error>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include "city_hash/city.h"
@@ -23,9 +24,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/IRReader/IRReader.h"
-#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
-#include "llvm/Support/raw_ostream.h"
 #include "spoor/proto/spoor.pb.h"
 #include "util/numeric.h"
 #include "util/time/clock.h"
@@ -38,9 +37,6 @@ using google::protobuf::util::TimeUtil;
 using spoor::FunctionInfo;
 using spoor::InstrumentedFunctionMap;
 using spoor::instrumentation::inject_instrumentation::InjectInstrumentation;
-using spoor::instrumentation::inject_instrumentation::
-    kInstrumentedFunctionMapFileExtension;
-using testing::MatchesRegex;
 using testing::Return;
 using util::time::SystemClock;
 using util::time::testing::MakeTimePoint;
@@ -124,17 +120,13 @@ TEST(InjectInstrumentation, InstrumentsModule) {  // NOLINT
                                            uninstrumented_module_context);
     ASSERT_NE(parsed_module, nullptr);
 
-    const auto ostream = [](const llvm::StringRef /*unused*/,
-                            gsl::not_null<std::error_code*> /*unused*/) {
-      return std::make_unique<llvm::raw_null_ostream>();
-    };
+    auto output_function_map_stream = std::make_unique<std::ostringstream>();
     auto system_clock = std::make_unique<SystemClockMock>();
     EXPECT_CALL(*system_clock, Now())
         .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
     InjectInstrumentation inject_instrumentation{
         {.inject_instrumentation = true,
-         .instrumented_function_map_output_path = "/",
-         .instrumented_function_map_output_stream = ostream,
+         .output_function_map_stream = std::move(output_function_map_stream),
          .system_clock = std::move(system_clock),
          .function_allow_list = {},
          .function_blocklist = {},
@@ -346,18 +338,14 @@ TEST(InjectInstrumentation, OutputsInstrumentedFunctionMap) {  // NOLINT
                           instrumented_module_context);
     ASSERT_NE(parsed_module, nullptr);
 
-    std::string buffer{};
-    const auto ostream = [&buffer](const llvm::StringRef /*unused*/,
-                                   gsl::not_null<std::error_code*> /*unused*/) {
-      return std::make_unique<llvm::raw_string_ostream>(buffer);
-    };
+    auto output_function_map_stream = std::make_unique<std::ostringstream>();
+    auto* output_function_map_buffer = output_function_map_stream->rdbuf();
     auto system_clock = std::make_unique<SystemClockMock>();
     EXPECT_CALL(*system_clock, Now())
         .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
     InjectInstrumentation inject_instrumentation{
         {.inject_instrumentation = true,
-         .instrumented_function_map_output_path = "/",
-         .instrumented_function_map_output_stream = ostream,
+         .output_function_map_stream = std::move(output_function_map_stream),
          .system_clock = std::move(system_clock),
          .function_allow_list = {},
          .function_blocklist = {},
@@ -369,7 +357,8 @@ TEST(InjectInstrumentation, OutputsInstrumentedFunctionMap) {  // NOLINT
     inject_instrumentation.run(*parsed_module, module_analysis_manager);
 
     InstrumentedFunctionMap instrumented_function_map{};
-    instrumented_function_map.ParseFromString(buffer);
+    instrumented_function_map.ParseFromString(
+        output_function_map_buffer->str());
 
     ASSERT_TRUE(MessageDifferencer::Equals(instrumented_function_map,
                                            expected_instrumented_function_map));
@@ -391,17 +380,13 @@ TEST(InjectInstrumentation, FunctionBlocklist) {  // NOLINT
                                          uninstrumented_module_context);
   ASSERT_NE(parsed_module, nullptr);
 
-  const auto ostream = [](const llvm::StringRef /*unused*/,
-                          gsl::not_null<std::error_code*> /*unused*/) {
-    return std::make_unique<llvm::raw_null_ostream>();
-  };
+  auto output_function_map_stream = std::make_unique<std::ostringstream>();
   auto system_clock = std::make_unique<SystemClockMock>();
   EXPECT_CALL(*system_clock, Now())
       .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
   InjectInstrumentation inject_instrumentation{
       {.inject_instrumentation = true,
-       .instrumented_function_map_output_path = "/",
-       .instrumented_function_map_output_stream = ostream,
+       .output_function_map_stream = std::move(output_function_map_stream),
        .system_clock = std::move(system_clock),
        .function_allow_list = {},
        .function_blocklist = {"_Z9Fibonaccii"},
@@ -432,17 +417,13 @@ TEST(InjectInstrumentation, FunctionAllowListOverridesBlocklist) {  // NOLINT
                                          uninstrumented_module_context);
   ASSERT_NE(parsed_module, nullptr);
 
-  auto ostream = [](const llvm::StringRef /*unused*/,
-                    gsl::not_null<std::error_code*> /*unused*/) {
-    return std::make_unique<llvm::raw_null_ostream>();
-  };
+  auto output_function_map_stream = std::make_unique<std::ostringstream>();
   auto system_clock = std::make_unique<SystemClockMock>();
   EXPECT_CALL(*system_clock, Now())
       .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
   InjectInstrumentation inject_instrumentation{
       {.inject_instrumentation = true,
-       .instrumented_function_map_output_path = "/",
-       .instrumented_function_map_output_stream = ostream,
+       .output_function_map_stream = std::move(output_function_map_stream),
        .system_clock = std::move(system_clock),
        .function_allow_list = {"_Z9Fibonaccii"},
        .function_blocklist = {"_Z9Fibonaccii"},
@@ -484,17 +465,13 @@ TEST(InjectInstrumentation, InstructionThreshold) {  // NOLINT
                                            uninstrumented_module_context);
     ASSERT_NE(parsed_module, nullptr);
 
-    const auto ostream = [](const llvm::StringRef /*unused*/,
-                            gsl::not_null<std::error_code*> /*unused*/) {
-      return std::make_unique<llvm::raw_null_ostream>();
-    };
+    auto output_function_map_stream = std::make_unique<std::ostringstream>();
     auto system_clock = std::make_unique<SystemClockMock>();
     EXPECT_CALL(*system_clock, Now())
         .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
     InjectInstrumentation inject_instrumentation{
         {.inject_instrumentation = true,
-         .instrumented_function_map_output_path = "/",
-         .instrumented_function_map_output_stream = ostream,
+         .output_function_map_stream = std::move(output_function_map_stream),
          .system_clock = std::move(system_clock),
          .function_allow_list = {},
          .function_blocklist = {},
@@ -527,17 +504,13 @@ TEST(InjectInstrumentation, AlwaysInstrumentsMain) {  // NOLINT
                                          uninstrumented_module_context);
   ASSERT_NE(parsed_module, nullptr);
 
-  const auto ostream = [](const llvm::StringRef /*unused*/,
-                          gsl::not_null<std::error_code*> /*unused*/) {
-    return std::make_unique<llvm::raw_null_ostream>();
-  };
+  auto output_function_map_stream = std::make_unique<std::ostringstream>();
   auto system_clock = std::make_unique<SystemClockMock>();
   EXPECT_CALL(*system_clock, Now())
       .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
   InjectInstrumentation inject_instrumentation{
       {.inject_instrumentation = true,
-       .instrumented_function_map_output_path = "/",
-       .instrumented_function_map_output_stream = ostream,
+       .output_function_map_stream = std::move(output_function_map_stream),
        .system_clock = std::move(system_clock),
        .function_allow_list = {},
        .function_blocklist = {"main", "_Z9Fibonaccii"},
@@ -569,15 +542,11 @@ TEST(InjectInstrumentation, DoNotInjectInstrumentationConfig) {  // NOLINT
                                          uninstrumented_module_context);
   ASSERT_NE(parsed_module, nullptr);
 
-  const auto ostream = [](const llvm::StringRef /*unused*/,
-                          gsl::not_null<std::error_code*> /*unused*/) {
-    return std::make_unique<llvm::raw_null_ostream>();
-  };
+  auto output_function_map_stream = std::make_unique<std::ostringstream>();
   auto system_clock = std::make_unique<SystemClockMock>();
   InjectInstrumentation inject_instrumentation{
       {.inject_instrumentation = false,
-       .instrumented_function_map_output_path = "/",
-       .instrumented_function_map_output_stream = ostream,
+       .output_function_map_stream = std::move(output_function_map_stream),
        .system_clock = std::move(system_clock),
        .function_allow_list = {},
        .function_blocklist = {},
@@ -595,66 +564,6 @@ TEST(InjectInstrumentation, DoNotInjectInstrumentationConfig) {  // NOLINT
   }
 }
 
-TEST(InjectInstrumentation, InstrumentedFunctionMapFileName) {  // NOLINT
-  llvm::SMDiagnostic expected_module_diagnostic{};
-  llvm::LLVMContext expected_module_context{};
-  auto expected_instrumented_module =
-      llvm::parseIRFile(kOnlyMainFunctionInstrumentedIrFile.data(),
-                        expected_module_diagnostic, expected_module_context);
-  ASSERT_NE(expected_instrumented_module, nullptr);
-
-  llvm::SMDiagnostic uninstrumented_module_diagnostic{};
-  llvm::LLVMContext uninstrumented_module_context{};
-  auto parsed_module = llvm::parseIRFile(kUninstrumentedIrFile.data(),
-                                         uninstrumented_module_diagnostic,
-                                         uninstrumented_module_context);
-  ASSERT_NE(parsed_module, nullptr);
-  constexpr std::string_view instrumented_function_map_output_path{
-      "/path/to/output"};
-  const std::vector<std::optional<std::string>> module_ids{{}, "", "module_id"};
-  for (const auto& module_id : module_ids) {
-    std::string file_name{};
-    const auto ostream = [&file_name](
-                             const llvm::StringRef file,
-                             gsl::not_null<std::error_code*> /*unused*/) {
-      file_name = file;
-      return std::make_unique<llvm::raw_null_ostream>();
-    };
-    const auto expected_file_name = [&] {
-      std::string buffer{};
-      const auto id = module_id.value_or(parsed_module->getModuleIdentifier());
-      const auto module_id_hash = CityHash64(id.data(), id.size());
-      llvm::raw_string_ostream{buffer}
-          << instrumented_function_map_output_path << '/'
-          << llvm::format_hex_no_prefix(module_id_hash,
-                                        sizeof(module_id_hash) * 2)
-          << '.' << kInstrumentedFunctionMapFileExtension;
-      return buffer;
-    }();
-    auto system_clock = std::make_unique<SystemClockMock>();
-    EXPECT_CALL(*system_clock, Now())
-        .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
-    InjectInstrumentation inject_instrumentation{
-        {.inject_instrumentation = true,
-         .instrumented_function_map_output_path =
-             instrumented_function_map_output_path,
-         .instrumented_function_map_output_stream = ostream,
-         .system_clock = std::move(system_clock),
-         .function_allow_list = {},
-         .function_blocklist = {},
-         .module_id = module_id,
-         .min_instruction_count_to_instrument = 0,
-         .initialize_runtime = false,
-         .enable_runtime = false}};
-    llvm::ModuleAnalysisManager module_analysis_manager{};
-    inject_instrumentation.run(*parsed_module, module_analysis_manager);
-    const std::string pattern{
-        R"(/path/to/output/[a-f0-9]{16}\.spoor_function_map)"};
-    ASSERT_THAT(file_name, MatchesRegex(pattern));
-    ASSERT_EQ(file_name, expected_file_name);
-  }
-}
-
 TEST(InjectInstrumentation, AddsTimestamp) {  // NOLINT
   llvm::SMDiagnostic module_diagnostic{};
   llvm::LLVMContext module_context{};
@@ -662,19 +571,15 @@ TEST(InjectInstrumentation, AddsTimestamp) {  // NOLINT
                                          module_diagnostic, module_context);
   ASSERT_NE(parsed_module, nullptr);
 
-  std::string buffer{};
-  const auto ostream = [&buffer](const llvm::StringRef /*unused*/,
-                                 gsl::not_null<std::error_code*> /*unused*/) {
-    return std::make_unique<llvm::raw_string_ostream>(buffer);
-  };
+  auto output_function_map_stream = std::make_unique<std::ostringstream>();
+  auto* output_function_map_buffer = output_function_map_stream->rdbuf();
   const auto nanoseconds = 1'607'590'800'000'000'000;
   auto system_clock = std::make_unique<SystemClockMock>();
   EXPECT_CALL(*system_clock, Now())
       .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(nanoseconds)));
   InjectInstrumentation inject_instrumentation{
       {.inject_instrumentation = true,
-       .instrumented_function_map_output_path = "/path/to/output",
-       .instrumented_function_map_output_stream = ostream,
+       .output_function_map_stream = std::move(output_function_map_stream),
        .system_clock = std::move(system_clock),
        .function_allow_list = {},
        .function_blocklist = {},
@@ -685,7 +590,7 @@ TEST(InjectInstrumentation, AddsTimestamp) {  // NOLINT
   inject_instrumentation.run(*parsed_module, module_analysis_manager);
 
   InstrumentedFunctionMap instrumented_function_map{};
-  instrumented_function_map.ParseFromString(buffer);
+  instrumented_function_map.ParseFromString(output_function_map_buffer->str());
 
   ASSERT_EQ(
       TimeUtil::TimestampToNanoseconds(instrumented_function_map.created_at()),
@@ -706,17 +611,13 @@ TEST(InjectInstrumentation, ReturnValue) {  // NOLINT
                                            module_diagnostic, module_context);
     ASSERT_NE(parsed_module, nullptr);
 
-    const auto ostream = [](const llvm::StringRef /*unused*/,
-                            gsl::not_null<std::error_code*> /*unused*/) {
-      return std::make_unique<llvm::raw_null_ostream>();
-    };
+    auto output_function_map_stream = std::make_unique<std::ostringstream>();
     auto system_clock = std::make_unique<SystemClockMock>();
     EXPECT_CALL(*system_clock, Now())
         .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
     InjectInstrumentation inject_instrumentation{
         {.inject_instrumentation = true,
-         .instrumented_function_map_output_path = "/",
-         .instrumented_function_map_output_stream = ostream,
+         .output_function_map_stream = std::move(output_function_map_stream),
          .system_clock = std::move(system_clock),
          .function_allow_list = {},
          .function_blocklist = config.function_blocklist,
@@ -729,49 +630,6 @@ TEST(InjectInstrumentation, ReturnValue) {  // NOLINT
         inject_instrumentation.run(*parsed_module, module_analysis_manager);
     ASSERT_EQ(result.areAllPreserved(), config.are_all_preserved);
   }
-}
-
-TEST(InjectInstrumentation, ExitsOnOstreamError) {  // NOLINT
-  llvm::SMDiagnostic expected_module_diagnostic{};
-  llvm::LLVMContext expected_module_context{};
-  auto expected_instrumented_module =
-      llvm::parseIRFile(kOnlyMainFunctionInstrumentedIrFile.data(),
-                        expected_module_diagnostic, expected_module_context);
-  ASSERT_NE(expected_instrumented_module, nullptr);
-
-  llvm::SMDiagnostic uninstrumented_module_diagnostic{};
-  llvm::LLVMContext uninstrumented_module_context{};
-  auto parsed_module = llvm::parseIRFile(kUninstrumentedIrFile.data(),
-                                         uninstrumented_module_diagnostic,
-                                         uninstrumented_module_context);
-  ASSERT_NE(parsed_module, nullptr);
-
-  const std::string path{"/path/to/file"};
-  auto error = std::make_error_code(std::errc::permission_denied);
-  const auto ostream = [&error](const llvm::StringRef /*unused*/,
-                                gsl::not_null<std::error_code*> error_code) {
-    *error_code = error;
-    return std::make_unique<llvm::raw_null_ostream>();
-  };
-  auto system_clock = std::make_unique<SystemClock>();
-  InjectInstrumentation inject_instrumentation{
-      {.inject_instrumentation = true,
-       .instrumented_function_map_output_path = "/",
-       .instrumented_function_map_output_stream = ostream,
-       .system_clock = std::move(system_clock),
-       .function_allow_list = {},
-       .function_blocklist = {},
-       .module_id = {},
-       .min_instruction_count_to_instrument = 0,
-       .initialize_runtime = false,
-       .enable_runtime = false}};
-  llvm::ModuleAnalysisManager module_analysis_manager{};
-  const std::string pattern{
-      ".*Failed to open/create the instrumentation map output file '.*'\\. "
-      "Permission denied\\..*"};
-  ASSERT_DEATH(  // NOLINT
-      inject_instrumentation.run(*parsed_module, module_analysis_manager),
-      MatchesRegex(pattern));
 }
 
 }  // namespace

@@ -99,13 +99,16 @@ auto main(int argc, char** argv) -> int {
     return EXIT_FAILURE;
   }
 
-  auto instrumented_function_map_output_stream =
-      [](const llvm::StringRef file_path,
-         gsl::not_null<std::error_code*> error) {
-        return std::make_unique<llvm::raw_fd_ostream>(file_path, *error);
-      };
-
   auto system_clock = std::make_unique<util::time::SystemClock>();
+
+  auto output_function_map_stream =
+      std::make_unique<std::ofstream>(config.output_function_map_file);
+  if (!output_function_map_stream->is_open()) {
+    llvm::WithColor::error();
+    llvm::errs() << "Failed to create the function map file '"
+                 << config.output_function_map_file << "'.\n";
+    return EXIT_FAILURE;
+  }
 
   std::unordered_set<std::string> function_allow_list{};
   if (config.function_allow_list_file.has_value()) {
@@ -134,10 +137,7 @@ auto main(int argc, char** argv) -> int {
   spoor::instrumentation::inject_instrumentation::InjectInstrumentation
       inject_instrumentation{{
           .inject_instrumentation = config.inject_instrumentation,
-          .instrumented_function_map_output_path =
-              config.instrumented_function_map_output_path,
-          .instrumented_function_map_output_stream =
-              std::move(instrumented_function_map_output_stream),
+          .output_function_map_stream = std::move(output_function_map_stream),
           .system_clock = std::move(system_clock),
           .function_allow_list = std::move(function_allow_list),
           .function_blocklist = std::move(function_blocklist),
