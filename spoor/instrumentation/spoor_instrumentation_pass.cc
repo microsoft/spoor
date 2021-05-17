@@ -19,7 +19,6 @@
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/WithColor.h"
-#include "llvm/Support/raw_ostream.h"
 #include "spoor/instrumentation/config/env_config.h"
 #include "spoor/instrumentation/inject_instrumentation/inject_instrumentation.h"
 #include "spoor/instrumentation/instrumentation.h"
@@ -35,6 +34,15 @@ auto PluginInfo() -> llvm::PassPluginLibraryInfo {
            llvm::ArrayRef<llvm::PassBuilder::PipelineElement> /*unused*/) {
           if (pass_name != kPluginName.data()) return false;
           const auto config = config::ConfigFromEnv();
+
+          auto output_function_map_stream =
+              std::make_unique<std::ofstream>(config.output_function_map_file);
+          if (!output_function_map_stream->is_open()) {
+            const auto message =
+                absl::StrFormat("Failed to create the function map file '%s'.",
+                                config.output_function_map_file);
+            llvm::report_fatal_error(message, false);
+          }
 
           std::unordered_set<std::string> function_allow_list{};
           if (config.function_allow_list_file.has_value()) {
@@ -60,19 +68,11 @@ auto PluginInfo() -> llvm::PassPluginLibraryInfo {
             function_blocklist = support::ReadLinesToSet(&file);
           }
 
-          auto instrumented_function_map_output_stream =
-              [](const llvm::StringRef file_path,
-                 gsl::not_null<std::error_code*> error) {
-                return std::make_unique<llvm::raw_fd_ostream>(file_path,
-                                                              *error);
-              };
           auto system_clock = std::make_unique<util::time::SystemClock>();
           pass_manager.addPass(inject_instrumentation::InjectInstrumentation{{
               .inject_instrumentation = config.inject_instrumentation,
-              .instrumented_function_map_output_path =
-                  config.instrumented_function_map_output_path,
-              .instrumented_function_map_output_stream =
-                  std::move(instrumented_function_map_output_stream),
+              .output_function_map_stream =
+                  std::move(output_function_map_stream),
               .system_clock = std::move(system_clock),
               .function_allow_list = std::move(function_allow_list),
               .function_blocklist = std::move(function_blocklist),

@@ -22,12 +22,12 @@ constexpr std::string_view kInitializeRuntimeKey{
     "SPOOR_INSTRUMENTATION_RUNTIME_INITIALIZE_RUNTIME"};
 constexpr std::string_view kInjectInstrumentationKey{
     "SPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION"};
-constexpr std::string_view kInstrumentedFunctionMapOutputPathKey{
-    "SPOOR_INSTRUMENTATION_INSTRUMENTED_FUNCTION_MAP_OUTPUT_PATH"};
 constexpr std::string_view kMinInstructionThresholdKey{
     "SPOOR_INSTRUMENTATION_MIN_INSTRUCTION_THRESHOLD"};
 constexpr std::string_view kModuleIdKey{"SPOOR_INSTRUMENTATION_MODULE_ID"};
 constexpr std::string_view kOutputFileKey{"SPOOR_INSTRUMENTATION_OUTPUT_FILE"};
+constexpr std::string_view kOutputFunctionMapFileKey{
+    "SPOOR_INSTRUMENTATION_OUTPUT_FUNCTION_MAP_FILE"};
 constexpr std::string_view kOutputLanguageKey{
     "SPOOR_INSTRUMENTATION_OUTPUT_LANGUAGE"};
 

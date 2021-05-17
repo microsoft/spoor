@@ -7,14 +7,11 @@
 #include <cctype>
 #include <chrono>
 #include <cstdlib>
-#include <functional>
 #include <ios>
 #include <iterator>
 #include <string_view>
-#include <system_error>
 #include <utility>
 
-#include "absl/strings/str_format.h"
 #include "city_hash/city.h"
 #include "google/protobuf/timestamp.pb.h"
 #include "google/protobuf/util/time_util.h"
@@ -29,9 +26,6 @@
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/Type.h"
 #include "llvm/Passes/PassPlugin.h"
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/Format.h"
-#include "llvm/Support/raw_ostream.h"
 #include "spoor/proto/spoor.pb.h"
 #include "swift/Demangling/Demangle.h"
 #include "swift/Demangling/Demangler.h"
@@ -74,33 +68,8 @@ auto InjectInstrumentation::run(llvm::Module& llvm_module,
   }();
   *instrumented_function_map.mutable_created_at() = now;
 
-  const auto file_name = [&] {
-    std::string buffer{};
-    const auto module_id =
-        options_.module_id.value_or(llvm_module.getModuleIdentifier());
-    const auto module_id_hash = CityHash64(module_id.data(), module_id.size());
-    llvm::raw_string_ostream{buffer}
-        << llvm::format_hex_no_prefix(module_id_hash,
-                                      sizeof(module_id_hash) * 2)
-        << '.' << kInstrumentedFunctionMapFileExtension;
-    return buffer;
-  }();
-  const auto path = options_.instrumented_function_map_output_path / file_name;
-  std::error_code error{};
-  auto output_stream =
-      options_.instrumented_function_map_output_stream(path.c_str(), &error);
-  if (error) {
-    const auto message = absl::StrFormat(
-        "Failed to open/create the instrumentation map output file '%s'. %s.",
-        path, error.message());
-    llvm::report_fatal_error(message, false);
-  }
-
-  // LLVM passes do not support `std::ostream` so we're forced to bridge the
-  // output with a `std::string` instead of directly using `SerializeToOstream`.
-  std::string buffer{};
-  instrumented_function_map.SerializeToString(&buffer);
-  *output_stream << buffer;
+  instrumented_function_map.SerializeToOstream(
+      options_.output_function_map_stream.get());
 
   return preserved_analyses;
 }

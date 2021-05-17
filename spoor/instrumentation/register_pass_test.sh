@@ -24,7 +24,8 @@ else
   exit 1
 fi
 
-OUTPUT_IR_FILE="instrumented.ll"
+OUTPUT_IR_FILE="fib_instrumented.ll"
+export SPOOR_INSTRUMENTATION_OUTPUT_FUNCTION_MAP_FILE="fib.spoor_function_map"
 
 # TODO(#131): Fix `opt` pass plugin support for IR instrumentation.
 set +e
@@ -37,12 +38,9 @@ set -e
 
 exit 0
 
-FUNCTION_MAP_FILE=$(find . -type f -name "*.spoor_function_map")
-
-if ! [[ -s "$FUNCTION_MAP_FILE" ]]; then
-  echo "The function map file '$FUNCTION_MAP_FILE' is empty."
+if ! [[ -s "$SPOOR_INSTRUMENTATION_OUTPUT_FUNCTION_MAP_FILE" ]]; then
+  echo "The function map file" \
+      "'$SPOOR_INSTRUMENTATION_OUTPUT_FUNCTION_MAP_FILE' is empty or was not" \
+      "created."
   exit 1
 fi
-
-grep _spoor_runtime_LogFunctionEntry "$OUTPUT_IR_FILE" > /dev/null
-grep _spoor_runtime_LogFunctionExit "$OUTPUT_IR_FILE" > /dev/null

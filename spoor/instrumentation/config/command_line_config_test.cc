@@ -26,10 +26,10 @@ using spoor::instrumentation::config::kFunctionAllowListFileKey;
 using spoor::instrumentation::config::kFunctionBlocklistFileKey;
 using spoor::instrumentation::config::kInitializeRuntimeKey;
 using spoor::instrumentation::config::kInjectInstrumentationKey;
-using spoor::instrumentation::config::kInstrumentedFunctionMapOutputPathKey;
 using spoor::instrumentation::config::kMinInstructionThresholdKey;
 using spoor::instrumentation::config::kModuleIdKey;
 using spoor::instrumentation::config::kOutputFileKey;
+using spoor::instrumentation::config::kOutputFunctionMapFileKey;
 using spoor::instrumentation::config::kOutputLanguageKey;
 using spoor::instrumentation::config::kOutputLanguages;
 using spoor::instrumentation::config::OutputLanguage;
@@ -56,19 +56,20 @@ TEST(CommandLineConfig, ParsesCommandLine) {  // NOLINT
       .function_blocklist_file = "/path/to/blocklist.txt",
       .initialize_runtime = false,
       .inject_instrumentation = false,
-      .instrumented_function_map_output_path = "/path/to/output/",
       .min_instruction_threshold = 42,
       .module_id = "ModuleId",
       .output_file = "/path/to/output_file.ll",
+      .output_function_map_file = "/path/to/file.spoor_function_map",
       .output_language = OutputLanguage::kIr};
-  auto argv = MakeArgv(
-      {"spoor_opt", "--enable_runtime=false",
-       "--function_allow_list_file=/path/to/allow_list.txt",
-       "--function_blocklist_file=/path/to/blocklist.txt",
-       "--initialize_runtime=false", "--inject_instrumentation=false",
-       "--instrumentation_map_output_path=/path/to/output/",
-       "--min_instruction_threshold=42", "--module_id=ModuleId",
-       "--output_file=/path/to/output_file.ll", "--output_language=ir"});
+  auto argv =
+      MakeArgv({"spoor_opt", "--enable_runtime=false",
+                "--function_allow_list_file=/path/to/allow_list.txt",
+                "--function_blocklist_file=/path/to/blocklist.txt",
+                "--initialize_runtime=false", "--inject_instrumentation=false",
+                "--min_instruction_threshold=42", "--module_id=ModuleId",
+                "--output_file=/path/to/output_file.ll",
+                "--output_function_map_file=/path/to/file.spoor_function_map",
+                "--output_language=ir"});
   const auto expected_positional_args = MakeArgv({argv.front()});
   const auto [config, positional_args] = ConfigFromCommandLineOrEnv(
       gsl::narrow_cast<int>(argv.size()), argv.data(), get_env);
@@ -86,10 +87,10 @@ TEST(CommandLineConfig, UsesDefaultValueWhenNotSpecified) {  // NOLINT
                                .function_blocklist_file = {},
                                .initialize_runtime = true,
                                .inject_instrumentation = true,
-                               .instrumented_function_map_output_path = ".",
                                .min_instruction_threshold = 0,
                                .module_id = {},
                                .output_file = "-",
+                               .output_function_map_file = "",
                                .output_language = OutputLanguage::kBitcode};
   auto argv = MakeArgv({"spoor_opt"});
   const auto [config, positional_args] = ConfigFromCommandLineOrEnv(
@@ -101,17 +102,18 @@ TEST(CommandLineConfig, UsesDefaultValueWhenNotSpecified) {  // NOLINT
 TEST(CommandLineConfig, UsesEnvironmentValueWhenNotSpecified) {  // NOLINT
   const auto get_env = [](const char* key) {
     constexpr util::flat_map::FlatMap<std::string_view, std::string_view, 11>
-        environment{{kEnableRuntimeKey, "false"},
-                    {kForceBinaryOutputKey, "true"},
-                    {kFunctionAllowListFileKey, "/path/to/allow_list.txt"},
-                    {kFunctionBlocklistFileKey, "/path/to/blocklist.txt"},
-                    {kInitializeRuntimeKey, "false"},
-                    {kInjectInstrumentationKey, "false"},
-                    {kInstrumentedFunctionMapOutputPathKey, "/path/to/output/"},
-                    {kMinInstructionThresholdKey, "42"},
-                    {kModuleIdKey, "ModuleId"},
-                    {kOutputFileKey, "/path/to/output_file.ll"},
-                    {kOutputLanguageKey, "ir"}};
+        environment{
+            {kEnableRuntimeKey, "false"},
+            {kForceBinaryOutputKey, "true"},
+            {kFunctionAllowListFileKey, "/path/to/allow_list.txt"},
+            {kFunctionBlocklistFileKey, "/path/to/blocklist.txt"},
+            {kInitializeRuntimeKey, "false"},
+            {kInjectInstrumentationKey, "false"},
+            {kMinInstructionThresholdKey, "42"},
+            {kModuleIdKey, "ModuleId"},
+            {kOutputFileKey, "/path/to/output_file.ll"},
+            {kOutputFunctionMapFileKey, "/path/to/file.spoor_function_map"},
+            {kOutputLanguageKey, "ir"}};
     return environment.FirstValueForKey(key).value_or(nullptr).data();
   };
   const Config expected_config{
@@ -121,10 +123,10 @@ TEST(CommandLineConfig, UsesEnvironmentValueWhenNotSpecified) {  // NOLINT
       .function_blocklist_file = "/path/to/blocklist.txt",
       .initialize_runtime = false,
       .inject_instrumentation = false,
-      .instrumented_function_map_output_path = "/path/to/output/",
       .min_instruction_threshold = 42,
       .module_id = "ModuleId",
       .output_file = "/path/to/output_file.ll",
+      .output_function_map_file = "/path/to/file.spoor_function_map",
       .output_language = OutputLanguage::kIr};
   auto argv = MakeArgv({"spoor_opt"});
   const auto [config, positional_args] = ConfigFromCommandLineOrEnv(
@@ -143,10 +145,11 @@ TEST(CommandLineConfig, OverridesEnvironment) {  // NOLINT
             {kFunctionBlocklistFileKey, "/path/to/other/blocklist.txt"},
             {kInitializeRuntimeKey, "true"},
             {kInjectInstrumentationKey, "true"},
-            {kInstrumentedFunctionMapOutputPathKey, "/path/to/other/output/"},
             {kMinInstructionThresholdKey, "43"},
             {kModuleIdKey, "OtherModuleId"},
             {kOutputFileKey, "/path/to/other/output_file.ll"},
+            {kOutputFunctionMapFileKey,
+             "/path/to/other/file.spoor_function_map"},
             {kOutputLanguageKey, "bitcode"}};
     return environment.FirstValueForKey(key).value_or(nullptr).data();
   };
@@ -157,19 +160,20 @@ TEST(CommandLineConfig, OverridesEnvironment) {  // NOLINT
       .function_blocklist_file = "/path/to/blocklist.txt",
       .initialize_runtime = false,
       .inject_instrumentation = false,
-      .instrumented_function_map_output_path = "/path/to/output/",
       .min_instruction_threshold = 42,
       .module_id = "ModuleId",
       .output_file = "/path/to/output_file.ll",
+      .output_function_map_file = "/path/to/file.spoor_function_map",
       .output_language = OutputLanguage::kIr};
-  auto argv = MakeArgv(
-      {"spoor_opt", "--enable_runtime=false",
-       "--function_allow_list_file=/path/to/allow_list.txt",
-       "--function_blocklist_file=/path/to/blocklist.txt",
-       "--initialize_runtime=false", "--inject_instrumentation=false",
-       "--instrumentation_map_output_path=/path/to/output/",
-       "--min_instruction_threshold=42", "--module_id=ModuleId",
-       "--output_file=/path/to/output_file.ll", "--output_language=ir"});
+  auto argv =
+      MakeArgv({"spoor_opt", "--enable_runtime=false",
+                "--function_allow_list_file=/path/to/allow_list.txt",
+                "--function_blocklist_file=/path/to/blocklist.txt",
+                "--initialize_runtime=false", "--inject_instrumentation=false",
+                "--min_instruction_threshold=42", "--module_id=ModuleId",
+                "--output_file=/path/to/output_file.ll",
+                "--output_function_map_file=/path/to/file.spoor_function_map",
+                "--output_language=ir"});
   const auto expected_positional_args = MakeArgv({argv.front()});
   const auto [config, positional_args] = ConfigFromCommandLineOrEnv(
       gsl::narrow_cast<int>(argv.size()), argv.data(), get_env);

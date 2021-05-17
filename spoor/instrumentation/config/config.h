@@ -25,10 +25,10 @@ struct alignas(128) Config {
   std::optional<std::string> function_blocklist_file;
   bool initialize_runtime;
   bool inject_instrumentation;
-  std::string instrumented_function_map_output_path;
   uint32 min_instruction_threshold;
   std::optional<std::string> module_id;
   std::string output_file;
+  std::string output_function_map_file;
   OutputLanguage output_language;
 };
 
@@ -66,9 +66,9 @@ constexpr std::string_view kInjectInstrumentationDoc{
     "Inject Spoor instrumentation."};
 constexpr auto kInjectInstrumentationDefaultValue{true};
 
-constexpr std::string_view kInstrumentedFunctionMapOutputPathDoc{
+constexpr std::string_view kOutputFunctionMapFileDoc{
     "Spoor function map output file."};
-constexpr std::string_view kInstrumentedFunctionMapOutputPathDefaultValue{"."};
+constexpr std::string_view kOutputFunctionMapFileDefaultValue{};
 
 constexpr std::string_view kMinInstructionThresholdDoc{
     "Minimum number of LLVM IR instructions required to instrument a "

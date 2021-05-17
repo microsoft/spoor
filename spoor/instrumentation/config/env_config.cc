@@ -31,9 +31,6 @@ auto ConfigFromEnv(const util::env::GetEnv& get_env) -> Config {
       .inject_instrumentation =
           GetEnvOrDefault(kInjectInstrumentationKey.data(),
                           kInjectInstrumentationDefaultValue, get_env),
-      .instrumented_function_map_output_path = GetEnvOrDefault(
-          kInstrumentedFunctionMapOutputPathKey.data(),
-          std::string{kInstrumentedFunctionMapOutputPathDefaultValue}, get_env),
       .min_instruction_threshold =
           GetEnvOrDefault(kMinInstructionThresholdKey.data(),
                           kMinInstructionThresholdDefaultValue, get_env),
@@ -41,6 +38,9 @@ auto ConfigFromEnv(const util::env::GetEnv& get_env) -> Config {
                                    true, get_env),
       .output_file = GetEnvOrDefault(
           kOutputFileKey.data(), std::string{kOutputFileDefaultValue}, get_env),
+      .output_function_map_file = GetEnvOrDefault(
+          kOutputFunctionMapFileKey.data(),
+          std::string{kOutputFunctionMapFileDefaultValue}, get_env),
       .output_language = GetEnvOrDefault(kOutputLanguageKey.data(),
                                          kOutputLanguageDefaultValue,
                                          kOutputLanguages, true, get_env)};

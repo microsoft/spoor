@@ -11,10 +11,9 @@ auto operator==(const Config& lhs, const Config& rhs) -> bool {
          lhs.enable_runtime == rhs.enable_runtime &&
          lhs.initialize_runtime == rhs.initialize_runtime &&
          lhs.inject_instrumentation == rhs.inject_instrumentation &&
-         lhs.instrumented_function_map_output_path ==
-             rhs.instrumented_function_map_output_path &&
          lhs.min_instruction_threshold == rhs.min_instruction_threshold &&
          lhs.module_id == rhs.module_id && lhs.output_file == rhs.output_file &&
+         lhs.output_function_map_file == rhs.output_function_map_file &&
          lhs.output_language == rhs.output_language;
 }
 
