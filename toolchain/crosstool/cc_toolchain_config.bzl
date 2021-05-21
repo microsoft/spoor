@@ -102,8 +102,8 @@ def linux_llvm_toolchain_impl(ctx):
         cxx_builtin_include_directories = [
             "/usr/include",
             "/usr/lib/llvm-12/include/c++/v1/",
-            "/usr/lib/llvm-12/lib/clang/12.0.0/include",
-            "/usr/lib/llvm-12/lib/clang/12.0.0/share",
+            "/usr/lib/llvm-12/lib/clang/12.0.0_1/include",
+            "/usr/lib/llvm-12/lib/clang/12.0.0_1/share",
         ],
         toolchain_identifier = "linux-llvm-toolchain",
         host_system_name = "local",
@@ -157,9 +157,9 @@ def darwin_llvm_toolchain_impl(ctx):
         features = FEATURES,
         cxx_builtin_include_directories = [
             "/usr/local/opt/llvm/include/c++/v1",
-            "/usr/local/Cellar/llvm/12.0.0/include/",
-            "/usr/local/Cellar/llvm/12.0.0/lib/clang/12.0.0/include",
-            "/usr/local/Cellar/llvm/12.0.0/lib/clang/12.0.0/share",
+            "/usr/local/Cellar/llvm/12.0.0_1/include/",
+            "/usr/local/Cellar/llvm/12.0.0_1/lib/clang/12.0.0/include",
+            "/usr/local/Cellar/llvm/12.0.0_1/lib/clang/12.0.0/share",
             "/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/include",
             "/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/System/Library/Frameworks",
         ],
