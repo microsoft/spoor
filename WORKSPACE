@@ -34,17 +34,17 @@ pip_install(
 # TODO(#133): Use LLVM's Bazel build configuration when it is checked in.
 http_archive(
     name = "com_google_llvm_bazel",
-    sha256 = "65bc90fba5355fdd605d7f8d7281470e4110648b566276b6a93a9e28d100a26d",
-    strip_prefix = "llvm-bazel-lelandjansen-release-12.x/llvm-bazel",
-    url = "https://github.com/lelandjansen/llvm-bazel/archive/refs/heads/lelandjansen/release-12.x.tar.gz",
+    sha256 = "2eb64e813477e8009f4813aae5ae7f95090585a9a06f2437007e387551769dea",
+    strip_prefix = "llvm-bazel-lelandjansen-llvm-11.1.0/llvm-bazel",
+    url = "https://github.com/lelandjansen/llvm-bazel/archive/refs/heads/lelandjansen/llvm-11.1.0.tar.gz",
 )
 
 http_archive(
     name = "org_llvm_llvm_project",
     build_file_content = "#empty",
-    sha256 = "02429cc77358ec3a25a4652900b29efafa4513c690d8402c7124a13de2290d63",
-    strip_prefix = "llvm-project-d28af7c654d8db0b68c175db5ce212d74fb5e9bc",
-    url = "https://github.com/llvm/llvm-project/archive/d28af7c654d8db0b68c175db5ce212d74fb5e9bc.tar.gz",
+    sha256 = "d4dbca22c0056847a89d4335c172ecc14db8ef7c60f3a639b3cb91cb82961900",
+    strip_prefix = "llvm-project-1fdec59bffc11ae37eb51a1b9869f0696bfd5312",
+    url = "https://github.com/llvm/llvm-project/archive/1fdec59bffc11ae37eb51a1b9869f0696bfd5312.tar.gz",
 )
 
 load("@com_google_llvm_bazel//:terminfo.bzl", "llvm_terminfo_disable")
