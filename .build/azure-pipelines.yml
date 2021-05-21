@@ -8,7 +8,7 @@ trigger:
 
 jobs:
 - job: build_and_test
-  timeoutInMinutes: 75
+  timeoutInMinutes: 90
   strategy:
     matrix:
       mac:
@@ -24,7 +24,7 @@ jobs:
   - script: ./toolchain/benchmark/run_benchmarks.sh
     displayName: Benchmark
 - job: build_and_test_llvm
-  timeoutInMinutes: 75
+  timeoutInMinutes: 90
   strategy:
     matrix:
       mac:
@@ -40,7 +40,7 @@ jobs:
       bazel test //... --crosstool_top=//toolchain/crosstool:llvm_toolchain
     displayName: Test (LLVM toolchain)
 - job: address_sanitizer
-  timeoutInMinutes: 75
+  timeoutInMinutes: 90
   strategy:
     matrix:
       mac:
@@ -52,7 +52,7 @@ jobs:
   - script: bazel test --config=asan $(bazel query 'kind(cc_.*, tests(//...))')
     displayName: Address sanitizer
 - job: thread_sanitizer
-  timeoutInMinutes: 75
+  timeoutInMinutes: 90
   strategy:
     matrix:
       mac:
@@ -64,7 +64,7 @@ jobs:
   - script: bazel test --config=tsan $(bazel query 'kind(cc_.*, tests(//...))')
     displayName: Thread sanitizer
 - job: style_and_lint
-  timeoutInMinutes: 75
+  timeoutInMinutes: 90
   strategy:
     matrix:
       mac:
