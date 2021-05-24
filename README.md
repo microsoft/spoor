@@ -6,8 +6,8 @@
 * A C++ compiler that supports [C++20][c++20-compiler] such as Clang 12.
 * Python 3.
 * [Bazel][bazel].
-* [Clang Format][clang-format], [Clang Tidy][clang-tidy], and [YAPF][yapf] to
-  format and lint code.
+* [Clang Format][clang-format], [Clang Tidy][clang-tidy], [Pylint][pylint], and
+  [YAPF][yapf] to format and lint code.
 
 ## Build
 ```
@@ -21,7 +21,7 @@ $ bazel test //...
 
 ## Style and lint
 
-### Format C++, Objective-C, Python
+### Format C++, Objective-C, and Python
 ```
 $ bazel build //... --aspects toolchain/style/style.bzl%format --output_groups=report
 ```
@@ -31,7 +31,7 @@ $ bazel build //... --aspects toolchain/style/style.bzl%format --output_groups=r
 $ bazel run //toolchain/style:buildifier
 ```
 
-### Lint C++
+### Lint C++ and Python
 ```
 $ bazel build //... --aspects toolchain/style/style.bzl%lint --output_groups=report
 ```
@@ -90,4 +90,5 @@ comments.
 [protoc-installation]: https://grpc.io/docs/protoc-installation/
 [style-guide]: STYLE_GUIDE.md
 [yapf]: https://github.com/google/yapf
+[pylint]: https://www.pylint.org/
 [yarn]: https://classic.yarnpkg.com/

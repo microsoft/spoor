@@ -18,3 +18,9 @@ filegroup(
     data = [".style.yapf"],
     visibility = ["//visibility:public"],
 )
+
+filegroup(
+    name = "pylint_config",
+    data = ["@com_google_style_guide_pylintrc//file:pylintrc"],
+    visibility = ["//visibility:public"],
+)
