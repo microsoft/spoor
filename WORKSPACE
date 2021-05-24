@@ -3,7 +3,11 @@
 
 workspace(name = "spoor")
 
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load(
+    "@bazel_tools//tools/build_defs/repo:http.bzl",
+    "http_archive",
+    "http_file",
+)
 
 http_archive(
     name = "com_microsoft_gsl",
@@ -195,4 +199,11 @@ http_archive(
     sha256 = "adcf171ef05af1e7d75cf89373fad9b40f23068531087ddce614ad82b0385f5d",
     strip_prefix = "xctestrunner-fix-compatibility-with-python-3.9",
     url = "https://github.com/thii/xctestrunner/archive/refs/heads/fix-compatibility-with-python-3.9.tar.gz",
+)
+
+http_file(
+    name = "com_google_style_guide_pylintrc",
+    downloaded_file_path = "pylintrc",
+    sha256 = "c93e541953066272d590b43d1a86ceeb3c0ef06ed5a7d74b799185ff6162ea9e",
+    urls = ["https://raw.githubusercontent.com/google/styleguide/9c8784ded344f6a35d1e1550385002f613a0c788/pylintrc"],
 )

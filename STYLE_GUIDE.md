@@ -135,6 +135,14 @@ if (a != nil)
 if (a)
 ```
 
+## Python
+
+Follow [Google's Python Style Guide][google-python-style-guide].
+
+### Indentation
+
+Exception: Indent code with two spaces.
+
 ## Starlark (Bazel)
 
 Follow [Starlark's Style Guide][starlark-style-guide].
@@ -189,6 +197,7 @@ Follow
 [google-cpp-style-guide]: https://google.github.io/styleguide/cppguide.html
 [google-markdown-style-guide]: https://google.github.io/styleguide/docguide/style.html#document-layout
 [google-objc-style-guide]: https://google.github.io/styleguide/objcguide.html
+[google-python-style-guide]: https://google.github.io/styleguide/pyguide.html
 [google-shell-style-guide]: https://google.github.io/styleguide/shellguide.html
 [microsoft-writing-style-guide]: https://docs.microsoft.com/en-us/style-guide/welcome/
 [rust-result]: https://doc.rust-lang.org/std/result/

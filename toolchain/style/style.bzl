@@ -168,13 +168,47 @@ def _run_clang_tidy(
         executable = clang_tidy_executable,
         arguments = [args],
         mnemonic = "ClangTidy",
-        progress_message = "Tidying {}".format(input_file.short_path),
+        progress_message = "Linting {}".format(input_file.short_path),
         use_default_shell_env = True,
     )
 
     return output_file
 
-def _clang_format_impl(target, ctx):
+def _run_pylint(
+        ctx,
+        pylint_config,
+        pylint_executable,
+        input_file,
+        transitive_sources):
+    inputs = depset(
+        direct = pylint_config.to_list() + [input_file],
+        transitive = [transitive_sources],
+    )
+
+    output_file_name = "{}.formatted.{}".format(
+        input_file.basename[:(-1 * (len(input_file.extension) + 1))],
+        input_file.extension,
+    )
+    output_file = ctx.actions.declare_file(output_file_name)
+
+    args = ctx.actions.args()
+    args.add(output_file.path)
+    args.add(input_file.path)
+    args.add("--rcfile=external/com_google_style_guide_pylintrc/file/pylintrc")
+
+    ctx.actions.run(
+        outputs = [output_file],
+        inputs = inputs,
+        executable = pylint_executable,
+        arguments = [args],
+        mnemonic = "Pylint",
+        progress_message = "Linting {}".format(input_file.short_path),
+        use_default_shell_env = True,
+    )
+
+    return output_file
+
+def _format_impl(target, ctx):
     clang_format_config = ctx.attr._clang_format_config.data_runfiles.files
     yapf_config = ctx.attr._yapf_config.data_runfiles.files
     clang_format_executable = ctx.attr._clang_format_executable.files_to_run
@@ -211,10 +245,7 @@ def _clang_format_impl(target, ctx):
 
     return [OutputGroupInfo(report = depset(direct = output_files))]
 
-def _clang_tidy_impl(target, ctx):
-    if CcInfo not in target:
-        return []
-
+def _cc_lint_impl(target, ctx):
     clang_tidy_config = ctx.attr._clang_tidy_config.data_runfiles.files
     clang_tidy_executable = ctx.attr._clang_tidy_executable.files_to_run
 
@@ -237,11 +268,11 @@ def _clang_tidy_impl(target, ctx):
     rule_flags = getattr(ctx.rule.attr, "copts", [])
     flags = cc_flags + rule_flags
 
-    compilation_context = target[CcInfo].compilation_context
-
     input_files = []
     for src in getattr(ctx.rule.attr, "srcs", []):
         input_files += [src for src in src.files.to_list() if src.is_source]
+
+    compilation_context = target[CcInfo].compilation_context
 
     output_files = []
     for input_file in input_files:
@@ -258,8 +289,40 @@ def _clang_tidy_impl(target, ctx):
 
     return [OutputGroupInfo(report = depset(direct = output_files))]
 
+def _py_lint_impl(target, ctx):
+    pylint_config = ctx.attr._pylint_config.data_runfiles.files
+    pylint_executable = ctx.attr._pylint_executable.files_to_run
+
+    input_files = []
+    for src in getattr(ctx.rule.attr, "srcs", []):
+        input_files += [src for src in src.files.to_list() if src.is_source]
+
+    transitive_sources = target[PyInfo].transitive_sources
+
+    output_files = []
+    for input_file in input_files:
+        output_file = _run_pylint(
+            ctx,
+            pylint_config,
+            pylint_executable,
+            input_file,
+            transitive_sources,
+        )
+        output_files.append(output_file)
+
+    return [OutputGroupInfo(report = depset(direct = output_files))]
+
+def _lint_impl(target, ctx):
+    if PyInfo in target:
+        return _py_lint_impl(target, ctx)
+
+    if CcInfo in target:
+        return _cc_lint_impl(target, ctx)
+
+    return []
+
 format = aspect(
-    implementation = _clang_format_impl,
+    implementation = _format_impl,
     attrs = {
         "_clang_format_executable": attr.label(
             default = Label("//toolchain/style:clang_format"),
@@ -274,11 +337,11 @@ format = aspect(
             default = Label("//:yapf_config"),
         ),
     },
-    doc = "Run Clang Format and apply changes.",
+    doc = "Format code and apply changes.",
 )
 
 lint = aspect(
-    implementation = _clang_tidy_impl,
+    implementation = _lint_impl,
     fragments = ["cpp"],
     attrs = {
         "_cc_toolchain": attr.label(
@@ -290,6 +353,12 @@ lint = aspect(
         "_clang_tidy_config": attr.label(
             default = Label("//:clang_tidy_config"),
         ),
+        "_pylint_executable": attr.label(
+            default = Label("//toolchain/style:pylint"),
+        ),
+        "_pylint_config": attr.label(
+            default = Label("//:pylint_config"),
+        ),
     },
-    doc = "Run Clang Tidy and report violations.",
+    doc = "Run lint code and report violations.",
 )

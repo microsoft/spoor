@@ -1,6 +1,8 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+# Match .pylintrc
 [style]
 based_on_style = google
 column_limit = 80
+indent_width = 2

@@ -25,3 +25,10 @@ sh_binary(
     data = ["//:yapf_config"],
     visibility = ["//visibility:public"],
 )
+
+sh_binary(
+    name = "pylint",
+    srcs = ["pylint.sh"],
+    data = ["//:pylint_config"],
+    visibility = ["//visibility:public"],
+)
