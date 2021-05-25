@@ -4,8 +4,8 @@
 load("@rules_cc//cc:defs.bzl", "objc_library")
 load(
     "@build_bazel_rules_apple//apple:ios.bzl",
+    "ios_static_framework",
     "ios_unit_test",
-    "ios_static_framework"
 )
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_unit_test")
 load(
@@ -50,13 +50,14 @@ _WRAPPER_TEST_SRCS = [
 ]
 
 _MODULE_NAME = "SpoorRuntime"
+
 _STUB_MODULE_NAME = "SpoorRuntimeStub"
 
 ios_static_framework(
     name = "ios_runtime_framework",
     hdrs = _LIB_HDRS,
-    minimum_os_version = _MINIMUM_IOS_VERSION,
     bundle_name = _MODULE_NAME,
+    minimum_os_version = _MINIMUM_IOS_VERSION,
     visibility = ["//visibility:public"],
     deps = [":runtime_lib"],
 )
@@ -64,8 +65,8 @@ ios_static_framework(
 ios_static_framework(
     name = "ios_runtime_stub_framework",
     hdrs = _LIB_HDRS,
-    minimum_os_version = _MINIMUM_IOS_VERSION,
     bundle_name = _STUB_MODULE_NAME,
+    minimum_os_version = _MINIMUM_IOS_VERSION,
     visibility = ["//visibility:public"],
     deps = [":runtime_stub_lib"],
 )

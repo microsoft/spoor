@@ -5,9 +5,9 @@
 
 #include "spoor/runtime/runtime.h"
 
+#import "Runtime.h"
 #import "SpoorConfig_private.h"
 #import "SpoorDeletedFilesInfo_private.h"
-#import "Runtime.h"
 
 @interface SpoorRuntimeTests : XCTestCase
 
