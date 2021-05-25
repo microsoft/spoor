@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 load("@rules_cc//cc:defs.bzl", "objc_library")
-load("@build_bazel_rules_apple//apple:ios.bzl", "ios_unit_test")
+load("@build_bazel_rules_apple//apple:ios.bzl", "ios_static_framework", "ios_unit_test")
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_unit_test")
 load("//toolchain:config.bzl", "SPOOR_DEFAULT_COPTS", "SPOOR_DEFAULT_TEST_COPTS")
 
@@ -22,7 +22,7 @@ _TEST_COPTS = SPOOR_DEFAULT_TEST_COPTS + [
 _LIB_HDRS = [
     "SpoorConfig.h",
     "SpoorDeletedFilesInfo.h",
-    "SpoorRuntime.h",
+    "SpoorRuntimeLogger.h",
     "SpoorTypes.h",
 ]
 
@@ -31,7 +31,7 @@ _LIB_SRCS = [
     "SpoorConfig_private.h",
     "SpoorDeletedFilesInfo.mm",
     "SpoorDeletedFilesInfo_private.h",
-    "SpoorRuntime.mm",
+    "SpoorRuntimeLogger.mm",
 ]
 
 _WRAPPER_TEST_SRCS = [
@@ -40,12 +40,35 @@ _WRAPPER_TEST_SRCS = [
     "SpoorTypesTests.mm",
 ]
 
+_MODULE_NAME = "SpoorRuntime"
+
+ios_static_framework(
+    name = "runtime_framework",
+    hdrs = _LIB_HDRS,
+    minimum_os_version = _MINIMUM_IOS_VERSION,
+    bundle_name = _MODULE_NAME,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":runtime_lib",
+    ],
+)
+
+ios_static_framework(
+    name = "runtime_stub_framework",
+    hdrs = _LIB_HDRS,
+    minimum_os_version = _MINIMUM_IOS_VERSION,
+    bundle_name = _MODULE_NAME,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":runtime_stub_lib",
+    ],
+)
+
 objc_library(
-    name = "runtime",
+    name = "runtime_lib",
     srcs = _LIB_SRCS,
     hdrs = _LIB_HDRS,
     copts = _LIB_COPTS,
-    module_name = "SpoorRuntime",
     visibility = ["//visibility:public"],
     deps = [
         "//spoor/runtime",
@@ -53,11 +76,10 @@ objc_library(
 )
 
 objc_library(
-    name = "runtime_stub",
+    name = "runtime_stub_lib",
     srcs = _LIB_SRCS,
     hdrs = _LIB_HDRS,
     copts = _LIB_COPTS,
-    module_name = "SpoorRuntimeStub",
     visibility = ["//visibility:public"],
     deps = [
         "//spoor/runtime:runtime_stub",
@@ -113,7 +135,7 @@ objc_library(
     copts = _TEST_COPTS,
     visibility = ["//visibility:private"],
     deps = [
-        ":runtime",
+        ":runtime_lib",
     ],
 )
 
@@ -124,7 +146,7 @@ objc_library(
     copts = _TEST_COPTS,
     visibility = ["//visibility:private"],
     deps = [
-        ":runtime_stub",
+        ":runtime_stub_lib",
     ],
 )
 
@@ -132,12 +154,12 @@ objc_library(
     name = "runtime_test_lib",
     testonly = True,
     srcs = [
-        "SpoorRuntimeTests.mm",
+        "SpoorRuntimeLoggerTests.mm",
     ],
     copts = _TEST_COPTS,
     visibility = ["//visibility:private"],
     deps = [
-        ":runtime",
+        ":runtime_lib",
     ],
 )
 
@@ -145,11 +167,11 @@ objc_library(
     name = "runtime_stub_test_lib",
     testonly = True,
     srcs = [
-        "SpoorRuntimeStubTests.mm",
+        "SpoorRuntimeLoggerStubTests.mm",
     ],
     copts = _TEST_COPTS,
     visibility = ["//visibility:private"],
     deps = [
-        ":runtime_stub",
+        ":runtime_stub_lib",
     ],
 )
