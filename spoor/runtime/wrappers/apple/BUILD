@@ -2,7 +2,11 @@
 # Licensed under the MIT License.
 
 load("@rules_cc//cc:defs.bzl", "objc_library")
-load("@build_bazel_rules_apple//apple:ios.bzl", "ios_static_framework", "ios_unit_test")
+load(
+    "@build_bazel_rules_apple//apple:ios.bzl",
+    "ios_unit_test",
+    "ios_static_framework"
+)
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_unit_test")
 load(
     "//toolchain:config.bzl",
