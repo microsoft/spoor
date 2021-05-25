@@ -4,7 +4,12 @@
 load("@rules_cc//cc:defs.bzl", "objc_library")
 load("@build_bazel_rules_apple//apple:ios.bzl", "ios_static_framework", "ios_unit_test")
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_unit_test")
-load("//toolchain:config.bzl", "SPOOR_DEFAULT_LINKOPTS", "SPOOR_DEFAULT_COPTS", "SPOOR_DEFAULT_TEST_COPTS")
+load(
+    "//toolchain:config.bzl",
+    "SPOOR_DEFAULT_COPTS",
+    "SPOOR_DEFAULT_LINKOPTS",
+    "SPOOR_DEFAULT_TEST_COPTS",
+)
 
 _MINIMUM_IOS_VERSION = "13.0"
 
@@ -62,7 +67,7 @@ ios_static_framework(
 )
 
 apple_static_library(
-    name = "ios_spoor_runtime_lib",
+    name = "spoor_runtime_ios",
     linkopts = SPOOR_DEFAULT_LINKOPTS,
     minimum_os_version = _MINIMUM_IOS_VERSION,
     platform_type = "ios",
@@ -71,7 +76,7 @@ apple_static_library(
 )
 
 apple_static_library(
-    name = "macos_spoor_runtime_lib",
+    name = "spoor_runtime_macos",
     linkopts = SPOOR_DEFAULT_LINKOPTS,
     minimum_os_version = _MINIMUM_MACOS_VERSION,
     platform_type = "macos",
@@ -80,7 +85,7 @@ apple_static_library(
 )
 
 apple_static_library(
-    name = "ios_spoor_runtime_stub_lib",
+    name = "spoor_runtime_stub_ios",
     linkopts = SPOOR_DEFAULT_LINKOPTS,
     minimum_os_version = _MINIMUM_IOS_VERSION,
     platform_type = "ios",
@@ -89,7 +94,7 @@ apple_static_library(
 )
 
 apple_static_library(
-    name = "macos_spoor_runtime_stub_lib",
+    name = "spoor_runtime_stub_macos",
     linkopts = SPOOR_DEFAULT_LINKOPTS,
     minimum_os_version = _MINIMUM_MACOS_VERSION,
     platform_type = "macos",
