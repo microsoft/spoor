@@ -7,7 +7,7 @@
 
 #import "SpoorConfig_private.h"
 #import "SpoorDeletedFilesInfo_private.h"
-#import "SpoorRuntimeLogger.h"
+#import "Runtime.h"
 
 @interface SpoorRuntimeStubTests : XCTestCase
 
