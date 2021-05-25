@@ -18,8 +18,8 @@ function create_xcframework {
     echo "$name: Building framework for x86_64..."
     x86_64_bazel_output=$((bazel build //spoor/runtime/wrappers/objc:$name --ios_multi_cpus=x86_64) 2>&1)
     if [ $? -ne 0 ]; then
-    echo "Failed to build for x86_64" >&2
-    exit $?
+        echo "$name: Failed to build for x86_64" >&2
+        exit $?
     fi
     [[ $x86_64_bazel_output =~ $regex ]]
     x86_64_zip_framework=${BASH_REMATCH[0]}
@@ -27,8 +27,8 @@ function create_xcframework {
     echo "$name: Building framework for arm64..."
     arm64_bazel_output=$((bazel build //spoor/runtime/wrappers/objc:$name --ios_multi_cpus=arm64) 2>&1)
     if [ $? -ne 0 ]; then
-    echo "Failed to build for arm64" >&2
-    exit $?
+        echo "$name: Failed to build for arm64" >&2
+        exit $?
     fi
     [[ $arm64_bazel_output =~ $regex ]]
     arm64_zip_framework=${BASH_REMATCH[0]}
