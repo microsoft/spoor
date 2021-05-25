@@ -19,6 +19,7 @@
 #include "absl/strings/string_view.h"
 #include "gsl/gsl"
 #include "llvm/Bitcode/BitcodeWriter.h"
+#include "llvm/Config/llvm-config.h"
 #include "llvm/IR/IRPrintingPasses.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/PassManager.h"
@@ -40,6 +41,7 @@ using spoor::instrumentation::config::OutputLanguage;
 using spoor::instrumentation::support::ReadLinesToSet;
 
 constexpr std::string_view kStdinFileName{"-"};
+constexpr std::string_view kVersion{"%s %s\nBased on LLVM %d.%d.%d\n"};
 constexpr std::string_view kUsage{
     "Transform LLVM Bitcode/IR by injecting Spoor instrumentation.\n\n"
     "USAGE: %1$s [options] [input_file]\n\n"
@@ -71,8 +73,11 @@ auto main(int argc, char** argv) -> int {
       .contains_helpshort_flags = show_help,
       .contains_help_flags = show_help,
       .version_string =
-          [] {
-            return absl::StrFormat("v%s\n", spoor::instrumentation::kVersion);
+          [&] {
+            return absl::StrFormat(kVersion, short_program_invocation_name,
+                                   spoor::instrumentation::kVersion,
+                                   LLVM_VERSION_MAJOR, LLVM_VERSION_MINOR,
+                                   LLVM_VERSION_PATCH);
           },
   });
   absl::SetProgramUsageMessage(
