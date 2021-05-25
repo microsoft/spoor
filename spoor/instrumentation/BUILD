@@ -33,6 +33,7 @@ cc_binary(
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Passes",
         "@llvm-project//llvm:Support",
+        "@llvm-project//llvm:config",
     ],
 )
 
