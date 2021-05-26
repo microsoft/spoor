@@ -98,8 +98,8 @@ class RuntimeManager final : public event_logger::EventLoggerNotifier {
   mutable std::shared_mutex lock_{};
   std::unique_ptr<Pool> pool_;
   std::unordered_set<event_logger::EventLogger*> event_loggers_;
-  bool initialized_;
-  bool enabled_;
+  std::atomic_bool initialized_;
+  std::atomic_bool enabled_;
 };
 
 template <class ConstIterator>

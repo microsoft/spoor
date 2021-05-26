@@ -29,7 +29,6 @@ RuntimeManager::~RuntimeManager() { Deinitialize(); }
 auto RuntimeManager::Initialize() -> void {
   std::unique_lock lock{lock_};
   if (initialized_) return;
-  initialized_ = true;
   const Pool::Options pool_options{
       .reserved_pool_options = {.max_slice_capacity =
                                     options_.reserved_pool_max_slice_capacity,
@@ -43,6 +42,8 @@ auto RuntimeManager::Initialize() -> void {
   for (auto* event_logger : event_loggers_) {
     event_logger->SetPool(pool_.get());
   }
+
+  initialized_ = true;
 }
 
 auto RuntimeManager::Deinitialize() -> void {
@@ -66,13 +67,11 @@ auto RuntimeManager::Deinitialize() -> void {
 }
 
 auto RuntimeManager::Enable() -> void {
-  std::unique_lock lock{lock_};
   if (!initialized_) return;
   enabled_ = true;
 }
 
 auto RuntimeManager::Disable() -> void {
-  std::unique_lock lock{lock_};
   enabled_ = false;
 }
 
@@ -154,12 +153,10 @@ auto RuntimeManager::Clear() -> void {
 }
 
 auto RuntimeManager::Initialized() const -> bool {
-  std::shared_lock lock{lock_};
   return initialized_;
 }
 
 auto RuntimeManager::Enabled() const -> bool {
-  std::shared_lock lock{lock_};
   return enabled_;
 }
 
