@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-#import "SpoorRuntime.h"
+#import "Runtime.h"
 
 #import <Foundation/Foundation.h>
 

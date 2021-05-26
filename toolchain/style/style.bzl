@@ -92,20 +92,20 @@ def _run_clang_tidy(
     output_file = ctx.actions.declare_file(output_file_name)
 
     source_exclusions = [
-        "spoor/runtime/wrappers/objc/SpoorConfig.h",
-        "spoor/runtime/wrappers/objc/SpoorConfig.mm",
-        "spoor/runtime/wrappers/objc/SpoorConfigTests.mm",
-        "spoor/runtime/wrappers/objc/SpoorConfig_private.h",
-        "spoor/runtime/wrappers/objc/SpoorDeletedFilesInfo.h",
-        "spoor/runtime/wrappers/objc/SpoorDeletedFilesInfo.mm",
-        "spoor/runtime/wrappers/objc/SpoorDeletedFilesInfoTests.mm",
-        "spoor/runtime/wrappers/objc/SpoorDeletedFilesInfo_private.h",
-        "spoor/runtime/wrappers/objc/SpoorRuntime.h",
-        "spoor/runtime/wrappers/objc/SpoorRuntime.mm",
-        "spoor/runtime/wrappers/objc/SpoorRuntimeStubTests.mm",
-        "spoor/runtime/wrappers/objc/SpoorRuntimeTests.mm",
-        "spoor/runtime/wrappers/objc/SpoorTypes.h",
-        "spoor/runtime/wrappers/objc/SpoorTypesTests.mm",
+        "spoor/runtime/wrappers/apple/SpoorConfig.h",
+        "spoor/runtime/wrappers/apple/SpoorConfig.mm",
+        "spoor/runtime/wrappers/apple/SpoorConfigTests.mm",
+        "spoor/runtime/wrappers/apple/SpoorConfig_private.h",
+        "spoor/runtime/wrappers/apple/SpoorDeletedFilesInfo.h",
+        "spoor/runtime/wrappers/apple/SpoorDeletedFilesInfo.mm",
+        "spoor/runtime/wrappers/apple/SpoorDeletedFilesInfoTests.mm",
+        "spoor/runtime/wrappers/apple/SpoorDeletedFilesInfo_private.h",
+        "spoor/runtime/wrappers/apple/SpoorTypes.h",
+        "spoor/runtime/wrappers/apple/SpoorTypesTests.mm",
+        "spoor/runtime/wrappers/apple/Runtime.h",
+        "spoor/runtime/wrappers/apple/Runtime.mm",
+        "spoor/runtime/wrappers/apple/RuntimeStubTests.mm",
+        "spoor/runtime/wrappers/apple/RuntimeTests.mm",
     ]
     if input_file.path in source_exclusions:
         ctx.actions.run_shell(
