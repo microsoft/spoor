@@ -13,7 +13,7 @@ class TraceWriterMock final : public TraceWriter {
  public:
   MOCK_METHOD(  // NOLINT
       Result, Write,
-      (const std::filesystem::path& file, Header header,
+      (const std::filesystem::path& file_path, Header header,
        gsl::not_null<Events*> events),
       (override));
 };

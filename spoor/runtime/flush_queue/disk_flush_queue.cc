@@ -150,9 +150,9 @@ auto DiskFlushQueue::TraceFilePath(const FlushInfo& flush_info) const
   const auto timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(
                              flush_info.flush_timestamp.time_since_epoch())
                              .count();
-  const auto file_name =
-      absl::StrFormat("%016x-%016x-%016x.%s", options_.session_id,
-                      flush_info.thread_id, timestamp, kTraceFileExtension);
+  const auto file_name = absl::StrFormat(
+      "%016x-%016x-%016x.%s", options_.session_id, flush_info.thread_id,
+      timestamp, trace::kTraceFileExtension);
   return options_.trace_file_path / file_name;
 }
 

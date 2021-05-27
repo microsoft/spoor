@@ -4,7 +4,9 @@
 #pragma once
 
 #include <array>
+#include <string_view>
 #include <type_traits>
+#include <vector>
 
 #include "absl/base/internal/endian.h"
 #include "gsl/gsl"
@@ -28,6 +30,8 @@ using TraceFileVersion = uint32;
 // IMPORTANT: Increment the version number if the Header or Event structure
 // changes.
 constexpr TraceFileVersion kTraceFileVersion{0};
+
+constexpr std::string_view kTraceFileExtension{"spoor_trace"};
 
 // Inspired by PNG's magic number.
 constexpr MagicNumber kMagicNumber{
@@ -92,6 +96,13 @@ static_assert(sizeof(Event) == 24);
 
 constexpr auto operator==(const Event& lhs, const Event& rhs) -> bool;
 
+struct alignas(128) TraceFile {
+  Header header;
+  std::vector<Event> events;
+};
+
+constexpr auto operator==(const TraceFile& lhs, const TraceFile& rhs) -> bool;
+
 constexpr auto operator==(const Header& lhs, const Header& rhs) -> bool {
   return lhs.magic_number == rhs.magic_number &&
          lhs.endianness == rhs.endianness &&
@@ -107,6 +118,10 @@ constexpr auto operator==(const Event& lhs, const Event& rhs) -> bool {
   return lhs.steady_clock_timestamp == rhs.steady_clock_timestamp &&
          lhs.payload_1 == rhs.payload_1 && lhs.type == rhs.type &&
          lhs.payload_2 == rhs.payload_2;
+}
+
+constexpr auto operator==(const TraceFile& lhs, const TraceFile& rhs) -> bool {
+  return lhs.header == rhs.header && lhs.events == rhs.events;
 }
 
 }  // namespace spoor::runtime::trace

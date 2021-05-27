@@ -15,11 +15,9 @@ class TraceReader {
  public:
   enum class Error {
     kFailedToOpenFile,
-    kMagicNumberDoesNotMatch,
     kUnknownVersion,
+    kCorruptData,
   };
-
-  using Result = util::result::Result<Header, Error>;
 
   constexpr TraceReader() = default;
   constexpr TraceReader(const TraceReader&) = default;
@@ -29,9 +27,11 @@ class TraceReader {
   virtual ~TraceReader() = default;
 
   [[nodiscard]] virtual auto MatchesTraceFileConvention(
-      const std::filesystem::path& file) const -> bool = 0;
-  [[nodiscard]] virtual auto ReadHeader(const std::filesystem::path& file) const
-      -> Result = 0;
+      const std::filesystem::path& file_path) const -> bool = 0;
+  [[nodiscard]] virtual auto ReadHeader(const std::filesystem::path& file_path)
+      const -> util::result::Result<Header, Error> = 0;
+  [[nodiscard]] virtual auto Read(const std::filesystem::path& file_path) const
+      -> util::result::Result<TraceFile, Error> = 0;
 };
 
 }  // namespace spoor::runtime::trace

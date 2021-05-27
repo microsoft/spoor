@@ -13,6 +13,13 @@ namespace util::file_system {
 
 class LocalFileWriter final : public FileWriter {
  public:
+  LocalFileWriter() = default;
+  LocalFileWriter(const LocalFileWriter&) = delete;
+  LocalFileWriter(LocalFileWriter&&) noexcept = default;
+  auto operator=(const LocalFileWriter&) -> LocalFileWriter& = delete;
+  auto operator=(LocalFileWriter&&) noexcept -> LocalFileWriter& = default;
+  ~LocalFileWriter() override = default;
+
   auto Open(const std::filesystem::path& path, std::ios_base::openmode mode)
       -> void override;
   [[nodiscard]] auto IsOpen() const -> bool override;
