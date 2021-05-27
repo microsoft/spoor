@@ -180,9 +180,9 @@ gazelle_dependencies()
 
 http_archive(
     name = "build_bazel_rules_apple",
-    sha256 = "9e81657e9d8b9a96c726e0ce26581f2f141197b504fffdbc0a2d755b688ec386",
-    strip_prefix = "rules_apple-0.31.1",
-    url = "https://github.com/bazelbuild/rules_apple/archive/0.31.1.tar.gz",
+    sha256 = "d82e8687f473139ccdd6adbf94ab167af39d550dcefabcc79a7085cbf804dbba",
+    strip_prefix = "rules_apple-4a0caf9abd43380b86022e9d4e92194fba0b04fe",
+    url = "https://github.com/bazelbuild/rules_apple/archive/4a0caf9abd43380b86022e9d4e92194fba0b04fe.tar.gz",
 )
 
 load(
@@ -191,15 +191,6 @@ load(
 )
 
 apple_rules_dependencies()
-
-# TODO(#128): Remove this custom `xctestrunner` in favor of the default runner
-# when the Python 3.9 support is checked in.
-http_archive(
-    name = "xctestrunner",
-    sha256 = "adcf171ef05af1e7d75cf89373fad9b40f23068531087ddce614ad82b0385f5d",
-    strip_prefix = "xctestrunner-fix-compatibility-with-python-3.9",
-    url = "https://github.com/thii/xctestrunner/archive/refs/heads/fix-compatibility-with-python-3.9.tar.gz",
-)
 
 http_file(
     name = "com_google_style_guide_pylintrc",
