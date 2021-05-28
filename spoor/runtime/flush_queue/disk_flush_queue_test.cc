@@ -26,13 +26,13 @@
 namespace {
 
 using spoor::runtime::flush_queue::DiskFlushQueue;
-using spoor::runtime::flush_queue::kTraceFileExtension;
 using spoor::runtime::trace::CompressionStrategy;
 using spoor::runtime::trace::Event;
 using spoor::runtime::trace::EventType;
 using spoor::runtime::trace::Header;
 using spoor::runtime::trace::kEndianness;
 using spoor::runtime::trace::kMagicNumber;
+using spoor::runtime::trace::kTraceFileExtension;
 using spoor::runtime::trace::kTraceFileVersion;
 using spoor::runtime::trace::TimestampNanoseconds;
 using spoor::runtime::trace::TraceWriter;

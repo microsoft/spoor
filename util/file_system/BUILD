@@ -13,12 +13,15 @@ load(
 cc_library(
     name = "file_system",
     srcs = [
+        "local_file_reader.cc",
         "local_file_system.cc",
         "local_file_writer.cc",
     ],
     hdrs = [
+        "file_reader.h",
         "file_system.h",
         "file_writer.h",
+        "local_file_reader.h",
         "local_file_system.h",
         "local_file_writer.h",
     ],
@@ -36,6 +39,7 @@ cc_library(
     srcs = ["directory_entry_mock.cc"],
     hdrs = [
         "directory_entry_mock.h",
+        "file_reader_mock.h",
         "file_system_mock.h",
         "file_writer_mock.h",
     ],

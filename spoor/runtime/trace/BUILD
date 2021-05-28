@@ -52,6 +52,26 @@ cc_test(
 )
 
 cc_test(
+    name = "trace_file_reader_test",
+    size = "small",
+    srcs = ["trace_file_reader_test.cc"],
+    copts = SPOOR_DEFAULT_TEST_COPTS,
+    linkopts = SPOOR_DEFAULT_TEST_LINKOPTS,
+    visibility = ["//visibility:private"],
+    deps = [
+        ":trace",
+        "//util:result",
+        "//util/compression",
+        "//util/file_system:file_system_mock",
+        "//util/flat_map",
+        "@com_google_absl//absl/base:endian",
+        "@com_google_absl//absl/strings",
+        "@com_google_googletest//:gtest_main",
+        "@com_microsoft_gsl//:gsl",
+    ],
+)
+
+cc_test(
     name = "trace_file_writer_test",
     size = "small",
     srcs = ["trace_file_writer_test.cc"],

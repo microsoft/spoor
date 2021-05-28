@@ -23,7 +23,7 @@ class TraceFileWriter final : public TraceWriter {
   };
 
   explicit TraceFileWriter(Options options);
-  auto Write(const std::filesystem::path& file, Header header,
+  auto Write(const std::filesystem::path& file_path, Header header,
              gsl::not_null<Events*> events) -> Result override;
 
  private:

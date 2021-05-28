@@ -28,7 +28,7 @@ class TraceWriter {
   constexpr auto operator=(TraceWriter&&) -> TraceWriter& = default;
   virtual ~TraceWriter() = default;
 
-  virtual auto Write(const std::filesystem::path& file, Header header,
+  virtual auto Write(const std::filesystem::path& file_path, Header header,
                      gsl::not_null<Events*> events) -> Result = 0;
 };
 
