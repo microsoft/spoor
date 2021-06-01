@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 
 SPOOR_DEFAULT_COPTS = [
+    "-std=c++20",
     "-fno-exceptions",
     "-fno-rtti",
     "-Wall",
