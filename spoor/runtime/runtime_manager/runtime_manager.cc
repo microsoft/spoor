@@ -4,6 +4,7 @@
 #include "spoor/runtime/runtime_manager/runtime_manager.h"
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <functional>
 #include <iterator>
@@ -28,7 +29,8 @@ RuntimeManager::~RuntimeManager() { Deinitialize(); }
 
 auto RuntimeManager::Initialize() -> void {
   std::unique_lock lock{lock_};
-  if (initialized_) return;
+
+  if (initialized_.exchange(true)) return;
   const Pool::Options pool_options{
       .reserved_pool_options = {.max_slice_capacity =
                                     options_.reserved_pool_max_slice_capacity,
@@ -42,16 +44,15 @@ auto RuntimeManager::Initialize() -> void {
   for (auto* event_logger : event_loggers_) {
     event_logger->SetPool(pool_.get());
   }
-
-  initialized_ = true;
 }
 
 auto RuntimeManager::Deinitialize() -> void {
   Disable();
   {
     std::unique_lock lock{lock_};
-    if (!initialized_) return;
-    initialized_ = false;
+
+    if (!initialized_.exchange(false)) return;
+
     for (auto* event_logger : event_loggers_) {
       event_logger->SetEventLoggerNotifier(nullptr);
       event_logger->SetPool(nullptr);
@@ -72,6 +73,7 @@ auto RuntimeManager::Enable() -> void {
 }
 
 auto RuntimeManager::Disable() -> void {
+  if (!initialized_) return;
   enabled_ = false;
 }
 
@@ -152,13 +154,9 @@ auto RuntimeManager::Clear() -> void {
   options_.flush_queue->Clear();
 }
 
-auto RuntimeManager::Initialized() const -> bool {
-  return initialized_;
-}
+auto RuntimeManager::Initialized() const -> bool { return initialized_; }
 
-auto RuntimeManager::Enabled() const -> bool {
-  return enabled_;
-}
+auto RuntimeManager::Enabled() const -> bool { return enabled_; }
 
 auto operator==(const RuntimeManager::DeletedFilesInfo& lhs,
                 const RuntimeManager::DeletedFilesInfo& rhs) -> bool {
