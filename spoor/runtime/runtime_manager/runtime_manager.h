@@ -94,10 +94,14 @@ class RuntimeManager final : public event_logger::EventLoggerNotifier {
 
  private:
   Options options_;
-  // Protects `pool_`, `event_loggers_`, `initialized_`, and `enabled_`.
+  // Protects `pool_`, `event_loggers_`, `Initialize()` and `Deinitialize()`.
   mutable std::shared_mutex lock_{};
   std::unique_ptr<Pool> pool_;
   std::unordered_set<event_logger::EventLogger*> event_loggers_;
+
+  // These two flags will not be protected by _lock,
+  // This will reduce the performance impact introduced by
+  // the _lock.
   std::atomic_bool initialized_;
   std::atomic_bool enabled_;
 };
