@@ -25,16 +25,14 @@ class Result {
   // Note: Not explicit. `Result` is often used as a return value making it
   // convenient and sensible to `return T{}` or `return E{}` when the return
   // type is `Result<T, E>`.
-  template <class T2 = T, class = std::enable_if_t<!std::is_same_v<T2, E>>>
-  constexpr Result(const T& value);  // NOLINT(google-explicit-constructor)
-  template <class T2 = T, class = std::enable_if_t<!std::is_same_v<T2, E>>>
-  constexpr Result(T&& value);  // NOLINT(google-explicit-constructor)
-  template <class T2 = T, class E2 = E,
-            class = std::enable_if_t<!std::is_same_v<T2, E2>>>
-  constexpr Result(const E& error);  // NOLINT(google-explicit-constructor)
-  template <class T2 = T, class E2 = E,
-            class = std::enable_if_t<!std::is_same_v<T2, E2>>>
-  constexpr Result(E&& error);  // NOLINT(google-explicit-constructor)
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr Result(const T& value) requires(!std::is_same_v<T, E>);
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr Result(T&& value) requires(!std::is_same_v<T, E>);
+  template <class T2 = T>  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr Result(const E& error) requires(!std::is_same_v<T2, E>);
+  template <class T2 = T>  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr Result(E&& error) requires(!std::is_same_v<T2, E>);
 
   // Construct `Result` when T == E or to aid readability.
   [[nodiscard]] constexpr static auto Ok(const T& value) -> Result<T, E>;
@@ -80,23 +78,21 @@ static_assert(std::is_constructible_v<Result<char, double>, double>);
 static_assert(!std::is_constructible_v<Result<char, char>, char>);
 
 template <class T, class E>
-template <class T2, class>
-constexpr Result<T, E>::Result(const T& value)
+constexpr Result<T, E>::Result(const T& value) requires(!std::is_same_v<T, E>)
     : value_{value}, err_{std::nullopt} {}
 
 template <class T, class E>
-template <class T2, class>
-constexpr Result<T, E>::Result(T&& value)
+constexpr Result<T, E>::Result(T&& value) requires(!std::is_same_v<T, E>)
     : value_{std::move(value)}, err_{std::nullopt} {}
 
 template <class T, class E>
-template <class T2, class E2, class>
-constexpr Result<T, E>::Result(const E& error)
+template <class T2>
+constexpr Result<T, E>::Result(const E& error) requires(!std::is_same_v<T2, E>)
     : value_{std::nullopt}, err_{error} {}
 
 template <class T, class E>
-template <class T2, class E2, class>
-constexpr Result<T, E>::Result(E&& error)
+template <class T2>
+constexpr Result<T, E>::Result(E&& error) requires(!std::is_same_v<T2, E>)
     : value_{std::nullopt}, err_{std::move(error)} {}
 
 template <class T, class E>

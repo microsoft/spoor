@@ -27,10 +27,9 @@ auto GetEnvOrDefault(const char* key, std::optional<std::string> default_value,
 auto GetEnvOrDefault(const char* key, bool default_value, const GetEnv& get_env)
     -> bool;
 
-template <class T, class = std::enable_if_t<std::is_integral_v<T> &&
-                                            !std::is_same_v<T, bool>>>
+template <class T>
 auto GetEnvOrDefault(const char* key, T default_value, const GetEnv& get_env)
-    -> T;
+    -> T requires(std::is_integral_v<T> && !std::is_same_v<T, bool>);
 
 template <class T, std::size_t Size>
 auto GetEnvOrDefault(
@@ -38,9 +37,9 @@ auto GetEnvOrDefault(
     const util::flat_map::FlatMap<std::string_view, T, Size>& value_map,
     bool normalize, const GetEnv& get_env) -> T;
 
-template <class T, class>
-auto GetEnvOrDefault(const char* key, const T default_value,
-                     const GetEnv& get_env) -> T {
+template <class T>
+auto GetEnvOrDefault(const char* key, T default_value, const GetEnv& get_env)
+    -> T requires(std::is_integral_v<T> && !std::is_same_v<T, bool>) {
   const auto* user_value = get_env(key);
   if (user_value == nullptr) return default_value;
   T value{};
