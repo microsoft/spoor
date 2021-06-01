@@ -6,9 +6,15 @@ steps:
     wget https://apt.llvm.org/llvm.sh
     chmod +x llvm.sh
     sudo ./llvm.sh 12
+    sudo ./llvm.sh 11
   displayName: Install LLVM (Linux)
   condition: eq(variables['Agent.OS'], 'Linux')
-- script: echo '##vso[task.prependpath]/usr/local/opt/llvm/bin'
+- script: |
+    brew install llvm@11
+    brew install llvm@12
+    echo '##vso[task.prependpath]/usr/local/opt/llvm@12/bin'
+    # The default compiler is added last.
+    echo '##vso[task.prependpath]/usr/local/opt/llvm@11/bin'
   displayName: Install LLVM (macOS)
   condition: eq(variables['Agent.OS'], 'Darwin')
 - script: sudo xcode-select --switch /Applications/Xcode_12.5.app/Contents/Developer
