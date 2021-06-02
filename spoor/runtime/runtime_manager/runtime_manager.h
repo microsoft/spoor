@@ -101,7 +101,7 @@ class RuntimeManager final : public event_logger::EventLoggerNotifier {
   std::unordered_set<event_logger::EventLogger*> event_loggers_;
 
   // During pre-main stage, the LogFunctionEntry/LogFunctionExit will
-  // be called, but spoor is not finishing the default initialization, it leads
+  // be called, but Spoor is not finishing the default initialization, it leads
   // to a crash when accessing some variables. By giving atomic_bool, with its
   // zero value, those two functions can bypass this crash. The atomic will make
   // sure it's thread-safe after the pre-main stage.
