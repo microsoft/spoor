@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <chrono>
 #include <filesystem>
 #include <functional>
@@ -98,7 +99,13 @@ class RuntimeManager final : public event_logger::EventLoggerNotifier {
   mutable std::shared_mutex lock_{};
   std::unique_ptr<Pool> pool_;
   std::unordered_set<event_logger::EventLogger*> event_loggers_;
-  bool initialized_;
+
+  // During pre-main stage, the LogFunctionEntry/LogFunctionExit will
+  // be called, but spoor is not finishing the default initialization, it leads
+  // to a crash when accessing some variables. By giving atomic_bool, with its
+  // zero value, those two functions can bypass this crash. The atomic will make
+  // sure it's thread-safe after the pre-main stage.
+  std::atomic_bool initialized_;
   bool enabled_;
 };
 
