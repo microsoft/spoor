@@ -11,8 +11,8 @@ INSTRUMENTED_IR_FILE="fib_instrumented.ll"
 OUTPUT_FUNCTION_MAP_FILE="fib.spoor_function_map"
 OUTPUT_EXECUTABLE_FILE="fib"
 
-if command -v clang++-12 &> /dev/null; then
-  CLANGXX="clang++-12"
+if command -v clang++-11 &> /dev/null; then
+  CLANGXX="clang++-11"
 elif command -v clang++ &> /dev/null; then
   CLANGXX="clang++"
 else

@@ -81,7 +81,7 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
-# Objective-C
+# Xcode
 xcuserdata/
 *.hmap
 *.ipa

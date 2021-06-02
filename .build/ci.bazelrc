@@ -1,6 +1,9 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+build --ios_multi_cpus=arm64,x86_64
+build --macos_cpus=x86_64
+
 build --output_filter='^external/*'
 test --test_output=all
 
