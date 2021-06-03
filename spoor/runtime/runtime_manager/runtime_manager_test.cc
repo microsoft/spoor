@@ -360,9 +360,10 @@ namespace premain_crash_test {
 // The Init method will be called always before main function, early access
 // to some variables of runtime_manager could lead to a crash.
 // This test will help the catch the premain crash regression.
-SteadyClockMock steady_clock{};
-FlushQueueMock flush_queue{};
-RuntimeManager runtime_manager{{.steady_clock = &steady_clock,
+
+SteadyClockMock steady_clock{};                                 // NOLINT
+FlushQueueMock flush_queue{};                                   // NOLINT
+RuntimeManager runtime_manager{{.steady_clock = &steady_clock,  // NOLINT
                                 .flush_queue = &flush_queue,
                                 .thread_event_buffer_capacity = 0,
                                 .reserved_pool_capacity = 0,
@@ -373,7 +374,7 @@ RuntimeManager runtime_manager{{.steady_clock = &steady_clock,
                                 .max_buffer_flush_attempts = 0,
                                 .flush_all_events = false}};
 
-void Init(void) __attribute__((constructor)) {
+void Init() __attribute__((constructor)) {
   std::cout << "pre-main crash test: started" << std::endl;
   std::cout << "If you see something like, libc++abi: terminating, it means "
                "the test failed."
