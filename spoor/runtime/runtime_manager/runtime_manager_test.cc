@@ -355,4 +355,33 @@ TEST(RuntimeManagerDeletedFilesInfo, Equality) {  // NOLINT
   ASSERT_NE(info_b, info_c);
 }
 
+namespace premain_crash_test {
+// This is a special test for pre-main crash.
+// The Init method will be called always before main function, early access
+// to some variables of runtime_manager could lead to a crash.
+// This test will help the catch the premain crash regression.
+SteadyClockMock steady_clock{};
+FlushQueueMock flush_queue{};
+RuntimeManager runtime_manager{{.steady_clock = &steady_clock,
+                                .flush_queue = &flush_queue,
+                                .thread_event_buffer_capacity = 0,
+                                .reserved_pool_capacity = 0,
+                                .reserved_pool_max_slice_capacity = 0,
+                                .dynamic_pool_capacity = 0,
+                                .dynamic_pool_max_slice_capacity = 0,
+                                .dynamic_pool_borrow_cas_attempts = 0,
+                                .max_buffer_flush_attempts = 0,
+                                .flush_all_events = false}};
+
+void Init(void) __attribute__((constructor)) {
+  std::cout << "pre-main crash test: started" << std::endl;
+  std::cout << "If you see something like, libc++abi: terminating, it means "
+               "the test failed."
+            << std::endl;
+  runtime_manager.LogFunctionEntry(0);
+  runtime_manager.LogFunctionExit(0);
+  std::cout << "pre-main crash test: Passed." << std::endl;
+}
+}  // namespace premain_crash_test
+
 }  // namespace

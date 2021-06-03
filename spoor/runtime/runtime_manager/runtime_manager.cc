@@ -114,6 +114,8 @@ auto RuntimeManager::LogEvent(
 auto RuntimeManager::LogEvent(const trace::EventType type,
                               const uint64 payload_1, const uint32 payload_2)
     -> void {
+  if (!enabled_) return;
+
   const auto now = options_.steady_clock->Now();
   const auto now_nanoseconds =
       std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -124,16 +126,12 @@ auto RuntimeManager::LogEvent(const trace::EventType type,
 
 auto RuntimeManager::LogFunctionEntry(const trace::FunctionId function_id)
     -> void {
-  if (!initialized_) return;
-
   LogEvent(static_cast<trace::EventType>(trace::Event::Type::kFunctionEntry),
            function_id, 0);
 }
 
 auto RuntimeManager::LogFunctionExit(const trace::FunctionId function_id)
     -> void {
-  if (!initialized_) return;
-
   LogEvent(static_cast<trace::EventType>(trace::Event::Type::kFunctionExit),
            function_id, 0);
 }
