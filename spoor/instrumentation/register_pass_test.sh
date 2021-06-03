@@ -25,7 +25,7 @@ else
 fi
 
 OUTPUT_IR_FILE="fib_instrumented.ll"
-export SPOOR_INSTRUMENTATION_OUTPUT_FUNCTION_MAP_FILE="fib.spoor_function_map"
+export SPOOR_INSTRUMENTATION_OUTPUT_SYMBOLS_FILE="fib.spoor_symbols"
 
 # TODO(#131): Fix `opt` pass plugin support for IR instrumentation.
 set +e
@@ -38,9 +38,9 @@ set -e
 
 exit 0
 
-if ! [[ -s "$SPOOR_INSTRUMENTATION_OUTPUT_FUNCTION_MAP_FILE" ]]; then
+if ! [[ -s "$SPOOR_INSTRUMENTATION_OUTPUT_SYMBOLS_FILE" ]]; then
   echo "The function map file" \
-      "'$SPOOR_INSTRUMENTATION_OUTPUT_FUNCTION_MAP_FILE' is empty or was not" \
+      "'$SPOOR_INSTRUMENTATION_OUTPUT_SYMBOLS_FILE' is empty or was not" \
       "created."
   exit 1
 fi

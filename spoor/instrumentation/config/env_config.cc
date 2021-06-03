@@ -38,9 +38,9 @@ auto ConfigFromEnv(const util::env::GetEnv& get_env) -> Config {
                                    true, get_env),
       .output_file = GetEnvOrDefault(
           kOutputFileKey.data(), std::string{kOutputFileDefaultValue}, get_env),
-      .output_function_map_file = GetEnvOrDefault(
-          kOutputFunctionMapFileKey.data(),
-          std::string{kOutputFunctionMapFileDefaultValue}, get_env),
+      .output_symbols_file =
+          GetEnvOrDefault(kOutputSymbolsFileKey.data(),
+                          std::string{kOutputSymbolsFileDefaultValue}, get_env),
       .output_language = GetEnvOrDefault(kOutputLanguageKey.data(),
                                          kOutputLanguageDefaultValue,
                                          kOutputLanguages, true, get_env)};

@@ -8,7 +8,7 @@ BASE_PATH="spoor"
 OUTPUT_EXECUTABLE_FILE="fib"
 UNINSTRUMENTED_IR_FILE="fib.ll"
 INSTRUMENTED_IR_FILE="fib_instrumented.ll"
-OUTPUT_FUNCTION_MAP_FILE="fib.spoor_function_map"
+OUTPUT_SYMBOLS_FILE="fib.spoor_symbols"
 OUTPUT_EXECUTABLE_FILE="fib"
 
 if command -v clang++-11 &> /dev/null; then
@@ -32,7 +32,7 @@ fi
 "$BASE_PATH/instrumentation/spoor_opt" \
   "$UNINSTRUMENTED_IR_FILE" \
   --output_language=ir \
-  --output_function_map_file="$OUTPUT_FUNCTION_MAP_FILE" \
+  --output_symbols_file="$OUTPUT_SYMBOLS_FILE" \
   --output_file="$INSTRUMENTED_IR_FILE"
 
 "$CLANGXX" \
@@ -50,5 +50,5 @@ if [ "$RESULT" != "$EXPECTED_RESULT" ]; then
   exit 1
 fi
 
-ls | grep "$OUTPUT_FUNCTION_MAP_FILE" > /dev/null
+ls | grep "$OUTPUT_SYMBOLS_FILE" > /dev/null
 ls | grep ".spoor_trace" > /dev/null

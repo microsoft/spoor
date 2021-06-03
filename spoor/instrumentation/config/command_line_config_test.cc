@@ -29,9 +29,9 @@ using spoor::instrumentation::config::kInjectInstrumentationKey;
 using spoor::instrumentation::config::kMinInstructionThresholdKey;
 using spoor::instrumentation::config::kModuleIdKey;
 using spoor::instrumentation::config::kOutputFileKey;
-using spoor::instrumentation::config::kOutputFunctionMapFileKey;
 using spoor::instrumentation::config::kOutputLanguageKey;
 using spoor::instrumentation::config::kOutputLanguages;
+using spoor::instrumentation::config::kOutputSymbolsFileKey;
 using spoor::instrumentation::config::OutputLanguage;
 
 auto MakeArgv(const std::vector<std::string_view>& args) -> std::vector<char*> {
@@ -59,7 +59,7 @@ TEST(CommandLineConfig, ParsesCommandLine) {  // NOLINT
       .min_instruction_threshold = 42,
       .module_id = "ModuleId",
       .output_file = "/path/to/output_file.ll",
-      .output_function_map_file = "/path/to/file.spoor_function_map",
+      .output_symbols_file = "/path/to/file.spoor_symbols",
       .output_language = OutputLanguage::kIr};
   auto argv =
       MakeArgv({"spoor_opt", "--enable_runtime=false",
@@ -68,7 +68,7 @@ TEST(CommandLineConfig, ParsesCommandLine) {  // NOLINT
                 "--initialize_runtime=false", "--inject_instrumentation=false",
                 "--min_instruction_threshold=42", "--module_id=ModuleId",
                 "--output_file=/path/to/output_file.ll",
-                "--output_function_map_file=/path/to/file.spoor_function_map",
+                "--output_symbols_file=/path/to/file.spoor_symbols",
                 "--output_language=ir"});
   const auto expected_positional_args = MakeArgv({argv.front()});
   const auto [config, positional_args] = ConfigFromCommandLineOrEnv(
@@ -90,7 +90,7 @@ TEST(CommandLineConfig, UsesDefaultValueWhenNotSpecified) {  // NOLINT
                                .min_instruction_threshold = 0,
                                .module_id = {},
                                .output_file = "-",
-                               .output_function_map_file = "",
+                               .output_symbols_file = "",
                                .output_language = OutputLanguage::kBitcode};
   auto argv = MakeArgv({"spoor_opt"});
   const auto [config, positional_args] = ConfigFromCommandLineOrEnv(
@@ -112,8 +112,9 @@ TEST(CommandLineConfig, UsesEnvironmentValueWhenNotSpecified) {  // NOLINT
             {kMinInstructionThresholdKey, "42"},
             {kModuleIdKey, "ModuleId"},
             {kOutputFileKey, "/path/to/output_file.ll"},
-            {kOutputFunctionMapFileKey, "/path/to/file.spoor_function_map"},
-            {kOutputLanguageKey, "ir"}};
+            {kOutputSymbolsFileKey, "/path/to/file.spoor_symbols"},
+            {kOutputLanguageKey, "ir"},
+        };
     return environment.FirstValueForKey(key).value_or(nullptr).data();
   };
   const Config expected_config{
@@ -126,7 +127,7 @@ TEST(CommandLineConfig, UsesEnvironmentValueWhenNotSpecified) {  // NOLINT
       .min_instruction_threshold = 42,
       .module_id = "ModuleId",
       .output_file = "/path/to/output_file.ll",
-      .output_function_map_file = "/path/to/file.spoor_function_map",
+      .output_symbols_file = "/path/to/file.spoor_symbols",
       .output_language = OutputLanguage::kIr};
   auto argv = MakeArgv({"spoor_opt"});
   const auto [config, positional_args] = ConfigFromCommandLineOrEnv(
@@ -148,8 +149,7 @@ TEST(CommandLineConfig, OverridesEnvironment) {  // NOLINT
             {kMinInstructionThresholdKey, "43"},
             {kModuleIdKey, "OtherModuleId"},
             {kOutputFileKey, "/path/to/other/output_file.ll"},
-            {kOutputFunctionMapFileKey,
-             "/path/to/other/file.spoor_function_map"},
+            {kOutputSymbolsFileKey, "/path/to/other/file.spoor_symbols"},
             {kOutputLanguageKey, "bitcode"}};
     return environment.FirstValueForKey(key).value_or(nullptr).data();
   };
@@ -163,7 +163,7 @@ TEST(CommandLineConfig, OverridesEnvironment) {  // NOLINT
       .min_instruction_threshold = 42,
       .module_id = "ModuleId",
       .output_file = "/path/to/output_file.ll",
-      .output_function_map_file = "/path/to/file.spoor_function_map",
+      .output_symbols_file = "/path/to/file.spoor_symbols",
       .output_language = OutputLanguage::kIr};
   auto argv =
       MakeArgv({"spoor_opt", "--enable_runtime=false",
@@ -172,7 +172,7 @@ TEST(CommandLineConfig, OverridesEnvironment) {  // NOLINT
                 "--initialize_runtime=false", "--inject_instrumentation=false",
                 "--min_instruction_threshold=42", "--module_id=ModuleId",
                 "--output_file=/path/to/output_file.ll",
-                "--output_function_map_file=/path/to/file.spoor_function_map",
+                "--output_symbols_file=/path/to/file.spoor_symbols",
                 "--output_language=ir"});
   const auto expected_positional_args = MakeArgv({argv.front()});
   const auto [config, positional_args] = ConfigFromCommandLineOrEnv(

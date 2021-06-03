@@ -120,10 +120,8 @@ def test_sets_environment_if_not_defined(popen_mock):
     assert return_code == 0
     _, spoor_opt_args, _ = popen_mock.call_args_list
     expected_env = {
-        'SPOOR_INSTRUMENTATION_MODULE_ID':
-            'a.o',
-        'SPOOR_INSTRUMENTATION_OUTPUT_FUNCTION_MAP_FILE':
-            'a.spoor_function_map',
+        'SPOOR_INSTRUMENTATION_MODULE_ID': 'a.o',
+        'SPOOR_INSTRUMENTATION_OUTPUT_SYMBOLS_FILE': 'a.spoor_symbols',
     }
     assert expected_env.items() <= spoor_opt_args.kwargs['env'].items()
 
@@ -131,10 +129,8 @@ def test_sets_environment_if_not_defined(popen_mock):
 @patch('subprocess.Popen')
 @patch.dict(
     'os.environ', {
-        'SPOOR_INSTRUMENTATION_MODULE_ID':
-            'module_id',
-        'SPOOR_INSTRUMENTATION_OUTPUT_FUNCTION_MAP_FILE':
-            'map.spoor_function_map',
+        'SPOOR_INSTRUMENTATION_MODULE_ID': 'module_id',
+        'SPOOR_INSTRUMENTATION_OUTPUT_SYMBOLS_FILE': 'map.spoor_symbols',
     })
 def test_does_not_override_environment(popen_mock):
   popen_handle = popen_mock.return_value.__enter__
@@ -154,10 +150,8 @@ def test_does_not_override_environment(popen_mock):
     assert return_code == 0
     _, spoor_opt_args, _ = popen_mock.call_args_list
     expected_env = {
-        'SPOOR_INSTRUMENTATION_MODULE_ID':
-            'module_id',
-        'SPOOR_INSTRUMENTATION_OUTPUT_FUNCTION_MAP_FILE':
-            'map.spoor_function_map',
+        'SPOOR_INSTRUMENTATION_MODULE_ID': 'module_id',
+        'SPOOR_INSTRUMENTATION_OUTPUT_SYMBOLS_FILE': 'map.spoor_symbols',
     }
     assert expected_env.items() <= spoor_opt_args.kwargs['env'].items()
 

@@ -7,6 +7,7 @@
 #include <memory>
 #include <vector>
 
+#include "gsl/gsl"
 #include "spoor/runtime/trace/trace.h"
 #include "spoor/runtime/trace/trace_writer.h"
 #include "util/compression/compressor.h"

@@ -23,8 +23,8 @@ using spoor::instrumentation::config::kInjectInstrumentationKey;
 using spoor::instrumentation::config::kMinInstructionThresholdKey;
 using spoor::instrumentation::config::kModuleIdKey;
 using spoor::instrumentation::config::kOutputFileKey;
-using spoor::instrumentation::config::kOutputFunctionMapFileKey;
 using spoor::instrumentation::config::kOutputLanguageKey;
+using spoor::instrumentation::config::kOutputSymbolsFileKey;
 using spoor::instrumentation::config::OutputLanguage;
 
 TEST(EnvConfig, GetsUserProvidedValue) {  // NOLINT
@@ -40,8 +40,9 @@ TEST(EnvConfig, GetsUserProvidedValue) {  // NOLINT
             {kMinInstructionThresholdKey, "42"},
             {kModuleIdKey, "ModuleId"},
             {kOutputFileKey, "/path/to/output_file.ll"},
-            {kOutputFunctionMapFileKey, "/path/to/file.spoor_function_map"},
-            {kOutputLanguageKey, "      iR     "}};
+            {kOutputSymbolsFileKey, "/path/to/file.spoor_symbols"},
+            {kOutputLanguageKey, "      iR     "},
+        };
     return environment.FirstValueForKey(key).value_or(nullptr).data();
   };
   const Config expected_config{
@@ -54,7 +55,7 @@ TEST(EnvConfig, GetsUserProvidedValue) {  // NOLINT
       .min_instruction_threshold = 42,
       .module_id = "ModuleId",
       .output_file = "/path/to/output_file.ll",
-      .output_function_map_file = "/path/to/file.spoor_function_map",
+      .output_symbols_file = "/path/to/file.spoor_symbols",
       .output_language = OutputLanguage::kIr};
   ASSERT_EQ(ConfigFromEnv(get_env), expected_config);
 }
@@ -72,7 +73,7 @@ TEST(EnvConfig, UsesDefaultValueWhenNotSpecified) {  // NOLINT
                                .min_instruction_threshold = 0,
                                .module_id = {},
                                .output_file = "-",
-                               .output_function_map_file = "",
+                               .output_symbols_file = "",
                                .output_language = OutputLanguage::kBitcode};
   ASSERT_EQ(ConfigFromEnv(get_env), expected_config);
 }
@@ -89,7 +90,7 @@ TEST(EnvConfig, UsesDefaultValueForEmptyStringValues) {  // NOLINT
                     {kMinInstructionThresholdKey, ""},
                     {kModuleIdKey, ""},
                     {kOutputFileKey, ""},
-                    {kOutputFunctionMapFileKey, ""},
+                    {kOutputSymbolsFileKey, ""},
                     {kOutputLanguageKey, ""}};
     return environment.FirstValueForKey(key).value_or(nullptr).data();
   };
@@ -102,7 +103,7 @@ TEST(EnvConfig, UsesDefaultValueForEmptyStringValues) {  // NOLINT
                                .min_instruction_threshold = 0,
                                .module_id = {},
                                .output_file = "",
-                               .output_function_map_file = "",
+                               .output_symbols_file = "",
                                .output_language = OutputLanguage::kBitcode};
   ASSERT_EQ(ConfigFromEnv(get_env), expected_config);
 }

@@ -23,10 +23,16 @@
 #include "spoor/instrumentation/config/env_config.h"
 #include "spoor/instrumentation/inject_instrumentation/inject_instrumentation.h"
 #include "spoor/instrumentation/instrumentation.h"
-#include "spoor/instrumentation/support/support.h"
+#include "spoor/instrumentation/symbols/symbols_file_writer.h"
+#include "util/file_system/local_file_reader.h"
+#include "util/file_system/local_file_writer.h"
 #include "util/time/clock.h"
 
 namespace spoor::instrumentation {
+
+using symbols::SymbolsFileWriter;
+using util::file_system::LocalFileReader;
+using util::file_system::LocalFileWriter;
 
 auto PluginInfo() -> llvm::PassPluginLibraryInfo {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -38,47 +44,20 @@ auto PluginInfo() -> llvm::PassPluginLibraryInfo {
           if (pass_name != kPluginName.data()) return false;
           const auto config = config::ConfigFromEnv();
 
-          auto output_function_map_stream =
-              std::make_unique<std::ofstream>(config.output_function_map_file);
-          if (!output_function_map_stream->is_open()) {
-            const auto message =
-                absl::StrFormat("Failed to create the function map file '%s'.",
-                                config.output_function_map_file);
-            llvm::report_fatal_error(message, false);
-          }
-
-          std::unordered_set<std::string> function_allow_list{};
-          if (config.function_allow_list_file.has_value()) {
-            std::ifstream file{config.function_allow_list_file.value()};
-            if (!file.is_open()) {
-              const auto message = absl::StrFormat(
-                  "Failed to read the function allow list file '%s'.",
-                  config.function_allow_list_file.value());
-              llvm::report_fatal_error(message, false);
-            }
-            function_allow_list = support::ReadLinesToSet(&file);
-          }
-
-          std::unordered_set<std::string> function_blocklist{};
-          if (config.function_blocklist_file.has_value()) {
-            std::ifstream file{config.function_blocklist_file.value()};
-            if (!file.is_open()) {
-              const auto message = absl::StrFormat(
-                  "Failed to read the function blocklist file '%s'.",
-                  config.function_blocklist_file.value());
-              llvm::report_fatal_error(message, false);
-            }
-            function_blocklist = support::ReadLinesToSet(&file);
-          }
-
+          auto file_reader = std::make_unique<LocalFileReader>();
+          auto file_writer = std::make_unique<LocalFileWriter>();
+          auto symbols_writer =
+              std::make_unique<SymbolsFileWriter>(SymbolsFileWriter::Options{
+                  .file_writer = std::move(file_writer)});
           auto system_clock = std::make_unique<util::time::SystemClock>();
           pass_manager.addPass(inject_instrumentation::InjectInstrumentation{{
               .inject_instrumentation = config.inject_instrumentation,
-              .output_function_map_stream =
-                  std::move(output_function_map_stream),
+              .file_reader = std::move(file_reader),
+              .symbols_writer = std::move(symbols_writer),
               .system_clock = std::move(system_clock),
-              .function_allow_list = std::move(function_allow_list),
-              .function_blocklist = std::move(function_blocklist),
+              .function_allow_list_file_path = config.function_allow_list_file,
+              .function_blocklist_file_path = config.function_blocklist_file,
+              .symbols_file_path = config.output_symbols_file,
               .module_id = config.module_id,
               .min_instruction_count_to_instrument =
                   config.min_instruction_threshold,

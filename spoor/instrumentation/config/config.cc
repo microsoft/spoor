@@ -13,7 +13,7 @@ auto operator==(const Config& lhs, const Config& rhs) -> bool {
          lhs.inject_instrumentation == rhs.inject_instrumentation &&
          lhs.min_instruction_threshold == rhs.min_instruction_threshold &&
          lhs.module_id == rhs.module_id && lhs.output_file == rhs.output_file &&
-         lhs.output_function_map_file == rhs.output_function_map_file &&
+         lhs.output_symbols_file == rhs.output_symbols_file &&
          lhs.output_language == rhs.output_language;
 }
 

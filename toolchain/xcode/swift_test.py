@@ -67,8 +67,8 @@ def test_parses_swift_compile_args(popen_mock):
       expected_env = {
           'SPOOR_INSTRUMENTATION_MODULE_ID':
               output_object_file,
-          'SPOOR_INSTRUMENTATION_OUTPUT_FUNCTION_MAP_FILE':
-              output_object_file[:-2] + '.spoor_function_map',
+          'SPOOR_INSTRUMENTATION_OUTPUT_SYMBOLS_FILE':
+              output_object_file[:-2] + '.spoor_symbols',
       }
       assert expected_env.items() <= spoor_opt_args.kwargs['env'].items()
       spoor_opt_process_mock.stdout.close.assert_called_once()

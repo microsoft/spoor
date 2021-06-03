@@ -60,10 +60,9 @@ ABSL_FLAG(  // NOLINT
     std::string{spoor::instrumentation::config::kOutputFileDefaultValue},
     spoor::instrumentation::config::kOutputFileDoc);
 ABSL_FLAG(  // NOLINT
-    std::string, output_function_map_file,
-    std::string{
-        spoor::instrumentation::config::kOutputFunctionMapFileDefaultValue},
-    spoor::instrumentation::config::kOutputFunctionMapFileDoc);
+    std::string, output_symbols_file,
+    std::string{spoor::instrumentation::config::kOutputSymbolsFileDefaultValue},
+    spoor::instrumentation::config::kOutputSymbolsFileDoc);
 ABSL_FLAG(  // NOLINT
     spoor::instrumentation::config::OutputLanguage, output_language,
     spoor::instrumentation::config::kOutputLanguageDefaultValue,
@@ -91,8 +90,7 @@ auto ConfigFromCommandLineOrEnv(const int argc, char** argv,
                 env_config.min_instruction_threshold);
   absl::SetFlag(&FLAGS_module_id, env_config.module_id);
   absl::SetFlag(&FLAGS_output_file, env_config.output_file);
-  absl::SetFlag(&FLAGS_output_function_map_file,
-                env_config.output_function_map_file);
+  absl::SetFlag(&FLAGS_output_symbols_file, env_config.output_symbols_file);
   absl::SetFlag(&FLAGS_output_language, env_config.output_language);
   auto positional_args = absl::ParseCommandLine(argc, argv);
   Config config{
@@ -108,7 +106,7 @@ auto ConfigFromCommandLineOrEnv(const int argc, char** argv,
           absl::GetFlag(FLAGS_min_instruction_threshold),
       .module_id = absl::GetFlag(FLAGS_module_id).StdOptional(),
       .output_file = absl::GetFlag(FLAGS_output_file),
-      .output_function_map_file = absl::GetFlag(FLAGS_output_function_map_file),
+      .output_symbols_file = absl::GetFlag(FLAGS_output_symbols_file),
       .output_language = absl::GetFlag(FLAGS_output_language)};
   return std::make_pair(std::move(config), std::move(positional_args));
 }

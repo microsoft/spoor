@@ -2,13 +2,35 @@
 # Licensed under the MIT License.
 
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
-load("//toolchain:config.bzl", "SPOOR_DEFAULT_COPTS", "SPOOR_DEFAULT_LINKOPTS")
+load(
+    "//toolchain:config.bzl",
+    "SPOOR_DEFAULT_COPTS",
+    "SPOOR_DEFAULT_LINKOPTS",
+    "SPOOR_DEFAULT_TEST_COPTS",
+    "SPOOR_DEFAULT_TEST_LINKOPTS",
+)
 
 cc_library(
     name = "instrumentation_info",
     hdrs = ["instrumentation.h"],
-    copts = ["-Werror"],
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
+    visibility = ["//visibility:public"],
+    deps = ["//util:numeric"],
+)
+
+cc_test(
+    name = "instrumentation_info_test",
+    size = "small",
+    srcs = ["instrumentation_test.cc"],
+    copts = SPOOR_DEFAULT_TEST_COPTS,
+    linkopts = SPOOR_DEFAULT_TEST_LINKOPTS,
     visibility = ["//visibility:private"],
+    deps = [
+        ":instrumentation_info",
+        "//spoor/instrumentation/symbols:symbols_cc_proto",
+        "@com_google_googletest//:gtest_main",
+    ],
 )
 
 cc_binary(
@@ -22,7 +44,8 @@ cc_binary(
         "//spoor/instrumentation/config",
         "//spoor/instrumentation/config:command_line_config",
         "//spoor/instrumentation/inject_instrumentation",
-        "//spoor/instrumentation/support",
+        "//spoor/instrumentation/symbols:symbols_writer",
+        "//util/file_system",
         "//util/time:clock",
         "@com_google_absl//absl/flags:config",
         "@com_google_absl//absl/flags:flag",
@@ -55,7 +78,8 @@ SHARED_LIBRARY_DEPS = [
     ":instrumentation_info",
     "//spoor/instrumentation/config:env_config",
     "//spoor/instrumentation/inject_instrumentation",
-    "//spoor/instrumentation/support",
+    "//spoor/instrumentation/symbols:symbols_writer",
+    "//util/file_system",
     "//util/time:clock",
     "@com_google_absl//absl/strings:str_format",
     "@com_google_protobuf//:protobuf",

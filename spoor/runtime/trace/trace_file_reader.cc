@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <fstream>
 #include <ios>
+#include <utility>
 #include <vector>
 
 #include "absl/base/internal/endian.h"
