@@ -355,4 +355,47 @@ TEST(RuntimeManagerDeletedFilesInfo, Equality) {  // NOLINT
   ASSERT_NE(info_b, info_c);
 }
 
+namespace pre_main_crash_test {
+// Operating on uninitialized data results in a crash.
+
+// clang-format off NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects) clang-format on
+SteadyClockMock steady_clock_{};
+
+// clang-format off NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects) clang-format on
+FlushQueueMock flush_queue_{};
+
+// clang-format off NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects) clang-format on
+RuntimeManager runtime_manager_{{.steady_clock = &steady_clock_,
+                                 .flush_queue = &flush_queue_,
+                                 .thread_event_buffer_capacity = 0,
+                                 .reserved_pool_capacity = 0,
+                                 .reserved_pool_max_slice_capacity = 0,
+                                 .dynamic_pool_capacity = 0,
+                                 .dynamic_pool_max_slice_capacity = 0,
+                                 .dynamic_pool_borrow_cas_attempts = 0,
+                                 .max_buffer_flush_attempts = 0,
+                                 .flush_all_events = false}};
+
+__attribute__((constructor)) auto TestIgnoresLogEventPreMain() -> void {
+  std::cerr << "pre-main crash test: Started\n";
+  std::cerr << "A console message such as `libc++abi: terminating` indicates a "
+               "test failure.\n";
+
+  runtime_manager_.LogFunctionEntry(0);
+  runtime_manager_.LogFunctionExit(0);
+  runtime_manager_.LogEvent(1, 2, 3);
+  runtime_manager_.LogEvent(1, 2, 3, 4);
+
+  constexpr Event event{
+      .steady_clock_timestamp = 0,
+      .payload_1 = 1,
+      .type = static_cast<EventType>(Event::Type::kFunctionEntry),
+      .payload_2 = 0};
+  runtime_manager_.LogEvent(event);
+
+  std::cerr << "pre-main crash test: Passed.\n";
+}
+
+}  // namespace pre_main_crash_test
+
 }  // namespace

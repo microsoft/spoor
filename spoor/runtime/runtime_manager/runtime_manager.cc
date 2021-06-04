@@ -29,7 +29,6 @@ RuntimeManager::~RuntimeManager() { Deinitialize(); }
 auto RuntimeManager::Initialize() -> void {
   std::unique_lock lock{lock_};
   if (initialized_) return;
-  initialized_ = true;
   const Pool::Options pool_options{
       .reserved_pool_options = {.max_slice_capacity =
                                     options_.reserved_pool_max_slice_capacity,
@@ -43,6 +42,8 @@ auto RuntimeManager::Initialize() -> void {
   for (auto* event_logger : event_loggers_) {
     event_logger->SetPool(pool_.get());
   }
+
+  initialized_ = true;
 }
 
 auto RuntimeManager::Deinitialize() -> void {
@@ -91,6 +92,8 @@ auto RuntimeManager::Unsubscribe(
 }
 
 auto RuntimeManager::LogEvent(const trace::Event event) -> void {
+  if (!enabled_) return;
+
   thread_local event_logger::EventLogger event_logger{
       {.flush_queue = options_.flush_queue,
        .preferred_capacity = options_.thread_event_buffer_capacity,
@@ -113,6 +116,8 @@ auto RuntimeManager::LogEvent(
 auto RuntimeManager::LogEvent(const trace::EventType type,
                               const uint64 payload_1, const uint32 payload_2)
     -> void {
+  if (!enabled_) return;
+
   const auto now = options_.steady_clock->Now();
   const auto now_nanoseconds =
       std::chrono::duration_cast<std::chrono::nanoseconds>(

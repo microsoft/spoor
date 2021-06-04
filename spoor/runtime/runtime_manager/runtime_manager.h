@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <chrono>
 #include <filesystem>
 #include <functional>
@@ -99,7 +100,12 @@ class RuntimeManager final : public event_logger::EventLoggerNotifier {
   std::unique_ptr<Pool> pool_;
   std::unordered_set<event_logger::EventLogger*> event_loggers_;
   bool initialized_;
-  bool enabled_;
+
+  // std::atomic_bool's zero-initialization value ensures that the runtime
+  // library is not enabled pre-main. The flag guards the logging methods
+  // against pre-main calls and prevents a crash where they might otherwise
+  // operate on uninitialized data.
+  std::atomic_bool enabled_;
 };
 
 template <class ConstIterator>
