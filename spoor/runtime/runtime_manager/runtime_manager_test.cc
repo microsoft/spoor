@@ -355,34 +355,47 @@ TEST(RuntimeManagerDeletedFilesInfo, Equality) {  // NOLINT
   ASSERT_NE(info_b, info_c);
 }
 
-namespace premain_crash_test {
-// This is a special test for pre-main crash.
-// The Init method will be called always before main function, early access
-// to some variables of runtime_manager could lead to a crash.
-// This test will help the catch the premain crash regression.
+namespace pre_main_crash_test {
+// Operating on uninitialized data results in a crash.
 
-SteadyClockMock steady_clock{};                                 // NOLINT
-FlushQueueMock flush_queue{};                                   // NOLINT
-RuntimeManager runtime_manager{{.steady_clock = &steady_clock,  // NOLINT
-                                .flush_queue = &flush_queue,
-                                .thread_event_buffer_capacity = 0,
-                                .reserved_pool_capacity = 0,
-                                .reserved_pool_max_slice_capacity = 0,
-                                .dynamic_pool_capacity = 0,
-                                .dynamic_pool_max_slice_capacity = 0,
-                                .dynamic_pool_borrow_cas_attempts = 0,
-                                .max_buffer_flush_attempts = 0,
-                                .flush_all_events = false}};
+// clang-format off NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects) clang-format on
+SteadyClockMock steady_clock_{};
 
-void Init() __attribute__((constructor)) {
-  std::cout << "pre-main crash test: started" << std::endl;
-  std::cout << "If you see something like, libc++abi: terminating, it means "
-               "the test failed."
-            << std::endl;
-  runtime_manager.LogFunctionEntry(0);
-  runtime_manager.LogFunctionExit(0);
-  std::cout << "pre-main crash test: Passed." << std::endl;
+// clang-format off NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects) clang-format on
+FlushQueueMock flush_queue_{};
+
+// clang-format off NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects) clang-format on
+RuntimeManager runtime_manager_{{.steady_clock = &steady_clock_,
+                                 .flush_queue = &flush_queue_,
+                                 .thread_event_buffer_capacity = 0,
+                                 .reserved_pool_capacity = 0,
+                                 .reserved_pool_max_slice_capacity = 0,
+                                 .dynamic_pool_capacity = 0,
+                                 .dynamic_pool_max_slice_capacity = 0,
+                                 .dynamic_pool_borrow_cas_attempts = 0,
+                                 .max_buffer_flush_attempts = 0,
+                                 .flush_all_events = false}};
+
+__attribute__((constructor)) auto TestIgnoresLogEventPreMain() -> void {
+  std::cerr << "pre-main crash test: Started\n";
+  std::cerr << "A console message such as `libc++abi: terminating` indicates a "
+               "test failure.\n";
+
+  runtime_manager_.LogFunctionEntry(0);
+  runtime_manager_.LogFunctionExit(0);
+  runtime_manager_.LogEvent(1, 2, 3);
+  runtime_manager_.LogEvent(1, 2, 3, 4);
+
+  constexpr Event event{
+      .steady_clock_timestamp = 0,
+      .payload_1 = 1,
+      .type = static_cast<EventType>(Event::Type::kFunctionEntry),
+      .payload_2 = 0};
+  runtime_manager_.LogEvent(event);
+
+  std::cerr << "pre-main crash test: Passed.\n";
 }
-}  // namespace premain_crash_test
+
+}  // namespace pre_main_crash_test
 
 }  // namespace

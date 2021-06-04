@@ -92,6 +92,8 @@ auto RuntimeManager::Unsubscribe(
 }
 
 auto RuntimeManager::LogEvent(const trace::Event event) -> void {
+  if (!enabled_) return;
+
   thread_local event_logger::EventLogger event_logger{
       {.flush_queue = options_.flush_queue,
        .preferred_capacity = options_.thread_event_buffer_capacity,

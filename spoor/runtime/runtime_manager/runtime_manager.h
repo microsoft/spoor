@@ -101,11 +101,10 @@ class RuntimeManager final : public event_logger::EventLoggerNotifier {
   std::unordered_set<event_logger::EventLogger*> event_loggers_;
   bool initialized_;
 
-  // During pre-main stage, when LogEvent functions get called before
-  // Spoor is finishing the default initialization, it will lead
-  // to a crash when accessing some variables. By giving atomic_bool, with its
-  // zero value, those two functions can bypass this crash. The atomic will make
-  // sure it's thread-safe after the pre-main stage.
+  // std::atomic_bool's zero-initialization value ensures that the runtime
+  // library is not enabled pre-main. The flag guards the logging methods
+  // against pre-main calls and prevents a crash where they might otherwise
+  // operate on uninitialized data.
   std::atomic_bool enabled_;
 };
 
