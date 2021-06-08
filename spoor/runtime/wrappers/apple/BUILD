@@ -58,6 +58,7 @@ ios_static_framework(
     hdrs = _LIB_HDRS,
     bundle_name = _MODULE_NAME,
     minimum_os_version = _MINIMUM_IOS_VERSION,
+    ipa_post_processor = ":plist_generate",
     visibility = ["//visibility:public"],
     deps = [":runtime_lib"],
 )
@@ -67,6 +68,7 @@ ios_static_framework(
     hdrs = _LIB_HDRS,
     bundle_name = _STUB_MODULE_NAME,
     minimum_os_version = _MINIMUM_IOS_VERSION,
+    ipa_post_processor = ":plist_generate",
     visibility = ["//visibility:public"],
     deps = [":runtime_stub_lib"],
 )
@@ -105,6 +107,12 @@ apple_static_library(
     platform_type = "macos",
     visibility = ["//visibility:public"],
     deps = [":runtime_stub_lib"],
+)
+
+sh_binary(
+    name = "plist_generate",
+    srcs = ["plist_generate.sh"],
+    visibility = ["//visibility:private"],
 )
 
 objc_library(
