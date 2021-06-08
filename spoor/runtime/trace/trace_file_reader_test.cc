@@ -59,8 +59,8 @@ TEST(TraceFileReader, MatchesTraceFileConvention) {  // NOLINT
           {"/path/spoor_trace/foo.bar", true},
           {"/path/trace.spoor_trace/foo.bar", true},
       }};
-  FileSystemMock file_system{};
-  EXPECT_CALL(file_system, IsRegularFile(_))
+  auto file_system = std::make_unique<FileSystemMock>();
+  EXPECT_CALL(*file_system, IsRegularFile(_))
       .WillRepeatedly(
           [&](const auto& path) -> util::result::Result<bool, std::error_code> {
             const auto is_regular_file =
@@ -69,10 +69,10 @@ TEST(TraceFileReader, MatchesTraceFileConvention) {  // NOLINT
             return not_matching_paths_is_regular_file.FirstValueForKey(path)
                 .value();
           });
-  FileReaderMock file_reader{};
+  auto file_reader = std::make_unique<FileReaderMock>();
   TraceFileReader trace_file_reader{{
-      .file_system = &file_system,
-      .file_reader = &file_reader,
+      .file_system = std::move(file_system),
+      .file_reader = std::move(file_reader),
   }};
   std::for_each(
       std::cbegin(matching_paths_is_regular_file),
@@ -92,7 +92,7 @@ TEST(TraceFileReader, MatchesTraceFileConvention) {  // NOLINT
 
 TEST(TraceFileReader, ReadHeaderParsesGoodData) {  // NOLINT
   const std::filesystem::path file_path{"/path/to/trace.spoor_trace"};
-  const Header header{
+  constexpr Header header{
       .magic_number = kMagicNumber,
       .endianness = kEndianness,
       .compression_strategy = CompressionStrategy::kNone,
@@ -108,15 +108,15 @@ TEST(TraceFileReader, ReadHeaderParsesGoodData) {  // NOLINT
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
   const std::string buffer{reinterpret_cast<const char*>(&header),
                            sizeof(header)};
-  FileSystemMock file_system{};
-  FileReaderMock file_reader{};
-  EXPECT_CALL(file_reader, Open(file_path, std::ios::binary));
-  EXPECT_CALL(file_reader, IsOpen()).WillOnce(Return(true));
-  EXPECT_CALL(file_reader, Read(sizeof(Header))).WillOnce(Return(buffer));
-  EXPECT_CALL(file_reader, Close());
+  auto file_system = std::make_unique<FileSystemMock>();
+  auto file_reader = std::make_unique<FileReaderMock>();
+  EXPECT_CALL(*file_reader, Open(file_path, std::ios::binary));
+  EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(true));
+  EXPECT_CALL(*file_reader, Read(sizeof(Header))).WillOnce(Return(buffer));
+  EXPECT_CALL(*file_reader, Close());
   TraceFileReader trace_file_reader{{
-      .file_system = &file_system,
-      .file_reader = &file_reader,
+      .file_system = std::move(file_system),
+      .file_reader = std::move(file_reader),
   }};
   const auto result = trace_file_reader.ReadHeader(file_path);
   ASSERT_TRUE(result.IsOk());
@@ -126,13 +126,13 @@ TEST(TraceFileReader, ReadHeaderParsesGoodData) {  // NOLINT
 
 TEST(TraceFileReader, ReadHeaderHandlesFailedToOpenFile) {  // NOLINT
   const std::filesystem::path file_path{"/path/to/trace.spoor_trace"};
-  FileSystemMock file_system{};
-  FileReaderMock file_reader{};
-  EXPECT_CALL(file_reader, Open(file_path, std::ios::binary));
-  EXPECT_CALL(file_reader, IsOpen()).WillOnce(Return(false));
+  auto file_system = std::make_unique<FileSystemMock>();
+  auto file_reader = std::make_unique<FileReaderMock>();
+  EXPECT_CALL(*file_reader, Open(file_path, std::ios::binary));
+  EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(false));
   TraceFileReader trace_file_reader{{
-      .file_system = &file_system,
-      .file_reader = &file_reader,
+      .file_system = std::move(file_system),
+      .file_reader = std::move(file_reader),
   }};
   const auto result = trace_file_reader.ReadHeader(file_path);
   ASSERT_TRUE(result.IsErr());
@@ -142,7 +142,7 @@ TEST(TraceFileReader, ReadHeaderHandlesFailedToOpenFile) {  // NOLINT
 
 TEST(TraceFileReader, ReadHeaderHandlesFileTooSmall) {  // NOLINT
   const std::filesystem::path file_path{"/path/to/trace.spoor_trace"};
-  const Header header{
+  constexpr Header header{
       .magic_number = kMagicNumber,
       .endianness = kEndianness,
       .compression_strategy = CompressionStrategy::kNone,
@@ -158,15 +158,15 @@ TEST(TraceFileReader, ReadHeaderHandlesFileTooSmall) {  // NOLINT
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
   const std::string buffer{reinterpret_cast<const char*>(&header),
                            sizeof(header) - 1};
-  FileSystemMock file_system{};
-  FileReaderMock file_reader{};
-  EXPECT_CALL(file_reader, Open(file_path, std::ios::binary));
-  EXPECT_CALL(file_reader, IsOpen()).WillOnce(Return(true));
-  EXPECT_CALL(file_reader, Read(sizeof(Header))).WillOnce(Return(buffer));
-  EXPECT_CALL(file_reader, Close());
+  auto file_system = std::make_unique<FileSystemMock>();
+  auto file_reader = std::make_unique<FileReaderMock>();
+  EXPECT_CALL(*file_reader, Open(file_path, std::ios::binary));
+  EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(true));
+  EXPECT_CALL(*file_reader, Read(sizeof(Header))).WillOnce(Return(buffer));
+  EXPECT_CALL(*file_reader, Close());
   TraceFileReader trace_file_reader{{
-      .file_system = &file_system,
-      .file_reader = &file_reader,
+      .file_system = std::move(file_system),
+      .file_reader = std::move(file_reader),
   }};
   const auto result = trace_file_reader.ReadHeader(file_path);
   ASSERT_TRUE(result.IsErr());
@@ -176,7 +176,7 @@ TEST(TraceFileReader, ReadHeaderHandlesFileTooSmall) {  // NOLINT
 
 TEST(TraceFileReader, ReadHeaderHandlesBadMagicNumber) {  // NOLINT
   const std::filesystem::path file_path{"/path/to/trace.spoor_trace"};
-  const Header header{
+  constexpr Header header{
       .magic_number = {},
       .endianness = kEndianness,
       .compression_strategy = CompressionStrategy::kNone,
@@ -192,15 +192,15 @@ TEST(TraceFileReader, ReadHeaderHandlesBadMagicNumber) {  // NOLINT
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
   const std::string buffer{reinterpret_cast<const char*>(&header),
                            sizeof(header)};
-  FileSystemMock file_system{};
-  FileReaderMock file_reader{};
-  EXPECT_CALL(file_reader, Open(file_path, std::ios::binary));
-  EXPECT_CALL(file_reader, IsOpen()).WillOnce(Return(true));
-  EXPECT_CALL(file_reader, Read(sizeof(Header))).WillOnce(Return(buffer));
-  EXPECT_CALL(file_reader, Close());
+  auto file_system = std::make_unique<FileSystemMock>();
+  auto file_reader = std::make_unique<FileReaderMock>();
+  EXPECT_CALL(*file_reader, Open(file_path, std::ios::binary));
+  EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(true));
+  EXPECT_CALL(*file_reader, Read(sizeof(Header))).WillOnce(Return(buffer));
+  EXPECT_CALL(*file_reader, Close());
   TraceFileReader trace_file_reader{{
-      .file_system = &file_system,
-      .file_reader = &file_reader,
+      .file_system = std::move(file_system),
+      .file_reader = std::move(file_reader),
   }};
   const auto result = trace_file_reader.ReadHeader(file_path);
   ASSERT_TRUE(result.IsErr());
@@ -210,7 +210,7 @@ TEST(TraceFileReader, ReadHeaderHandlesBadMagicNumber) {  // NOLINT
 
 TEST(TraceFileReader, ReadHeaderHandlesBadVersion) {  // NOLINT
   const std::filesystem::path file_path{"/path/to/trace.spoor_trace"};
-  const Header header{
+  constexpr Header header{
       .magic_number = kMagicNumber,
       .endianness = kEndianness,
       .compression_strategy = CompressionStrategy::kNone,
@@ -226,15 +226,15 @@ TEST(TraceFileReader, ReadHeaderHandlesBadVersion) {  // NOLINT
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
   const std::string buffer{reinterpret_cast<const char*>(&header),
                            sizeof(header)};
-  FileSystemMock file_system{};
-  FileReaderMock file_reader{};
-  EXPECT_CALL(file_reader, Open(file_path, std::ios::binary));
-  EXPECT_CALL(file_reader, IsOpen()).WillOnce(Return(true));
-  EXPECT_CALL(file_reader, Read(sizeof(Header))).WillOnce(Return(buffer));
-  EXPECT_CALL(file_reader, Close());
+  auto file_system = std::make_unique<FileSystemMock>();
+  auto file_reader = std::make_unique<FileReaderMock>();
+  EXPECT_CALL(*file_reader, Open(file_path, std::ios::binary));
+  EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(true));
+  EXPECT_CALL(*file_reader, Read(sizeof(Header))).WillOnce(Return(buffer));
+  EXPECT_CALL(*file_reader, Close());
   TraceFileReader trace_file_reader{{
-      .file_system = &file_system,
-      .file_reader = &file_reader,
+      .file_system = std::move(file_system),
+      .file_reader = std::move(file_reader),
   }};
   const auto result = trace_file_reader.ReadHeader(file_path);
   ASSERT_TRUE(result.IsErr());
@@ -288,15 +288,15 @@ TEST(TraceFileReader, ReadParsesGoodDataUncompressed) {  // NOLINT
   }();
   ASSERT_EQ(buffer.size(),
             sizeof(Header) + trace_file.events.size() * sizeof(Event));
-  FileSystemMock file_system{};
-  FileReaderMock file_reader{};
-  EXPECT_CALL(file_reader, Open(file_path, std::ios::binary));
-  EXPECT_CALL(file_reader, IsOpen()).WillOnce(Return(true));
-  EXPECT_CALL(file_reader, Read()).WillOnce(Return(buffer));
-  EXPECT_CALL(file_reader, Close());
+  auto file_system = std::make_unique<FileSystemMock>();
+  auto file_reader = std::make_unique<FileReaderMock>();
+  EXPECT_CALL(*file_reader, Open(file_path, std::ios::binary));
+  EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(true));
+  EXPECT_CALL(*file_reader, Read()).WillOnce(Return(buffer));
+  EXPECT_CALL(*file_reader, Close());
   TraceFileReader trace_file_reader{{
-      .file_system = &file_system,
-      .file_reader = &file_reader,
+      .file_system = std::move(file_system),
+      .file_reader = std::move(file_reader),
   }};
   const auto result = trace_file_reader.Read(file_path);
   ASSERT_TRUE(result.IsOk());
@@ -357,15 +357,15 @@ TEST(TraceFileReader, ReadParsesGoodDataCompressed) {  // NOLINT
   }();
   ASSERT_LE(buffer.size(),
             sizeof(Header) + trace_file.events.size() * sizeof(Event));
-  FileSystemMock file_system{};
-  FileReaderMock file_reader{};
-  EXPECT_CALL(file_reader, Open(file_path, std::ios::binary));
-  EXPECT_CALL(file_reader, IsOpen()).WillOnce(Return(true));
-  EXPECT_CALL(file_reader, Read()).WillOnce(Return(buffer));
-  EXPECT_CALL(file_reader, Close());
+  auto file_system = std::make_unique<FileSystemMock>();
+  auto file_reader = std::make_unique<FileReaderMock>();
+  EXPECT_CALL(*file_reader, Open(file_path, std::ios::binary));
+  EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(true));
+  EXPECT_CALL(*file_reader, Read()).WillOnce(Return(buffer));
+  EXPECT_CALL(*file_reader, Close());
   TraceFileReader trace_file_reader{{
-      .file_system = &file_system,
-      .file_reader = &file_reader,
+      .file_system = std::move(file_system),
+      .file_reader = std::move(file_reader),
   }};
   const auto result = trace_file_reader.Read(file_path);
   ASSERT_TRUE(result.IsOk());
@@ -439,15 +439,15 @@ TEST(TraceFileReader, ReadParsesGoodDataDifferentEndian) {  // NOLINT
   ASSERT_EQ(
       buffer.size(),
       sizeof(Header) + trace_file_other_endian.events.size() * sizeof(Event));
-  FileSystemMock file_system{};
-  FileReaderMock file_reader{};
-  EXPECT_CALL(file_reader, Open(file_path, std::ios::binary));
-  EXPECT_CALL(file_reader, IsOpen()).WillOnce(Return(true));
-  EXPECT_CALL(file_reader, Read()).WillOnce(Return(buffer));
-  EXPECT_CALL(file_reader, Close());
+  auto file_system = std::make_unique<FileSystemMock>();
+  auto file_reader = std::make_unique<FileReaderMock>();
+  EXPECT_CALL(*file_reader, Open(file_path, std::ios::binary));
+  EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(true));
+  EXPECT_CALL(*file_reader, Read()).WillOnce(Return(buffer));
+  EXPECT_CALL(*file_reader, Close());
   TraceFileReader trace_file_reader{{
-      .file_system = &file_system,
-      .file_reader = &file_reader,
+      .file_system = std::move(file_system),
+      .file_reader = std::move(file_reader),
   }};
   const auto result = trace_file_reader.Read(file_path);
   ASSERT_TRUE(result.IsOk());
@@ -457,13 +457,13 @@ TEST(TraceFileReader, ReadParsesGoodDataDifferentEndian) {  // NOLINT
 
 TEST(TraceFileReader, ReadHandlesFailedToOpenFile) {  // NOLINT
   const std::filesystem::path file_path{"/path/to/trace.spoor_trace"};
-  FileSystemMock file_system{};
-  FileReaderMock file_reader{};
-  EXPECT_CALL(file_reader, Open(file_path, std::ios::binary));
-  EXPECT_CALL(file_reader, IsOpen()).WillOnce(Return(false));
+  auto file_system = std::make_unique<FileSystemMock>();
+  auto file_reader = std::make_unique<FileReaderMock>();
+  EXPECT_CALL(*file_reader, Open(file_path, std::ios::binary));
+  EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(false));
   TraceFileReader trace_file_reader{{
-      .file_system = &file_system,
-      .file_reader = &file_reader,
+      .file_system = std::move(file_system),
+      .file_reader = std::move(file_reader),
   }};
   const auto result = trace_file_reader.Read(file_path);
   ASSERT_TRUE(result.IsErr());
@@ -473,7 +473,7 @@ TEST(TraceFileReader, ReadHandlesFailedToOpenFile) {  // NOLINT
 
 TEST(TraceFileReader, ReadHandlesFileTooSmall) {  // NOLINT
   const std::filesystem::path file_path{"/path/to/trace.spoor_trace"};
-  const Header header{
+  constexpr Header header{
       .magic_number = kMagicNumber,
       .endianness = kEndianness,
       .compression_strategy = CompressionStrategy::kNone,
@@ -489,15 +489,15 @@ TEST(TraceFileReader, ReadHandlesFileTooSmall) {  // NOLINT
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
   const std::string buffer{reinterpret_cast<const char*>(&header),
                            sizeof(header) - 1};
-  FileSystemMock file_system{};
-  FileReaderMock file_reader{};
-  EXPECT_CALL(file_reader, Open(file_path, std::ios::binary));
-  EXPECT_CALL(file_reader, IsOpen()).WillOnce(Return(true));
-  EXPECT_CALL(file_reader, Read()).WillOnce(Return(buffer));
-  EXPECT_CALL(file_reader, Close());
+  auto file_system = std::make_unique<FileSystemMock>();
+  auto file_reader = std::make_unique<FileReaderMock>();
+  EXPECT_CALL(*file_reader, Open(file_path, std::ios::binary));
+  EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(true));
+  EXPECT_CALL(*file_reader, Read()).WillOnce(Return(buffer));
+  EXPECT_CALL(*file_reader, Close());
   TraceFileReader trace_file_reader{{
-      .file_system = &file_system,
-      .file_reader = &file_reader,
+      .file_system = std::move(file_system),
+      .file_reader = std::move(file_reader),
   }};
   const auto result = trace_file_reader.Read(file_path);
   ASSERT_TRUE(result.IsErr());
@@ -507,7 +507,7 @@ TEST(TraceFileReader, ReadHandlesFileTooSmall) {  // NOLINT
 
 TEST(TraceFileReader, ReadHandlesBadMagicNumber) {  // NOLINT
   const std::filesystem::path file_path{"/path/to/trace.spoor_trace"};
-  const Header header{
+  constexpr Header header{
       .magic_number = {},
       .endianness = kEndianness,
       .compression_strategy = CompressionStrategy::kNone,
@@ -523,15 +523,15 @@ TEST(TraceFileReader, ReadHandlesBadMagicNumber) {  // NOLINT
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
   const std::string buffer{reinterpret_cast<const char*>(&header),
                            sizeof(header)};
-  FileSystemMock file_system{};
-  FileReaderMock file_reader{};
-  EXPECT_CALL(file_reader, Open(file_path, std::ios::binary));
-  EXPECT_CALL(file_reader, IsOpen()).WillOnce(Return(true));
-  EXPECT_CALL(file_reader, Read()).WillOnce(Return(buffer));
-  EXPECT_CALL(file_reader, Close());
+  auto file_system = std::make_unique<FileSystemMock>();
+  auto file_reader = std::make_unique<FileReaderMock>();
+  EXPECT_CALL(*file_reader, Open(file_path, std::ios::binary));
+  EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(true));
+  EXPECT_CALL(*file_reader, Read()).WillOnce(Return(buffer));
+  EXPECT_CALL(*file_reader, Close());
   TraceFileReader trace_file_reader{{
-      .file_system = &file_system,
-      .file_reader = &file_reader,
+      .file_system = std::move(file_system),
+      .file_reader = std::move(file_reader),
   }};
   const auto result = trace_file_reader.Read(file_path);
   ASSERT_TRUE(result.IsErr());
@@ -541,7 +541,7 @@ TEST(TraceFileReader, ReadHandlesBadMagicNumber) {  // NOLINT
 
 TEST(TraceFileReader, ReadHandlesBadVersion) {  // NOLINT
   const std::filesystem::path file_path{"/path/to/trace.spoor_trace"};
-  const Header header{
+  constexpr Header header{
       .magic_number = kMagicNumber,
       .endianness = kEndianness,
       .compression_strategy = CompressionStrategy::kNone,
@@ -557,15 +557,15 @@ TEST(TraceFileReader, ReadHandlesBadVersion) {  // NOLINT
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
   const std::string buffer{reinterpret_cast<const char*>(&header),
                            sizeof(header)};
-  FileSystemMock file_system{};
-  FileReaderMock file_reader{};
-  EXPECT_CALL(file_reader, Open(file_path, std::ios::binary));
-  EXPECT_CALL(file_reader, IsOpen()).WillOnce(Return(true));
-  EXPECT_CALL(file_reader, Read()).WillOnce(Return(buffer));
-  EXPECT_CALL(file_reader, Close());
+  auto file_system = std::make_unique<FileSystemMock>();
+  auto file_reader = std::make_unique<FileReaderMock>();
+  EXPECT_CALL(*file_reader, Open(file_path, std::ios::binary));
+  EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(true));
+  EXPECT_CALL(*file_reader, Read()).WillOnce(Return(buffer));
+  EXPECT_CALL(*file_reader, Close());
   TraceFileReader trace_file_reader{{
-      .file_system = &file_system,
-      .file_reader = &file_reader,
+      .file_system = std::move(file_system),
+      .file_reader = std::move(file_reader),
   }};
   const auto result = trace_file_reader.Read(file_path);
   ASSERT_TRUE(result.IsErr());
@@ -594,15 +594,15 @@ TEST(TraceFileReader, ReadHandlesBadCompression) {  // NOLINT
                                     sizeof(Header)};
     return absl::StrCat(header_buffer, "bad compression");
   }();
-  FileSystemMock file_system{};
-  FileReaderMock file_reader{};
-  EXPECT_CALL(file_reader, Open(file_path, std::ios::binary));
-  EXPECT_CALL(file_reader, IsOpen()).WillOnce(Return(true));
-  EXPECT_CALL(file_reader, Read()).WillOnce(Return(buffer));
-  EXPECT_CALL(file_reader, Close());
+  auto file_system = std::make_unique<FileSystemMock>();
+  auto file_reader = std::make_unique<FileReaderMock>();
+  EXPECT_CALL(*file_reader, Open(file_path, std::ios::binary));
+  EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(true));
+  EXPECT_CALL(*file_reader, Read()).WillOnce(Return(buffer));
+  EXPECT_CALL(*file_reader, Close());
   TraceFileReader trace_file_reader{{
-      .file_system = &file_system,
-      .file_reader = &file_reader,
+      .file_system = std::move(file_system),
+      .file_reader = std::move(file_reader),
   }};
   const auto result = trace_file_reader.Read(file_path);
   ASSERT_TRUE(result.IsErr());
@@ -647,15 +647,15 @@ TEST(TraceFileReader, ReadHandlesWrongNumberOfEvents) {  // NOLINT
     }();
     ASSERT_EQ(buffer.size(),
               sizeof(Header) + trace_file.events.size() * sizeof(Event));
-    FileSystemMock file_system{};
-    FileReaderMock file_reader{};
-    EXPECT_CALL(file_reader, Open(file_path, std::ios::binary));
-    EXPECT_CALL(file_reader, IsOpen()).WillOnce(Return(true));
-    EXPECT_CALL(file_reader, Read()).WillOnce(Return(buffer));
-    EXPECT_CALL(file_reader, Close());
+    auto file_system = std::make_unique<FileSystemMock>();
+    auto file_reader = std::make_unique<FileReaderMock>();
+    EXPECT_CALL(*file_reader, Open(file_path, std::ios::binary));
+    EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(true));
+    EXPECT_CALL(*file_reader, Read()).WillOnce(Return(buffer));
+    EXPECT_CALL(*file_reader, Close());
     TraceFileReader trace_file_reader{{
-        .file_system = &file_system,
-        .file_reader = &file_reader,
+        .file_system = std::move(file_system),
+        .file_reader = std::move(file_reader),
     }};
     const auto result = trace_file_reader.Read(file_path);
     ASSERT_TRUE(result.IsErr());

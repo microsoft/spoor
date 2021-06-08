@@ -75,15 +75,15 @@ TEST(TraceFileWriter, Write) {  // NOLINT
                         .event_count = raw_events.size()};
     auto compressor =
         MakeCompressor(compression_strategy, raw_events.size() * sizeof(Event));
-    FileWriterMock file_writer{};
-    EXPECT_CALL(file_writer, Open(path, std::ios::trunc | std::ios::binary));
-    EXPECT_CALL(file_writer, IsOpen()).WillOnce(Return(true));
-    EXPECT_CALL(file_writer, Write(MatchesHeader(header)));
-    EXPECT_CALL(file_writer,
+    auto file_writer = std::make_unique<FileWriterMock>();
+    EXPECT_CALL(*file_writer, Open(path, std::ios::trunc | std::ios::binary));
+    EXPECT_CALL(*file_writer, IsOpen()).WillOnce(Return(true));
+    EXPECT_CALL(*file_writer, Write(MatchesHeader(header)));
+    EXPECT_CALL(*file_writer,
                 Write(MatchesEvents(raw_events, compressor.get())));
-    EXPECT_CALL(file_writer, Close());
+    EXPECT_CALL(*file_writer, Close());
     TraceFileWriter trace_file_writer{
-        {.file_writer = &file_writer,
+        {.file_writer = std::move(file_writer),
          .compression_strategy = compression_strategy,
          .initial_buffer_capacity = raw_events.size()}};
     const auto result = trace_file_writer.Write(path, header, &events);
@@ -130,14 +130,14 @@ TEST(TraceFileWriter, SetsHeaderCompressionStrategy) {  // NOLINT
                 [&events](const auto event) { events.Push(event); });
   auto compressor =
       MakeCompressor(compression_strategy, raw_events.size() * sizeof(Event));
-  FileWriterMock file_writer{};
-  EXPECT_CALL(file_writer, Open(path, std::ios::trunc | std::ios::binary));
-  EXPECT_CALL(file_writer, IsOpen()).WillOnce(Return(true));
-  EXPECT_CALL(file_writer, Write(MatchesHeader(expected_header)));
-  EXPECT_CALL(file_writer, Write(MatchesEvents(raw_events, compressor.get())));
-  EXPECT_CALL(file_writer, Close());
+  auto file_writer = std::make_unique<FileWriterMock>();
+  EXPECT_CALL(*file_writer, Open(path, std::ios::trunc | std::ios::binary));
+  EXPECT_CALL(*file_writer, IsOpen()).WillOnce(Return(true));
+  EXPECT_CALL(*file_writer, Write(MatchesHeader(expected_header)));
+  EXPECT_CALL(*file_writer, Write(MatchesEvents(raw_events, compressor.get())));
+  EXPECT_CALL(*file_writer, Close());
   TraceFileWriter trace_file_writer{
-      {.file_writer = &file_writer,
+      {.file_writer = std::move(file_writer),
        .compression_strategy = CompressionStrategy::kSnappy,
        .initial_buffer_capacity = raw_events.size()}};
   const auto result = trace_file_writer.Write(path, input_header, &events);
@@ -160,13 +160,13 @@ TEST(TraceFileWriter, DoesNotWriteZeroEvents) {  // NOLINT
                           .event_count = raw_events.size()};
   Pool pool{{.max_slice_capacity = 0, .capacity = 0}};
   CircularSliceBuffer events{{.buffer_slice_pool = &pool, .capacity = 0}};
-  FileWriterMock file_writer{};
-  EXPECT_CALL(file_writer, Open(_, _)).Times(0);
-  EXPECT_CALL(file_writer, IsOpen()).Times(0);
-  EXPECT_CALL(file_writer, Write(_)).Times(0);
-  EXPECT_CALL(file_writer, Close()).Times(0);
+  auto file_writer = std::make_unique<FileWriterMock>();
+  EXPECT_CALL(*file_writer, Open(_, _)).Times(0);
+  EXPECT_CALL(*file_writer, IsOpen()).Times(0);
+  EXPECT_CALL(*file_writer, Write(_)).Times(0);
+  EXPECT_CALL(*file_writer, Close()).Times(0);
   TraceFileWriter trace_file_writer{
-      {.file_writer = &file_writer,
+      {.file_writer = std::move(file_writer),
        .compression_strategy = compression_strategy,
        .initial_buffer_capacity = raw_events.size()}};
   const auto result = trace_file_writer.Write(path, header, &events);
@@ -199,14 +199,14 @@ TEST(TraceFileWriter, WritesUncompressedIfCompressedIsLarger) {  // NOLINT
   auto compressor = MakeCompressor(CompressionStrategy::kNone,
                                    raw_events.size() * sizeof(Event));
   ASSERT_EQ(header.compression_strategy, compressor->Strategy());
-  FileWriterMock file_writer{};
-  EXPECT_CALL(file_writer, Open(path, std::ios::trunc | std::ios::binary));
-  EXPECT_CALL(file_writer, IsOpen()).WillOnce(Return(true));
-  EXPECT_CALL(file_writer, Write(MatchesHeader(header)));
-  EXPECT_CALL(file_writer, Write(MatchesEvents(raw_events, compressor.get())));
-  EXPECT_CALL(file_writer, Close());
+  auto file_writer = std::make_unique<FileWriterMock>();
+  EXPECT_CALL(*file_writer, Open(path, std::ios::trunc | std::ios::binary));
+  EXPECT_CALL(*file_writer, IsOpen()).WillOnce(Return(true));
+  EXPECT_CALL(*file_writer, Write(MatchesHeader(header)));
+  EXPECT_CALL(*file_writer, Write(MatchesEvents(raw_events, compressor.get())));
+  EXPECT_CALL(*file_writer, Close());
   TraceFileWriter trace_file_writer{
-      {.file_writer = &file_writer,
+      {.file_writer = std::move(file_writer),
        .compression_strategy = CompressionStrategy::kSnappy,
        .initial_buffer_capacity = raw_events.size()}};
   const auto result = trace_file_writer.Write(path, header, &events);
@@ -236,13 +236,13 @@ TEST(TraceFileWriter, FailsIfFileCannotBeOpened) {  // NOLINT
       {.buffer_slice_pool = &pool, .capacity = raw_events.size()}};
   std::for_each(std::cbegin(raw_events), std ::cend(raw_events),
                 [&events](const auto event) { events.Push(event); });
-  FileWriterMock file_writer{};
-  EXPECT_CALL(file_writer, Open(path, std::ios::trunc | std::ios::binary));
-  EXPECT_CALL(file_writer, IsOpen()).WillOnce(Return(false));
-  EXPECT_CALL(file_writer, Write(_)).Times(0);
-  EXPECT_CALL(file_writer, Close()).Times(0);
+  auto file_writer = std::make_unique<FileWriterMock>();
+  EXPECT_CALL(*file_writer, Open(path, std::ios::trunc | std::ios::binary));
+  EXPECT_CALL(*file_writer, IsOpen()).WillOnce(Return(false));
+  EXPECT_CALL(*file_writer, Write(_)).Times(0);
+  EXPECT_CALL(*file_writer, Close()).Times(0);
   TraceFileWriter trace_file_writer{
-      {.file_writer = &file_writer,
+      {.file_writer = std::move(file_writer),
        .compression_strategy = compression_strategy,
        .initial_buffer_capacity = raw_events.size()}};
   const auto result = trace_file_writer.Write(path, header, &events);
