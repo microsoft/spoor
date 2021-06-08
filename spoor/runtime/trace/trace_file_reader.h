@@ -4,8 +4,8 @@
 #pragma once
 
 #include <filesystem>
+#include <memory>
 
-#include "gsl/gsl"
 #include "spoor/runtime/trace/trace_reader.h"
 #include "util/file_system/file_reader.h"
 #include "util/file_system/file_system.h"
@@ -15,8 +15,8 @@ namespace spoor::runtime::trace {
 class TraceFileReader final : public TraceReader {
  public:
   struct alignas(16) Options {
-    gsl::not_null<util::file_system::FileSystem*> file_system;
-    gsl::not_null<util::file_system::FileReader*> file_reader;
+    std::unique_ptr<util::file_system::FileSystem> file_system;
+    std::unique_ptr<util::file_system::FileReader> file_reader;
   };
 
   explicit TraceFileReader(Options options);
