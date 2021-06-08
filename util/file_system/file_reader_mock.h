@@ -5,6 +5,7 @@
 
 #include <filesystem>
 #include <ios>
+#include <istream>
 
 #include "gmock/gmock.h"
 #include "util/file_system/file_reader.h"
@@ -13,6 +14,8 @@ namespace util::file_system::testing {
 
 class FileReaderMock final : public FileReader {
  public:
+  MOCK_METHOD(  // NOLINT
+      (void), Open, (const std::filesystem::path& path), (override));
   MOCK_METHOD(  // NOLINT
       (void), Open,
       (const std::filesystem::path& path, std::ios_base::openmode mode),

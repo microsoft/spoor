@@ -31,14 +31,18 @@
 #include "spoor/instrumentation/config/config.h"
 #include "spoor/instrumentation/inject_instrumentation/inject_instrumentation.h"
 #include "spoor/instrumentation/instrumentation.h"
-#include "spoor/instrumentation/support/support.h"
+#include "spoor/instrumentation/symbols/symbols_file_writer.h"
+#include "util/file_system/local_file_reader.h"
+#include "util/file_system/local_file_writer.h"
 #include "util/time/clock.h"
 
 namespace {
 
 using spoor::instrumentation::config::ConfigFromCommandLineOrEnv;
 using spoor::instrumentation::config::OutputLanguage;
-using spoor::instrumentation::support::ReadLinesToSet;
+using spoor::instrumentation::symbols::SymbolsFileWriter;
+using util::file_system::LocalFileReader;
+using util::file_system::LocalFileWriter;
 
 constexpr std::string_view kStdinFileName{"-"};
 constexpr std::string_view kVersion{"%s %s\nBased on LLVM %d.%d.%d\n"};
@@ -106,48 +110,21 @@ auto main(int argc, char** argv) -> int {
     return EXIT_FAILURE;
   }
 
+  auto file_reader = std::make_unique<LocalFileReader>();
+  auto file_writer = std::make_unique<LocalFileWriter>();
+  auto symbols_writer = std::make_unique<SymbolsFileWriter>(
+      SymbolsFileWriter::Options{.file_writer = std::move(file_writer)});
   auto system_clock = std::make_unique<util::time::SystemClock>();
-
-  auto output_function_map_stream =
-      std::make_unique<std::ofstream>(config.output_function_map_file);
-  if (!output_function_map_stream->is_open()) {
-    llvm::WithColor::error();
-    llvm::errs() << "Failed to create the function map file '"
-                 << config.output_function_map_file << "'.\n";
-    return EXIT_FAILURE;
-  }
-
-  std::unordered_set<std::string> function_allow_list{};
-  if (config.function_allow_list_file.has_value()) {
-    std::ifstream file{config.function_allow_list_file.value()};
-    if (!file.is_open()) {
-      llvm::WithColor::error();
-      llvm::errs() << "Failed to read the function allow list file '"
-                   << config.function_allow_list_file.value() << "'.\n";
-      return EXIT_FAILURE;
-    }
-    function_allow_list = ReadLinesToSet(&file);
-  }
-
-  std::unordered_set<std::string> function_blocklist{};
-  if (config.function_blocklist_file.has_value()) {
-    std::ifstream file{config.function_blocklist_file.value()};
-    if (!file.is_open()) {
-      llvm::WithColor::error();
-      llvm::errs() << "Failed to read the function allow list file '"
-                   << config.function_blocklist_file.value() << "'.\n";
-      return EXIT_FAILURE;
-    }
-    function_blocklist = ReadLinesToSet(&file);
-  }
 
   spoor::instrumentation::inject_instrumentation::InjectInstrumentation
       inject_instrumentation{{
           .inject_instrumentation = config.inject_instrumentation,
-          .output_function_map_stream = std::move(output_function_map_stream),
+          .file_reader = std::move(file_reader),
+          .symbols_writer = std::move(symbols_writer),
           .system_clock = std::move(system_clock),
-          .function_allow_list = std::move(function_allow_list),
-          .function_blocklist = std::move(function_blocklist),
+          .function_allow_list_file_path = config.function_allow_list_file,
+          .function_blocklist_file_path = config.function_blocklist_file,
+          .symbols_file_path = config.output_symbols_file,
           .module_id = config.module_id,
           .min_instruction_count_to_instrument =
               config.min_instruction_threshold,

@@ -21,6 +21,7 @@ class FileReader {
   auto operator=(FileReader&&) noexcept -> FileReader& = default;
   virtual ~FileReader() = default;
 
+  virtual auto Open(const std::filesystem::path& path) -> void = 0;
   virtual auto Open(const std::filesystem::path& path,
                     std::ios_base::openmode mode) -> void = 0;
   [[nodiscard]] virtual auto IsOpen() const -> bool = 0;

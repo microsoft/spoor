@@ -26,8 +26,8 @@ constexpr std::string_view kMinInstructionThresholdKey{
     "SPOOR_INSTRUMENTATION_MIN_INSTRUCTION_THRESHOLD"};
 constexpr std::string_view kModuleIdKey{"SPOOR_INSTRUMENTATION_MODULE_ID"};
 constexpr std::string_view kOutputFileKey{"SPOOR_INSTRUMENTATION_OUTPUT_FILE"};
-constexpr std::string_view kOutputFunctionMapFileKey{
-    "SPOOR_INSTRUMENTATION_OUTPUT_FUNCTION_MAP_FILE"};
+constexpr std::string_view kOutputSymbolsFileKey{
+    "SPOOR_INSTRUMENTATION_OUTPUT_SYMBOLS_FILE"};
 constexpr std::string_view kOutputLanguageKey{
     "SPOOR_INSTRUMENTATION_OUTPUT_LANGUAGE"};
 

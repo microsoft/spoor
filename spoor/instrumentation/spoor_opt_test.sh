@@ -7,15 +7,15 @@ set -e
 BASE_PATH="spoor/instrumentation"
 SPOOR_OPT="$BASE_PATH/spoor_opt"
 OUTPUT_IR_FILE="fib_instrumented.ll"
-OUTPUT_INSTRUMENTED_FUNCTION_MAP_FILE="fib.spoor_function_map"
+OUTPUT_INSTRUMENTED_SYMBOLS_FILE="fib.spoor_symbols"
 
 "$SPOOR_OPT" "$BASE_PATH/test_data/fib.ll" \
   --output_language=ir \
-  --output_function_map_file="$OUTPUT_INSTRUMENTED_FUNCTION_MAP_FILE" \
+  --output_symbols_file="$OUTPUT_INSTRUMENTED_SYMBOLS_FILE" \
   --output_file="$OUTPUT_IR_FILE"
 
-if ! [[ -s "$OUTPUT_INSTRUMENTED_FUNCTION_MAP_FILE" ]]; then
-  echo "The function map file '$OUTPUT_INSTRUMENTED_FUNCTION_MAP_FILE' is" \
+if ! [[ -s "$OUTPUT_INSTRUMENTED_SYMBOLS_FILE" ]]; then
+  echo "The function map file '$OUTPUT_INSTRUMENTED_SYMBOLS_FILE' is" \
       "empty or was not created."
   exit 1
 fi

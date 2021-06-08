@@ -20,6 +20,7 @@ class LocalFileReader final : public FileReader {
   auto operator=(LocalFileReader&&) noexcept -> LocalFileReader& = default;
   ~LocalFileReader() override = default;
 
+  auto Open(const std::filesystem::path& path) -> void override;
   auto Open(const std::filesystem::path& path, std::ios_base::openmode mode)
       -> void override;
   [[nodiscard]] auto IsOpen() const -> bool override;

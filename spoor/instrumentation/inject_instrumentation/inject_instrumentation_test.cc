@@ -5,6 +5,7 @@
 
 #include <array>
 #include <cstdlib>
+#include <ios>
 #include <limits>
 #include <memory>
 #include <sstream>
@@ -14,6 +15,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/strings/str_join.h"
 #include "city_hash/city.h"
 #include "gmock/gmock.h"
 #include "google/protobuf/util/message_differencer.h"
@@ -25,7 +27,10 @@
 #include "llvm/IR/PassManager.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/Support/SourceMgr.h"
-#include "spoor/proto/spoor.pb.h"
+#include "spoor/instrumentation/symbols/symbols.pb.h"
+#include "spoor/instrumentation/symbols/symbols_writer.h"
+#include "spoor/instrumentation/symbols/symbols_writer_mock.h"
+#include "util/file_system/file_reader_mock.h"
 #include "util/numeric.h"
 #include "util/time/clock.h"
 #include "util/time/clock_mock.h"
@@ -34,13 +39,19 @@ namespace {
 
 using google::protobuf::util::MessageDifferencer;
 using google::protobuf::util::TimeUtil;
-using spoor::FunctionInfo;
-using spoor::InstrumentedFunctionMap;
 using spoor::instrumentation::inject_instrumentation::InjectInstrumentation;
+using spoor::instrumentation::symbols::Symbols;
+using spoor::instrumentation::symbols::SymbolsWriter;
+using spoor::instrumentation::symbols::testing::SymbolsWriterMock;
+using testing::_;
 using testing::Return;
+using testing::ReturnRef;
+using util::file_system::testing::FileReaderMock;
 using util::time::SystemClock;
 using util::time::testing::MakeTimePoint;
 using util::time::testing::SystemClockMock;
+using SymbolsWriterResult =
+    spoor::instrumentation::symbols::testing::SymbolsWriterMock::Result;
 
 constexpr std::string_view kUninstrumentedIrFile{
     "spoor/instrumentation/test_data/fib.ll"};
@@ -93,6 +104,10 @@ auto AssertModulesEqual(gsl::not_null<llvm::Module*> computed_module,
   expected_module->setSourceFileName(expected_module_source_file);
 }
 
+MATCHER_P(SymbolsEq, expected, "Symbols are not equal.") {  // NOLINT
+  return MessageDifferencer::Equals(arg, expected);
+}
+
 TEST(InjectInstrumentation, InstrumentsModule) {  // NOLINT
   struct alignas(32) TestCaseConfig {
     std::string_view expected_ir_file;
@@ -104,6 +119,7 @@ TEST(InjectInstrumentation, InstrumentsModule) {  // NOLINT
        {kInstrumentedIrFile, false, true},
        {kInstrumentedInitializedIrFile, true, false},
        {kInstrumentedInitializedEnabledIrFile, true, true}}};
+  const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
 
   for (const auto& config : configs) {
     llvm::SMDiagnostic instrumented_module_diagnostic{};
@@ -120,20 +136,26 @@ TEST(InjectInstrumentation, InstrumentsModule) {  // NOLINT
                                            uninstrumented_module_context);
     ASSERT_NE(parsed_module, nullptr);
 
-    auto output_function_map_stream = std::make_unique<std::ostringstream>();
+    auto file_reader = std::make_unique<FileReaderMock>();
+    auto symbols_writer = std::make_unique<SymbolsWriterMock>();
+    EXPECT_CALL(*symbols_writer, Write(symbols_file_path, _))
+        .WillOnce(Return(SymbolsWriterResult::Ok({})));
     auto system_clock = std::make_unique<SystemClockMock>();
     EXPECT_CALL(*system_clock, Now())
-        .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
-    InjectInstrumentation inject_instrumentation{
-        {.inject_instrumentation = true,
-         .output_function_map_stream = std::move(output_function_map_stream),
-         .system_clock = std::move(system_clock),
-         .function_allow_list = {},
-         .function_blocklist = {},
-         .module_id = {},
-         .min_instruction_count_to_instrument = 0,
-         .initialize_runtime = config.initialize_runtime,
-         .enable_runtime = config.enable_runtime}};
+        .WillRepeatedly(Return(MakeTimePoint<std::chrono::system_clock>(0)));
+    InjectInstrumentation inject_instrumentation{{
+        .inject_instrumentation = true,
+        .file_reader = std::move(file_reader),
+        .symbols_writer = std::move(symbols_writer),
+        .system_clock = std::move(system_clock),
+        .function_allow_list_file_path = {},
+        .function_blocklist_file_path = {},
+        .symbols_file_path = symbols_file_path,
+        .module_id = {},
+        .min_instruction_count_to_instrument = 0,
+        .initialize_runtime = config.initialize_runtime,
+        .enable_runtime = config.enable_runtime,
+    }};
     llvm::ModuleAnalysisManager module_analysis_manager{};
     inject_instrumentation.run(*parsed_module, module_analysis_manager);
     {
@@ -144,193 +166,225 @@ TEST(InjectInstrumentation, InstrumentsModule) {  // NOLINT
   }
 }
 
-TEST(InjectInstrumentation, OutputsInstrumentedFunctionMap) {  // NOLINT
-  const auto make_module_id_hash = [](const std::string_view& module_id) {
+TEST(InjectInstrumentation, OutputsInstrumentedSymbols) {  // NOLINT
+  const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
+  constexpr auto timestamp_0 = 1'607'590'800'000'000'000;
+  constexpr auto timestamp_1 = 1'607'590'900'000'000'000;
+  constexpr auto make_module_id_hash = [](const std::string_view module_id) {
     return static_cast<uint64>(CityHash32(module_id.data(), module_id.size()))
            << 32ULL;
   };
-  const std::vector<std::pair<std::string_view, InstrumentedFunctionMap>>
-      test_cases{
-          {
-              kUninstrumentedIrFile,
-              [&] {
-                constexpr auto module_id{kUninstrumentedIrFile};
-                const auto module_id_hash = make_module_id_hash(module_id);
+  const std::vector<std::pair<std::string_view, Symbols>> test_cases{
+      {
+          kUninstrumentedIrFile,
+          [&] {
+            Symbols symbols{};
+            const std::string module_id{kUninstrumentedIrFile};
+            const auto module_id_hash = make_module_id_hash(module_id);
 
-                InstrumentedFunctionMap expected_instrumented_function_map{};
-                expected_instrumented_function_map.set_module_id(
-                    module_id.data());
-                *expected_instrumented_function_map.mutable_created_at() =
-                    TimeUtil::NanosecondsToTimestamp(0);
-                auto& function_map =
-                    *expected_instrumented_function_map.mutable_function_map();
+            auto& function_symbols_table =
+                *symbols.mutable_function_symbols_table();
 
-                FunctionInfo fibonacci_function_info{};
-                fibonacci_function_info.set_linkage_name("_Z9Fibonaccii");
-                fibonacci_function_info.set_demangled_name("Fibonacci(int)");
-                fibonacci_function_info.set_instrumented(true);
-                function_map[module_id_hash | 0ULL] = fibonacci_function_info;
+            auto& fibonacci_function_infos =
+                function_symbols_table[module_id_hash | 0ULL];
+            auto& fibonacci_function_info =
+                *fibonacci_function_infos.add_function_infos();
+            fibonacci_function_info.set_module_id(module_id);
+            fibonacci_function_info.set_linkage_name("_Z9Fibonaccii");
+            fibonacci_function_info.set_demangled_name("Fibonacci(int)");
+            fibonacci_function_info.set_instrumented(true);
+            *fibonacci_function_info.mutable_created_at() =
+                TimeUtil::NanosecondsToTimestamp(timestamp_0);
 
-                FunctionInfo main_function_info{};
-                main_function_info.set_linkage_name("main");
-                main_function_info.set_demangled_name("main");
-                main_function_info.set_instrumented(true);
-                function_map[module_id_hash | 1ULL] = main_function_info;
+            auto& main_function_infos =
+                function_symbols_table[module_id_hash | 1ULL];
+            auto& main_function_info =
+                *main_function_infos.add_function_infos();
+            main_function_info.set_module_id(module_id);
+            main_function_info.set_linkage_name("main");
+            main_function_info.set_demangled_name("main");
+            main_function_info.set_instrumented(true);
+            *main_function_info.mutable_created_at() =
+                TimeUtil::NanosecondsToTimestamp(timestamp_1);
 
-                return expected_instrumented_function_map;
-              }(),
-          },
-          {
-              kUninstrumentedIrWithDebugInfoCSourceFile,
-              [&] {
-                constexpr auto module_id{
-                    kUninstrumentedIrWithDebugInfoCSourceFile};
-                const auto module_id_hash = make_module_id_hash(module_id);
+            return symbols;
+          }(),
+      },
+      {
+          kUninstrumentedIrWithDebugInfoCSourceFile,
+          [&] {
+            Symbols symbols{};
+            const std::string module_id{
+                kUninstrumentedIrWithDebugInfoCSourceFile};
+            const auto module_id_hash = make_module_id_hash(module_id);
 
-                InstrumentedFunctionMap expected_instrumented_function_map{};
-                expected_instrumented_function_map.set_module_id(
-                    module_id.data());
-                *expected_instrumented_function_map.mutable_created_at() =
-                    TimeUtil::NanosecondsToTimestamp(0);
-                auto& function_map =
-                    *expected_instrumented_function_map.mutable_function_map();
+            auto& function_symbols_table =
+                *symbols.mutable_function_symbols_table();
 
-                FunctionInfo fibonacci_function_info{};
-                fibonacci_function_info.set_linkage_name("Fibonacci");
-                fibonacci_function_info.set_demangled_name("Fibonacci");
-                fibonacci_function_info.set_file_name("fibonacci.c");
-                fibonacci_function_info.set_directory("/path/to/file");
-                fibonacci_function_info.set_line(1);
-                fibonacci_function_info.set_instrumented(true);
-                function_map[module_id_hash | 0ULL] = fibonacci_function_info;
+            auto& fibonacci_function_infos =
+                function_symbols_table[module_id_hash | 0ULL];
+            auto& fibonacci_function_info =
+                *fibonacci_function_infos.add_function_infos();
+            fibonacci_function_info.set_module_id(module_id);
+            fibonacci_function_info.set_linkage_name("Fibonacci");
+            fibonacci_function_info.set_demangled_name("Fibonacci");
+            fibonacci_function_info.set_file_name("fibonacci.c");
+            fibonacci_function_info.set_directory("/path/to/file");
+            fibonacci_function_info.set_line(1);
+            fibonacci_function_info.set_instrumented(true);
+            *fibonacci_function_info.mutable_created_at() =
+                TimeUtil::NanosecondsToTimestamp(timestamp_0);
 
-                FunctionInfo main_function_info{};
-                main_function_info.set_linkage_name("main");
-                main_function_info.set_demangled_name("main");
-                main_function_info.set_file_name("fibonacci.c");
-                main_function_info.set_directory("/path/to/file");
-                main_function_info.set_line(6);
-                main_function_info.set_instrumented(true);
-                function_map[module_id_hash | 1ULL] = main_function_info;
+            auto& main_function_infos =
+                function_symbols_table[module_id_hash | 1ULL];
+            auto& main_function_info =
+                *main_function_infos.add_function_infos();
+            main_function_info.set_module_id(module_id);
+            main_function_info.set_linkage_name("main");
+            main_function_info.set_demangled_name("main");
+            main_function_info.set_file_name("fibonacci.c");
+            main_function_info.set_directory("/path/to/file");
+            main_function_info.set_line(6);
+            main_function_info.set_instrumented(true);
+            *main_function_info.mutable_created_at() =
+                TimeUtil::NanosecondsToTimestamp(timestamp_1);
 
-                return expected_instrumented_function_map;
-              }(),
-          },
-          {
-              kUninstrumentedIrWithDebugInfoCppSourceFile,
-              [&] {
-                constexpr auto module_id{
-                    kUninstrumentedIrWithDebugInfoCppSourceFile};
-                const auto module_id_hash = make_module_id_hash(module_id);
+            return symbols;
+          }(),
+      },
+      {
+          kUninstrumentedIrWithDebugInfoCppSourceFile,
+          [&] {
+            Symbols symbols{};
+            const std::string module_id{
+                kUninstrumentedIrWithDebugInfoCppSourceFile};
+            const auto module_id_hash = make_module_id_hash(module_id);
 
-                InstrumentedFunctionMap expected_instrumented_function_map{};
-                expected_instrumented_function_map.set_module_id(
-                    module_id.data());
-                *expected_instrumented_function_map.mutable_created_at() =
-                    TimeUtil::NanosecondsToTimestamp(0);
-                auto& function_map =
-                    *expected_instrumented_function_map.mutable_function_map();
+            auto& function_symbols_table =
+                *symbols.mutable_function_symbols_table();
 
-                FunctionInfo fibonacci_function_info{};
-                fibonacci_function_info.set_linkage_name("_Z9Fibonaccii");
-                fibonacci_function_info.set_demangled_name("Fibonacci(int)");
-                fibonacci_function_info.set_file_name("fibonacci.cc");
-                fibonacci_function_info.set_directory("/path/to/file");
-                fibonacci_function_info.set_line(1);
-                fibonacci_function_info.set_instrumented(true);
-                function_map[module_id_hash | 0ULL] = fibonacci_function_info;
+            auto& fibonacci_function_infos =
+                function_symbols_table[module_id_hash | 0ULL];
+            auto& fibonacci_function_info =
+                *fibonacci_function_infos.add_function_infos();
+            fibonacci_function_info.set_module_id(module_id);
+            fibonacci_function_info.set_linkage_name("_Z9Fibonaccii");
+            fibonacci_function_info.set_demangled_name("Fibonacci(int)");
+            fibonacci_function_info.set_file_name("fibonacci.cc");
+            fibonacci_function_info.set_directory("/path/to/file");
+            fibonacci_function_info.set_line(1);
+            fibonacci_function_info.set_instrumented(true);
+            *fibonacci_function_info.mutable_created_at() =
+                TimeUtil::NanosecondsToTimestamp(timestamp_0);
 
-                FunctionInfo main_function_info{};
-                main_function_info.set_linkage_name("main");
-                main_function_info.set_demangled_name("main");
-                main_function_info.set_file_name("fibonacci.cc");
-                main_function_info.set_directory("/path/to/file");
-                main_function_info.set_line(6);
-                main_function_info.set_instrumented(true);
-                function_map[module_id_hash | 1ULL] = main_function_info;
+            auto& main_function_infos =
+                function_symbols_table[module_id_hash | 1ULL];
+            auto& main_function_info =
+                *main_function_infos.add_function_infos();
+            main_function_info.set_module_id(module_id);
+            main_function_info.set_linkage_name("main");
+            main_function_info.set_demangled_name("main");
+            main_function_info.set_file_name("fibonacci.cc");
+            main_function_info.set_directory("/path/to/file");
+            main_function_info.set_line(6);
+            fibonacci_function_info.set_instrumented(true);
+            main_function_info.set_instrumented(true);
+            *main_function_info.mutable_created_at() =
+                TimeUtil::NanosecondsToTimestamp(timestamp_1);
 
-                return expected_instrumented_function_map;
-              }(),
-          },
-          {
-              kUninstrumentedIrWithDebugInfoObjcSourceFile,
-              [&] {
-                constexpr auto module_id{
-                    kUninstrumentedIrWithDebugInfoObjcSourceFile};
-                const auto module_id_hash = make_module_id_hash(module_id);
+            return symbols;
+          }(),
+      },
+      {
+          kUninstrumentedIrWithDebugInfoObjcSourceFile,
+          [&] {
+            Symbols symbols{};
+            const std::string module_id{
+                kUninstrumentedIrWithDebugInfoObjcSourceFile};
+            const auto module_id_hash = make_module_id_hash(module_id);
 
-                InstrumentedFunctionMap expected_instrumented_function_map{};
-                expected_instrumented_function_map.set_module_id(
-                    module_id.data());
-                *expected_instrumented_function_map.mutable_created_at() =
-                    TimeUtil::NanosecondsToTimestamp(0);
-                auto& function_map =
-                    *expected_instrumented_function_map.mutable_function_map();
+            auto& function_symbols_table =
+                *symbols.mutable_function_symbols_table();
 
-                FunctionInfo fibonacci_function_info{};
-                fibonacci_function_info.set_linkage_name(
-                    "\001+[Fibonacci compute:]");
-                fibonacci_function_info.set_demangled_name(
-                    "+[Fibonacci compute:]");
-                fibonacci_function_info.set_file_name("fibonacci.m");
-                fibonacci_function_info.set_directory("/path/to/file");
-                fibonacci_function_info.set_line(6);
-                fibonacci_function_info.set_instrumented(true);
-                function_map[module_id_hash | 0ULL] = fibonacci_function_info;
+            auto& fibonacci_function_infos =
+                function_symbols_table[module_id_hash | 0ULL];
+            auto& fibonacci_function_info =
+                *fibonacci_function_infos.add_function_infos();
+            fibonacci_function_info.set_module_id(module_id);
+            fibonacci_function_info.set_linkage_name(
+                "\001+[Fibonacci compute:]");
+            fibonacci_function_info.set_demangled_name("+[Fibonacci compute:]");
+            fibonacci_function_info.set_file_name("fibonacci.m");
+            fibonacci_function_info.set_directory("/path/to/file");
+            fibonacci_function_info.set_line(6);
+            fibonacci_function_info.set_instrumented(true);
+            *fibonacci_function_info.mutable_created_at() =
+                TimeUtil::NanosecondsToTimestamp(timestamp_0);
 
-                FunctionInfo main_function_info{};
-                main_function_info.set_linkage_name("main");
-                main_function_info.set_demangled_name("main");
-                main_function_info.set_file_name("fibonacci.m");
-                main_function_info.set_directory("/path/to/file");
-                main_function_info.set_line(12);
-                main_function_info.set_instrumented(true);
-                function_map[module_id_hash | 1ULL] = main_function_info;
+            auto& main_function_infos =
+                function_symbols_table[module_id_hash | 1ULL];
+            auto& main_function_info =
+                *main_function_infos.add_function_infos();
+            main_function_info.set_module_id(module_id);
+            main_function_info.set_linkage_name("main");
+            main_function_info.set_demangled_name("main");
+            main_function_info.set_file_name("fibonacci.m");
+            main_function_info.set_directory("/path/to/file");
+            main_function_info.set_line(12);
+            main_function_info.set_instrumented(true);
+            *main_function_info.mutable_created_at() =
+                TimeUtil::NanosecondsToTimestamp(timestamp_1);
 
-                return expected_instrumented_function_map;
-              }(),
-          },
-          {
-              kUninstrumentedIrWithDebugInfoSwiftSourceFile,
-              [&] {
-                constexpr auto module_id{
-                    kUninstrumentedIrWithDebugInfoSwiftSourceFile};
-                const auto module_id_hash = make_module_id_hash(module_id);
+            return symbols;
+          }(),
+      },
+      {
+          kUninstrumentedIrWithDebugInfoSwiftSourceFile,
+          [&] {
+            Symbols symbols{};
+            const std::string module_id{
+                kUninstrumentedIrWithDebugInfoSwiftSourceFile};
+            const auto module_id_hash = make_module_id_hash(module_id);
 
-                InstrumentedFunctionMap expected_instrumented_function_map{};
-                expected_instrumented_function_map.set_module_id(
-                    module_id.data());
-                *expected_instrumented_function_map.mutable_created_at() =
-                    TimeUtil::NanosecondsToTimestamp(0);
-                auto& function_map =
-                    *expected_instrumented_function_map.mutable_function_map();
+            auto& function_symbols_table =
+                *symbols.mutable_function_symbols_table();
 
-                FunctionInfo fibonacci_function_info{};
-                fibonacci_function_info.set_linkage_name("$s9fibonacciAAyS2iF");
-                fibonacci_function_info.set_demangled_name(
-                    "fibonacci.fibonacci(Swift.Int) -> Swift.Int");
-                fibonacci_function_info.set_file_name("fibonacci.swift");
-                fibonacci_function_info.set_directory("/path/to/file");
-                fibonacci_function_info.set_line(1);
-                fibonacci_function_info.set_instrumented(true);
-                function_map[module_id_hash | 1ULL] = fibonacci_function_info;
+            auto& main_function_infos =
+                function_symbols_table[module_id_hash | 0ULL];
+            auto& main_function_info =
+                *main_function_infos.add_function_infos();
+            main_function_info.set_module_id(module_id);
+            main_function_info.set_linkage_name("main");
+            main_function_info.set_demangled_name("main");
+            main_function_info.set_file_name("fibonacci.swift");
+            main_function_info.set_directory("/path/to/file");
+            // Swift automatically adds a `main` function and picks the line
+            // number.
+            main_function_info.set_line(1);
+            main_function_info.set_instrumented(true);
+            *main_function_info.mutable_created_at() =
+                TimeUtil::NanosecondsToTimestamp(timestamp_0);
 
-                FunctionInfo main_function_info{};
-                main_function_info.set_linkage_name("main");
-                main_function_info.set_demangled_name("main");
-                main_function_info.set_file_name("fibonacci.swift");
-                main_function_info.set_directory("/path/to/file");
-                // Swift automatically adds a `main` function and picks the line
-                // number.
-                main_function_info.set_line(1);
-                main_function_info.set_instrumented(true);
-                function_map[module_id_hash | 0ULL] = main_function_info;
+            auto& fibonacci_function_infos =
+                function_symbols_table[module_id_hash | 1ULL];
+            auto& fibonacci_function_info =
+                *fibonacci_function_infos.add_function_infos();
+            fibonacci_function_info.set_module_id(module_id);
+            fibonacci_function_info.set_linkage_name("$s9fibonacciAAyS2iF");
+            fibonacci_function_info.set_demangled_name(
+                "fibonacci.fibonacci(Swift.Int) -> Swift.Int");
+            fibonacci_function_info.set_file_name("fibonacci.swift");
+            fibonacci_function_info.set_directory("/path/to/file");
+            fibonacci_function_info.set_line(1);
+            fibonacci_function_info.set_instrumented(true);
+            *fibonacci_function_info.mutable_created_at() =
+                TimeUtil::NanosecondsToTimestamp(timestamp_1);
 
-                return expected_instrumented_function_map;
-              }(),
-          },
-      };
-  for (const auto& [ir_file, expected_instrumented_function_map] : test_cases) {
+            return symbols;
+          }(),
+      },
+  };
+  for (const auto& [ir_file, symbols] : test_cases) {
     llvm::SMDiagnostic instrumented_module_diagnostic{};
     llvm::LLVMContext instrumented_module_context{};
     auto parsed_module =
@@ -338,34 +392,37 @@ TEST(InjectInstrumentation, OutputsInstrumentedFunctionMap) {  // NOLINT
                           instrumented_module_context);
     ASSERT_NE(parsed_module, nullptr);
 
-    auto output_function_map_stream = std::make_unique<std::ostringstream>();
-    auto* output_function_map_buffer = output_function_map_stream->rdbuf();
+    auto file_reader = std::make_unique<FileReaderMock>();
+    auto symbols_writer = std::make_unique<SymbolsWriterMock>();
+    EXPECT_CALL(*symbols_writer, Write(symbols_file_path, SymbolsEq(symbols)))
+        .WillOnce(Return(SymbolsWriterResult::Ok({})));
     auto system_clock = std::make_unique<SystemClockMock>();
     EXPECT_CALL(*system_clock, Now())
-        .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
-    InjectInstrumentation inject_instrumentation{
-        {.inject_instrumentation = true,
-         .output_function_map_stream = std::move(output_function_map_stream),
-         .system_clock = std::move(system_clock),
-         .function_allow_list = {},
-         .function_blocklist = {},
-         .module_id = {},
-         .min_instruction_count_to_instrument = 0,
-         .initialize_runtime = false,
-         .enable_runtime = false}};
+        .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(timestamp_0)))
+        .WillOnce(
+            Return(MakeTimePoint<std::chrono::system_clock>(timestamp_1)));
+    InjectInstrumentation inject_instrumentation{{
+        .inject_instrumentation = true,
+        .file_reader = std::move(file_reader),
+        .symbols_writer = std::move(symbols_writer),
+        .system_clock = std::move(system_clock),
+        .function_allow_list_file_path = {},
+        .function_blocklist_file_path = {},
+        .symbols_file_path = symbols_file_path,
+        .module_id = {},
+        .min_instruction_count_to_instrument = 0,
+        .initialize_runtime = false,
+        .enable_runtime = false,
+    }};
     llvm::ModuleAnalysisManager module_analysis_manager{};
     inject_instrumentation.run(*parsed_module, module_analysis_manager);
-
-    InstrumentedFunctionMap instrumented_function_map{};
-    instrumented_function_map.ParseFromString(
-        output_function_map_buffer->str());
-
-    ASSERT_TRUE(MessageDifferencer::Equals(instrumented_function_map,
-                                           expected_instrumented_function_map));
   }
 }
 
 TEST(InjectInstrumentation, FunctionBlocklist) {  // NOLINT
+  const std::filesystem::path blocklist_file_path{"/path/to/blocklist.txt"};
+  const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
+
   llvm::SMDiagnostic expected_module_diagnostic{};
   llvm::LLVMContext expected_module_context{};
   auto expected_instrumented_module =
@@ -380,20 +437,31 @@ TEST(InjectInstrumentation, FunctionBlocklist) {  // NOLINT
                                          uninstrumented_module_context);
   ASSERT_NE(parsed_module, nullptr);
 
-  auto output_function_map_stream = std::make_unique<std::ostringstream>();
+  std::stringstream blocklist{"_Z9Fibonaccii"};
+  auto file_reader = std::make_unique<FileReaderMock>();
+  EXPECT_CALL(*file_reader, Open(blocklist_file_path));
+  EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(true));
+  EXPECT_CALL(*file_reader, Istream()).WillOnce(ReturnRef(blocklist));
+  EXPECT_CALL(*file_reader, Close());
+  auto symbols_writer = std::make_unique<SymbolsWriterMock>();
+  EXPECT_CALL(*symbols_writer, Write(symbols_file_path, _))
+      .WillOnce(Return(SymbolsWriterResult::Ok({})));
   auto system_clock = std::make_unique<SystemClockMock>();
   EXPECT_CALL(*system_clock, Now())
-      .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
-  InjectInstrumentation inject_instrumentation{
-      {.inject_instrumentation = true,
-       .output_function_map_stream = std::move(output_function_map_stream),
-       .system_clock = std::move(system_clock),
-       .function_allow_list = {},
-       .function_blocklist = {"_Z9Fibonaccii"},
-       .module_id = {},
-       .min_instruction_count_to_instrument = 0,
-       .initialize_runtime = false,
-       .enable_runtime = false}};
+      .WillRepeatedly(Return(MakeTimePoint<std::chrono::system_clock>(0)));
+  InjectInstrumentation inject_instrumentation{{
+      .inject_instrumentation = true,
+      .file_reader = std::move(file_reader),
+      .symbols_writer = std::move(symbols_writer),
+      .system_clock = std::move(system_clock),
+      .function_allow_list_file_path = {},
+      .function_blocklist_file_path = blocklist_file_path,
+      .symbols_file_path = symbols_file_path,
+      .module_id = {},
+      .min_instruction_count_to_instrument = 0,
+      .initialize_runtime = false,
+      .enable_runtime = false,
+  }};
   llvm::ModuleAnalysisManager module_analysis_manager{};
   inject_instrumentation.run(*parsed_module, module_analysis_manager);
   {
@@ -403,6 +471,10 @@ TEST(InjectInstrumentation, FunctionBlocklist) {  // NOLINT
 }
 
 TEST(InjectInstrumentation, FunctionAllowListOverridesBlocklist) {  // NOLINT
+  const std::filesystem::path allow_list_file_path{"/path/to/allow_list.txt"};
+  const std::filesystem::path blocklist_file_path{"/path/to/blocklist.txt"};
+  const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
+
   llvm::SMDiagnostic expected_module_diagnostic{};
   llvm::LLVMContext expected_module_context{};
   auto expected_instrumented_module =
@@ -417,20 +489,35 @@ TEST(InjectInstrumentation, FunctionAllowListOverridesBlocklist) {  // NOLINT
                                          uninstrumented_module_context);
   ASSERT_NE(parsed_module, nullptr);
 
-  auto output_function_map_stream = std::make_unique<std::ostringstream>();
+  std::stringstream allow_list{"_Z9Fibonaccii"};
+  std::stringstream blocklist{"_Z9Fibonaccii"};
+  auto file_reader = std::make_unique<FileReaderMock>();
+  EXPECT_CALL(*file_reader, Open(allow_list_file_path));
+  EXPECT_CALL(*file_reader, Open(blocklist_file_path));
+  EXPECT_CALL(*file_reader, IsOpen()).WillRepeatedly(Return(true));
+  EXPECT_CALL(*file_reader, Istream())
+      .WillOnce(ReturnRef(allow_list))
+      .WillOnce(ReturnRef(blocklist));
+  EXPECT_CALL(*file_reader, Close()).Times(2);
+  auto symbols_writer = std::make_unique<SymbolsWriterMock>();
+  EXPECT_CALL(*symbols_writer, Write(symbols_file_path, _))
+      .WillOnce(Return(SymbolsWriterResult::Ok({})));
   auto system_clock = std::make_unique<SystemClockMock>();
   EXPECT_CALL(*system_clock, Now())
-      .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
-  InjectInstrumentation inject_instrumentation{
-      {.inject_instrumentation = true,
-       .output_function_map_stream = std::move(output_function_map_stream),
-       .system_clock = std::move(system_clock),
-       .function_allow_list = {"_Z9Fibonaccii"},
-       .function_blocklist = {"_Z9Fibonaccii"},
-       .module_id = {},
-       .min_instruction_count_to_instrument = 0,
-       .initialize_runtime = false,
-       .enable_runtime = false}};
+      .WillRepeatedly(Return(MakeTimePoint<std::chrono::system_clock>(0)));
+  InjectInstrumentation inject_instrumentation{{
+      .inject_instrumentation = true,
+      .file_reader = std::move(file_reader),
+      .symbols_writer = std::move(symbols_writer),
+      .system_clock = std::move(system_clock),
+      .function_allow_list_file_path = allow_list_file_path,
+      .function_blocklist_file_path = blocklist_file_path,
+      .symbols_file_path = symbols_file_path,
+      .module_id = {},
+      .min_instruction_count_to_instrument = 0,
+      .initialize_runtime = false,
+      .enable_runtime = false,
+  }};
   llvm::ModuleAnalysisManager module_analysis_manager{};
   inject_instrumentation.run(*parsed_module, module_analysis_manager);
   {
@@ -450,6 +537,8 @@ TEST(InjectInstrumentation, InstructionThreshold) {  // NOLINT
        {kInstrumentedIrFile, 9},
        {kOnlyMainFunctionInstrumentedIrFile, 10},
        {kOnlyMainFunctionInstrumentedIrFile, 11}}};
+  const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
+
   for (const auto& config : configs) {
     llvm::SMDiagnostic expected_module_diagnostic{};
     llvm::LLVMContext expected_module_context{};
@@ -465,20 +554,26 @@ TEST(InjectInstrumentation, InstructionThreshold) {  // NOLINT
                                            uninstrumented_module_context);
     ASSERT_NE(parsed_module, nullptr);
 
-    auto output_function_map_stream = std::make_unique<std::ostringstream>();
+    auto file_reader = std::make_unique<FileReaderMock>();
+    auto symbols_writer = std::make_unique<SymbolsWriterMock>();
+    EXPECT_CALL(*symbols_writer, Write(symbols_file_path, _))
+        .WillOnce(Return(SymbolsWriterResult::Ok({})));
     auto system_clock = std::make_unique<SystemClockMock>();
     EXPECT_CALL(*system_clock, Now())
-        .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
-    InjectInstrumentation inject_instrumentation{
-        {.inject_instrumentation = true,
-         .output_function_map_stream = std::move(output_function_map_stream),
-         .system_clock = std::move(system_clock),
-         .function_allow_list = {},
-         .function_blocklist = {},
-         .module_id = {},
-         .min_instruction_count_to_instrument = config.instruction_threshold,
-         .initialize_runtime = false,
-         .enable_runtime = false}};
+        .WillRepeatedly(Return(MakeTimePoint<std::chrono::system_clock>(0)));
+    InjectInstrumentation inject_instrumentation{{
+        .inject_instrumentation = true,
+        .file_reader = std::move(file_reader),
+        .symbols_writer = std::move(symbols_writer),
+        .system_clock = std::move(system_clock),
+        .function_allow_list_file_path = {},
+        .function_blocklist_file_path = {},
+        .symbols_file_path = symbols_file_path,
+        .module_id = {},
+        .min_instruction_count_to_instrument = config.instruction_threshold,
+        .initialize_runtime = false,
+        .enable_runtime = false,
+    }};
     llvm::ModuleAnalysisManager module_analysis_manager{};
     inject_instrumentation.run(*parsed_module, module_analysis_manager);
     {
@@ -489,7 +584,61 @@ TEST(InjectInstrumentation, InstructionThreshold) {  // NOLINT
   }
 }
 
+TEST(InjectInstrumentation, AllowListOverridesInstructionCount) {  // NOLINT
+  const std::filesystem::path allow_list_file_path{"/path/to/allow_list.txt"};
+  const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
+
+  llvm::SMDiagnostic expected_module_diagnostic{};
+  llvm::LLVMContext expected_module_context{};
+  auto expected_instrumented_module =
+      llvm::parseIRFile(kInstrumentedIrFile.data(), expected_module_diagnostic,
+                        expected_module_context);
+  ASSERT_NE(expected_instrumented_module, nullptr);
+
+  llvm::SMDiagnostic uninstrumented_module_diagnostic{};
+  llvm::LLVMContext uninstrumented_module_context{};
+  auto parsed_module = llvm::parseIRFile(kUninstrumentedIrFile.data(),
+                                         uninstrumented_module_diagnostic,
+                                         uninstrumented_module_context);
+  ASSERT_NE(parsed_module, nullptr);
+
+  std::stringstream allow_list{"_Z9Fibonaccii"};
+  auto file_reader = std::make_unique<FileReaderMock>();
+  EXPECT_CALL(*file_reader, Open(allow_list_file_path));
+  EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(true));
+  EXPECT_CALL(*file_reader, Istream()).WillOnce(ReturnRef(allow_list));
+  EXPECT_CALL(*file_reader, Close());
+  auto symbols_writer = std::make_unique<SymbolsWriterMock>();
+  EXPECT_CALL(*symbols_writer, Write(symbols_file_path, _))
+      .WillOnce(Return(SymbolsWriterResult::Ok({})));
+  auto system_clock = std::make_unique<SystemClockMock>();
+  EXPECT_CALL(*system_clock, Now())
+      .WillRepeatedly(Return(MakeTimePoint<std::chrono::system_clock>(0)));
+  InjectInstrumentation inject_instrumentation{{
+      .inject_instrumentation = true,
+      .file_reader = std::move(file_reader),
+      .symbols_writer = std::move(symbols_writer),
+      .system_clock = std::move(system_clock),
+      .function_allow_list_file_path = allow_list_file_path,
+      .function_blocklist_file_path = {},
+      .symbols_file_path = symbols_file_path,
+      .module_id = {},
+      .min_instruction_count_to_instrument = std::numeric_limits<uint32>::max(),
+      .initialize_runtime = false,
+      .enable_runtime = false,
+  }};
+  llvm::ModuleAnalysisManager module_analysis_manager{};
+  inject_instrumentation.run(*parsed_module, module_analysis_manager);
+  {
+    SCOPED_TRACE("Modules are not equal.");
+    AssertModulesEqual(parsed_module.get(), expected_instrumented_module.get());
+  }
+}
+
 TEST(InjectInstrumentation, AlwaysInstrumentsMain) {  // NOLINT
+  const std::filesystem::path blocklist_file_path{"/path/to/blocklist.txt"};
+  const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
+
   llvm::SMDiagnostic expected_module_diagnostic{};
   llvm::LLVMContext expected_module_context{};
   auto expected_instrumented_module =
@@ -504,21 +653,31 @@ TEST(InjectInstrumentation, AlwaysInstrumentsMain) {  // NOLINT
                                          uninstrumented_module_context);
   ASSERT_NE(parsed_module, nullptr);
 
-  auto output_function_map_stream = std::make_unique<std::ostringstream>();
+  std::stringstream blocklist{absl::StrJoin({"main", "_Z9Fibonaccii"}, "\n")};
+  auto file_reader = std::make_unique<FileReaderMock>();
+  EXPECT_CALL(*file_reader, Open(blocklist_file_path));
+  EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(true));
+  EXPECT_CALL(*file_reader, Istream()).WillOnce(ReturnRef(blocklist));
+  EXPECT_CALL(*file_reader, Close());
+  auto symbols_writer = std::make_unique<SymbolsWriterMock>();
+  EXPECT_CALL(*symbols_writer, Write(symbols_file_path, _))
+      .WillOnce(Return(SymbolsWriterResult::Ok({})));
   auto system_clock = std::make_unique<SystemClockMock>();
   EXPECT_CALL(*system_clock, Now())
-      .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
-  InjectInstrumentation inject_instrumentation{
-      {.inject_instrumentation = true,
-       .output_function_map_stream = std::move(output_function_map_stream),
-       .system_clock = std::move(system_clock),
-       .function_allow_list = {},
-       .function_blocklist = {"main", "_Z9Fibonaccii"},
-       .module_id = {},
-       .min_instruction_count_to_instrument =
-           std::numeric_limits<uint32>::max(),
-       .initialize_runtime = false,
-       .enable_runtime = false}};
+      .WillRepeatedly(Return(MakeTimePoint<std::chrono::system_clock>(0)));
+  InjectInstrumentation inject_instrumentation{{
+      .inject_instrumentation = true,
+      .file_reader = std::move(file_reader),
+      .symbols_writer = std::move(symbols_writer),
+      .system_clock = std::move(system_clock),
+      .function_allow_list_file_path = {},
+      .function_blocklist_file_path = blocklist_file_path,
+      .symbols_file_path = symbols_file_path,
+      .module_id = {},
+      .min_instruction_count_to_instrument = std::numeric_limits<uint32>::max(),
+      .initialize_runtime = false,
+      .enable_runtime = false,
+  }};
   llvm::ModuleAnalysisManager module_analysis_manager{};
   inject_instrumentation.run(*parsed_module, module_analysis_manager);
   {
@@ -528,6 +687,8 @@ TEST(InjectInstrumentation, AlwaysInstrumentsMain) {  // NOLINT
 }
 
 TEST(InjectInstrumentation, DoNotInjectInstrumentationConfig) {  // NOLINT
+  const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
+
   llvm::SMDiagnostic expected_module_diagnostic{};
   llvm::LLVMContext expected_module_context{};
   auto expected_uninstrumented_module =
@@ -542,19 +703,22 @@ TEST(InjectInstrumentation, DoNotInjectInstrumentationConfig) {  // NOLINT
                                          uninstrumented_module_context);
   ASSERT_NE(parsed_module, nullptr);
 
-  auto output_function_map_stream = std::make_unique<std::ostringstream>();
+  auto file_reader = std::make_unique<FileReaderMock>();
+  auto symbols_writer = std::make_unique<SymbolsWriterMock>();
   auto system_clock = std::make_unique<SystemClockMock>();
-  InjectInstrumentation inject_instrumentation{
-      {.inject_instrumentation = false,
-       .output_function_map_stream = std::move(output_function_map_stream),
-       .system_clock = std::move(system_clock),
-       .function_allow_list = {},
-       .function_blocklist = {},
-       .module_id = {},
-       .min_instruction_count_to_instrument =
-           std::numeric_limits<uint32>::max(),
-       .initialize_runtime = false,
-       .enable_runtime = false}};
+  InjectInstrumentation inject_instrumentation{{
+      .inject_instrumentation = false,
+      .file_reader = std::move(file_reader),
+      .symbols_writer = std::move(symbols_writer),
+      .system_clock = std::move(system_clock),
+      .function_allow_list_file_path = {},
+      .function_blocklist_file_path = {},
+      .symbols_file_path = symbols_file_path,
+      .module_id = {},
+      .min_instruction_count_to_instrument = 0,
+      .initialize_runtime = false,
+      .enable_runtime = false,
+  }};
   llvm::ModuleAnalysisManager module_analysis_manager{};
   inject_instrumentation.run(*parsed_module, module_analysis_manager);
   {
@@ -564,46 +728,17 @@ TEST(InjectInstrumentation, DoNotInjectInstrumentationConfig) {  // NOLINT
   }
 }
 
-TEST(InjectInstrumentation, AddsTimestamp) {  // NOLINT
-  llvm::SMDiagnostic module_diagnostic{};
-  llvm::LLVMContext module_context{};
-  auto parsed_module = llvm::parseIRFile(kUninstrumentedIrFile.data(),
-                                         module_diagnostic, module_context);
-  ASSERT_NE(parsed_module, nullptr);
-
-  auto output_function_map_stream = std::make_unique<std::ostringstream>();
-  auto* output_function_map_buffer = output_function_map_stream->rdbuf();
-  const auto nanoseconds = 1'607'590'800'000'000'000;
-  auto system_clock = std::make_unique<SystemClockMock>();
-  EXPECT_CALL(*system_clock, Now())
-      .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(nanoseconds)));
-  InjectInstrumentation inject_instrumentation{
-      {.inject_instrumentation = true,
-       .output_function_map_stream = std::move(output_function_map_stream),
-       .system_clock = std::move(system_clock),
-       .function_allow_list = {},
-       .function_blocklist = {},
-       .min_instruction_count_to_instrument = 0,
-       .initialize_runtime = false,
-       .enable_runtime = false}};
-  llvm::ModuleAnalysisManager module_analysis_manager{};
-  inject_instrumentation.run(*parsed_module, module_analysis_manager);
-
-  InstrumentedFunctionMap instrumented_function_map{};
-  instrumented_function_map.ParseFromString(output_function_map_buffer->str());
-
-  ASSERT_EQ(
-      TimeUtil::TimestampToNanoseconds(instrumented_function_map.created_at()),
-      nanoseconds);
-}
-
 TEST(InjectInstrumentation, ReturnValue) {  // NOLINT
   struct alignas(64) TestCaseConfig {
     std::unordered_set<std::string> function_blocklist;
     bool are_all_preserved;
   };
-  const std::vector<TestCaseConfig> configs{{{}, false},
-                                            {{"_Z9Fibonaccii"}, true}};
+  const std::vector<TestCaseConfig> configs{
+      {.function_blocklist = {}, .are_all_preserved = false},
+      {.function_blocklist = {"_Z9Fibonaccii"}, .are_all_preserved = true}};
+  const std::filesystem::path blocklist_file_path{"/path/to/blocklist.txt"};
+  const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
+
   for (const auto& config : configs) {
     llvm::SMDiagnostic module_diagnostic{};
     llvm::LLVMContext module_context{};
@@ -611,25 +746,289 @@ TEST(InjectInstrumentation, ReturnValue) {  // NOLINT
                                            module_diagnostic, module_context);
     ASSERT_NE(parsed_module, nullptr);
 
-    auto output_function_map_stream = std::make_unique<std::ostringstream>();
+    std::stringstream blocklist{absl::StrJoin(config.function_blocklist, "\n")};
+    auto file_reader = std::make_unique<FileReaderMock>();
+    EXPECT_CALL(*file_reader, Open(blocklist_file_path));
+    EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(true));
+    EXPECT_CALL(*file_reader, Istream()).WillOnce(ReturnRef(blocklist));
+    EXPECT_CALL(*file_reader, Close());
+    auto symbols_writer = std::make_unique<SymbolsWriterMock>();
+    EXPECT_CALL(*symbols_writer, Write(symbols_file_path, _))
+        .WillOnce(Return(SymbolsWriterResult::Ok({})));
     auto system_clock = std::make_unique<SystemClockMock>();
     EXPECT_CALL(*system_clock, Now())
-        .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(0)));
-    InjectInstrumentation inject_instrumentation{
-        {.inject_instrumentation = true,
-         .output_function_map_stream = std::move(output_function_map_stream),
-         .system_clock = std::move(system_clock),
-         .function_allow_list = {},
-         .function_blocklist = config.function_blocklist,
-         .module_id = {},
-         .min_instruction_count_to_instrument = 0,
-         .initialize_runtime = false,
-         .enable_runtime = false}};
+        .WillRepeatedly(Return(MakeTimePoint<std::chrono::system_clock>(0)));
+    InjectInstrumentation inject_instrumentation{{
+        .inject_instrumentation = true,
+        .file_reader = std::move(file_reader),
+        .symbols_writer = std::move(symbols_writer),
+        .system_clock = std::move(system_clock),
+        .function_allow_list_file_path = {},
+        .function_blocklist_file_path = blocklist_file_path,
+        .symbols_file_path = symbols_file_path,
+        .module_id = {},
+        .min_instruction_count_to_instrument = 0,
+        .initialize_runtime = false,
+        .enable_runtime = false,
+    }};
     llvm::ModuleAnalysisManager module_analysis_manager{};
     const auto result =
         inject_instrumentation.run(*parsed_module, module_analysis_manager);
     ASSERT_EQ(result.areAllPreserved(), config.are_all_preserved);
   }
+}
+
+TEST(InjectInstrumentationDeathTest, FailsOnAllowListFileOpenError) {  // NOLINT
+  const std::filesystem::path allow_list_file_path{"/path/to/allow_list.txt"};
+  const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
+
+  llvm::SMDiagnostic module_diagnostic{};
+  llvm::LLVMContext module_context{};
+  auto parsed_module = llvm::parseIRFile(kUninstrumentedIrFile.data(),
+                                         module_diagnostic, module_context);
+  ASSERT_NE(parsed_module, nullptr);
+
+  auto run = [&] {
+    std::stringstream allow_list{};
+    auto file_reader = std::make_unique<FileReaderMock>();
+    EXPECT_CALL(*file_reader, Open(allow_list_file_path));
+    EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(false));
+    auto symbols_writer = std::make_unique<SymbolsWriterMock>();
+    auto system_clock = std::make_unique<SystemClockMock>();
+    InjectInstrumentation inject_instrumentation{{
+        .inject_instrumentation = true,
+        .file_reader = std::move(file_reader),
+        .symbols_writer = std::move(symbols_writer),
+        .system_clock = std::move(system_clock),
+        .function_allow_list_file_path = allow_list_file_path,
+        .function_blocklist_file_path = {},
+        .symbols_file_path = symbols_file_path,
+        .module_id = {},
+        .min_instruction_count_to_instrument = 0,
+        .initialize_runtime = false,
+        .enable_runtime = false,
+    }};
+
+    llvm::ModuleAnalysisManager module_analysis_manager{};
+    inject_instrumentation.run(*parsed_module, module_analysis_manager);
+  };
+  ASSERT_DEATH(  // NOLINT
+      run(),
+      "Failed to open the function allow list file '/path/to/allow_list.txt'.");
+}
+
+// NOLINTNEXTLINE
+TEST(InjectInstrumentationDeathTest, FailsOnAllowListFileReadError) {
+  const std::filesystem::path allow_list_file_path{"/path/to/allow_list.txt"};
+  const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
+
+  llvm::SMDiagnostic module_diagnostic{};
+  llvm::LLVMContext module_context{};
+  auto parsed_module = llvm::parseIRFile(kUninstrumentedIrFile.data(),
+                                         module_diagnostic, module_context);
+  ASSERT_NE(parsed_module, nullptr);
+
+  auto run = [&] {
+    std::stringstream allow_list{};
+    allow_list.setstate(std::ios::failbit);
+    auto file_reader = std::make_unique<FileReaderMock>();
+    EXPECT_CALL(*file_reader, Open(allow_list_file_path));
+    EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(true));
+    EXPECT_CALL(*file_reader, Istream()).WillOnce(ReturnRef(allow_list));
+    EXPECT_CALL(*file_reader, Close());
+    auto symbols_writer = std::make_unique<SymbolsWriterMock>();
+    auto system_clock = std::make_unique<SystemClockMock>();
+    EXPECT_CALL(*system_clock, Now())
+        .WillRepeatedly(Return(MakeTimePoint<std::chrono::system_clock>(0)));
+    InjectInstrumentation inject_instrumentation{{
+        .inject_instrumentation = true,
+        .file_reader = std::move(file_reader),
+        .symbols_writer = std::move(symbols_writer),
+        .system_clock = std::move(system_clock),
+        .function_allow_list_file_path = allow_list_file_path,
+        .function_blocklist_file_path = {},
+        .symbols_file_path = symbols_file_path,
+        .module_id = {},
+        .min_instruction_count_to_instrument = 0,
+        .initialize_runtime = false,
+        .enable_runtime = false,
+    }};
+
+    llvm::ModuleAnalysisManager module_analysis_manager{};
+    inject_instrumentation.run(*parsed_module, module_analysis_manager);
+  };
+  ASSERT_DEATH(  // NOLINT
+      run(),
+      "Failed to read the function allow list file '/path/to/allow_list.txt'.");
+}
+
+// NOLINTNEXTLINE
+TEST(InjectInstrumentationDeathTest, FailsOnBlocklistFileOpenError) {
+  const std::filesystem::path blocklist_file_path{"/path/to/blocklist.txt"};
+  const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
+
+  llvm::SMDiagnostic module_diagnostic{};
+  llvm::LLVMContext module_context{};
+  auto parsed_module = llvm::parseIRFile(kUninstrumentedIrFile.data(),
+                                         module_diagnostic, module_context);
+  ASSERT_NE(parsed_module, nullptr);
+
+  auto run = [&] {
+    std::stringstream blocklist{};
+    auto file_reader = std::make_unique<FileReaderMock>();
+    EXPECT_CALL(*file_reader, Open(blocklist_file_path));
+    EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(false));
+    auto symbols_writer = std::make_unique<SymbolsWriterMock>();
+    auto system_clock = std::make_unique<SystemClockMock>();
+    InjectInstrumentation inject_instrumentation{{
+        .inject_instrumentation = true,
+        .file_reader = std::move(file_reader),
+        .symbols_writer = std::move(symbols_writer),
+        .system_clock = std::move(system_clock),
+        .function_allow_list_file_path = {},
+        .function_blocklist_file_path = blocklist_file_path,
+        .symbols_file_path = symbols_file_path,
+        .module_id = {},
+        .min_instruction_count_to_instrument = 0,
+        .initialize_runtime = false,
+        .enable_runtime = false,
+    }};
+
+    llvm::ModuleAnalysisManager module_analysis_manager{};
+    inject_instrumentation.run(*parsed_module, module_analysis_manager);
+  };
+  ASSERT_DEATH(  // NOLINT
+      run(),
+      "Failed to open the function blocklist file '/path/to/blocklist.txt'.");
+}
+
+// NOLINTNEXTLINE
+TEST(InjectInstrumentationDeathTest, FailsOnBlocklistFileReadError) {
+  const std::filesystem::path blocklist_file_path{"/path/to/blocklist.txt"};
+  const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
+
+  llvm::SMDiagnostic module_diagnostic{};
+  llvm::LLVMContext module_context{};
+  auto parsed_module = llvm::parseIRFile(kUninstrumentedIrFile.data(),
+                                         module_diagnostic, module_context);
+  ASSERT_NE(parsed_module, nullptr);
+
+  auto run = [&] {
+    std::stringstream blocklist{};
+    blocklist.setstate(std::ios::failbit);
+    auto file_reader = std::make_unique<FileReaderMock>();
+    EXPECT_CALL(*file_reader, Open(blocklist_file_path));
+    EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(true));
+    EXPECT_CALL(*file_reader, Istream()).WillOnce(ReturnRef(blocklist));
+    EXPECT_CALL(*file_reader, Close());
+    auto symbols_writer = std::make_unique<SymbolsWriterMock>();
+    auto system_clock = std::make_unique<SystemClockMock>();
+    EXPECT_CALL(*system_clock, Now())
+        .WillRepeatedly(Return(MakeTimePoint<std::chrono::system_clock>(0)));
+    InjectInstrumentation inject_instrumentation{{
+        .inject_instrumentation = true,
+        .file_reader = std::move(file_reader),
+        .symbols_writer = std::move(symbols_writer),
+        .system_clock = std::move(system_clock),
+        .function_allow_list_file_path = {},
+        .function_blocklist_file_path = blocklist_file_path,
+        .symbols_file_path = symbols_file_path,
+        .module_id = {},
+        .min_instruction_count_to_instrument = 0,
+        .initialize_runtime = false,
+        .enable_runtime = false,
+    }};
+
+    llvm::ModuleAnalysisManager module_analysis_manager{};
+    inject_instrumentation.run(*parsed_module, module_analysis_manager);
+  };
+  ASSERT_DEATH(  // NOLINT
+      run(),
+      "Failed to read the function blocklist file '/path/to/blocklist.txt'.");
+}
+
+// NOLINTNEXTLINE
+TEST(InjectInstrumentationDeathTest, FailsOnSymbolsFileOpenError) {
+  const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
+
+  llvm::SMDiagnostic module_diagnostic{};
+  llvm::LLVMContext module_context{};
+  auto parsed_module = llvm::parseIRFile(kUninstrumentedIrFile.data(),
+                                         module_diagnostic, module_context);
+  ASSERT_NE(parsed_module, nullptr);
+
+  auto run = [&] {
+    std::stringstream blocklist{};
+    blocklist.setstate(std::ios::failbit);
+    auto file_reader = std::make_unique<FileReaderMock>();
+    auto symbols_writer = std::make_unique<SymbolsWriterMock>();
+    EXPECT_CALL(*symbols_writer, Write(symbols_file_path, _))
+        .WillOnce(Return(SymbolsWriter::Error::kFailedToOpenFile));
+    auto system_clock = std::make_unique<SystemClockMock>();
+    EXPECT_CALL(*system_clock, Now())
+        .WillRepeatedly(Return(MakeTimePoint<std::chrono::system_clock>(0)));
+    InjectInstrumentation inject_instrumentation{{
+        .inject_instrumentation = true,
+        .file_reader = std::move(file_reader),
+        .symbols_writer = std::move(symbols_writer),
+        .system_clock = std::move(system_clock),
+        .function_allow_list_file_path = {},
+        .function_blocklist_file_path = {},
+        .symbols_file_path = symbols_file_path,
+        .module_id = {},
+        .min_instruction_count_to_instrument = 0,
+        .initialize_runtime = false,
+        .enable_runtime = false,
+    }};
+
+    llvm::ModuleAnalysisManager module_analysis_manager{};
+    inject_instrumentation.run(*parsed_module, module_analysis_manager);
+  };
+  ASSERT_DEATH(  // NOLINT
+      run(), "Failed to open the symbols file '/path/to/file.spoor_symbols'.");
+}
+
+// NOLINTNEXTLINE
+TEST(InjectInstrumentationDeathTest, FailsOnSymbolsFileWriteError) {
+  const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
+
+  llvm::SMDiagnostic module_diagnostic{};
+  llvm::LLVMContext module_context{};
+  auto parsed_module = llvm::parseIRFile(kUninstrumentedIrFile.data(),
+                                         module_diagnostic, module_context);
+  ASSERT_NE(parsed_module, nullptr);
+
+  auto run = [&] {
+    std::stringstream blocklist{};
+    blocklist.setstate(std::ios::failbit);
+    auto file_reader = std::make_unique<FileReaderMock>();
+    auto symbols_writer = std::make_unique<SymbolsWriterMock>();
+    EXPECT_CALL(*symbols_writer, Write(symbols_file_path, _))
+        .WillOnce(Return(SymbolsWriter::Error::kSerializationError));
+    auto system_clock = std::make_unique<SystemClockMock>();
+    EXPECT_CALL(*system_clock, Now())
+        .WillRepeatedly(Return(MakeTimePoint<std::chrono::system_clock>(0)));
+    InjectInstrumentation inject_instrumentation{{
+        .inject_instrumentation = true,
+        .file_reader = std::move(file_reader),
+        .symbols_writer = std::move(symbols_writer),
+        .system_clock = std::move(system_clock),
+        .function_allow_list_file_path = {},
+        .function_blocklist_file_path = {},
+        .symbols_file_path = symbols_file_path,
+        .module_id = {},
+        .min_instruction_count_to_instrument = 0,
+        .initialize_runtime = false,
+        .enable_runtime = false,
+    }};
+
+    llvm::ModuleAnalysisManager module_analysis_manager{};
+    inject_instrumentation.run(*parsed_module, module_analysis_manager);
+  };
+  ASSERT_DEATH(  // NOLINT
+      run(),
+      "Failed to write the instrumentation symbols to "
+      "'/path/to/file.spoor_symbols'.");
 }
 
 }  // namespace

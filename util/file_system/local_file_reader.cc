@@ -10,6 +10,10 @@
 
 namespace util::file_system {
 
+auto LocalFileReader::Open(const std::filesystem::path& path) -> void {
+  ifstream_.open(path.c_str());
+}
+
 auto LocalFileReader::Open(const std::filesystem::path& path,
                            std::ios_base::openmode mode) -> void {
   ifstream_.open(path.c_str(), mode);

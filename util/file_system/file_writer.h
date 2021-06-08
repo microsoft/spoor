@@ -5,6 +5,7 @@
 
 #include <filesystem>
 #include <ios>
+#include <ostream>
 
 #include "gsl/gsl"
 
@@ -19,10 +20,12 @@ class FileWriter {
   auto operator=(FileWriter&&) noexcept -> FileWriter& = default;
   virtual ~FileWriter() = default;
 
+  virtual auto Open(const std::filesystem::path& path) -> void = 0;
   virtual auto Open(const std::filesystem::path& path,
                     std::ios_base::openmode mode) -> void = 0;
   [[nodiscard]] virtual auto IsOpen() const -> bool = 0;
   virtual auto Write(gsl::span<const char> data) -> void = 0;
+  virtual auto Ostream() -> std::ostream& = 0;
   virtual auto Close() -> void = 0;
 };
 

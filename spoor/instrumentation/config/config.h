@@ -28,7 +28,7 @@ struct alignas(128) Config {
   uint32 min_instruction_threshold;
   std::optional<std::string> module_id;
   std::string output_file;
-  std::string output_function_map_file;
+  std::string output_symbols_file;
   OutputLanguage output_language;
 };
 
@@ -66,9 +66,9 @@ constexpr std::string_view kInjectInstrumentationDoc{
     "Inject Spoor instrumentation."};
 constexpr auto kInjectInstrumentationDefaultValue{true};
 
-constexpr std::string_view kOutputFunctionMapFileDoc{
-    "Spoor function map output file."};
-constexpr std::string_view kOutputFunctionMapFileDefaultValue{};
+constexpr std::string_view kOutputSymbolsFileDoc{
+    "Spoor instrumentation symbols output file."};
+constexpr std::string_view kOutputSymbolsFileDefaultValue{};
 
 constexpr std::string_view kMinInstructionThresholdDoc{
     "Minimum number of LLVM IR instructions required to instrument a "

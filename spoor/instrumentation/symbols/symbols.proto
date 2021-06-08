@@ -1,0 +1,29 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+syntax = "proto3";
+
+package spoor.instrumentation.symbols;
+
+import "google/protobuf/timestamp.proto";
+
+message FunctionInfo {
+  optional string module_id = 1;
+  optional string linkage_name = 2;
+  optional string demangled_name = 3;
+  optional string file_name = 4;
+  optional string directory = 5;
+  optional int32 line = 6;
+  optional bool instrumented = 7;
+  optional google.protobuf.Timestamp created_at = 8;
+}
+
+message FunctionInfos {
+  repeated FunctionInfo function_infos = 1;
+}
+
+message Symbols {
+  // A function ID will map to multiple `FunctionInfo`s in the (unlikely) event
+  // of a collision.
+  map<uint64, FunctionInfos> function_symbols_table = 1;
+}

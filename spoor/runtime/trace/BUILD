@@ -52,7 +52,7 @@ cc_test(
 )
 
 cc_test(
-    name = "trace_file_reader_test",
+    name = "trace_reader_test",
     size = "small",
     srcs = ["trace_file_reader_test.cc"],
     copts = SPOOR_DEFAULT_TEST_COPTS,
@@ -72,7 +72,7 @@ cc_test(
 )
 
 cc_test(
-    name = "trace_file_writer_test",
+    name = "trace_writer_test",
     size = "small",
     srcs = ["trace_file_writer_test.cc"],
     copts = SPOOR_DEFAULT_TEST_COPTS,
