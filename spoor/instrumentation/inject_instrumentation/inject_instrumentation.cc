@@ -13,7 +13,6 @@
 #include <utility>
 
 #include "absl/strings/str_format.h"
-#include "city_hash/city.h"
 #include "google/protobuf/timestamp.pb.h"
 #include "google/protobuf/util/time_util.h"
 #include "gsl/gsl"
@@ -28,11 +27,13 @@
 #include "llvm/IR/Type.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "spoor/instrumentation/inject_instrumentation/inject_instrumentation_private.h"
 #include "spoor/instrumentation/instrumentation.h"
 #include "spoor/instrumentation/symbols/symbols.pb.h"
 #include "spoor/instrumentation/symbols/symbols_file_writer.h"
 #include "swift/Demangling/Demangle.h"
 #include "swift/Demangling/Demangler.h"
+#include "util/numeric.h"
 #include "util/time/clock.h"
 
 namespace spoor::instrumentation::inject_instrumentation {
@@ -143,6 +144,7 @@ auto InjectInstrumentation::InstrumentModule(
     const std::unordered_set<std::string>& function_blocklist) const
     -> InjectInstrumentation::InstrumentModuleResult {
   const auto& module_id = llvm_module->getModuleIdentifier();
+  const auto module_hash = internal::ModuleHash(*llvm_module);
 
   Symbols symbols{};
   auto& function_symbols_table = *symbols.mutable_function_symbols_table();
@@ -170,11 +172,10 @@ auto InjectInstrumentation::InstrumentModule(
   const auto log_function_exit = llvm_module->getOrInsertFunction(
       kLogFunctionExitFunctionName.data(), log_function_type);
 
-  const auto make_function_id = [&module_id](const uint64 counter) {
-    const auto module_id_hash = CityHash32(module_id.data(), module_id.size());
+  const auto make_function_id = [module_hash](const uint64 counter) {
     constexpr FunctionId partition{32};
-    static_assert(sizeof(module_id_hash) * 8 == partition);
-    return (static_cast<FunctionId>(module_id_hash) << partition) | counter;
+    static_assert(sizeof(module_hash) * 8 == partition);
+    return (static_cast<FunctionId>(module_hash) << partition) | counter;
   };
 
   uint64 counter{0};

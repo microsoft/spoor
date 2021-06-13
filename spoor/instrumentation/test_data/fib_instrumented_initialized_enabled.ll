@@ -2,7 +2,7 @@
 ; Licensed under the MIT License.
 
 define i32 @_Z9Fibonaccii(i32 %0) {
-  call void @_spoor_runtime_LogFunctionEntry(i64 7304034947084320768)
+  call void @_spoor_runtime_LogFunctionEntry(i64 -166068037236031488)
   %2 = icmp slt i32 %0, 2
   br i1 %2, label %9, label %3
 3:
@@ -11,19 +11,19 @@ define i32 @_Z9Fibonaccii(i32 %0) {
   %6 = add nsw i32 %0, -2
   %7 = tail call i32 @_Z9Fibonaccii(i32 %6)
   %8 = add nsw i32 %7, %5
-  call void @_spoor_runtime_LogFunctionExit(i64 7304034947084320768)
+  call void @_spoor_runtime_LogFunctionExit(i64 -166068037236031488)
   ret i32 %8
 9:
-  call void @_spoor_runtime_LogFunctionExit(i64 7304034947084320768)
+  call void @_spoor_runtime_LogFunctionExit(i64 -166068037236031488)
   ret i32 %0
 }
 
 define i32 @main() {
   call void @_spoor_runtime_Initialize()
   call void @_spoor_runtime_Enable()
-  call void @_spoor_runtime_LogFunctionEntry(i64 7304034947084320769)
+  call void @_spoor_runtime_LogFunctionEntry(i64 -166068037236031487)
   %1 = tail call i32 @_Z9Fibonaccii(i32 7)
-  call void @_spoor_runtime_LogFunctionExit(i64 7304034947084320769)
+  call void @_spoor_runtime_LogFunctionExit(i64 -166068037236031487)
   call void @_spoor_runtime_Deinitialize()
   ret i32 %1
 }

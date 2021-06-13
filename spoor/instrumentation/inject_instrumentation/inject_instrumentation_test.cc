@@ -5,6 +5,7 @@
 
 #include <array>
 #include <cstdlib>
+#include <functional>
 #include <ios>
 #include <limits>
 #include <memory>
@@ -16,7 +17,6 @@
 #include <vector>
 
 #include "absl/strings/str_join.h"
-#include "city_hash/city.h"
 #include "gmock/gmock.h"
 #include "google/protobuf/util/message_differencer.h"
 #include "google/protobuf/util/time_util.h"
@@ -27,6 +27,7 @@
 #include "llvm/IR/PassManager.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/Support/SourceMgr.h"
+#include "spoor/instrumentation/inject_instrumentation/inject_instrumentation_private.h"
 #include "spoor/instrumentation/symbols/symbols.pb.h"
 #include "spoor/instrumentation/symbols/symbols_writer.h"
 #include "spoor/instrumentation/symbols/symbols_writer_mock.h"
@@ -40,6 +41,7 @@ namespace {
 using google::protobuf::util::MessageDifferencer;
 using google::protobuf::util::TimeUtil;
 using spoor::instrumentation::inject_instrumentation::InjectInstrumentation;
+using spoor::instrumentation::inject_instrumentation::internal::ModuleHash;
 using spoor::instrumentation::symbols::Symbols;
 using spoor::instrumentation::symbols::SymbolsWriter;
 using spoor::instrumentation::symbols::testing::SymbolsWriterMock;
@@ -170,227 +172,230 @@ TEST(InjectInstrumentation, OutputsInstrumentedSymbols) {  // NOLINT
   const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
   constexpr auto timestamp_0 = 1'607'590'800'000'000'000;
   constexpr auto timestamp_1 = 1'607'590'900'000'000'000;
-  constexpr auto make_module_id_hash = [](const std::string_view module_id) {
-    return static_cast<uint64>(CityHash32(module_id.data(), module_id.size()))
-           << 32ULL;
+  const auto make_module_hash = [](const llvm::Module& llvm_module) {
+    return static_cast<uint64>(ModuleHash(llvm_module)) << 32ULL;
   };
-  const std::vector<std::pair<std::string_view, Symbols>> test_cases{
-      {
-          kUninstrumentedIrFile,
-          [&] {
-            Symbols symbols{};
-            const std::string module_id{kUninstrumentedIrFile};
-            const auto module_id_hash = make_module_id_hash(module_id);
+  const std::vector<
+      std::pair<std::string_view, std::function<Symbols(const llvm::Module&)>>>
+      test_cases{
+          {
+              kUninstrumentedIrFile,
+              [&](const llvm::Module& llvm_module) {
+                Symbols symbols{};
+                const std::string module_id{kUninstrumentedIrFile};
+                const auto module_hash = make_module_hash(llvm_module);
 
-            auto& function_symbols_table =
-                *symbols.mutable_function_symbols_table();
+                auto& function_symbols_table =
+                    *symbols.mutable_function_symbols_table();
 
-            auto& fibonacci_function_infos =
-                function_symbols_table[module_id_hash | 0ULL];
-            auto& fibonacci_function_info =
-                *fibonacci_function_infos.add_function_infos();
-            fibonacci_function_info.set_module_id(module_id);
-            fibonacci_function_info.set_linkage_name("_Z9Fibonaccii");
-            fibonacci_function_info.set_demangled_name("Fibonacci(int)");
-            fibonacci_function_info.set_instrumented(true);
-            *fibonacci_function_info.mutable_created_at() =
-                TimeUtil::NanosecondsToTimestamp(timestamp_0);
+                auto& fibonacci_function_infos =
+                    function_symbols_table[module_hash | 0ULL];
+                auto& fibonacci_function_info =
+                    *fibonacci_function_infos.add_function_infos();
+                fibonacci_function_info.set_module_id(module_id);
+                fibonacci_function_info.set_linkage_name("_Z9Fibonaccii");
+                fibonacci_function_info.set_demangled_name("Fibonacci(int)");
+                fibonacci_function_info.set_instrumented(true);
+                *fibonacci_function_info.mutable_created_at() =
+                    TimeUtil::NanosecondsToTimestamp(timestamp_0);
 
-            auto& main_function_infos =
-                function_symbols_table[module_id_hash | 1ULL];
-            auto& main_function_info =
-                *main_function_infos.add_function_infos();
-            main_function_info.set_module_id(module_id);
-            main_function_info.set_linkage_name("main");
-            main_function_info.set_demangled_name("main");
-            main_function_info.set_instrumented(true);
-            *main_function_info.mutable_created_at() =
-                TimeUtil::NanosecondsToTimestamp(timestamp_1);
+                auto& main_function_infos =
+                    function_symbols_table[module_hash | 1ULL];
+                auto& main_function_info =
+                    *main_function_infos.add_function_infos();
+                main_function_info.set_module_id(module_id);
+                main_function_info.set_linkage_name("main");
+                main_function_info.set_demangled_name("main");
+                main_function_info.set_instrumented(true);
+                *main_function_info.mutable_created_at() =
+                    TimeUtil::NanosecondsToTimestamp(timestamp_1);
 
-            return symbols;
-          }(),
-      },
-      {
-          kUninstrumentedIrWithDebugInfoCSourceFile,
-          [&] {
-            Symbols symbols{};
-            const std::string module_id{
-                kUninstrumentedIrWithDebugInfoCSourceFile};
-            const auto module_id_hash = make_module_id_hash(module_id);
+                return symbols;
+              },
+          },
+          {
+              kUninstrumentedIrWithDebugInfoCSourceFile,
+              [&](const llvm::Module& llvm_module) {
+                Symbols symbols{};
+                const std::string module_id{
+                    kUninstrumentedIrWithDebugInfoCSourceFile};
+                const auto module_hash = make_module_hash(llvm_module);
 
-            auto& function_symbols_table =
-                *symbols.mutable_function_symbols_table();
+                auto& function_symbols_table =
+                    *symbols.mutable_function_symbols_table();
 
-            auto& fibonacci_function_infos =
-                function_symbols_table[module_id_hash | 0ULL];
-            auto& fibonacci_function_info =
-                *fibonacci_function_infos.add_function_infos();
-            fibonacci_function_info.set_module_id(module_id);
-            fibonacci_function_info.set_linkage_name("Fibonacci");
-            fibonacci_function_info.set_demangled_name("Fibonacci");
-            fibonacci_function_info.set_file_name("fibonacci.c");
-            fibonacci_function_info.set_directory("/path/to/file");
-            fibonacci_function_info.set_line(1);
-            fibonacci_function_info.set_instrumented(true);
-            *fibonacci_function_info.mutable_created_at() =
-                TimeUtil::NanosecondsToTimestamp(timestamp_0);
+                auto& fibonacci_function_infos =
+                    function_symbols_table[module_hash | 0ULL];
+                auto& fibonacci_function_info =
+                    *fibonacci_function_infos.add_function_infos();
+                fibonacci_function_info.set_module_id(module_id);
+                fibonacci_function_info.set_linkage_name("Fibonacci");
+                fibonacci_function_info.set_demangled_name("Fibonacci");
+                fibonacci_function_info.set_file_name("fibonacci.c");
+                fibonacci_function_info.set_directory("/path/to/file");
+                fibonacci_function_info.set_line(1);
+                fibonacci_function_info.set_instrumented(true);
+                *fibonacci_function_info.mutable_created_at() =
+                    TimeUtil::NanosecondsToTimestamp(timestamp_0);
 
-            auto& main_function_infos =
-                function_symbols_table[module_id_hash | 1ULL];
-            auto& main_function_info =
-                *main_function_infos.add_function_infos();
-            main_function_info.set_module_id(module_id);
-            main_function_info.set_linkage_name("main");
-            main_function_info.set_demangled_name("main");
-            main_function_info.set_file_name("fibonacci.c");
-            main_function_info.set_directory("/path/to/file");
-            main_function_info.set_line(6);
-            main_function_info.set_instrumented(true);
-            *main_function_info.mutable_created_at() =
-                TimeUtil::NanosecondsToTimestamp(timestamp_1);
+                auto& main_function_infos =
+                    function_symbols_table[module_hash | 1ULL];
+                auto& main_function_info =
+                    *main_function_infos.add_function_infos();
+                main_function_info.set_module_id(module_id);
+                main_function_info.set_linkage_name("main");
+                main_function_info.set_demangled_name("main");
+                main_function_info.set_file_name("fibonacci.c");
+                main_function_info.set_directory("/path/to/file");
+                main_function_info.set_line(6);
+                main_function_info.set_instrumented(true);
+                *main_function_info.mutable_created_at() =
+                    TimeUtil::NanosecondsToTimestamp(timestamp_1);
 
-            return symbols;
-          }(),
-      },
-      {
-          kUninstrumentedIrWithDebugInfoCppSourceFile,
-          [&] {
-            Symbols symbols{};
-            const std::string module_id{
-                kUninstrumentedIrWithDebugInfoCppSourceFile};
-            const auto module_id_hash = make_module_id_hash(module_id);
+                return symbols;
+              },
+          },
+          {
+              kUninstrumentedIrWithDebugInfoCppSourceFile,
+              [&](const llvm::Module& llvm_module) {
+                Symbols symbols{};
+                const std::string module_id{
+                    kUninstrumentedIrWithDebugInfoCppSourceFile};
+                const auto module_hash = make_module_hash(llvm_module);
 
-            auto& function_symbols_table =
-                *symbols.mutable_function_symbols_table();
+                auto& function_symbols_table =
+                    *symbols.mutable_function_symbols_table();
 
-            auto& fibonacci_function_infos =
-                function_symbols_table[module_id_hash | 0ULL];
-            auto& fibonacci_function_info =
-                *fibonacci_function_infos.add_function_infos();
-            fibonacci_function_info.set_module_id(module_id);
-            fibonacci_function_info.set_linkage_name("_Z9Fibonaccii");
-            fibonacci_function_info.set_demangled_name("Fibonacci(int)");
-            fibonacci_function_info.set_file_name("fibonacci.cc");
-            fibonacci_function_info.set_directory("/path/to/file");
-            fibonacci_function_info.set_line(1);
-            fibonacci_function_info.set_instrumented(true);
-            *fibonacci_function_info.mutable_created_at() =
-                TimeUtil::NanosecondsToTimestamp(timestamp_0);
+                auto& fibonacci_function_infos =
+                    function_symbols_table[module_hash | 0ULL];
+                auto& fibonacci_function_info =
+                    *fibonacci_function_infos.add_function_infos();
+                fibonacci_function_info.set_module_id(module_id);
+                fibonacci_function_info.set_linkage_name("_Z9Fibonaccii");
+                fibonacci_function_info.set_demangled_name("Fibonacci(int)");
+                fibonacci_function_info.set_file_name("fibonacci.cc");
+                fibonacci_function_info.set_directory("/path/to/file");
+                fibonacci_function_info.set_line(1);
+                fibonacci_function_info.set_instrumented(true);
+                *fibonacci_function_info.mutable_created_at() =
+                    TimeUtil::NanosecondsToTimestamp(timestamp_0);
 
-            auto& main_function_infos =
-                function_symbols_table[module_id_hash | 1ULL];
-            auto& main_function_info =
-                *main_function_infos.add_function_infos();
-            main_function_info.set_module_id(module_id);
-            main_function_info.set_linkage_name("main");
-            main_function_info.set_demangled_name("main");
-            main_function_info.set_file_name("fibonacci.cc");
-            main_function_info.set_directory("/path/to/file");
-            main_function_info.set_line(6);
-            fibonacci_function_info.set_instrumented(true);
-            main_function_info.set_instrumented(true);
-            *main_function_info.mutable_created_at() =
-                TimeUtil::NanosecondsToTimestamp(timestamp_1);
+                auto& main_function_infos =
+                    function_symbols_table[module_hash | 1ULL];
+                auto& main_function_info =
+                    *main_function_infos.add_function_infos();
+                main_function_info.set_module_id(module_id);
+                main_function_info.set_linkage_name("main");
+                main_function_info.set_demangled_name("main");
+                main_function_info.set_file_name("fibonacci.cc");
+                main_function_info.set_directory("/path/to/file");
+                main_function_info.set_line(6);
+                fibonacci_function_info.set_instrumented(true);
+                main_function_info.set_instrumented(true);
+                *main_function_info.mutable_created_at() =
+                    TimeUtil::NanosecondsToTimestamp(timestamp_1);
 
-            return symbols;
-          }(),
-      },
-      {
-          kUninstrumentedIrWithDebugInfoObjcSourceFile,
-          [&] {
-            Symbols symbols{};
-            const std::string module_id{
-                kUninstrumentedIrWithDebugInfoObjcSourceFile};
-            const auto module_id_hash = make_module_id_hash(module_id);
+                return symbols;
+              },
+          },
+          {
+              kUninstrumentedIrWithDebugInfoObjcSourceFile,
+              [&](const llvm::Module& llvm_module) {
+                Symbols symbols{};
+                const std::string module_id{
+                    kUninstrumentedIrWithDebugInfoObjcSourceFile};
+                const auto module_hash = make_module_hash(llvm_module);
 
-            auto& function_symbols_table =
-                *symbols.mutable_function_symbols_table();
+                auto& function_symbols_table =
+                    *symbols.mutable_function_symbols_table();
 
-            auto& fibonacci_function_infos =
-                function_symbols_table[module_id_hash | 0ULL];
-            auto& fibonacci_function_info =
-                *fibonacci_function_infos.add_function_infos();
-            fibonacci_function_info.set_module_id(module_id);
-            fibonacci_function_info.set_linkage_name(
-                "\001+[Fibonacci compute:]");
-            fibonacci_function_info.set_demangled_name("+[Fibonacci compute:]");
-            fibonacci_function_info.set_file_name("fibonacci.m");
-            fibonacci_function_info.set_directory("/path/to/file");
-            fibonacci_function_info.set_line(6);
-            fibonacci_function_info.set_instrumented(true);
-            *fibonacci_function_info.mutable_created_at() =
-                TimeUtil::NanosecondsToTimestamp(timestamp_0);
+                auto& fibonacci_function_infos =
+                    function_symbols_table[module_hash | 0ULL];
+                auto& fibonacci_function_info =
+                    *fibonacci_function_infos.add_function_infos();
+                fibonacci_function_info.set_module_id(module_id);
+                fibonacci_function_info.set_linkage_name(
+                    "\001+[Fibonacci compute:]");
+                fibonacci_function_info.set_demangled_name(
+                    "+[Fibonacci compute:]");
+                fibonacci_function_info.set_file_name("fibonacci.m");
+                fibonacci_function_info.set_directory("/path/to/file");
+                fibonacci_function_info.set_line(6);
+                fibonacci_function_info.set_instrumented(true);
+                *fibonacci_function_info.mutable_created_at() =
+                    TimeUtil::NanosecondsToTimestamp(timestamp_0);
 
-            auto& main_function_infos =
-                function_symbols_table[module_id_hash | 1ULL];
-            auto& main_function_info =
-                *main_function_infos.add_function_infos();
-            main_function_info.set_module_id(module_id);
-            main_function_info.set_linkage_name("main");
-            main_function_info.set_demangled_name("main");
-            main_function_info.set_file_name("fibonacci.m");
-            main_function_info.set_directory("/path/to/file");
-            main_function_info.set_line(12);
-            main_function_info.set_instrumented(true);
-            *main_function_info.mutable_created_at() =
-                TimeUtil::NanosecondsToTimestamp(timestamp_1);
+                auto& main_function_infos =
+                    function_symbols_table[module_hash | 1ULL];
+                auto& main_function_info =
+                    *main_function_infos.add_function_infos();
+                main_function_info.set_module_id(module_id);
+                main_function_info.set_linkage_name("main");
+                main_function_info.set_demangled_name("main");
+                main_function_info.set_file_name("fibonacci.m");
+                main_function_info.set_directory("/path/to/file");
+                main_function_info.set_line(12);
+                main_function_info.set_instrumented(true);
+                *main_function_info.mutable_created_at() =
+                    TimeUtil::NanosecondsToTimestamp(timestamp_1);
 
-            return symbols;
-          }(),
-      },
-      {
-          kUninstrumentedIrWithDebugInfoSwiftSourceFile,
-          [&] {
-            Symbols symbols{};
-            const std::string module_id{
-                kUninstrumentedIrWithDebugInfoSwiftSourceFile};
-            const auto module_id_hash = make_module_id_hash(module_id);
+                return symbols;
+              },
+          },
+          {
+              kUninstrumentedIrWithDebugInfoSwiftSourceFile,
+              [&](const llvm::Module& llvm_module) {
+                Symbols symbols{};
+                const std::string module_id{
+                    kUninstrumentedIrWithDebugInfoSwiftSourceFile};
+                const auto module_hash = make_module_hash(llvm_module);
 
-            auto& function_symbols_table =
-                *symbols.mutable_function_symbols_table();
+                auto& function_symbols_table =
+                    *symbols.mutable_function_symbols_table();
 
-            auto& main_function_infos =
-                function_symbols_table[module_id_hash | 0ULL];
-            auto& main_function_info =
-                *main_function_infos.add_function_infos();
-            main_function_info.set_module_id(module_id);
-            main_function_info.set_linkage_name("main");
-            main_function_info.set_demangled_name("main");
-            main_function_info.set_file_name("fibonacci.swift");
-            main_function_info.set_directory("/path/to/file");
-            // Swift automatically adds a `main` function and picks the line
-            // number.
-            main_function_info.set_line(1);
-            main_function_info.set_instrumented(true);
-            *main_function_info.mutable_created_at() =
-                TimeUtil::NanosecondsToTimestamp(timestamp_0);
+                auto& main_function_infos =
+                    function_symbols_table[module_hash | 0ULL];
+                auto& main_function_info =
+                    *main_function_infos.add_function_infos();
+                main_function_info.set_module_id(module_id);
+                main_function_info.set_linkage_name("main");
+                main_function_info.set_demangled_name("main");
+                main_function_info.set_file_name("fibonacci.swift");
+                main_function_info.set_directory("/path/to/file");
+                // Swift automatically adds a `main` function and picks the line
+                // number.
+                main_function_info.set_line(1);
+                main_function_info.set_instrumented(true);
+                *main_function_info.mutable_created_at() =
+                    TimeUtil::NanosecondsToTimestamp(timestamp_0);
 
-            auto& fibonacci_function_infos =
-                function_symbols_table[module_id_hash | 1ULL];
-            auto& fibonacci_function_info =
-                *fibonacci_function_infos.add_function_infos();
-            fibonacci_function_info.set_module_id(module_id);
-            fibonacci_function_info.set_linkage_name("$s9fibonacciAAyS2iF");
-            fibonacci_function_info.set_demangled_name(
-                "fibonacci.fibonacci(Swift.Int) -> Swift.Int");
-            fibonacci_function_info.set_file_name("fibonacci.swift");
-            fibonacci_function_info.set_directory("/path/to/file");
-            fibonacci_function_info.set_line(1);
-            fibonacci_function_info.set_instrumented(true);
-            *fibonacci_function_info.mutable_created_at() =
-                TimeUtil::NanosecondsToTimestamp(timestamp_1);
+                auto& fibonacci_function_infos =
+                    function_symbols_table[module_hash | 1ULL];
+                auto& fibonacci_function_info =
+                    *fibonacci_function_infos.add_function_infos();
+                fibonacci_function_info.set_module_id(module_id);
+                fibonacci_function_info.set_linkage_name("$s9fibonacciAAyS2iF");
+                fibonacci_function_info.set_demangled_name(
+                    "fibonacci.fibonacci(Swift.Int) -> Swift.Int");
+                fibonacci_function_info.set_file_name("fibonacci.swift");
+                fibonacci_function_info.set_directory("/path/to/file");
+                fibonacci_function_info.set_line(1);
+                fibonacci_function_info.set_instrumented(true);
+                *fibonacci_function_info.mutable_created_at() =
+                    TimeUtil::NanosecondsToTimestamp(timestamp_1);
 
-            return symbols;
-          }(),
-      },
-  };
-  for (const auto& [ir_file, symbols] : test_cases) {
+                return symbols;
+              },
+          },
+      };
+  for (const auto& [ir_file, make_symbols] : test_cases) {
     llvm::SMDiagnostic instrumented_module_diagnostic{};
     llvm::LLVMContext instrumented_module_context{};
     auto parsed_module =
         llvm::parseIRFile(ir_file.data(), instrumented_module_diagnostic,
                           instrumented_module_context);
     ASSERT_NE(parsed_module, nullptr);
+    const auto symbols = make_symbols(*parsed_module);
 
     auto file_reader = std::make_unique<FileReaderMock>();
     auto symbols_writer = std::make_unique<SymbolsWriterMock>();

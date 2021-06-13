@@ -53,6 +53,7 @@ cc_binary(
         "@com_google_absl//absl/strings",
         "@com_google_protobuf//:protobuf",
         "@com_microsoft_gsl//:gsl",
+        "@llvm-project//llvm:BitWriter",
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Passes",
         "@llvm-project//llvm:Support",
