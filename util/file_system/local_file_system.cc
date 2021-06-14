@@ -23,6 +23,15 @@ auto LocalFileSystem::IsRegularFile(const std::filesystem::path& path) const
   return is_regular_file;
 }
 
+auto LocalFileSystem::IsDirectory(const std::filesystem::path& path) const
+    -> util::result::Result<bool, std::error_code> {
+  std::error_code error_code{};
+  const auto is_directory = std::filesystem::is_directory(path, error_code);
+  const auto error = static_cast<bool>(error_code);
+  if (error) return error_code;
+  return is_directory;
+}
+
 auto LocalFileSystem::FileSize(const std::filesystem::path& path) const
     -> util::result::Result<std::uintmax_t, std::error_code> {
   std::error_code error_code{};

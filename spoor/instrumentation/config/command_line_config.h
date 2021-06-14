@@ -32,6 +32,7 @@ ABSL_DECLARE_FLAG(                                                 // NOLINT
     spoor::instrumentation::config::OutputLanguage, output_language);
 
 namespace spoor::instrumentation::config {
+
 auto ConfigFromCommandLineOrEnv(int argc, char** argv,
                                 const util::env::GetEnv& get_env = std::getenv)
     -> std::pair<Config, std::vector<char*>>;

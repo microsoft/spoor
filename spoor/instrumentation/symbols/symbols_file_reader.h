@@ -4,8 +4,8 @@
 #pragma once
 
 #include <filesystem>
+#include <memory>
 
-#include "gsl/gsl"
 #include "spoor/instrumentation/symbols/symbols_reader.h"
 #include "util/file_system/file_reader.h"
 
@@ -14,7 +14,7 @@ namespace spoor::instrumentation::symbols {
 class SymbolsFileReader final : public SymbolsReader {
  public:
   struct Options {
-    gsl::not_null<util::file_system::FileReader*> file_reader;
+    std::unique_ptr<util::file_system::FileReader> file_reader;
   };
 
   explicit SymbolsFileReader(Options options);

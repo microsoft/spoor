@@ -130,6 +130,21 @@ http_archive(
 )
 
 http_archive(
+    # Perfetto's build config requires deviating from the naming convention.
+    name = "perfetto",
+    sha256 = "9f7f64733eac7021c71742635dba8db888f668af236f62dcf76742318b682c47",
+    strip_prefix = "perfetto-15.0",
+    urls = ["https://github.com/google/perfetto/archive/v15.0.tar.gz"],
+)
+
+new_local_repository(
+    # Perfetto's build config requires deviating from the naming convention.
+    name = "perfetto_cfg",
+    build_file_content = "",
+    path = "toolchain/perfetto_overrides",
+)
+
+http_archive(
     name = "com_google_googletest",
     sha256 = "9dc9157a9a1551ec7a7e43daea9a694a0bb5fb8bec81235d8a1e6ef64c716dcb",
     strip_prefix = "googletest-release-1.10.0",
@@ -218,6 +233,14 @@ http_archive(
     sha256 = "dec60361d82b7d551ffe0f3e3d8d381047f91550c635accf2ec7b858483358ba",
     strip_prefix = "wikipedia-ios-releases-6.8.1",
     url = "https://github.com/wikimedia/wikipedia-ios/archive/refs/tags/releases/6.8.1.tar.gz",
+)
+
+http_file(
+    name = "dev_perfetto_trace_processor",
+    downloaded_file_path = "trace_processor",
+    executable = True,
+    sha256 = "1e5371913f51e65cc3679c00ab818e82acd48b9dbdd4321d59e55355a40eac66",
+    urls = ["https://get.perfetto.dev/trace_processor"],
 )
 
 http_file(

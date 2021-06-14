@@ -48,7 +48,7 @@ constexpr std::string_view kStdinFileName{"-"};
 constexpr std::string_view kVersion{"%s %s\nBased on LLVM %d.%d.%d\n"};
 constexpr std::string_view kUsage{
     "Transform LLVM Bitcode/IR by injecting Spoor instrumentation.\n\n"
-    "USAGE: %1$s [options] [input_file]\n\n"
+    "USAGE: %1$s [options...] [input_file]\n\n"
     "EXAMPLES\n"
     "$ %1$s source.bc --output_file=instrumented_source.bc\n"
     "$ clang++ source.cc -c -emit-llvm -o - | %1$s | "
