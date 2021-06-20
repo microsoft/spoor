@@ -130,6 +130,14 @@ http_archive(
 )
 
 http_archive(
+    name = "com_marzer_tomlplusplus",
+    build_file = "//toolchain:tomlplusplus.BUILD",
+    sha256 = "d7c28b25374241afa08c60183717d3025aa8abffe1030928dc7e1d2143852da1",
+    strip_prefix = "tomlplusplus-2.4.0",
+    url = "https://github.com/marzer/tomlplusplus/archive/refs/tags/v2.4.0.tar.gz",
+)
+
+http_archive(
     # Perfetto's build config requires deviating from the naming convention.
     name = "perfetto",
     sha256 = "9f7f64733eac7021c71742635dba8db888f668af236f62dcf76742318b682c47",

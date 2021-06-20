@@ -15,7 +15,8 @@ message FunctionInfo {
   optional string directory = 5;
   optional int32 line = 6;
   optional bool instrumented = 7;
-  optional google.protobuf.Timestamp created_at = 8;
+  optional string instrumented_reason = 9;
+  optional google.protobuf.Timestamp created_at = 10;
 }
 
 message FunctionInfos {

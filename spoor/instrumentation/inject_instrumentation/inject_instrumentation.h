@@ -19,10 +19,10 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Passes/PassPlugin.h"
+#include "spoor/instrumentation/filters/filters.h"
+#include "spoor/instrumentation/filters/filters_reader.h"
 #include "spoor/instrumentation/symbols/symbols.pb.h"
 #include "spoor/instrumentation/symbols/symbols_writer.h"
-#include "util/file_system/file_reader.h"
-#include "util/file_system/file_writer.h"
 #include "util/numeric.h"
 #include "util/time/clock.h"
 
@@ -33,14 +33,12 @@ class InjectInstrumentation
  public:
   struct Options {
     bool inject_instrumentation;
-    std::unique_ptr<util::file_system::FileReader> file_reader;
+    std::unique_ptr<filters::FiltersReader> filters_reader;
     std::unique_ptr<symbols::SymbolsWriter> symbols_writer;
     std::unique_ptr<util::time::SystemClock> system_clock;
-    std::optional<std::filesystem::path> function_allow_list_file_path;
-    std::optional<std::filesystem::path> function_blocklist_file_path;
+    std::optional<std::filesystem::path> filters_file_path;
     std::filesystem::path symbols_file_path;
     std::optional<std::string> module_id;
-    uint32 min_instruction_count_to_instrument;
     bool initialize_runtime;
     bool enable_runtime;
   };
@@ -73,10 +71,8 @@ class InjectInstrumentation
     kReadError,
   };
 
-  [[nodiscard]] auto InstrumentModule(
-      gsl::not_null<llvm::Module*> llvm_module,
-      const std::unordered_set<std::string>& function_allow_list,
-      const std::unordered_set<std::string>& function_blocklist) const
+  [[nodiscard]] auto InstrumentModule(gsl::not_null<llvm::Module*> llvm_module,
+                                      const filters::Filters& filters) const
       -> InstrumentModuleResult;
   [[nodiscard]] auto ReadFileLinesToSet(const std::filesystem::path& file_path)
       const -> util::result::Result<std::unordered_set<std::string>,
