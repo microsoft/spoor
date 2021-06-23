@@ -21,12 +21,10 @@ namespace {
 using spoor::instrumentation::config::Config;
 using spoor::instrumentation::config::ConfigFromCommandLineOrEnv;
 using spoor::instrumentation::config::kEnableRuntimeKey;
+using spoor::instrumentation::config::kFiltersFileKey;
 using spoor::instrumentation::config::kForceBinaryOutputKey;
-using spoor::instrumentation::config::kFunctionAllowListFileKey;
-using spoor::instrumentation::config::kFunctionBlocklistFileKey;
 using spoor::instrumentation::config::kInitializeRuntimeKey;
 using spoor::instrumentation::config::kInjectInstrumentationKey;
-using spoor::instrumentation::config::kMinInstructionThresholdKey;
 using spoor::instrumentation::config::kModuleIdKey;
 using spoor::instrumentation::config::kOutputFileKey;
 using spoor::instrumentation::config::kOutputLanguageKey;
@@ -53,25 +51,21 @@ TEST(CommandLineConfig, ParsesCommandLine) {  // NOLINT
   };
   const Config expected_config{
       .enable_runtime = false,
+      .filters_file = "/path/to/filters.toml",
       .force_binary_output = true,
-      .function_allow_list_file = "/path/to/allow_list.txt",
-      .function_blocklist_file = "/path/to/blocklist.txt",
       .initialize_runtime = false,
       .inject_instrumentation = false,
-      .min_instruction_threshold = 42,
       .module_id = "ModuleId",
       .output_file = "/path/to/output_file.ll",
       .output_symbols_file = "/path/to/file.spoor_symbols",
       .output_language = OutputLanguage::kIr};
-  auto argv =
-      MakeArgv({"spoor_opt", "--enable_runtime=false",
-                "--function_allow_list_file=/path/to/allow_list.txt",
-                "--function_blocklist_file=/path/to/blocklist.txt",
-                "--initialize_runtime=false", "--inject_instrumentation=false",
-                "--min_instruction_threshold=42", "--module_id=ModuleId",
-                "--output_file=/path/to/output_file.ll",
-                "--output_symbols_file=/path/to/file.spoor_symbols",
-                "--output_language=ir"});
+  auto argv = MakeArgv(
+      {"spoor_opt", "--enable_runtime=false",
+       "--filters_file=/path/to/filters.toml", "--force_binary_output=true",
+       "--initialize_runtime=false", "--inject_instrumentation=false",
+       "--module_id=ModuleId", "--output_file=/path/to/output_file.ll",
+       "--output_symbols_file=/path/to/file.spoor_symbols",
+       "--output_language=ir"});
   const auto expected_positional_args = MakeArgv({argv.front()});
   const auto [config, positional_args] = ConfigFromCommandLineOrEnv(
       gsl::narrow_cast<int>(argv.size()), argv.data(), get_env);
@@ -84,12 +78,10 @@ TEST(CommandLineConfig, UsesDefaultValueWhenNotSpecified) {  // NOLINT
     return nullptr;
   };
   const Config expected_config{.enable_runtime = true,
+                               .filters_file = {},
                                .force_binary_output = false,
-                               .function_allow_list_file = {},
-                               .function_blocklist_file = {},
                                .initialize_runtime = true,
                                .inject_instrumentation = true,
-                               .min_instruction_threshold = 0,
                                .module_id = {},
                                .output_file = "-",
                                .output_symbols_file = "",
@@ -103,15 +95,13 @@ TEST(CommandLineConfig, UsesDefaultValueWhenNotSpecified) {  // NOLINT
 
 TEST(CommandLineConfig, UsesEnvironmentValueWhenNotSpecified) {  // NOLINT
   const auto get_env = [](const char* key) {
-    constexpr util::flat_map::FlatMap<std::string_view, std::string_view, 11>
+    constexpr util::flat_map::FlatMap<std::string_view, std::string_view, 9>
         environment{
             {kEnableRuntimeKey, "false"},
+            {kFiltersFileKey, "/path/to/filters.toml"},
             {kForceBinaryOutputKey, "true"},
-            {kFunctionAllowListFileKey, "/path/to/allow_list.txt"},
-            {kFunctionBlocklistFileKey, "/path/to/blocklist.txt"},
             {kInitializeRuntimeKey, "false"},
             {kInjectInstrumentationKey, "false"},
-            {kMinInstructionThresholdKey, "42"},
             {kModuleIdKey, "ModuleId"},
             {kOutputFileKey, "/path/to/output_file.ll"},
             {kOutputSymbolsFileKey, "/path/to/file.spoor_symbols"},
@@ -121,12 +111,10 @@ TEST(CommandLineConfig, UsesEnvironmentValueWhenNotSpecified) {  // NOLINT
   };
   const Config expected_config{
       .enable_runtime = false,
+      .filters_file = "/path/to/filters.toml",
       .force_binary_output = true,
-      .function_allow_list_file = "/path/to/allow_list.txt",
-      .function_blocklist_file = "/path/to/blocklist.txt",
       .initialize_runtime = false,
       .inject_instrumentation = false,
-      .min_instruction_threshold = 42,
       .module_id = "ModuleId",
       .output_file = "/path/to/output_file.ll",
       .output_symbols_file = "/path/to/file.spoor_symbols",
@@ -140,15 +128,13 @@ TEST(CommandLineConfig, UsesEnvironmentValueWhenNotSpecified) {  // NOLINT
 
 TEST(CommandLineConfig, OverridesEnvironment) {  // NOLINT
   const auto get_env = [](const char* key) -> const char* {
-    constexpr util::flat_map::FlatMap<std::string_view, std::string_view, 11>
+    constexpr util::flat_map::FlatMap<std::string_view, std::string_view, 9>
         environment{
             {kEnableRuntimeKey, "true"},
+            {kFiltersFileKey, "/path/to/other/filters.toml"},
             {kForceBinaryOutputKey, "false"},
-            {kFunctionAllowListFileKey, "/path/to/other/allow_list.txt"},
-            {kFunctionBlocklistFileKey, "/path/to/other/blocklist.txt"},
             {kInitializeRuntimeKey, "true"},
             {kInjectInstrumentationKey, "true"},
-            {kMinInstructionThresholdKey, "43"},
             {kModuleIdKey, "OtherModuleId"},
             {kOutputFileKey, "/path/to/other/output_file.ll"},
             {kOutputSymbolsFileKey, "/path/to/other/file.spoor_symbols"},
@@ -157,22 +143,18 @@ TEST(CommandLineConfig, OverridesEnvironment) {  // NOLINT
   };
   const Config expected_config{
       .enable_runtime = false,
+      .filters_file = "/path/to/filters.toml",
       .force_binary_output = false,
-      .function_allow_list_file = "/path/to/allow_list.txt",
-      .function_blocklist_file = "/path/to/blocklist.txt",
       .initialize_runtime = false,
       .inject_instrumentation = false,
-      .min_instruction_threshold = 42,
       .module_id = "ModuleId",
       .output_file = "/path/to/output_file.ll",
       .output_symbols_file = "/path/to/file.spoor_symbols",
       .output_language = OutputLanguage::kIr};
   auto argv =
-      MakeArgv({"spoor_opt", "--enable_runtime=false",
-                "--function_allow_list_file=/path/to/allow_list.txt",
-                "--function_blocklist_file=/path/to/blocklist.txt",
-                "--initialize_runtime=false", "--inject_instrumentation=false",
-                "--min_instruction_threshold=42", "--module_id=ModuleId",
+      MakeArgv({"spoor_opt", "--filters_file=/path/to/filters.toml",
+                "--enable_runtime=false", "--initialize_runtime=false",
+                "--inject_instrumentation=false", "--module_id=ModuleId",
                 "--output_file=/path/to/output_file.ll",
                 "--output_symbols_file=/path/to/file.spoor_symbols",
                 "--output_language=ir"});
@@ -187,7 +169,7 @@ TEST(CommandLineConfig, PositionalArguments) {  // NOLINT
   const auto get_env = [](const char* /*unused*/) -> const char* {
     return nullptr;
   };
-  auto argv = MakeArgv({"spoor_opt", "--output_language=ir", "-", "--",
+  auto argv = MakeArgv({"spoor_opt", "-", "--output_language=ir", "--",
                         "--enable_runtime=true"});
   auto expected_positional_args =
       MakeArgv({"spoor_opt", "-", "--enable_runtime=true"});

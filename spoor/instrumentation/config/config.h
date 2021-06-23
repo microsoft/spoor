@@ -17,15 +17,13 @@ enum class OutputLanguage {
   kIr,
 };
 
-struct alignas(128) Config {
+struct Config {
   // Alphabetized to match the order printed in --help.
   bool enable_runtime;
+  std::optional<std::string> filters_file;
   bool force_binary_output;
-  std::optional<std::string> function_allow_list_file;
-  std::optional<std::string> function_blocklist_file;
   bool initialize_runtime;
   bool inject_instrumentation;
-  uint32 min_instruction_threshold;
   std::optional<std::string> module_id;
   std::string output_file;
   std::string output_symbols_file;
@@ -40,23 +38,15 @@ constexpr std::string_view kEnableRuntimeDoc{
     "Automatically enable Spoor's runtime."};
 constexpr auto kEnableRuntimeDefaultValue{true};
 
+constexpr std::string_view kFiltersFileDoc{"File path to the filters file."};
+// This statically-constructed object is safe because its value is the type's
+// default.
+// NOLINTNEXTLINE(fuchsia-statically-constructed-objects)
+const std::optional<std::string> kFiltersFileDefaultValue{};
+
 constexpr std::string_view kForceBinaryOutputDoc{
     "Force printing binary data to the console."};
 constexpr auto kForceBinaryOutputDefaultValue{false};
-
-constexpr std::string_view kFunctionAllowListFileDoc{
-    "File path to the function allow list."};
-// This statically-constructed object is safe because its value is the type's
-// default.
-// NOLINTNEXTLINE(fuchsia-statically-constructed-objects)
-const std::optional<std::string> kFunctionAllowListFileDefaultValue{};
-
-constexpr std::string_view kFunctionBlocklistFileDoc{
-    "File path to the function blocklist."};
-// This statically-constructed object is safe because its value is the type's
-// default.
-// NOLINTNEXTLINE(fuchsia-statically-constructed-objects)
-const std::optional<std::string> kFunctionBlocklistFileDefaultValue{};
 
 constexpr std::string_view kInitializeRuntimeDoc{
     "Automatically initialize Spoor's runtime."};
@@ -69,11 +59,6 @@ constexpr auto kInjectInstrumentationDefaultValue{true};
 constexpr std::string_view kOutputSymbolsFileDoc{
     "Spoor instrumentation symbols output file."};
 constexpr std::string_view kOutputSymbolsFileDefaultValue{};
-
-constexpr std::string_view kMinInstructionThresholdDoc{
-    "Minimum number of LLVM IR instructions required to instrument a "
-    "function."};
-constexpr uint32 kMinInstructionThresholdDefaultValue{0};
 
 constexpr std::string_view kModuleIdDoc{"Override the LLVM module's ID."};
 // This statically-constructed object is safe because its value is the type's

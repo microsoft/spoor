@@ -6,12 +6,11 @@
 namespace spoor::instrumentation::config {
 
 auto operator==(const Config& lhs, const Config& rhs) -> bool {
-  return lhs.function_allow_list_file == rhs.function_allow_list_file &&
-         lhs.function_blocklist_file == rhs.function_blocklist_file &&
-         lhs.enable_runtime == rhs.enable_runtime &&
+  return lhs.enable_runtime == rhs.enable_runtime &&
+         lhs.filters_file == rhs.filters_file &&
+         lhs.force_binary_output == rhs.force_binary_output &&
          lhs.initialize_runtime == rhs.initialize_runtime &&
          lhs.inject_instrumentation == rhs.inject_instrumentation &&
-         lhs.min_instruction_threshold == rhs.min_instruction_threshold &&
          lhs.module_id == rhs.module_id && lhs.output_file == rhs.output_file &&
          lhs.output_symbols_file == rhs.output_symbols_file &&
          lhs.output_language == rhs.output_language;

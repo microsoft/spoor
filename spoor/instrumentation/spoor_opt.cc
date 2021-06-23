@@ -29,6 +29,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "spoor/instrumentation/config/command_line_config.h"
 #include "spoor/instrumentation/config/config.h"
+#include "spoor/instrumentation/filters/filters_file_reader.h"
 #include "spoor/instrumentation/inject_instrumentation/inject_instrumentation.h"
 #include "spoor/instrumentation/instrumentation.h"
 #include "spoor/instrumentation/symbols/symbols_file_writer.h"
@@ -40,6 +41,7 @@ namespace {
 
 using spoor::instrumentation::config::ConfigFromCommandLineOrEnv;
 using spoor::instrumentation::config::OutputLanguage;
+using spoor::instrumentation::filters::FiltersFileReader;
 using spoor::instrumentation::symbols::SymbolsFileWriter;
 using util::file_system::LocalFileReader;
 using util::file_system::LocalFileWriter;
@@ -111,6 +113,8 @@ auto main(int argc, char** argv) -> int {
   }
 
   auto file_reader = std::make_unique<LocalFileReader>();
+  auto filters_reader = std::make_unique<FiltersFileReader>(
+      FiltersFileReader::Options{.file_reader = std::move(file_reader)});
   auto file_writer = std::make_unique<LocalFileWriter>();
   auto symbols_writer = std::make_unique<SymbolsFileWriter>(
       SymbolsFileWriter::Options{.file_writer = std::move(file_writer)});
@@ -119,15 +123,12 @@ auto main(int argc, char** argv) -> int {
   spoor::instrumentation::inject_instrumentation::InjectInstrumentation
       inject_instrumentation{{
           .inject_instrumentation = config.inject_instrumentation,
-          .file_reader = std::move(file_reader),
+          .filters_reader = std::move(filters_reader),
           .symbols_writer = std::move(symbols_writer),
           .system_clock = std::move(system_clock),
-          .function_allow_list_file_path = config.function_allow_list_file,
-          .function_blocklist_file_path = config.function_blocklist_file,
+          .filters_file_path = config.filters_file,
           .symbols_file_path = config.output_symbols_file,
           .module_id = config.module_id,
-          .min_instruction_count_to_instrument =
-              config.min_instruction_threshold,
           .initialize_runtime = config.initialize_runtime,
           .enable_runtime = config.enable_runtime,
       }};

@@ -15,12 +15,10 @@ namespace {
 using spoor::instrumentation::config::Config;
 using spoor::instrumentation::config::ConfigFromEnv;
 using spoor::instrumentation::config::kEnableRuntimeKey;
+using spoor::instrumentation::config::kFiltersFileKey;
 using spoor::instrumentation::config::kForceBinaryOutputKey;
-using spoor::instrumentation::config::kFunctionAllowListFileKey;
-using spoor::instrumentation::config::kFunctionBlocklistFileKey;
 using spoor::instrumentation::config::kInitializeRuntimeKey;
 using spoor::instrumentation::config::kInjectInstrumentationKey;
-using spoor::instrumentation::config::kMinInstructionThresholdKey;
 using spoor::instrumentation::config::kModuleIdKey;
 using spoor::instrumentation::config::kOutputFileKey;
 using spoor::instrumentation::config::kOutputLanguageKey;
@@ -29,15 +27,13 @@ using spoor::instrumentation::config::OutputLanguage;
 
 TEST(EnvConfig, GetsUserProvidedValue) {  // NOLINT
   const auto get_env = [](const char* key) {
-    constexpr util::flat_map::FlatMap<std::string_view, std::string_view, 11>
+    constexpr util::flat_map::FlatMap<std::string_view, std::string_view, 9>
         environment{
             {kEnableRuntimeKey, "false"},
+            {kFiltersFileKey, "/path/to/filters.toml"},
             {kForceBinaryOutputKey, "true"},
-            {kFunctionAllowListFileKey, "/path/to/allow_list.txt"},
-            {kFunctionBlocklistFileKey, "/path/to/blocklist.txt"},
             {kInitializeRuntimeKey, "false"},
             {kInjectInstrumentationKey, "false"},
-            {kMinInstructionThresholdKey, "42"},
             {kModuleIdKey, "ModuleId"},
             {kOutputFileKey, "/path/to/output_file.ll"},
             {kOutputSymbolsFileKey, "/path/to/file.spoor_symbols"},
@@ -47,12 +43,10 @@ TEST(EnvConfig, GetsUserProvidedValue) {  // NOLINT
   };
   const Config expected_config{
       .enable_runtime = false,
+      .filters_file = "/path/to/filters.toml",
       .force_binary_output = true,
-      .function_allow_list_file = "/path/to/allow_list.txt",
-      .function_blocklist_file = "/path/to/blocklist.txt",
       .initialize_runtime = false,
       .inject_instrumentation = false,
-      .min_instruction_threshold = 42,
       .module_id = "ModuleId",
       .output_file = "/path/to/output_file.ll",
       .output_symbols_file = "/path/to/file.spoor_symbols",
@@ -65,12 +59,10 @@ TEST(EnvConfig, UsesDefaultValueWhenNotSpecified) {  // NOLINT
     return nullptr;
   };
   const Config expected_config{.enable_runtime = true,
+                               .filters_file = {},
                                .force_binary_output = false,
-                               .function_allow_list_file = {},
-                               .function_blocklist_file = {},
                                .initialize_runtime = true,
                                .inject_instrumentation = true,
-                               .min_instruction_threshold = 0,
                                .module_id = {},
                                .output_file = "-",
                                .output_symbols_file = "",
@@ -80,14 +72,12 @@ TEST(EnvConfig, UsesDefaultValueWhenNotSpecified) {  // NOLINT
 
 TEST(EnvConfig, UsesDefaultValueForEmptyStringValues) {  // NOLINT
   const auto get_env = [](const char* key) {
-    constexpr util::flat_map::FlatMap<std::string_view, std::string_view, 11>
+    constexpr util::flat_map::FlatMap<std::string_view, std::string_view, 9>
         environment{{kEnableRuntimeKey, ""},
+                    {kFiltersFileKey, ""},
                     {kForceBinaryOutputKey, ""},
-                    {kFunctionAllowListFileKey, ""},
-                    {kFunctionBlocklistFileKey, ""},
                     {kInitializeRuntimeKey, ""},
                     {kInjectInstrumentationKey, ""},
-                    {kMinInstructionThresholdKey, ""},
                     {kModuleIdKey, ""},
                     {kOutputFileKey, ""},
                     {kOutputSymbolsFileKey, ""},
@@ -95,12 +85,10 @@ TEST(EnvConfig, UsesDefaultValueForEmptyStringValues) {  // NOLINT
     return environment.FirstValueForKey(key).value_or(nullptr).data();
   };
   const Config expected_config{.enable_runtime = true,
+                               .filters_file = {},
                                .force_binary_output = false,
-                               .function_allow_list_file = {},
-                               .function_blocklist_file = {},
                                .initialize_runtime = true,
                                .inject_instrumentation = true,
-                               .min_instruction_threshold = 0,
                                .module_id = {},
                                .output_file = "",
                                .output_symbols_file = "",

@@ -25,19 +25,14 @@ ABSL_FLAG(  // NOLINT
     spoor::instrumentation::config::kEnableRuntimeDefaultValue,
     spoor::instrumentation::config::kEnableRuntimeDoc);
 ABSL_FLAG(  // NOLINT
+    util::flags::Optional<std::string>, filters_file,
+    util::flags::Optional<std::string>{
+        spoor::instrumentation::config::kFiltersFileDefaultValue},
+    spoor::instrumentation::config::kFiltersFileDoc);
+ABSL_FLAG(  // NOLINT
     bool, force_binary_output,
     spoor::instrumentation::config::kForceBinaryOutputDefaultValue,
     spoor::instrumentation::config::kForceBinaryOutputDoc);
-ABSL_FLAG(  // NOLINT
-    util::flags::Optional<std::string>, function_allow_list_file,
-    util::flags::Optional<std::string>{
-        spoor::instrumentation::config::kFunctionAllowListFileDefaultValue},
-    spoor::instrumentation::config::kFunctionAllowListFileDoc);
-ABSL_FLAG(  // NOLINT
-    util::flags::Optional<std::string>, function_blocklist_file,
-    util::flags::Optional<std::string>{
-        spoor::instrumentation::config::kFunctionBlocklistFileDefaultValue},
-    spoor::instrumentation::config::kFunctionBlocklistFileDoc);
 ABSL_FLAG(  // NOLINT
     bool, initialize_runtime,
     spoor::instrumentation::config::kInitializeRuntimeDefaultValue,
@@ -46,10 +41,6 @@ ABSL_FLAG(  // NOLINT
     bool, inject_instrumentation,
     spoor::instrumentation::config::kInjectInstrumentationDefaultValue,
     spoor::instrumentation::config::kInjectInstrumentationDoc);
-ABSL_FLAG(  // NOLINT
-    uint32, min_instruction_threshold,
-    spoor::instrumentation::config::kMinInstructionThresholdDefaultValue,
-    spoor::instrumentation::config::kMinInstructionThresholdDoc);
 ABSL_FLAG(  // NOLINT
     util::flags::Optional<std::string>, module_id,
     util::flags::Optional<std::string>{
@@ -77,17 +68,12 @@ auto ConfigFromCommandLineOrEnv(const int argc, char** argv,
                                 const util::env::GetEnv& get_env)
     -> std::pair<Config, std::vector<char*>> {
   const auto env_config = ConfigFromEnv(get_env);
-  absl::SetFlag(&FLAGS_function_allow_list_file,
-                env_config.function_allow_list_file);
-  absl::SetFlag(&FLAGS_force_binary_output, env_config.force_binary_output);
-  absl::SetFlag(&FLAGS_function_blocklist_file,
-                env_config.function_blocklist_file);
   absl::SetFlag(&FLAGS_enable_runtime, env_config.enable_runtime);
+  absl::SetFlag(&FLAGS_filters_file, env_config.filters_file);
+  absl::SetFlag(&FLAGS_force_binary_output, env_config.force_binary_output);
   absl::SetFlag(&FLAGS_initialize_runtime, env_config.initialize_runtime);
   absl::SetFlag(&FLAGS_inject_instrumentation,
                 env_config.inject_instrumentation);
-  absl::SetFlag(&FLAGS_min_instruction_threshold,
-                env_config.min_instruction_threshold);
   absl::SetFlag(&FLAGS_module_id, env_config.module_id);
   absl::SetFlag(&FLAGS_output_file, env_config.output_file);
   absl::SetFlag(&FLAGS_output_symbols_file, env_config.output_symbols_file);
@@ -95,15 +81,10 @@ auto ConfigFromCommandLineOrEnv(const int argc, char** argv,
   auto positional_args = absl::ParseCommandLine(argc, argv);
   Config config{
       .enable_runtime = absl::GetFlag(FLAGS_enable_runtime),
+      .filters_file = absl::GetFlag(FLAGS_filters_file).StdOptional(),
       .force_binary_output = absl::GetFlag(FLAGS_force_binary_output),
-      .function_allow_list_file =
-          absl::GetFlag(FLAGS_function_allow_list_file).StdOptional(),
-      .function_blocklist_file =
-          absl::GetFlag(FLAGS_function_blocklist_file).StdOptional(),
       .initialize_runtime = absl::GetFlag(FLAGS_initialize_runtime),
       .inject_instrumentation = absl::GetFlag(FLAGS_inject_instrumentation),
-      .min_instruction_threshold =
-          absl::GetFlag(FLAGS_min_instruction_threshold),
       .module_id = absl::GetFlag(FLAGS_module_id).StdOptional(),
       .output_file = absl::GetFlag(FLAGS_output_file),
       .output_symbols_file = absl::GetFlag(FLAGS_output_symbols_file),

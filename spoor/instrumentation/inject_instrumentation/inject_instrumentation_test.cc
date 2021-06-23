@@ -27,11 +27,13 @@
 #include "llvm/IR/PassManager.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/Support/SourceMgr.h"
+#include "spoor/instrumentation/filters/filters.h"
+#include "spoor/instrumentation/filters/filters_reader.h"
+#include "spoor/instrumentation/filters/filters_reader_mock.h"
 #include "spoor/instrumentation/inject_instrumentation/inject_instrumentation_private.h"
 #include "spoor/instrumentation/symbols/symbols.pb.h"
 #include "spoor/instrumentation/symbols/symbols_writer.h"
 #include "spoor/instrumentation/symbols/symbols_writer_mock.h"
-#include "util/file_system/file_reader_mock.h"
 #include "util/numeric.h"
 #include "util/time/clock.h"
 #include "util/time/clock_mock.h"
@@ -40,6 +42,10 @@ namespace {
 
 using google::protobuf::util::MessageDifferencer;
 using google::protobuf::util::TimeUtil;
+using spoor::instrumentation::filters::Filter;
+using spoor::instrumentation::filters::Filters;
+using spoor::instrumentation::filters::FiltersReader;
+using spoor::instrumentation::filters::testing::FiltersReaderMock;
 using spoor::instrumentation::inject_instrumentation::InjectInstrumentation;
 using spoor::instrumentation::inject_instrumentation::internal::ModuleHash;
 using spoor::instrumentation::symbols::Symbols;
@@ -47,8 +53,6 @@ using spoor::instrumentation::symbols::SymbolsWriter;
 using spoor::instrumentation::symbols::testing::SymbolsWriterMock;
 using testing::_;
 using testing::Return;
-using testing::ReturnRef;
-using util::file_system::testing::FileReaderMock;
 using util::time::SystemClock;
 using util::time::testing::MakeTimePoint;
 using util::time::testing::SystemClockMock;
@@ -111,23 +115,23 @@ MATCHER_P(SymbolsEq, expected, "Symbols are not equal.") {  // NOLINT
 }
 
 TEST(InjectInstrumentation, InstrumentsModule) {  // NOLINT
-  struct alignas(32) TestCaseConfig {
+  struct TestCase {
     std::string_view expected_ir_file;
     bool initialize_runtime;
     bool enable_runtime;
   };
-  constexpr std::array<TestCaseConfig, 4> configs{
+  constexpr std::array<TestCase, 4> test_cases{
       {{kInstrumentedIrFile, false, false},
        {kInstrumentedIrFile, false, true},
        {kInstrumentedInitializedIrFile, true, false},
        {kInstrumentedInitializedEnabledIrFile, true, true}}};
   const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
 
-  for (const auto& config : configs) {
+  for (const auto& test_case : test_cases) {
     llvm::SMDiagnostic instrumented_module_diagnostic{};
     llvm::LLVMContext instrumented_module_context{};
     auto expected_instrumented_module = llvm::parseIRFile(
-        config.expected_ir_file.data(), instrumented_module_diagnostic,
+        test_case.expected_ir_file.data(), instrumented_module_diagnostic,
         instrumented_module_context);
     ASSERT_NE(expected_instrumented_module, nullptr);
 
@@ -138,7 +142,7 @@ TEST(InjectInstrumentation, InstrumentsModule) {  // NOLINT
                                            uninstrumented_module_context);
     ASSERT_NE(parsed_module, nullptr);
 
-    auto file_reader = std::make_unique<FileReaderMock>();
+    auto filters_reader = std::make_unique<FiltersReaderMock>();
     auto symbols_writer = std::make_unique<SymbolsWriterMock>();
     EXPECT_CALL(*symbols_writer, Write(symbols_file_path, _))
         .WillOnce(Return(SymbolsWriterResult::Ok({})));
@@ -147,16 +151,14 @@ TEST(InjectInstrumentation, InstrumentsModule) {  // NOLINT
         .WillRepeatedly(Return(MakeTimePoint<std::chrono::system_clock>(0)));
     InjectInstrumentation inject_instrumentation{{
         .inject_instrumentation = true,
-        .file_reader = std::move(file_reader),
+        .filters_reader = std::move(filters_reader),
         .symbols_writer = std::move(symbols_writer),
         .system_clock = std::move(system_clock),
-        .function_allow_list_file_path = {},
-        .function_blocklist_file_path = {},
+        .filters_file_path = {},
         .symbols_file_path = symbols_file_path,
         .module_id = {},
-        .min_instruction_count_to_instrument = 0,
-        .initialize_runtime = config.initialize_runtime,
-        .enable_runtime = config.enable_runtime,
+        .initialize_runtime = test_case.initialize_runtime,
+        .enable_runtime = test_case.enable_runtime,
     }};
     llvm::ModuleAnalysisManager module_analysis_manager{};
     inject_instrumentation.run(*parsed_module, module_analysis_manager);
@@ -169,17 +171,24 @@ TEST(InjectInstrumentation, InstrumentsModule) {  // NOLINT
 }
 
 TEST(InjectInstrumentation, OutputsInstrumentedSymbols) {  // NOLINT
+  struct TestCase {
+    std::string_view ir_file;
+    Filters filters;
+    std::function<Symbols(const llvm::Module&)> expected_symbols;
+  };
+
+  const std::filesystem::path filters_file_path{"/path/to/filters.toml"};
   const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
   constexpr auto timestamp_0 = 1'607'590'800'000'000'000;
   constexpr auto timestamp_1 = 1'607'590'900'000'000'000;
   const auto make_module_hash = [](const llvm::Module& llvm_module) {
     return static_cast<uint64>(ModuleHash(llvm_module)) << 32ULL;
   };
-  const std::vector<
-      std::pair<std::string_view, std::function<Symbols(const llvm::Module&)>>>
-      test_cases{
-          {
-              kUninstrumentedIrFile,
+  const std::vector<TestCase> test_cases{
+      {
+          .ir_file = kUninstrumentedIrFile,
+          .filters = {},
+          .expected_symbols =
               [&](const llvm::Module& llvm_module) {
                 Symbols symbols{};
                 const std::string module_id{kUninstrumentedIrFile};
@@ -212,9 +221,72 @@ TEST(InjectInstrumentation, OutputsInstrumentedSymbols) {  // NOLINT
 
                 return symbols;
               },
-          },
-          {
-              kUninstrumentedIrWithDebugInfoCSourceFile,
+      },
+      {
+          .ir_file = kUninstrumentedIrFile,
+          .filters =
+              {
+                  {
+                      .action = Filter::Action::kBlock,
+                      .rule_name = "Block everything",
+                      .source_file_path = {},
+                      .function_demangled_name = {},
+                      .function_linkage_name = {},
+                      .function_ir_instruction_count_lt = {},
+                      .function_ir_instruction_count_gt = {},
+                  },
+                  {
+                      .action = Filter::Action::kAllow,
+                      .rule_name = "Always instrument `main`",
+                      .source_file_path = {},
+                      .function_demangled_name = {},
+                      .function_linkage_name = "main",
+                      .function_ir_instruction_count_lt = {},
+                      .function_ir_instruction_count_gt = {},
+                  },
+              },
+          .expected_symbols =
+              [&](const llvm::Module& llvm_module) {
+                Symbols symbols{};
+                const std::string module_id{kUninstrumentedIrFile};
+                const auto module_hash = make_module_hash(llvm_module);
+
+                auto& function_symbols_table =
+                    *symbols.mutable_function_symbols_table();
+
+                auto& fibonacci_function_infos =
+                    function_symbols_table[module_hash | 0ULL];
+                auto& fibonacci_function_info =
+                    *fibonacci_function_infos.add_function_infos();
+                fibonacci_function_info.set_module_id(module_id);
+                fibonacci_function_info.set_linkage_name("_Z9Fibonaccii");
+                fibonacci_function_info.set_demangled_name("Fibonacci(int)");
+                fibonacci_function_info.set_instrumented(false);
+                fibonacci_function_info.set_instrumented_reason(
+                    "Block everything");
+                *fibonacci_function_info.mutable_created_at() =
+                    TimeUtil::NanosecondsToTimestamp(timestamp_0);
+
+                auto& main_function_infos =
+                    function_symbols_table[module_hash | 1ULL];
+                auto& main_function_info =
+                    *main_function_infos.add_function_infos();
+                main_function_info.set_module_id(module_id);
+                main_function_info.set_linkage_name("main");
+                main_function_info.set_demangled_name("main");
+                main_function_info.set_instrumented(true);
+                main_function_info.set_instrumented_reason(
+                    "Always instrument `main`");
+                *main_function_info.mutable_created_at() =
+                    TimeUtil::NanosecondsToTimestamp(timestamp_1);
+
+                return symbols;
+              },
+      },
+      {
+          .ir_file = kUninstrumentedIrWithDebugInfoCSourceFile,
+          .filters = {},
+          .expected_symbols =
               [&](const llvm::Module& llvm_module) {
                 Symbols symbols{};
                 const std::string module_id{
@@ -254,9 +326,11 @@ TEST(InjectInstrumentation, OutputsInstrumentedSymbols) {  // NOLINT
 
                 return symbols;
               },
-          },
-          {
-              kUninstrumentedIrWithDebugInfoCppSourceFile,
+      },
+      {
+          .ir_file = kUninstrumentedIrWithDebugInfoCppSourceFile,
+          .filters = {},
+          .expected_symbols =
               [&](const llvm::Module& llvm_module) {
                 Symbols symbols{};
                 const std::string module_id{
@@ -297,9 +371,11 @@ TEST(InjectInstrumentation, OutputsInstrumentedSymbols) {  // NOLINT
 
                 return symbols;
               },
-          },
-          {
-              kUninstrumentedIrWithDebugInfoObjcSourceFile,
+      },
+      {
+          .ir_file = kUninstrumentedIrWithDebugInfoObjcSourceFile,
+          .filters = {},
+          .expected_symbols =
               [&](const llvm::Module& llvm_module) {
                 Symbols symbols{};
                 const std::string module_id{
@@ -341,9 +417,11 @@ TEST(InjectInstrumentation, OutputsInstrumentedSymbols) {  // NOLINT
 
                 return symbols;
               },
-          },
-          {
-              kUninstrumentedIrWithDebugInfoSwiftSourceFile,
+      },
+      {
+          .ir_file = kUninstrumentedIrWithDebugInfoSwiftSourceFile,
+          .filters = {},
+          .expected_symbols =
               [&](const llvm::Module& llvm_module) {
                 Symbols symbols{};
                 const std::string module_id{
@@ -386,20 +464,23 @@ TEST(InjectInstrumentation, OutputsInstrumentedSymbols) {  // NOLINT
 
                 return symbols;
               },
-          },
-      };
-  for (const auto& [ir_file, make_symbols] : test_cases) {
+      },
+  };
+  for (const auto& test_case : test_cases) {
     llvm::SMDiagnostic instrumented_module_diagnostic{};
     llvm::LLVMContext instrumented_module_context{};
-    auto parsed_module =
-        llvm::parseIRFile(ir_file.data(), instrumented_module_diagnostic,
-                          instrumented_module_context);
+    auto parsed_module = llvm::parseIRFile(test_case.ir_file.data(),
+                                           instrumented_module_diagnostic,
+                                           instrumented_module_context);
     ASSERT_NE(parsed_module, nullptr);
-    const auto symbols = make_symbols(*parsed_module);
+    const auto expected_symbols = test_case.expected_symbols(*parsed_module);
 
-    auto file_reader = std::make_unique<FileReaderMock>();
+    auto filters_reader = std::make_unique<FiltersReaderMock>();
+    EXPECT_CALL(*filters_reader, Read(filters_file_path))
+        .WillOnce(Return(test_case.filters));
     auto symbols_writer = std::make_unique<SymbolsWriterMock>();
-    EXPECT_CALL(*symbols_writer, Write(symbols_file_path, SymbolsEq(symbols)))
+    EXPECT_CALL(*symbols_writer,
+                Write(symbols_file_path, SymbolsEq(expected_symbols)))
         .WillOnce(Return(SymbolsWriterResult::Ok({})));
     auto system_clock = std::make_unique<SystemClockMock>();
     EXPECT_CALL(*system_clock, Now())
@@ -408,24 +489,31 @@ TEST(InjectInstrumentation, OutputsInstrumentedSymbols) {  // NOLINT
             Return(MakeTimePoint<std::chrono::system_clock>(timestamp_1)));
     InjectInstrumentation inject_instrumentation{{
         .inject_instrumentation = true,
-        .file_reader = std::move(file_reader),
+        .filters_reader = std::move(filters_reader),
         .symbols_writer = std::move(symbols_writer),
         .system_clock = std::move(system_clock),
-        .function_allow_list_file_path = {},
-        .function_blocklist_file_path = {},
+        .filters_file_path = filters_file_path,
         .symbols_file_path = symbols_file_path,
         .module_id = {},
-        .min_instruction_count_to_instrument = 0,
         .initialize_runtime = false,
         .enable_runtime = false,
     }};
     llvm::ModuleAnalysisManager module_analysis_manager{};
     inject_instrumentation.run(*parsed_module, module_analysis_manager);
   }
-}
+}  // namespace
 
 TEST(InjectInstrumentation, FunctionBlocklist) {  // NOLINT
-  const std::filesystem::path blocklist_file_path{"/path/to/blocklist.txt"};
+  const std::filesystem::path filters_file_path{"/path/to/filters.toml"};
+  const Filters filters{{
+      .action = Filter::Action::kBlock,
+      .rule_name = "Block Fibonacci",
+      .source_file_path = {},
+      .function_demangled_name = {},
+      .function_linkage_name = "_Z9Fibonaccii",
+      .function_ir_instruction_count_lt = {},
+      .function_ir_instruction_count_gt = {},
+  }};
   const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
 
   llvm::SMDiagnostic expected_module_diagnostic{};
@@ -442,12 +530,9 @@ TEST(InjectInstrumentation, FunctionBlocklist) {  // NOLINT
                                          uninstrumented_module_context);
   ASSERT_NE(parsed_module, nullptr);
 
-  std::stringstream blocklist{"_Z9Fibonaccii"};
-  auto file_reader = std::make_unique<FileReaderMock>();
-  EXPECT_CALL(*file_reader, Open(blocklist_file_path));
-  EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(true));
-  EXPECT_CALL(*file_reader, Istream()).WillOnce(ReturnRef(blocklist));
-  EXPECT_CALL(*file_reader, Close());
+  auto filters_reader = std::make_unique<FiltersReaderMock>();
+  EXPECT_CALL(*filters_reader, Read(filters_file_path))
+      .WillOnce(Return(filters));
   auto symbols_writer = std::make_unique<SymbolsWriterMock>();
   EXPECT_CALL(*symbols_writer, Write(symbols_file_path, _))
       .WillOnce(Return(SymbolsWriterResult::Ok({})));
@@ -456,14 +541,12 @@ TEST(InjectInstrumentation, FunctionBlocklist) {  // NOLINT
       .WillRepeatedly(Return(MakeTimePoint<std::chrono::system_clock>(0)));
   InjectInstrumentation inject_instrumentation{{
       .inject_instrumentation = true,
-      .file_reader = std::move(file_reader),
+      .filters_reader = std::move(filters_reader),
       .symbols_writer = std::move(symbols_writer),
       .system_clock = std::move(system_clock),
-      .function_allow_list_file_path = {},
-      .function_blocklist_file_path = blocklist_file_path,
+      .filters_file_path = filters_file_path,
       .symbols_file_path = symbols_file_path,
       .module_id = {},
-      .min_instruction_count_to_instrument = 0,
       .initialize_runtime = false,
       .enable_runtime = false,
   }};
@@ -476,8 +559,27 @@ TEST(InjectInstrumentation, FunctionBlocklist) {  // NOLINT
 }
 
 TEST(InjectInstrumentation, FunctionAllowListOverridesBlocklist) {  // NOLINT
-  const std::filesystem::path allow_list_file_path{"/path/to/allow_list.txt"};
-  const std::filesystem::path blocklist_file_path{"/path/to/blocklist.txt"};
+  const std::filesystem::path filters_file_path{"/path/to/filters.toml"};
+  const Filters filters{
+      {
+          .action = Filter::Action::kBlock,
+          .rule_name = "Block Fibonacci",
+          .source_file_path = {},
+          .function_demangled_name = {},
+          .function_linkage_name = "_Z9Fibonaccii",
+          .function_ir_instruction_count_lt = {},
+          .function_ir_instruction_count_gt = {},
+      },
+      {
+          .action = Filter::Action::kAllow,
+          .rule_name = "Allow Fibonacci",
+          .source_file_path = {},
+          .function_demangled_name = {},
+          .function_linkage_name = "_Z9Fibonaccii",
+          .function_ir_instruction_count_lt = {},
+          .function_ir_instruction_count_gt = {},
+      },
+  };
   const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
 
   llvm::SMDiagnostic expected_module_diagnostic{};
@@ -494,16 +596,9 @@ TEST(InjectInstrumentation, FunctionAllowListOverridesBlocklist) {  // NOLINT
                                          uninstrumented_module_context);
   ASSERT_NE(parsed_module, nullptr);
 
-  std::stringstream allow_list{"_Z9Fibonaccii"};
-  std::stringstream blocklist{"_Z9Fibonaccii"};
-  auto file_reader = std::make_unique<FileReaderMock>();
-  EXPECT_CALL(*file_reader, Open(allow_list_file_path));
-  EXPECT_CALL(*file_reader, Open(blocklist_file_path));
-  EXPECT_CALL(*file_reader, IsOpen()).WillRepeatedly(Return(true));
-  EXPECT_CALL(*file_reader, Istream())
-      .WillOnce(ReturnRef(allow_list))
-      .WillOnce(ReturnRef(blocklist));
-  EXPECT_CALL(*file_reader, Close()).Times(2);
+  auto filters_reader = std::make_unique<FiltersReaderMock>();
+  EXPECT_CALL(*filters_reader, Read(filters_file_path))
+      .WillOnce(Return(filters));
   auto symbols_writer = std::make_unique<SymbolsWriterMock>();
   EXPECT_CALL(*symbols_writer, Write(symbols_file_path, _))
       .WillOnce(Return(SymbolsWriterResult::Ok({})));
@@ -512,14 +607,12 @@ TEST(InjectInstrumentation, FunctionAllowListOverridesBlocklist) {  // NOLINT
       .WillRepeatedly(Return(MakeTimePoint<std::chrono::system_clock>(0)));
   InjectInstrumentation inject_instrumentation{{
       .inject_instrumentation = true,
-      .file_reader = std::move(file_reader),
+      .filters_reader = std::move(filters_reader),
       .symbols_writer = std::move(symbols_writer),
       .system_clock = std::move(system_clock),
-      .function_allow_list_file_path = allow_list_file_path,
-      .function_blocklist_file_path = blocklist_file_path,
+      .filters_file_path = filters_file_path,
       .symbols_file_path = symbols_file_path,
       .module_id = {},
-      .min_instruction_count_to_instrument = 0,
       .initialize_runtime = false,
       .enable_runtime = false,
   }};
@@ -532,19 +625,48 @@ TEST(InjectInstrumentation, FunctionAllowListOverridesBlocklist) {  // NOLINT
 }
 
 TEST(InjectInstrumentation, InstructionThreshold) {  // NOLINT
-  struct alignas(32) TestCaseConfig {
+  struct TestCaseConfig {
+    int32 instruction_threshold;
     std::string_view expected_ir_file;
-    uint32 instruction_threshold;
   };
-  constexpr std::array<TestCaseConfig, 5> configs{
-      {{kInstrumentedIrFile, 0},
-       {kInstrumentedIrFile, 8},
-       {kInstrumentedIrFile, 9},
-       {kOnlyMainFunctionInstrumentedIrFile, 10},
-       {kOnlyMainFunctionInstrumentedIrFile, 11}}};
+  constexpr std::array<TestCaseConfig, 5> configs{{
+      {.instruction_threshold = 0, .expected_ir_file = kInstrumentedIrFile},
+      {.instruction_threshold = 8, .expected_ir_file = kInstrumentedIrFile},
+      {.instruction_threshold = 9, .expected_ir_file = kInstrumentedIrFile},
+      {
+          .instruction_threshold = 10,
+          .expected_ir_file = kOnlyMainFunctionInstrumentedIrFile,
+      },
+      {
+          .instruction_threshold = 11,
+          .expected_ir_file = kOnlyMainFunctionInstrumentedIrFile,
+      },
+  }};
+  const std::filesystem::path filters_file_path{"/path/to/filters.toml"};
   const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
 
   for (const auto& config : configs) {
+    const Filters filters{
+        {
+            .action = Filter::Action::kBlock,
+            .rule_name = "Block small functions",
+            .source_file_path = {},
+            .function_demangled_name = {},
+            .function_linkage_name = {},
+            .function_ir_instruction_count_lt = config.instruction_threshold,
+            .function_ir_instruction_count_gt = {},
+        },
+        {
+            .action = Filter::Action::kAllow,
+            .rule_name = "Allow main",
+            .source_file_path = {},
+            .function_demangled_name = {},
+            .function_linkage_name = "main",
+            .function_ir_instruction_count_lt = {},
+            .function_ir_instruction_count_gt = {},
+        },
+    };
+
     llvm::SMDiagnostic expected_module_diagnostic{};
     llvm::LLVMContext expected_module_context{};
     auto expected_instrumented_module =
@@ -559,7 +681,9 @@ TEST(InjectInstrumentation, InstructionThreshold) {  // NOLINT
                                            uninstrumented_module_context);
     ASSERT_NE(parsed_module, nullptr);
 
-    auto file_reader = std::make_unique<FileReaderMock>();
+    auto filters_reader = std::make_unique<FiltersReaderMock>();
+    EXPECT_CALL(*filters_reader, Read(filters_file_path))
+        .WillOnce(Return(filters));
     auto symbols_writer = std::make_unique<SymbolsWriterMock>();
     EXPECT_CALL(*symbols_writer, Write(symbols_file_path, _))
         .WillOnce(Return(SymbolsWriterResult::Ok({})));
@@ -568,14 +692,12 @@ TEST(InjectInstrumentation, InstructionThreshold) {  // NOLINT
         .WillRepeatedly(Return(MakeTimePoint<std::chrono::system_clock>(0)));
     InjectInstrumentation inject_instrumentation{{
         .inject_instrumentation = true,
-        .file_reader = std::move(file_reader),
+        .filters_reader = std::move(filters_reader),
         .symbols_writer = std::move(symbols_writer),
         .system_clock = std::move(system_clock),
-        .function_allow_list_file_path = {},
-        .function_blocklist_file_path = {},
+        .filters_file_path = filters_file_path,
         .symbols_file_path = symbols_file_path,
         .module_id = {},
-        .min_instruction_count_to_instrument = config.instruction_threshold,
         .initialize_runtime = false,
         .enable_runtime = false,
     }};
@@ -589,109 +711,8 @@ TEST(InjectInstrumentation, InstructionThreshold) {  // NOLINT
   }
 }
 
-TEST(InjectInstrumentation, AllowListOverridesInstructionCount) {  // NOLINT
-  const std::filesystem::path allow_list_file_path{"/path/to/allow_list.txt"};
-  const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
-
-  llvm::SMDiagnostic expected_module_diagnostic{};
-  llvm::LLVMContext expected_module_context{};
-  auto expected_instrumented_module =
-      llvm::parseIRFile(kInstrumentedIrFile.data(), expected_module_diagnostic,
-                        expected_module_context);
-  ASSERT_NE(expected_instrumented_module, nullptr);
-
-  llvm::SMDiagnostic uninstrumented_module_diagnostic{};
-  llvm::LLVMContext uninstrumented_module_context{};
-  auto parsed_module = llvm::parseIRFile(kUninstrumentedIrFile.data(),
-                                         uninstrumented_module_diagnostic,
-                                         uninstrumented_module_context);
-  ASSERT_NE(parsed_module, nullptr);
-
-  std::stringstream allow_list{"_Z9Fibonaccii"};
-  auto file_reader = std::make_unique<FileReaderMock>();
-  EXPECT_CALL(*file_reader, Open(allow_list_file_path));
-  EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(true));
-  EXPECT_CALL(*file_reader, Istream()).WillOnce(ReturnRef(allow_list));
-  EXPECT_CALL(*file_reader, Close());
-  auto symbols_writer = std::make_unique<SymbolsWriterMock>();
-  EXPECT_CALL(*symbols_writer, Write(symbols_file_path, _))
-      .WillOnce(Return(SymbolsWriterResult::Ok({})));
-  auto system_clock = std::make_unique<SystemClockMock>();
-  EXPECT_CALL(*system_clock, Now())
-      .WillRepeatedly(Return(MakeTimePoint<std::chrono::system_clock>(0)));
-  InjectInstrumentation inject_instrumentation{{
-      .inject_instrumentation = true,
-      .file_reader = std::move(file_reader),
-      .symbols_writer = std::move(symbols_writer),
-      .system_clock = std::move(system_clock),
-      .function_allow_list_file_path = allow_list_file_path,
-      .function_blocklist_file_path = {},
-      .symbols_file_path = symbols_file_path,
-      .module_id = {},
-      .min_instruction_count_to_instrument = std::numeric_limits<uint32>::max(),
-      .initialize_runtime = false,
-      .enable_runtime = false,
-  }};
-  llvm::ModuleAnalysisManager module_analysis_manager{};
-  inject_instrumentation.run(*parsed_module, module_analysis_manager);
-  {
-    SCOPED_TRACE("Modules are not equal.");
-    AssertModulesEqual(parsed_module.get(), expected_instrumented_module.get());
-  }
-}
-
-TEST(InjectInstrumentation, AlwaysInstrumentsMain) {  // NOLINT
-  const std::filesystem::path blocklist_file_path{"/path/to/blocklist.txt"};
-  const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
-
-  llvm::SMDiagnostic expected_module_diagnostic{};
-  llvm::LLVMContext expected_module_context{};
-  auto expected_instrumented_module =
-      llvm::parseIRFile(kOnlyMainFunctionInstrumentedIrFile.data(),
-                        expected_module_diagnostic, expected_module_context);
-  ASSERT_NE(expected_instrumented_module, nullptr);
-
-  llvm::SMDiagnostic uninstrumented_module_diagnostic{};
-  llvm::LLVMContext uninstrumented_module_context{};
-  auto parsed_module = llvm::parseIRFile(kUninstrumentedIrFile.data(),
-                                         uninstrumented_module_diagnostic,
-                                         uninstrumented_module_context);
-  ASSERT_NE(parsed_module, nullptr);
-
-  std::stringstream blocklist{absl::StrJoin({"main", "_Z9Fibonaccii"}, "\n")};
-  auto file_reader = std::make_unique<FileReaderMock>();
-  EXPECT_CALL(*file_reader, Open(blocklist_file_path));
-  EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(true));
-  EXPECT_CALL(*file_reader, Istream()).WillOnce(ReturnRef(blocklist));
-  EXPECT_CALL(*file_reader, Close());
-  auto symbols_writer = std::make_unique<SymbolsWriterMock>();
-  EXPECT_CALL(*symbols_writer, Write(symbols_file_path, _))
-      .WillOnce(Return(SymbolsWriterResult::Ok({})));
-  auto system_clock = std::make_unique<SystemClockMock>();
-  EXPECT_CALL(*system_clock, Now())
-      .WillRepeatedly(Return(MakeTimePoint<std::chrono::system_clock>(0)));
-  InjectInstrumentation inject_instrumentation{{
-      .inject_instrumentation = true,
-      .file_reader = std::move(file_reader),
-      .symbols_writer = std::move(symbols_writer),
-      .system_clock = std::move(system_clock),
-      .function_allow_list_file_path = {},
-      .function_blocklist_file_path = blocklist_file_path,
-      .symbols_file_path = symbols_file_path,
-      .module_id = {},
-      .min_instruction_count_to_instrument = std::numeric_limits<uint32>::max(),
-      .initialize_runtime = false,
-      .enable_runtime = false,
-  }};
-  llvm::ModuleAnalysisManager module_analysis_manager{};
-  inject_instrumentation.run(*parsed_module, module_analysis_manager);
-  {
-    SCOPED_TRACE("Modules are not equal.");
-    AssertModulesEqual(parsed_module.get(), expected_instrumented_module.get());
-  }
-}
-
 TEST(InjectInstrumentation, DoNotInjectInstrumentationConfig) {  // NOLINT
+  const std::filesystem::path filters_file_path{"/path/to/filters.toml"};
   const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
 
   llvm::SMDiagnostic expected_module_diagnostic{};
@@ -708,19 +729,17 @@ TEST(InjectInstrumentation, DoNotInjectInstrumentationConfig) {  // NOLINT
                                          uninstrumented_module_context);
   ASSERT_NE(parsed_module, nullptr);
 
-  auto file_reader = std::make_unique<FileReaderMock>();
+  auto filters_reader = std::make_unique<FiltersReaderMock>();
   auto symbols_writer = std::make_unique<SymbolsWriterMock>();
   auto system_clock = std::make_unique<SystemClockMock>();
   InjectInstrumentation inject_instrumentation{{
       .inject_instrumentation = false,
-      .file_reader = std::move(file_reader),
+      .filters_reader = std::move(filters_reader),
       .symbols_writer = std::move(symbols_writer),
       .system_clock = std::move(system_clock),
-      .function_allow_list_file_path = {},
-      .function_blocklist_file_path = {},
+      .filters_file_path = filters_file_path,
       .symbols_file_path = symbols_file_path,
       .module_id = {},
-      .min_instruction_count_to_instrument = 0,
       .initialize_runtime = false,
       .enable_runtime = false,
   }};
@@ -734,14 +753,29 @@ TEST(InjectInstrumentation, DoNotInjectInstrumentationConfig) {  // NOLINT
 }
 
 TEST(InjectInstrumentation, ReturnValue) {  // NOLINT
-  struct alignas(64) TestCaseConfig {
-    std::unordered_set<std::string> function_blocklist;
+  struct TestCaseConfig {
+    Filters filters;
     bool are_all_preserved;
   };
   const std::vector<TestCaseConfig> configs{
-      {.function_blocklist = {}, .are_all_preserved = false},
-      {.function_blocklist = {"_Z9Fibonaccii"}, .are_all_preserved = true}};
-  const std::filesystem::path blocklist_file_path{"/path/to/blocklist.txt"};
+      {
+          .filters = {},
+          .are_all_preserved = false,
+      },
+      {
+          .filters = {{
+              .action = Filter::Action::kBlock,
+              .rule_name = "Block Fibonacci",
+              .source_file_path = {},
+              .function_demangled_name = ".*Fibonacci.*",
+              .function_linkage_name = {},
+              .function_ir_instruction_count_lt = {},
+              .function_ir_instruction_count_gt = {},
+          }},
+          .are_all_preserved = true,
+      },
+  };
+  const std::filesystem::path filters_file_path{"/path/to/filters.toml"};
   const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
 
   for (const auto& config : configs) {
@@ -751,12 +785,9 @@ TEST(InjectInstrumentation, ReturnValue) {  // NOLINT
                                            module_diagnostic, module_context);
     ASSERT_NE(parsed_module, nullptr);
 
-    std::stringstream blocklist{absl::StrJoin(config.function_blocklist, "\n")};
-    auto file_reader = std::make_unique<FileReaderMock>();
-    EXPECT_CALL(*file_reader, Open(blocklist_file_path));
-    EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(true));
-    EXPECT_CALL(*file_reader, Istream()).WillOnce(ReturnRef(blocklist));
-    EXPECT_CALL(*file_reader, Close());
+    auto filters_reader = std::make_unique<FiltersReaderMock>();
+    EXPECT_CALL(*filters_reader, Read(filters_file_path))
+        .WillOnce(Return(config.filters));
     auto symbols_writer = std::make_unique<SymbolsWriterMock>();
     EXPECT_CALL(*symbols_writer, Write(symbols_file_path, _))
         .WillOnce(Return(SymbolsWriterResult::Ok({})));
@@ -765,14 +796,12 @@ TEST(InjectInstrumentation, ReturnValue) {  // NOLINT
         .WillRepeatedly(Return(MakeTimePoint<std::chrono::system_clock>(0)));
     InjectInstrumentation inject_instrumentation{{
         .inject_instrumentation = true,
-        .file_reader = std::move(file_reader),
+        .filters_reader = std::move(filters_reader),
         .symbols_writer = std::move(symbols_writer),
         .system_clock = std::move(system_clock),
-        .function_allow_list_file_path = {},
-        .function_blocklist_file_path = blocklist_file_path,
+        .filters_file_path = filters_file_path,
         .symbols_file_path = symbols_file_path,
         .module_id = {},
-        .min_instruction_count_to_instrument = 0,
         .initialize_runtime = false,
         .enable_runtime = false,
     }};
@@ -783,9 +812,13 @@ TEST(InjectInstrumentation, ReturnValue) {  // NOLINT
   }
 }
 
-TEST(InjectInstrumentationDeathTest, FailsOnAllowListFileOpenError) {  // NOLINT
-  const std::filesystem::path allow_list_file_path{"/path/to/allow_list.txt"};
+TEST(InjectInstrumentationDeathTest, FailsOnFiltersReaderError) {  // NOLINT
+  const std::filesystem::path filters_file_path{"/path/to/filters.toml"};
   const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
+  const FiltersReader::Error error{
+      .type = FiltersReader::Error::Type::kFailedToOpenFile,
+      .message = "Error message.",
+  };
 
   llvm::SMDiagnostic module_diagnostic{};
   llvm::LLVMContext module_context{};
@@ -795,21 +828,19 @@ TEST(InjectInstrumentationDeathTest, FailsOnAllowListFileOpenError) {  // NOLINT
 
   auto run = [&] {
     std::stringstream allow_list{};
-    auto file_reader = std::make_unique<FileReaderMock>();
-    EXPECT_CALL(*file_reader, Open(allow_list_file_path));
-    EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(false));
+    auto filters_reader = std::make_unique<FiltersReaderMock>();
+    EXPECT_CALL(*filters_reader, Read(filters_file_path))
+        .WillOnce(Return(error));
     auto symbols_writer = std::make_unique<SymbolsWriterMock>();
     auto system_clock = std::make_unique<SystemClockMock>();
     InjectInstrumentation inject_instrumentation{{
         .inject_instrumentation = true,
-        .file_reader = std::move(file_reader),
+        .filters_reader = std::move(filters_reader),
         .symbols_writer = std::move(symbols_writer),
         .system_clock = std::move(system_clock),
-        .function_allow_list_file_path = allow_list_file_path,
-        .function_blocklist_file_path = {},
+        .filters_file_path = filters_file_path,
         .symbols_file_path = symbols_file_path,
         .module_id = {},
-        .min_instruction_count_to_instrument = 0,
         .initialize_runtime = false,
         .enable_runtime = false,
     }};
@@ -817,139 +848,7 @@ TEST(InjectInstrumentationDeathTest, FailsOnAllowListFileOpenError) {  // NOLINT
     llvm::ModuleAnalysisManager module_analysis_manager{};
     inject_instrumentation.run(*parsed_module, module_analysis_manager);
   };
-  ASSERT_DEATH(  // NOLINT
-      run(),
-      "Failed to open the function allow list file '/path/to/allow_list.txt'.");
-}
-
-// NOLINTNEXTLINE
-TEST(InjectInstrumentationDeathTest, FailsOnAllowListFileReadError) {
-  const std::filesystem::path allow_list_file_path{"/path/to/allow_list.txt"};
-  const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
-
-  llvm::SMDiagnostic module_diagnostic{};
-  llvm::LLVMContext module_context{};
-  auto parsed_module = llvm::parseIRFile(kUninstrumentedIrFile.data(),
-                                         module_diagnostic, module_context);
-  ASSERT_NE(parsed_module, nullptr);
-
-  auto run = [&] {
-    std::stringstream allow_list{};
-    allow_list.setstate(std::ios::failbit);
-    auto file_reader = std::make_unique<FileReaderMock>();
-    EXPECT_CALL(*file_reader, Open(allow_list_file_path));
-    EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(true));
-    EXPECT_CALL(*file_reader, Istream()).WillOnce(ReturnRef(allow_list));
-    EXPECT_CALL(*file_reader, Close());
-    auto symbols_writer = std::make_unique<SymbolsWriterMock>();
-    auto system_clock = std::make_unique<SystemClockMock>();
-    EXPECT_CALL(*system_clock, Now())
-        .WillRepeatedly(Return(MakeTimePoint<std::chrono::system_clock>(0)));
-    InjectInstrumentation inject_instrumentation{{
-        .inject_instrumentation = true,
-        .file_reader = std::move(file_reader),
-        .symbols_writer = std::move(symbols_writer),
-        .system_clock = std::move(system_clock),
-        .function_allow_list_file_path = allow_list_file_path,
-        .function_blocklist_file_path = {},
-        .symbols_file_path = symbols_file_path,
-        .module_id = {},
-        .min_instruction_count_to_instrument = 0,
-        .initialize_runtime = false,
-        .enable_runtime = false,
-    }};
-
-    llvm::ModuleAnalysisManager module_analysis_manager{};
-    inject_instrumentation.run(*parsed_module, module_analysis_manager);
-  };
-  ASSERT_DEATH(  // NOLINT
-      run(),
-      "Failed to read the function allow list file '/path/to/allow_list.txt'.");
-}
-
-// NOLINTNEXTLINE
-TEST(InjectInstrumentationDeathTest, FailsOnBlocklistFileOpenError) {
-  const std::filesystem::path blocklist_file_path{"/path/to/blocklist.txt"};
-  const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
-
-  llvm::SMDiagnostic module_diagnostic{};
-  llvm::LLVMContext module_context{};
-  auto parsed_module = llvm::parseIRFile(kUninstrumentedIrFile.data(),
-                                         module_diagnostic, module_context);
-  ASSERT_NE(parsed_module, nullptr);
-
-  auto run = [&] {
-    std::stringstream blocklist{};
-    auto file_reader = std::make_unique<FileReaderMock>();
-    EXPECT_CALL(*file_reader, Open(blocklist_file_path));
-    EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(false));
-    auto symbols_writer = std::make_unique<SymbolsWriterMock>();
-    auto system_clock = std::make_unique<SystemClockMock>();
-    InjectInstrumentation inject_instrumentation{{
-        .inject_instrumentation = true,
-        .file_reader = std::move(file_reader),
-        .symbols_writer = std::move(symbols_writer),
-        .system_clock = std::move(system_clock),
-        .function_allow_list_file_path = {},
-        .function_blocklist_file_path = blocklist_file_path,
-        .symbols_file_path = symbols_file_path,
-        .module_id = {},
-        .min_instruction_count_to_instrument = 0,
-        .initialize_runtime = false,
-        .enable_runtime = false,
-    }};
-
-    llvm::ModuleAnalysisManager module_analysis_manager{};
-    inject_instrumentation.run(*parsed_module, module_analysis_manager);
-  };
-  ASSERT_DEATH(  // NOLINT
-      run(),
-      "Failed to open the function blocklist file '/path/to/blocklist.txt'.");
-}
-
-// NOLINTNEXTLINE
-TEST(InjectInstrumentationDeathTest, FailsOnBlocklistFileReadError) {
-  const std::filesystem::path blocklist_file_path{"/path/to/blocklist.txt"};
-  const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
-
-  llvm::SMDiagnostic module_diagnostic{};
-  llvm::LLVMContext module_context{};
-  auto parsed_module = llvm::parseIRFile(kUninstrumentedIrFile.data(),
-                                         module_diagnostic, module_context);
-  ASSERT_NE(parsed_module, nullptr);
-
-  auto run = [&] {
-    std::stringstream blocklist{};
-    blocklist.setstate(std::ios::failbit);
-    auto file_reader = std::make_unique<FileReaderMock>();
-    EXPECT_CALL(*file_reader, Open(blocklist_file_path));
-    EXPECT_CALL(*file_reader, IsOpen()).WillOnce(Return(true));
-    EXPECT_CALL(*file_reader, Istream()).WillOnce(ReturnRef(blocklist));
-    EXPECT_CALL(*file_reader, Close());
-    auto symbols_writer = std::make_unique<SymbolsWriterMock>();
-    auto system_clock = std::make_unique<SystemClockMock>();
-    EXPECT_CALL(*system_clock, Now())
-        .WillRepeatedly(Return(MakeTimePoint<std::chrono::system_clock>(0)));
-    InjectInstrumentation inject_instrumentation{{
-        .inject_instrumentation = true,
-        .file_reader = std::move(file_reader),
-        .symbols_writer = std::move(symbols_writer),
-        .system_clock = std::move(system_clock),
-        .function_allow_list_file_path = {},
-        .function_blocklist_file_path = blocklist_file_path,
-        .symbols_file_path = symbols_file_path,
-        .module_id = {},
-        .min_instruction_count_to_instrument = 0,
-        .initialize_runtime = false,
-        .enable_runtime = false,
-    }};
-
-    llvm::ModuleAnalysisManager module_analysis_manager{};
-    inject_instrumentation.run(*parsed_module, module_analysis_manager);
-  };
-  ASSERT_DEATH(  // NOLINT
-      run(),
-      "Failed to read the function blocklist file '/path/to/blocklist.txt'.");
+  ASSERT_DEATH(run(), error.message);  // NOLINT
 }
 
 // NOLINTNEXTLINE
@@ -965,7 +864,7 @@ TEST(InjectInstrumentationDeathTest, FailsOnSymbolsFileOpenError) {
   auto run = [&] {
     std::stringstream blocklist{};
     blocklist.setstate(std::ios::failbit);
-    auto file_reader = std::make_unique<FileReaderMock>();
+    auto filters_reader = std::make_unique<FiltersReaderMock>();
     auto symbols_writer = std::make_unique<SymbolsWriterMock>();
     EXPECT_CALL(*symbols_writer, Write(symbols_file_path, _))
         .WillOnce(Return(SymbolsWriter::Error::kFailedToOpenFile));
@@ -974,14 +873,12 @@ TEST(InjectInstrumentationDeathTest, FailsOnSymbolsFileOpenError) {
         .WillRepeatedly(Return(MakeTimePoint<std::chrono::system_clock>(0)));
     InjectInstrumentation inject_instrumentation{{
         .inject_instrumentation = true,
-        .file_reader = std::move(file_reader),
+        .filters_reader = std::move(filters_reader),
         .symbols_writer = std::move(symbols_writer),
         .system_clock = std::move(system_clock),
-        .function_allow_list_file_path = {},
-        .function_blocklist_file_path = {},
+        .filters_file_path = {},
         .symbols_file_path = symbols_file_path,
         .module_id = {},
-        .min_instruction_count_to_instrument = 0,
         .initialize_runtime = false,
         .enable_runtime = false,
     }};
@@ -1004,9 +901,7 @@ TEST(InjectInstrumentationDeathTest, FailsOnSymbolsFileWriteError) {
   ASSERT_NE(parsed_module, nullptr);
 
   auto run = [&] {
-    std::stringstream blocklist{};
-    blocklist.setstate(std::ios::failbit);
-    auto file_reader = std::make_unique<FileReaderMock>();
+    auto filters_reader = std::make_unique<FiltersReaderMock>();
     auto symbols_writer = std::make_unique<SymbolsWriterMock>();
     EXPECT_CALL(*symbols_writer, Write(symbols_file_path, _))
         .WillOnce(Return(SymbolsWriter::Error::kSerializationError));
@@ -1015,14 +910,12 @@ TEST(InjectInstrumentationDeathTest, FailsOnSymbolsFileWriteError) {
         .WillRepeatedly(Return(MakeTimePoint<std::chrono::system_clock>(0)));
     InjectInstrumentation inject_instrumentation{{
         .inject_instrumentation = true,
-        .file_reader = std::move(file_reader),
+        .filters_reader = std::move(filters_reader),
         .symbols_writer = std::move(symbols_writer),
         .system_clock = std::move(system_clock),
-        .function_allow_list_file_path = {},
-        .function_blocklist_file_path = {},
+        .filters_file_path = {},
         .symbols_file_path = symbols_file_path,
         .module_id = {},
-        .min_instruction_count_to_instrument = 0,
         .initialize_runtime = false,
         .enable_runtime = false,
     }};

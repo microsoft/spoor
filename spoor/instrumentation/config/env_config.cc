@@ -16,24 +16,17 @@ auto ConfigFromEnv(const util::env::GetEnv& get_env) -> Config {
   return {
       .enable_runtime = GetEnvOrDefault(kEnableRuntimeKey.data(),
                                         kEnableRuntimeDefaultValue, get_env),
+      .filters_file = GetEnvOrDefault(kFiltersFileKey.data(),
+                                      kFiltersFileDefaultValue, true, get_env),
       .force_binary_output =
           GetEnvOrDefault(kForceBinaryOutputKey.data(),
                           kForceBinaryOutputDefaultValue, get_env),
-      .function_allow_list_file =
-          GetEnvOrDefault(kFunctionAllowListFileKey.data(),
-                          kFunctionAllowListFileDefaultValue, true, get_env),
-      .function_blocklist_file =
-          GetEnvOrDefault(kFunctionBlocklistFileKey.data(),
-                          kFunctionBlocklistFileDefaultValue, true, get_env),
       .initialize_runtime =
           GetEnvOrDefault(kInitializeRuntimeKey.data(),
                           kInitializeRuntimeDefaultValue, get_env),
       .inject_instrumentation =
           GetEnvOrDefault(kInjectInstrumentationKey.data(),
                           kInjectInstrumentationDefaultValue, get_env),
-      .min_instruction_threshold =
-          GetEnvOrDefault(kMinInstructionThresholdKey.data(),
-                          kMinInstructionThresholdDefaultValue, get_env),
       .module_id = GetEnvOrDefault(kModuleIdKey.data(), kModuleIdDefaultValue,
                                    true, get_env),
       .output_file = GetEnvOrDefault(
