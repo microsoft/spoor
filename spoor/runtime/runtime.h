@@ -6,6 +6,10 @@
 #ifndef SPOOR_RUNTIME_RUNTIME_H_
 #define SPOOR_RUNTIME_RUNTIME_H_
 
+#ifndef SPOOR_RUNTIME_EXPORT
+#define SPOOR_RUNTIME_EXPORT __attribute__((visibility("default")))
+#endif
+
 #ifdef __cplusplus
 #include <cstdint>
 #include <filesystem>
@@ -50,57 +54,61 @@ struct alignas(128) Config {
 // Initialize the event tracing runtime. A call to this function is inserted at
 // the start of `main` by the compile-time instrumentation unless configured
 // otherwise.
-auto Initialize() -> void;
+SPOOR_RUNTIME_EXPORT auto Initialize() -> void;
 
 // Deinitialize the event tracing runtime. A call to this function is inserted
 // at the  end of `main` by the compile-time instrumentation.
-auto Deinitialize() -> void;
+SPOOR_RUNTIME_EXPORT auto Deinitialize() -> void;
 
 // Check if the runtime engine is initialized.
-auto Initialized() -> bool;
+SPOOR_RUNTIME_EXPORT auto Initialized() -> bool;
 
 // Enable runtime logging.
-auto Enable() -> void;
+SPOOR_RUNTIME_EXPORT auto Enable() -> void;
 
 // Disable runtime logging.
-auto Disable() -> void;
+SPOOR_RUNTIME_EXPORT auto Disable() -> void;
 
 // Check if runtime logging is enabled.
-auto Enabled() -> bool;
+SPOOR_RUNTIME_EXPORT auto Enabled() -> bool;
 
 // Log that the program generated an event. The function internally checks if
 // the runtime is enabled before logging the event.
-auto LogEvent(EventType event, TimestampNanoseconds steady_clock_timestamp,
-              uint64_t payload_1, uint64_t payload_2) -> void;
+SPOOR_RUNTIME_EXPORT auto LogEvent(EventType event,
+                                   TimestampNanoseconds steady_clock_timestamp,
+                                   uint64_t payload_1, uint64_t payload_2)
+    -> void;
 
 // Log that the program generated an event. The function internally checks if
 // the runtime is enabled before collecting the current timestamp and logging
 // the event.
-auto LogEvent(EventType event, uint64_t payload_1, uint64_t payload_2) -> void;
+SPOOR_RUNTIME_EXPORT auto LogEvent(EventType event, uint64_t payload_1,
+                                   uint64_t payload_2) -> void;
 
 // Flush in-memory trace events to disk. The callback is invoked on a background
 // thread.
-auto FlushTraceEvents(std::function<void()> callback) -> void;
+SPOOR_RUNTIME_EXPORT auto FlushTraceEvents(std::function<void()> callback)
+    -> void;
 
 // Clear the trace events from memory without flushing them to disk.
-auto ClearTraceEvents() -> void;
+SPOOR_RUNTIME_EXPORT auto ClearTraceEvents() -> void;
 
 // Retrieve an array of all trace files on disk. The callback is invoked on a
 // background thread.
-auto FlushedTraceFiles(
+SPOOR_RUNTIME_EXPORT auto FlushedTraceFiles(
     std::function<void(std::vector<std::filesystem::path>)> callback) -> void;
 
 // Delete all trace files older than a given timestamp. The callback is invoked
 // on a background thread.
-auto DeleteFlushedTraceFilesOlderThan(
+SPOOR_RUNTIME_EXPORT auto DeleteFlushedTraceFilesOlderThan(
     SystemTimestampSeconds system_timestamp,
     std::function<void(DeletedFilesInfo)> callback) -> void;
 
 // Retrieve Spoor's configuration.
-auto GetConfig() -> Config;
+SPOOR_RUNTIME_EXPORT auto GetConfig() -> Config;
 
 // Check if the runtime contains stub implementations.
-auto StubImplementation() -> bool;
+SPOOR_RUNTIME_EXPORT auto StubImplementation() -> bool;
 
 }  // namespace spoor::runtime
 #endif  // __cplusplus
