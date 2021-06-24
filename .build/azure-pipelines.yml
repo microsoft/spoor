@@ -1,15 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-parameters:
-- name: symbol_visibility
-  displayName: Symbol Visibility
-  type: string
-  default: default
-  values:
-  - default
-  - hidden
-
 trigger:
 - master
 
@@ -26,7 +17,7 @@ jobs:
     vmImage: $(imageName)
   steps:
   - template: ./templates/install-common.yml
-  - script: bazel build //... --copt=-fvisibility=${{ parameters.symbol_visibility }}
+  - script: bazel build //...
     displayName: Build
   - script: bazel test //...
     displayName: Test
