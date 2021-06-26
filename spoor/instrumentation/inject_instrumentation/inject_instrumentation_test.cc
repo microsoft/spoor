@@ -79,6 +79,15 @@ constexpr std::string_view kNoMainIrFile{
     "spoor/instrumentation/test_data/fib_no_main.ll"};
 constexpr std::string_view kOnlyMainFunctionInstrumentedIrFile{
     "spoor/instrumentation/test_data/fib_only_main_instrumented.ll"};
+constexpr std::string_view kDIFileCompilerGeneratedIrFile{
+    "spoor/instrumentation/test_data/main_difile_compiler_generated.ll"};
+constexpr std::string_view kDIFileEmptyDirectoryIrFile{
+    "spoor/instrumentation/test_data/main_difile_empty_directory.ll"};
+constexpr std::string_view kDIFileFileNameContainsDirectoryIrFile{
+    "spoor/instrumentation/test_data/"
+    "main_difile_file_name_contains_directory.ll"};
+constexpr std::string_view kDISubprogramZeroLineNumberIrFile{
+    "spoor/instrumentation/test_data/main_disubprogram_zero_line_number.ll"};
 
 auto AssertModulesEqual(gsl::not_null<llvm::Module*> computed_module,
                         gsl::not_null<llvm::Module*> expected_module) -> void {
@@ -465,6 +474,115 @@ TEST(InjectInstrumentation, OutputsInstrumentedSymbols) {  // NOLINT
                 return symbols;
               },
       },
+      {
+          .ir_file = kDIFileCompilerGeneratedIrFile,
+          .filters = {},
+          .expected_symbols =
+              [&](const llvm::Module& llvm_module) {
+                Symbols symbols{};
+                const std::string module_id{kDIFileCompilerGeneratedIrFile};
+                const auto module_hash = make_module_hash(llvm_module);
+
+                auto& function_symbols_table =
+                    *symbols.mutable_function_symbols_table();
+
+                auto& main_function_infos =
+                    function_symbols_table[module_hash | 0ULL];
+                auto& main_function_info =
+                    *main_function_infos.add_function_infos();
+                main_function_info.set_module_id(module_id);
+                main_function_info.set_linkage_name("main");
+                main_function_info.set_demangled_name("main");
+                main_function_info.set_file_name("<compiler-generated>");
+                main_function_info.set_instrumented(true);
+                *main_function_info.mutable_created_at() =
+                    TimeUtil::NanosecondsToTimestamp(timestamp_0);
+                return symbols;
+              },
+      },
+      {
+          .ir_file = kDIFileEmptyDirectoryIrFile,
+          .filters = {},
+          .expected_symbols =
+              [&](const llvm::Module& llvm_module) {
+                Symbols symbols{};
+                const std::string module_id{kDIFileEmptyDirectoryIrFile};
+                const auto module_hash = make_module_hash(llvm_module);
+
+                auto& function_symbols_table =
+                    *symbols.mutable_function_symbols_table();
+
+                auto& main_function_infos =
+                    function_symbols_table[module_hash | 0ULL];
+                auto& main_function_info =
+                    *main_function_infos.add_function_infos();
+                main_function_info.set_module_id(module_id);
+                main_function_info.set_linkage_name("main");
+                main_function_info.set_demangled_name("main");
+                main_function_info.set_file_name("/path/to/file/main.c");
+                main_function_info.set_line(1);
+                main_function_info.set_instrumented(true);
+                *main_function_info.mutable_created_at() =
+                    TimeUtil::NanosecondsToTimestamp(timestamp_0);
+                return symbols;
+              },
+      },
+      {
+          .ir_file = kDIFileFileNameContainsDirectoryIrFile,
+          .filters = {},
+          .expected_symbols =
+              [&](const llvm::Module& llvm_module) {
+                Symbols symbols{};
+                const std::string module_id{
+                    kDIFileFileNameContainsDirectoryIrFile};
+                const auto module_hash = make_module_hash(llvm_module);
+
+                auto& function_symbols_table =
+                    *symbols.mutable_function_symbols_table();
+
+                auto& main_function_infos =
+                    function_symbols_table[module_hash | 0ULL];
+                auto& main_function_info =
+                    *main_function_infos.add_function_infos();
+                main_function_info.set_module_id(module_id);
+                main_function_info.set_linkage_name("main");
+                main_function_info.set_demangled_name("main");
+                main_function_info.set_file_name("file/main.c");
+                main_function_info.set_directory("/path/to");
+                main_function_info.set_line(1);
+                main_function_info.set_instrumented(true);
+                *main_function_info.mutable_created_at() =
+                    TimeUtil::NanosecondsToTimestamp(timestamp_0);
+                return symbols;
+              },
+      },
+      {
+          .ir_file = kDISubprogramZeroLineNumberIrFile,
+          .filters = {},
+          .expected_symbols =
+              [&](const llvm::Module& llvm_module) {
+                Symbols symbols{};
+                const std::string module_id{kDISubprogramZeroLineNumberIrFile};
+                const auto module_hash = make_module_hash(llvm_module);
+
+                auto& function_symbols_table =
+                    *symbols.mutable_function_symbols_table();
+
+                auto& main_function_infos =
+                    function_symbols_table[module_hash | 0ULL];
+                auto& main_function_info =
+                    *main_function_infos.add_function_infos();
+                main_function_info.set_module_id(module_id);
+                main_function_info.set_linkage_name("main");
+                main_function_info.set_demangled_name("main");
+                main_function_info.set_file_name("main.c");
+                main_function_info.set_directory("/path/to/file");
+                main_function_info.set_instrumented(true);
+                *main_function_info.mutable_created_at() =
+                    TimeUtil::NanosecondsToTimestamp(timestamp_0);
+                return symbols;
+              },
+      },
   };
   for (const auto& test_case : test_cases) {
     llvm::SMDiagnostic instrumented_module_diagnostic{};
@@ -485,7 +603,7 @@ TEST(InjectInstrumentation, OutputsInstrumentedSymbols) {  // NOLINT
     auto system_clock = std::make_unique<SystemClockMock>();
     EXPECT_CALL(*system_clock, Now())
         .WillOnce(Return(MakeTimePoint<std::chrono::system_clock>(timestamp_0)))
-        .WillOnce(
+        .WillRepeatedly(
             Return(MakeTimePoint<std::chrono::system_clock>(timestamp_1)));
     InjectInstrumentation inject_instrumentation{{
         .inject_instrumentation = true,
