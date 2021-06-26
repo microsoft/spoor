@@ -15,13 +15,15 @@
 namespace spoor::tools::serialization {
 
 enum class OutputFormat {
-  kPerfetto,
-  kSpoorSymbols,
+  kPerfettoProto,
+  kSpoorSymbolsProto,
+  kSpoorSymbolsCsv,
 };
 
-constexpr std::array<OutputFormat, 2> kOutputFormats{{
-    OutputFormat::kPerfetto,
-    OutputFormat::kSpoorSymbols,
+constexpr std::array<OutputFormat, 3> kOutputFormats{{
+    OutputFormat::kPerfettoProto,
+    OutputFormat::kSpoorSymbolsProto,
+    OutputFormat::kSpoorSymbolsCsv,
 }};
 
 enum class OutputFormatFromConfigError {

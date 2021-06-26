@@ -125,7 +125,7 @@ auto main(const int argc, char** argv) -> int {
       auto visit_file = [&](const std::filesystem::path& path) {
         auto [_, inserted] = visited.emplace(path.string());
         if (!inserted || !file_system.IsRegularFile(path).OkOr(false)) return;
-        if (output_format != OutputFormat::kSpoorSymbols &&
+        if (output_format == OutputFormat::kPerfettoProto &&
             path.extension() == absl::StrCat(".", kTraceFileExtension)) {
           trace_file_paths.emplace_back(path);
         }

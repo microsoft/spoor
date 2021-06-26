@@ -14,12 +14,15 @@
 #include "spoor/instrumentation/symbols/symbols.pb.h"
 #include "spoor/runtime/trace/trace.h"
 #include "spoor/tools/adapters/perfetto/perfetto_adapter.h"
+#include "spoor/tools/serialization/csv/csv.h"
 #include "util/result.h"
 
 namespace spoor::tools::serialization {
 
 using adapters::perfetto::kPerfettoFileExtension;
 using adapters::perfetto::SpoorTraceToPerfettoTrace;
+using csv::kCsvFileExtension;
+using csv::SerializeSymbolsToOstreamAsCsv;
 using instrumentation::kSymbolsFileExtension;
 using instrumentation::symbols::Symbols;
 using runtime::trace::TraceFile;
@@ -31,18 +34,24 @@ auto OutputFormatFromConfig(const config::Config& config)
     case config::OutputFormat::kAutomatic: {
       const std::filesystem::path path{config.output_file};
       if (path.extension() == absl::StrCat(".", kPerfettoFileExtension)) {
-        return OutputFormat::kPerfetto;
+        return OutputFormat::kPerfettoProto;
       }
       if (path.extension() == absl::StrCat(".", kSymbolsFileExtension)) {
-        return OutputFormat::kSpoorSymbols;
+        return OutputFormat::kSpoorSymbolsProto;
+      }
+      if (path.extension() == absl::StrCat(".", kCsvFileExtension)) {
+        return OutputFormat::kSpoorSymbolsCsv;
       }
       return OutputFormatFromConfigError::kUnknownFileExtension;
     }
-    case config::OutputFormat::kPerfetto: {
-      return OutputFormat::kPerfetto;
+    case config::OutputFormat::kPerfettoProto: {
+      return OutputFormat::kPerfettoProto;
     }
-    case config::OutputFormat::kSpoorSymbols: {
-      return OutputFormat::kSpoorSymbols;
+    case config::OutputFormat::kSpoorSymbolsProto: {
+      return OutputFormat::kSpoorSymbolsProto;
+    }
+    case config::OutputFormat::kSpoorSymbolsCsv: {
+      return OutputFormat::kSpoorSymbolsCsv;
     }
   }
 }
@@ -54,13 +63,17 @@ auto SerializeToOstream(const std::vector<TraceFile>& trace_files,
     -> util::result::Result<util::result::None, util::result::None> {
   const auto success = [&] {
     switch (output_format) {
-      case OutputFormat::kPerfetto: {
+      case OutputFormat::kPerfettoProto: {
         const auto perfetto_trace =
             SpoorTraceToPerfettoTrace(trace_files, symbols);
         return perfetto_trace.SerializeToOstream(ostream);
       }
-      case OutputFormat::kSpoorSymbols: {
+      case OutputFormat::kSpoorSymbolsProto: {
         return symbols.SerializeToOstream(ostream);
+      }
+      case OutputFormat::kSpoorSymbolsCsv: {
+        const auto result = SerializeSymbolsToOstreamAsCsv(symbols, ostream);
+        return result.IsOk();
       }
     }
   }();

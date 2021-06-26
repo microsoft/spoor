@@ -12,8 +12,9 @@ namespace spoor::tools::config {
 
 enum class OutputFormat {
   kAutomatic,
-  kPerfetto,
-  kSpoorSymbols,
+  kPerfettoProto,
+  kSpoorSymbolsProto,
+  kSpoorSymbolsCsv,
 };
 
 struct Config {
@@ -22,11 +23,12 @@ struct Config {
   OutputFormat output_format;
 };
 
-constexpr util::flat_map::FlatMap<std::string_view, OutputFormat, 3>
+constexpr util::flat_map::FlatMap<std::string_view, OutputFormat, 4>
     kOutputFormats{
         {"automatic", OutputFormat::kAutomatic},
-        {"perfetto", OutputFormat::kPerfetto},
-        {"spoor_symbols", OutputFormat::kSpoorSymbols},
+        {"perfetto", OutputFormat::kPerfettoProto},
+        {"spoor_symbols", OutputFormat::kSpoorSymbolsProto},
+        {"csv", OutputFormat::kSpoorSymbolsCsv},
     };
 
 constexpr std::string_view kOutputFileDoc{"Output file."};
