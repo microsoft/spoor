@@ -7,8 +7,10 @@
 #include <cctype>
 #include <chrono>
 #include <cstdlib>
+#include <filesystem>
 #include <ios>
 #include <iterator>
+#include <string>
 #include <string_view>
 #include <utility>
 
@@ -173,15 +175,45 @@ auto InjectInstrumentation::InstrumentModule(
     function_info.set_demangled_name(demangled_name);
 
     const auto* subprogram = function.getSubprogram();
-    if (subprogram != nullptr) {
-      function_info.set_file_name(subprogram->getFilename().str());
-      function_info.set_directory(subprogram->getDirectory().str());
-      function_info.set_line(gsl::narrow_cast<int32>(subprogram->getLine()));
-    }
-    const auto filter_source_file_path = [subprogram] {
-      if (subprogram == nullptr) return std::string{};
-      return absl::StrFormat("%s/%s", subprogram->getFilename().str(),
-                             subprogram->getDirectory().str());
+    const auto directory =
+        [subprogram]() -> std::optional<std::filesystem::path> {
+      if (subprogram == nullptr) return {};
+      auto directory = subprogram->getDirectory().str();
+      if (directory.empty()) return {};
+      return directory;
+    }();
+    const auto file_name =
+        [subprogram, &directory]() -> std::optional<std::filesystem::path> {
+      if (subprogram == nullptr) return {};
+      auto file_name = subprogram->getFilename().str();
+      if (file_name.empty()) return {};
+      if (!directory.has_value()) return file_name;
+      // Sometimes the debug info's file name is an absolute path and other
+      // times it is relative to the directory.
+      const auto directory_string = directory->string();
+      if (!file_name.starts_with(directory_string)) return file_name;
+      const std::string separator{std::filesystem::path::preferred_separator};
+      return file_name.substr(directory_string.size() + separator.size());
+    }();
+    const auto line_number = [subprogram]() -> std::optional<int32> {
+      if (subprogram == nullptr) return {};
+      const auto line_number = subprogram->getLine();
+      if (line_number < 1) return {};
+      return gsl::narrow_cast<int32>(line_number);
+    }();
+
+    if (file_name.has_value()) function_info.set_file_name(file_name->string());
+    if (directory.has_value()) function_info.set_directory(directory->string());
+    if (line_number.has_value()) function_info.set_line(line_number.value());
+
+    const auto filter_source_file_path = [&directory,
+                                          &file_name]() -> std::string {
+      if (directory.has_value() && file_name.has_value()) {
+        return directory.value() / file_name.value();
+      }
+      if (directory.has_value()) return directory.value();
+      if (file_name.has_value()) return file_name.value();
+      return {};
     }();
 
     *function_info.mutable_created_at() = [&] {
