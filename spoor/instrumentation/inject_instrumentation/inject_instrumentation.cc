@@ -174,6 +174,9 @@ auto InjectInstrumentation::InstrumentModule(
     }();
     function_info.set_demangled_name(demangled_name);
 
+    const auto ir_instruction_count = function.getInstructionCount();
+    function_info.set_ir_instruction_count(ir_instruction_count);
+
     const auto* subprogram = function.getSubprogram();
     const auto directory =
         [subprogram]() -> std::optional<std::filesystem::path> {
@@ -223,7 +226,6 @@ auto InjectInstrumentation::InstrumentModule(
       return TimeUtil::NanosecondsToTimestamp(nanoseconds);
     }();
 
-    const auto ir_instruction_count = function.getInstructionCount();
     const auto is_main = function_name == kMainFunctionName;
 
     const auto [instrument_function,

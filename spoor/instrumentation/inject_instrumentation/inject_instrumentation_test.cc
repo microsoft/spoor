@@ -213,6 +213,7 @@ TEST(InjectInstrumentation, OutputsInstrumentedSymbols) {  // NOLINT
                 fibonacci_function_info.set_module_id(module_id);
                 fibonacci_function_info.set_linkage_name("_Z9Fibonaccii");
                 fibonacci_function_info.set_demangled_name("Fibonacci(int)");
+                fibonacci_function_info.set_ir_instruction_count(9);
                 fibonacci_function_info.set_instrumented(true);
                 *fibonacci_function_info.mutable_created_at() =
                     TimeUtil::NanosecondsToTimestamp(timestamp_0);
@@ -224,6 +225,7 @@ TEST(InjectInstrumentation, OutputsInstrumentedSymbols) {  // NOLINT
                 main_function_info.set_module_id(module_id);
                 main_function_info.set_linkage_name("main");
                 main_function_info.set_demangled_name("main");
+                main_function_info.set_ir_instruction_count(2);
                 main_function_info.set_instrumented(true);
                 *main_function_info.mutable_created_at() =
                     TimeUtil::NanosecondsToTimestamp(timestamp_1);
@@ -270,6 +272,7 @@ TEST(InjectInstrumentation, OutputsInstrumentedSymbols) {  // NOLINT
                 fibonacci_function_info.set_module_id(module_id);
                 fibonacci_function_info.set_linkage_name("_Z9Fibonaccii");
                 fibonacci_function_info.set_demangled_name("Fibonacci(int)");
+                fibonacci_function_info.set_ir_instruction_count(9);
                 fibonacci_function_info.set_instrumented(false);
                 fibonacci_function_info.set_instrumented_reason(
                     "Block everything");
@@ -283,6 +286,7 @@ TEST(InjectInstrumentation, OutputsInstrumentedSymbols) {  // NOLINT
                 main_function_info.set_module_id(module_id);
                 main_function_info.set_linkage_name("main");
                 main_function_info.set_demangled_name("main");
+                main_function_info.set_ir_instruction_count(2);
                 main_function_info.set_instrumented(true);
                 main_function_info.set_instrumented_reason(
                     "Always instrument `main`");
@@ -315,6 +319,7 @@ TEST(InjectInstrumentation, OutputsInstrumentedSymbols) {  // NOLINT
                 fibonacci_function_info.set_file_name("fibonacci.c");
                 fibonacci_function_info.set_directory("/path/to/file");
                 fibonacci_function_info.set_line(1);
+                fibonacci_function_info.set_ir_instruction_count(20);
                 fibonacci_function_info.set_instrumented(true);
                 *fibonacci_function_info.mutable_created_at() =
                     TimeUtil::NanosecondsToTimestamp(timestamp_0);
@@ -329,6 +334,7 @@ TEST(InjectInstrumentation, OutputsInstrumentedSymbols) {  // NOLINT
                 main_function_info.set_file_name("fibonacci.c");
                 main_function_info.set_directory("/path/to/file");
                 main_function_info.set_line(6);
+                main_function_info.set_ir_instruction_count(4);
                 main_function_info.set_instrumented(true);
                 *main_function_info.mutable_created_at() =
                     TimeUtil::NanosecondsToTimestamp(timestamp_1);
@@ -359,6 +365,7 @@ TEST(InjectInstrumentation, OutputsInstrumentedSymbols) {  // NOLINT
                 fibonacci_function_info.set_file_name("fibonacci.cc");
                 fibonacci_function_info.set_directory("/path/to/file");
                 fibonacci_function_info.set_line(1);
+                fibonacci_function_info.set_ir_instruction_count(20);
                 fibonacci_function_info.set_instrumented(true);
                 *fibonacci_function_info.mutable_created_at() =
                     TimeUtil::NanosecondsToTimestamp(timestamp_0);
@@ -373,7 +380,7 @@ TEST(InjectInstrumentation, OutputsInstrumentedSymbols) {  // NOLINT
                 main_function_info.set_file_name("fibonacci.cc");
                 main_function_info.set_directory("/path/to/file");
                 main_function_info.set_line(6);
-                fibonacci_function_info.set_instrumented(true);
+                main_function_info.set_ir_instruction_count(4);
                 main_function_info.set_instrumented(true);
                 *main_function_info.mutable_created_at() =
                     TimeUtil::NanosecondsToTimestamp(timestamp_1);
@@ -406,6 +413,7 @@ TEST(InjectInstrumentation, OutputsInstrumentedSymbols) {  // NOLINT
                 fibonacci_function_info.set_file_name("fibonacci.m");
                 fibonacci_function_info.set_directory("/path/to/file");
                 fibonacci_function_info.set_line(6);
+                fibonacci_function_info.set_ir_instruction_count(30);
                 fibonacci_function_info.set_instrumented(true);
                 *fibonacci_function_info.mutable_created_at() =
                     TimeUtil::NanosecondsToTimestamp(timestamp_0);
@@ -420,6 +428,7 @@ TEST(InjectInstrumentation, OutputsInstrumentedSymbols) {  // NOLINT
                 main_function_info.set_file_name("fibonacci.m");
                 main_function_info.set_directory("/path/to/file");
                 main_function_info.set_line(12);
+                main_function_info.set_ir_instruction_count(7);
                 main_function_info.set_instrumented(true);
                 *main_function_info.mutable_created_at() =
                     TimeUtil::NanosecondsToTimestamp(timestamp_1);
@@ -452,6 +461,7 @@ TEST(InjectInstrumentation, OutputsInstrumentedSymbols) {  // NOLINT
                 // Swift automatically adds a `main` function and picks the line
                 // number.
                 main_function_info.set_line(1);
+                main_function_info.set_ir_instruction_count(2);
                 main_function_info.set_instrumented(true);
                 *main_function_info.mutable_created_at() =
                     TimeUtil::NanosecondsToTimestamp(timestamp_0);
@@ -467,6 +477,7 @@ TEST(InjectInstrumentation, OutputsInstrumentedSymbols) {  // NOLINT
                 fibonacci_function_info.set_file_name("fibonacci.swift");
                 fibonacci_function_info.set_directory("/path/to/file");
                 fibonacci_function_info.set_line(1);
+                fibonacci_function_info.set_ir_instruction_count(15);
                 fibonacci_function_info.set_instrumented(true);
                 *fibonacci_function_info.mutable_created_at() =
                     TimeUtil::NanosecondsToTimestamp(timestamp_1);
@@ -494,6 +505,7 @@ TEST(InjectInstrumentation, OutputsInstrumentedSymbols) {  // NOLINT
                 main_function_info.set_linkage_name("main");
                 main_function_info.set_demangled_name("main");
                 main_function_info.set_file_name("<compiler-generated>");
+                main_function_info.set_ir_instruction_count(1);
                 main_function_info.set_instrumented(true);
                 *main_function_info.mutable_created_at() =
                     TimeUtil::NanosecondsToTimestamp(timestamp_0);
@@ -521,6 +533,7 @@ TEST(InjectInstrumentation, OutputsInstrumentedSymbols) {  // NOLINT
                 main_function_info.set_demangled_name("main");
                 main_function_info.set_file_name("/path/to/file/main.c");
                 main_function_info.set_line(1);
+                main_function_info.set_ir_instruction_count(1);
                 main_function_info.set_instrumented(true);
                 *main_function_info.mutable_created_at() =
                     TimeUtil::NanosecondsToTimestamp(timestamp_0);
@@ -550,6 +563,7 @@ TEST(InjectInstrumentation, OutputsInstrumentedSymbols) {  // NOLINT
                 main_function_info.set_file_name("file/main.c");
                 main_function_info.set_directory("/path/to");
                 main_function_info.set_line(1);
+                main_function_info.set_ir_instruction_count(1);
                 main_function_info.set_instrumented(true);
                 *main_function_info.mutable_created_at() =
                     TimeUtil::NanosecondsToTimestamp(timestamp_0);
@@ -577,6 +591,7 @@ TEST(InjectInstrumentation, OutputsInstrumentedSymbols) {  // NOLINT
                 main_function_info.set_demangled_name("main");
                 main_function_info.set_file_name("main.c");
                 main_function_info.set_directory("/path/to/file");
+                main_function_info.set_ir_instruction_count(1);
                 main_function_info.set_instrumented(true);
                 *main_function_info.mutable_created_at() =
                     TimeUtil::NanosecondsToTimestamp(timestamp_0);

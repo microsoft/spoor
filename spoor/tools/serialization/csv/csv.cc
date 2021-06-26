@@ -27,7 +27,7 @@ using instrumentation::symbols::Symbols;
 using spoor::runtime::trace::FunctionId;
 using Result = util::result::Result<util::result::None, util::result::None>;
 
-constexpr std::array<std::string_view, 10> kSpoorSymbolsColumns{{
+constexpr std::array<std::string_view, 11> kSpoorSymbolsColumns{{
     "function_id",
     "module_id",
     "linkage_name",
@@ -35,6 +35,7 @@ constexpr std::array<std::string_view, 10> kSpoorSymbolsColumns{{
     "file_name",
     "directory",
     "line",
+    "ir_instruction_count",
     "instrumented",
     "instrumented_reason",
     "created_at",
@@ -66,6 +67,7 @@ auto SerializeSymbolsToOstreamAsCsv(const Symbols& symbols,
           function_info.file_name(),
           function_info.directory(),
           function_info.line() < 1 ? "" : absl::StrCat(function_info.line()),
+          absl::StrCat(function_info.ir_instruction_count()),
           function_info.instrumented() ? "true" : "false",
           function_info.instrumented_reason(),
           TimeUtil::ToString(function_info.created_at()),

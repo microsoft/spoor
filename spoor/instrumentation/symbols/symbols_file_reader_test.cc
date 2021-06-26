@@ -40,6 +40,7 @@ TEST(SymbolsFileReader, Read) {  // NOLINT
     function_info.set_file_name("file.source");
     function_info.set_directory("/path/to/directory");
     function_info.set_line(42);
+    function_info.set_ir_instruction_count(100);
     function_info.set_instrumented(true);
     *function_info.mutable_created_at() = TimeUtil::NanosecondsToTimestamp(42);
     return symbols;
