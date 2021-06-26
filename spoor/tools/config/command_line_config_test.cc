@@ -33,7 +33,7 @@ auto MakeArgv(const std::vector<std::string_view>& args) -> std::vector<char*> {
 TEST(CommandLineConfig, ParsesCommandLine) {  // NOLINT
   const Config expected_config{
       .output_file = "/path/to/output_file.perfetto",
-      .output_format = OutputFormat::kPerfetto,
+      .output_format = OutputFormat::kPerfettoProto,
   };
   auto argv = MakeArgv({"spoor", "--output_file=/path/to/output_file.perfetto",
                         "--output_format=perfetto"});
@@ -103,7 +103,7 @@ TEST(CommandLineConfig, AbslParseFlag) {  // NOLINT
   ASSERT_FALSE(success);
   ASSERT_EQ(error,
             "Unknown output format 'invalid'. Options: automatic, perfetto, "
-            "spoor_symbols.");
+            "spoor_symbols, csv.");
 }
 
 TEST(CommandLineConfig, AbslUnparseFlag) {  // NOLINT

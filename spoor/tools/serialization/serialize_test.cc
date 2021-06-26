@@ -14,6 +14,7 @@
 #include "spoor/instrumentation/symbols/symbols.pb.h"
 #include "spoor/runtime/trace/trace.h"
 #include "spoor/tools/config/config.h"
+#include "spoor/tools/serialization/csv/csv.h"
 
 namespace {
 
@@ -35,6 +36,7 @@ using spoor::tools::serialization::OutputFormat;
 using spoor::tools::serialization::OutputFormatFromConfig;
 using spoor::tools::serialization::OutputFormatFromConfigError;
 using spoor::tools::serialization::SerializeToOstream;
+using spoor::tools::serialization::csv::kCsvDelimiter;
 using ConfigOutputFormat = spoor::tools::config::OutputFormat;
 using SerializationOutputFormat = spoor::tools::serialization::OutputFormat;
 
@@ -47,7 +49,7 @@ TEST(OutputFormatFromConfig, ParsesOutputFormat) {  // NOLINT
     const auto output_format_result = OutputFormatFromConfig(config);
     ASSERT_TRUE(output_format_result.IsOk());
     const auto output_format = output_format_result.Ok();
-    ASSERT_EQ(output_format, SerializationOutputFormat::kPerfetto);
+    ASSERT_EQ(output_format, SerializationOutputFormat::kPerfettoProto);
   }
   {
     const Config config{
@@ -57,7 +59,17 @@ TEST(OutputFormatFromConfig, ParsesOutputFormat) {  // NOLINT
     const auto output_format_result = OutputFormatFromConfig(config);
     ASSERT_TRUE(output_format_result.IsOk());
     const auto output_format = output_format_result.Ok();
-    ASSERT_EQ(output_format, SerializationOutputFormat::kSpoorSymbols);
+    ASSERT_EQ(output_format, SerializationOutputFormat::kSpoorSymbolsProto);
+  }
+  {
+    const Config config{
+        .output_file = "/path/to/file.csv",
+        .output_format = ConfigOutputFormat::kAutomatic,
+    };
+    const auto output_format_result = OutputFormatFromConfig(config);
+    ASSERT_TRUE(output_format_result.IsOk());
+    const auto output_format = output_format_result.Ok();
+    ASSERT_EQ(output_format, SerializationOutputFormat::kSpoorSymbolsCsv);
   }
   {
     const Config config{
@@ -72,22 +84,22 @@ TEST(OutputFormatFromConfig, ParsesOutputFormat) {  // NOLINT
   {
     const Config config{
         .output_file = "/path/to/file.spoor_symbols",
-        .output_format = ConfigOutputFormat::kPerfetto,
+        .output_format = ConfigOutputFormat::kPerfettoProto,
     };
     const auto output_format_result = OutputFormatFromConfig(config);
     ASSERT_TRUE(output_format_result.IsOk());
     const auto output_format = output_format_result.Ok();
-    ASSERT_EQ(output_format, SerializationOutputFormat::kPerfetto);
+    ASSERT_EQ(output_format, SerializationOutputFormat::kPerfettoProto);
   }
   {
     const Config config{
         .output_file = "/path/to/file.perfetto",
-        .output_format = ConfigOutputFormat::kSpoorSymbols,
+        .output_format = ConfigOutputFormat::kSpoorSymbolsProto,
     };
     const auto output_format_result = OutputFormatFromConfig(config);
     ASSERT_TRUE(output_format_result.IsOk());
     const auto output_format = output_format_result.Ok();
-    ASSERT_EQ(output_format, SerializationOutputFormat::kSpoorSymbols);
+    ASSERT_EQ(output_format, SerializationOutputFormat::kSpoorSymbolsProto);
   }
 }
 
@@ -144,8 +156,8 @@ TEST(SerializeToOstream, SerializesToOstream) {  // NOLINT
   }();
   {
     std::stringstream buffer{};
-    const auto result = SerializeToOstream(trace_files, symbols,
-                                           OutputFormat::kPerfetto, &buffer);
+    const auto result = SerializeToOstream(
+        trace_files, symbols, OutputFormat::kPerfettoProto, &buffer);
     ASSERT_TRUE(result.IsOk());
     Trace parsed_trace{};
     const auto trace_success = parsed_trace.ParseFromIstream(&buffer);
@@ -154,11 +166,18 @@ TEST(SerializeToOstream, SerializesToOstream) {  // NOLINT
   {
     std::stringstream buffer{};
     const auto result = SerializeToOstream(
-        trace_files, symbols, OutputFormat::kSpoorSymbols, &buffer);
+        trace_files, symbols, OutputFormat::kSpoorSymbolsProto, &buffer);
     ASSERT_TRUE(result.IsOk());
     Symbols parsed_symbols{};
     const auto symbols_success = parsed_symbols.ParseFromIstream(&buffer);
     ASSERT_TRUE(symbols_success);
+  }
+  {
+    std::stringstream buffer{};
+    const auto result = SerializeToOstream(
+        trace_files, symbols, OutputFormat::kSpoorSymbolsCsv, &buffer);
+    ASSERT_TRUE(result.IsOk());
+    ASSERT_NE(buffer.str().find(kCsvDelimiter), std::string::npos);
   }
   for (const auto output_format : kOutputFormats) {
     std::stringstream buffer{};
