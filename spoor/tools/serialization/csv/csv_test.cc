@@ -30,6 +30,7 @@ TEST(SerializeSymbolsToOstreamAsCsv, SerializesToCsv) {  // NOLINT
     function_a_info->set_file_name("file_a.source");
     function_a_info->set_directory("/path/to/a");
     function_a_info->set_line(1);
+    function_a_info->set_ir_instruction_count(100);
     function_a_info->set_instrumented(true);
     function_a_info->set_instrumented_reason("Rule A");
     *function_a_info->mutable_created_at() =
@@ -45,6 +46,7 @@ TEST(SerializeSymbolsToOstreamAsCsv, SerializesToCsv) {  // NOLINT
     function_c_info->set_file_name("file_c.source");
     function_c_info->set_directory("/path/to/c");
     function_c_info->set_line(42);
+    function_c_info->set_ir_instruction_count(200);
     function_c_info->set_instrumented(false);
     function_c_info->set_instrumented_reason("Rule C");
     *function_c_info->mutable_created_at() =
@@ -54,12 +56,13 @@ TEST(SerializeSymbolsToOstreamAsCsv, SerializesToCsv) {  // NOLINT
   }();
   const std::string expected_csv{
       "function_id;module_id;linkage_name;demangled_name;file_name;directory;"
-      "line;instrumented;instrumented_reason;created_at\n"
+      "line;ir_instruction_count;instrumented;instrumented_reason;created_at\n"
       "0x0000000000000f;module_a;function_a;FunctionA(int x, int y);"
-      "file_a.source;/path/to/a;1;true;Rule A;1970-01-01T00:00:00.000000001Z\n"
-      "0x0000000000000f;;;;;;;false;;1970-01-01T00:00:00Z\n"
+      "file_a.source;/path/to/a;1;100;true;Rule "
+      "A;1970-01-01T00:00:00.000000001Z\n"
+      "0x0000000000000f;;;;;;;0;false;;1970-01-01T00:00:00Z\n"
       "0x00000000000010;module_c;function_c;FunctionC();file_c.source;"
-      "/path/to/c;42;false;Rule C;1970-01-01T00:00:00.000000042Z"};
+      "/path/to/c;42;200;false;Rule C;1970-01-01T00:00:00.000000042Z"};
   std::stringstream buffer{};
   const auto result = SerializeSymbolsToOstreamAsCsv(symbols, &buffer);
   ASSERT_TRUE(result.IsOk());

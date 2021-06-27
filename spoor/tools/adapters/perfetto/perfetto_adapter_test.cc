@@ -367,6 +367,8 @@ TEST(PerfettoAdapter, AdaptsSymbolsToInternedData) {  // NOLINT
   const std::string function_b_directory{"/path/to/b/"};
   constexpr int32 function_a_line_number{1};
   constexpr int32 function_b_line_number{2};
+  constexpr int32 function_a_ir_instruction_count{100};
+  constexpr int32 function_b_ir_instruction_count{200};
 
   const auto symbols = [&] {
     std::vector<std::pair<FunctionId, FunctionInfo>> function_infos{
@@ -380,6 +382,8 @@ TEST(PerfettoAdapter, AdaptsSymbolsToInternedData) {  // NOLINT
               function_info.set_file_name(function_a_file_name);
               function_info.set_directory(function_a_directory);
               function_info.set_line(function_a_line_number);
+              function_info.set_ir_instruction_count(
+                  function_a_ir_instruction_count);
               function_info.set_instrumented(true);
               *function_info.mutable_created_at() =
                   TimeUtil::NanosecondsToTimestamp(1);
@@ -396,6 +400,8 @@ TEST(PerfettoAdapter, AdaptsSymbolsToInternedData) {  // NOLINT
               function_info.set_file_name(function_b_file_name);
               function_info.set_directory(function_b_directory);
               function_info.set_line(function_b_line_number);
+              function_info.set_ir_instruction_count(
+                  function_b_ir_instruction_count);
               function_info.set_instrumented(true);
               *function_info.mutable_created_at() =
                   TimeUtil::NanosecondsToTimestamp(2);
@@ -535,6 +541,8 @@ TEST(PerfettoAdapter, DoesNotAddUnusedFunctionsToInternedData) {  // NOLINT
   const std::string function_b_directory{"/path/to/b/"};
   constexpr int32 function_a_line_number{1};
   constexpr int32 function_b_line_number{2};
+  constexpr int32 function_a_ir_instruction_count{100};
+  constexpr int32 function_b_ir_instruction_count{200};
 
   const auto symbols = [&] {
     std::vector<std::pair<FunctionId, FunctionInfo>> function_infos{
@@ -548,6 +556,8 @@ TEST(PerfettoAdapter, DoesNotAddUnusedFunctionsToInternedData) {  // NOLINT
               function_info.set_file_name(function_a_file_name);
               function_info.set_directory(function_a_directory);
               function_info.set_line(function_a_line_number);
+              function_info.set_ir_instruction_count(
+                  function_a_ir_instruction_count);
               function_info.set_instrumented(true);
               *function_info.mutable_created_at() =
                   TimeUtil::NanosecondsToTimestamp(1);
@@ -564,6 +574,8 @@ TEST(PerfettoAdapter, DoesNotAddUnusedFunctionsToInternedData) {  // NOLINT
               function_info.set_file_name(function_b_file_name);
               function_info.set_directory(function_b_directory);
               function_info.set_line(function_b_line_number);
+              function_info.set_ir_instruction_count(
+                  function_b_ir_instruction_count);
               function_info.set_instrumented(true);
               *function_info.mutable_created_at() =
                   TimeUtil::NanosecondsToTimestamp(2);
@@ -665,6 +677,8 @@ TEST(PerfettoAdapter, HandlesMultipleFunctionInfosForSingleFunctionId) {
   const std::string function_b_directory{"/path/to/b/"};
   constexpr int32 function_a_line_number{1};
   constexpr int32 function_b_line_number{2};
+  constexpr int32 function_a_ir_instruction_count{100};
+  constexpr int32 function_b_ir_instruction_count{200};
 
   const auto symbols = [&] {
     std::vector<std::pair<FunctionId, FunctionInfo>> function_infos{
@@ -678,6 +692,8 @@ TEST(PerfettoAdapter, HandlesMultipleFunctionInfosForSingleFunctionId) {
               function_info.set_file_name(function_a_file_name);
               function_info.set_directory(function_a_directory);
               function_info.set_line(function_a_line_number);
+              function_info.set_ir_instruction_count(
+                  function_a_ir_instruction_count);
               function_info.set_instrumented(true);
               *function_info.mutable_created_at() =
                   TimeUtil::NanosecondsToTimestamp(1);
@@ -694,6 +710,8 @@ TEST(PerfettoAdapter, HandlesMultipleFunctionInfosForSingleFunctionId) {
               function_info.set_file_name(function_b_file_name);
               function_info.set_directory(function_b_directory);
               function_info.set_line(function_b_line_number);
+              function_info.set_ir_instruction_count(
+                  function_b_ir_instruction_count);
               function_info.set_instrumented(true);
               *function_info.mutable_created_at() =
                   TimeUtil::NanosecondsToTimestamp(2);
@@ -799,6 +817,8 @@ TEST(PerfettoAdapter, HandlesFunctionNameFallback) {  // NOLINT
   const std::string function_b_directory{"/path/to/b/"};
   constexpr int32 function_a_line_number{1};
   constexpr int32 function_b_line_number{2};
+  constexpr int32 function_a_ir_instruction_count{100};
+  constexpr int32 function_b_ir_instruction_count{200};
 
   const auto symbols = [&] {
     std::vector<std::pair<FunctionId, FunctionInfo>> function_infos{
@@ -811,6 +831,8 @@ TEST(PerfettoAdapter, HandlesFunctionNameFallback) {  // NOLINT
               function_info.set_file_name(function_a_file_name);
               function_info.set_directory(function_a_directory);
               function_info.set_line(function_a_line_number);
+              function_info.set_ir_instruction_count(
+                  function_a_ir_instruction_count);
               function_info.set_instrumented(true);
               *function_info.mutable_created_at() =
                   TimeUtil::NanosecondsToTimestamp(1);
@@ -825,6 +847,8 @@ TEST(PerfettoAdapter, HandlesFunctionNameFallback) {  // NOLINT
               function_info.set_file_name(function_b_file_name);
               function_info.set_directory(function_b_directory);
               function_info.set_line(function_b_line_number);
+              function_info.set_ir_instruction_count(
+                  function_b_ir_instruction_count);
               function_info.set_instrumented(true);
               *function_info.mutable_created_at() =
                   TimeUtil::NanosecondsToTimestamp(2);
@@ -963,6 +987,7 @@ TEST(PerfettoAdapter, TruncatesLongNames) {  // NOLINT
   const auto expected_file_name = absl::StrCat(
       directory, std::string(1'024 - directory.size() - 3, 'x'), "...");
   constexpr int32 line_number{1};
+  constexpr int32 ir_instruction_count{100};
 
   const auto symbols = [&] {
     std::vector<std::pair<FunctionId, FunctionInfo>> function_infos{{
@@ -975,6 +1000,7 @@ TEST(PerfettoAdapter, TruncatesLongNames) {  // NOLINT
           function_info.set_file_name(file_name);
           function_info.set_directory(directory);
           function_info.set_line(line_number);
+          function_info.set_ir_instruction_count(ir_instruction_count);
           function_info.set_instrumented(true);
           *function_info.mutable_created_at() =
               TimeUtil::NanosecondsToTimestamp(1);

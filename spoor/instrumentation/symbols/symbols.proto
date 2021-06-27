@@ -14,7 +14,8 @@ message FunctionInfo {
   optional string file_name = 4;
   optional string directory = 5;
   optional int32 line = 6;
-  optional bool instrumented = 7;
+  optional int32 ir_instruction_count = 7;
+  optional bool instrumented = 8;
   optional string instrumented_reason = 9;
   optional google.protobuf.Timestamp created_at = 10;
 }

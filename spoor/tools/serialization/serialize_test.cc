@@ -150,6 +150,7 @@ TEST(SerializeToOstream, SerializesToOstream) {  // NOLINT
     function_info->set_file_name("file_a.source");
     function_info->set_directory("/path/to/a/");
     function_info->set_line(1);
+    function_info->set_ir_instruction_count(100);
     function_info->set_instrumented(true);
     *function_info->mutable_created_at() = TimeUtil::NanosecondsToTimestamp(0);
     return symbols;
