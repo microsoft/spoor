@@ -11,13 +11,13 @@
 namespace spoor::instrumentation::config {
 
 constexpr std::string_view kEnableRuntimeKey{
-    "SPOOR_INSTRUMENTATION_RUNTIME_ENABLE_RUNTIME"};
+    "SPOOR_INSTRUMENTATION_ENABLE_RUNTIME"};
 constexpr std::string_view kFiltersFileKey{
     "SPOOR_INSTRUMENTATION_FILTERS_FILE"};
 constexpr std::string_view kForceBinaryOutputKey{
     "SPOOR_INSTRUMENTATION_FORCE_BINARY_OUTPUT"};
 constexpr std::string_view kInitializeRuntimeKey{
-    "SPOOR_INSTRUMENTATION_RUNTIME_INITIALIZE_RUNTIME"};
+    "SPOOR_INSTRUMENTATION_INITIALIZE_RUNTIME"};
 constexpr std::string_view kInjectInstrumentationKey{
     "SPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION"};
 constexpr std::string_view kModuleIdKey{"SPOOR_INSTRUMENTATION_MODULE_ID"};
