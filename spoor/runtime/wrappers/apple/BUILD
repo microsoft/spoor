@@ -19,12 +19,9 @@ _MINIMUM_IOS_VERSION = "13.0"
 
 _MINIMUM_MACOS_VERSION = "10.15"
 
-_LIB_COPTS = SPOOR_DEFAULT_COPTS + [
-    "-std=c++2a",
-]
+_LIB_COPTS = SPOOR_DEFAULT_COPTS
 
 _TEST_COPTS = SPOOR_DEFAULT_TEST_COPTS + [
-    "-std=c++2a",
     "-Wno-gnu-statement-expression",
 ]
 
