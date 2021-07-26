@@ -247,7 +247,7 @@ http_file(
     name = "dev_perfetto_trace_processor",
     downloaded_file_path = "trace_processor",
     executable = True,
-    sha256 = "1e5371913f51e65cc3679c00ab818e82acd48b9dbdd4321d59e55355a40eac66",
+    sha256 = "f43f1e444d6161a100b75cd98d91c8342dbfa8012bfb81d8b8dd0e722858feb8",
     urls = ["https://get.perfetto.dev/trace_processor"],
 )
 
