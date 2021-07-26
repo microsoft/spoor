@@ -89,6 +89,7 @@ class DiskFlushQueue final
   auto TraceFilePath(const FlushInfo& flush_info) const
       -> std::filesystem::path;
   auto TraceFileHeader(const FlushInfo& flush_info) const -> trace::Header;
+  auto RunCompletionIfPossible() -> void;
 };
 
 }  // namespace spoor::runtime::flush_queue

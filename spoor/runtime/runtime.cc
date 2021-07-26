@@ -297,21 +297,26 @@ auto _spoor_runtime_DeleteFlushedTraceFilesOlderThan(
     const _spoor_runtime_SystemTimestampSeconds system_timestamp_seconds,
     const _spoor_runtime_DeleteFlushedTraceFilesCallback callback) -> void {
   auto callback_adapter =
-      [callback](const RuntimeManager::DeletedFilesInfo& deleted_files_info) {
-        if (callback == nullptr) return;
-        callback(_spoor_runtime_DeletedFilesInfo{
-            .deleted_files = deleted_files_info.deleted_files,
-            .deleted_bytes = deleted_files_info.deleted_bytes});
-      };
+      [callback]() -> std::function<void(RuntimeManager::DeletedFilesInfo)> {
+    if (callback == nullptr) return nullptr;
+    return
+        [callback](const RuntimeManager::DeletedFilesInfo& deleted_files_info) {
+          callback(_spoor_runtime_DeletedFilesInfo{
+              .deleted_files = deleted_files_info.deleted_files,
+              .deleted_bytes = deleted_files_info.deleted_bytes});
+        };
+  }();
 
   std::error_code error{};
   const std::filesystem::directory_iterator directory{kConfig.trace_file_path,
                                                       error};
   if (error) {
-    std::thread{std::move(callback_adapter),
-                RuntimeManager::DeletedFilesInfo{.deleted_files = 0,
-                                                 .deleted_bytes = 0}}
-        .detach();
+    if (callback_adapter != nullptr) {
+      std::thread{std::move(callback_adapter),
+                  RuntimeManager::DeletedFilesInfo{.deleted_files = 0,
+                                                   .deleted_bytes = 0}}
+          .detach();
+    }
     return;
   }
   const auto system_timestamp =
