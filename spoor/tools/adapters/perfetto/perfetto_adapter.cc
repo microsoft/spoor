@@ -59,8 +59,8 @@ auto Truncate(const std::string& string) -> std::string {
                       ellipsis);
 }
 
-auto MakeFunctionName(const FunctionId function_id,
-                      const SpoorRepeatedFunctionInfos& function_infos)
+auto MakeEventFunctionName(const FunctionId function_id,
+                           const SpoorRepeatedFunctionInfos& function_infos)
     -> std::string {
   const auto joined =
       absl::StrJoin(function_infos, kSeparator,
@@ -69,6 +69,26 @@ auto MakeFunctionName(const FunctionId function_id,
                         if (function_info.has_demangled_name()) {
                           return function_info.demangled_name();
                         }
+                        if (function_info.has_linkage_name()) {
+                          return function_info.linkage_name();
+                        }
+                        return absl::StrFormat("%#016x", function_id);
+                      }();
+                      out->append(name);
+                    });
+  if (function_infos.size() < 2) return Truncate(joined);
+  const auto formatted = absl::StrFormat(kConflictFormat, function_infos.size(),
+                                         function_id, joined);
+  return Truncate(formatted);
+}
+
+auto MakeFunctionName(const FunctionId function_id,
+                      const SpoorRepeatedFunctionInfos& function_infos)
+    -> std::string {
+  const auto joined =
+      absl::StrJoin(function_infos, kSeparator,
+                    [function_id](auto* out, const auto& function_info) {
+                      const auto name = [&] {
                         if (function_info.has_linkage_name()) {
                           return function_info.linkage_name();
                         }
@@ -116,7 +136,7 @@ auto MakeEventName(const FunctionId function_id,
     -> PerfettoEventName {
   PerfettoEventName event_name{};
   event_name.set_iid(function_id);
-  event_name.set_name(MakeFunctionName(function_id, function_infos));
+  event_name.set_name(MakeEventFunctionName(function_id, function_infos));
   return event_name;
 }
 
