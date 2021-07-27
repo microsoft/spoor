@@ -17,8 +17,15 @@
 namespace {
 
 using testing::MockFunction;
+using testing::Test;
 
 constexpr absl::Duration kNotificationTimeout{absl::Milliseconds(1'000)};
+
+class RuntimeAutoInitialize : public Test {
+ protected:
+  auto SetUp() -> void override { spoor::runtime::Initialize(); }
+  auto TearDown() -> void override { spoor::runtime::Deinitialize(); }
+};
 
 ACTION_P(Notify, notification) {  // NOLINT
   notification->Notify();
@@ -96,10 +103,70 @@ TEST(Runtime, Enable) {  // NOLINT
   ASSERT_FALSE(spoor::runtime::Enabled());
 }
 
-TEST(Runtime, FlushTraceEvents) {  // NOLINT
+namespace flush_trace_events_running_test {
+
+// clang-format off NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects) clang-format on
+std::function<void(void)> callback_{};
+
+TEST_F(RuntimeAutoInitialize, FlushTraceEventsRunningCApi) {  // NOLINT
   _spoor_runtime_FlushTraceEvents({});
-  spoor::runtime::FlushTraceEvents({});
+
+  MockFunction<void(void)> callback{};
+  absl::Notification done{};
+  callback_ = callback.AsStdFunction();
+  EXPECT_CALL(callback, Call()).WillOnce(Notify(&done));
+  _spoor_runtime_FlushTraceEvents([] { callback_(); });
+  const auto success =
+      done.WaitForNotificationWithTimeout(kNotificationTimeout);
+  ASSERT_TRUE(success);
 }
+
+}  // namespace flush_trace_events_running_test
+
+TEST_F(RuntimeAutoInitialize, FlushTraceEventsRunningCcApi) {  // NOLINT
+  spoor::runtime::FlushTraceEvents({});
+
+  MockFunction<void()> callback{};
+  absl::Notification done{};
+  EXPECT_CALL(callback, Call()).WillOnce(Notify(&done));
+  spoor::runtime::FlushTraceEvents(callback.AsStdFunction());
+  const auto success =
+      done.WaitForNotificationWithTimeout(kNotificationTimeout);
+  ASSERT_TRUE(success);
+}
+
+namespace flush_trace_events_not_running_test {
+
+// clang-format off NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects) clang-format on
+std::function<void(void)> callback_{};
+
+TEST(Runtime, FlushTraceEventsNotRunning) {  // NOLINT
+  {
+    _spoor_runtime_FlushTraceEvents({});
+
+    MockFunction<void(void)> callback{};
+    absl::Notification done{};
+    callback_ = callback.AsStdFunction();
+    EXPECT_CALL(callback, Call()).WillOnce(Notify(&done));
+    _spoor_runtime_FlushTraceEvents([] { callback_(); });
+    const auto success =
+        done.WaitForNotificationWithTimeout(kNotificationTimeout);
+    ASSERT_TRUE(success);
+  }
+  {
+    spoor::runtime::FlushTraceEvents({});
+
+    MockFunction<void()> callback{};
+    absl::Notification done{};
+    EXPECT_CALL(callback, Call()).WillOnce(Notify(&done));
+    spoor::runtime::FlushTraceEvents(callback.AsStdFunction());
+    const auto success =
+        done.WaitForNotificationWithTimeout(kNotificationTimeout);
+    ASSERT_TRUE(success);
+  }
+}
+
+}  // namespace flush_trace_events_not_running_test
 
 TEST(Runtime, ClearTraceEvents) {  // NOLINT
   _spoor_runtime_Deinitialize();
@@ -115,15 +182,12 @@ TEST(Runtime, ClearTraceEvents) {  // NOLINT
   spoor::runtime::Deinitialize();
 }
 
-namespace flused_trace_files_test {
+namespace flushed_trace_files_test {
 
 // clang-format off NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects) clang-format on
 std::function<void(_spoor_runtime_TraceFiles)> callback_{};
 
 TEST(Runtime, FlushedTraceFiles) {  // NOLINT
-  _spoor_runtime_FlushedTraceFiles({});
-  spoor::runtime::FlushedTraceFiles({});
-
   {
     constexpr _spoor_runtime_TraceFiles expected_trace_files{
         .file_paths_size = 0,
@@ -151,7 +215,7 @@ TEST(Runtime, FlushedTraceFiles) {  // NOLINT
   }
 }
 
-}  // namespace flused_trace_files_test
+}  // namespace flushed_trace_files_test
 
 namespace delete_flushed_trace_files_older_than_test {
 
@@ -159,11 +223,6 @@ namespace delete_flushed_trace_files_older_than_test {
 std::function<void(_spoor_runtime_DeletedFilesInfo)> callback_{};
 
 TEST(Runtime, DeleteFlushedTraceFilesOlderThan) {  // NOLINT
-  _spoor_runtime_DeleteFlushedTraceFilesOlderThan(
-      std::numeric_limits<_spoor_runtime_SystemTimestampSeconds>::max(), {});
-  spoor::runtime::DeleteFlushedTraceFilesOlderThan(
-      std::numeric_limits<spoor::runtime::SystemTimestampSeconds>::max(), {});
-
   {
     constexpr _spoor_runtime_DeletedFilesInfo expected_deleted_files_info{
         .deleted_files = 0, .deleted_bytes = 0};

@@ -43,6 +43,7 @@ auto DiskFlushQueue::Run() -> void {
         return flush_info;
       }();
       if (!flush_info_optional.has_value()) {
+        RunCompletionIfPossible();
         std::this_thread::yield();
         continue;
       };
@@ -78,18 +79,7 @@ auto DiskFlushQueue::Run() -> void {
         manual_flush_record_ids_.erase(flush_info.id);
         --queue_size_;
       }
-      std::optional<std::function<void()>> flush_completion{};
-      {
-        std::unique_lock lock{lock_};
-        if (manual_flush_record_ids_.empty()) {
-          flush_completion_.swap(flush_completion);
-        }
-      }
-      if (flush_completion.has_value() && flush_completion.value() != nullptr) {
-        std::thread{[completion{std::move(flush_completion.value())}] {
-          completion();
-        }}.detach();
-      }
+      RunCompletionIfPossible();
     }
     draining_ = false;
     running_ = false;
@@ -120,6 +110,10 @@ auto DiskFlushQueue::Enqueue(Buffer&& buffer) -> void {
 }
 
 auto DiskFlushQueue::Flush(std::function<void()> completion) -> void {
+  if (!running_) {
+    if (completion != nullptr) completion();
+    return;
+  }
   const auto now = options_.steady_clock->Now();
   std::unique_lock lock{lock_};
   flush_timestamp_ = now;
@@ -179,6 +173,21 @@ auto DiskFlushQueue::TraceFileHeader(const FlushInfo& flush_info) const
       .system_clock_timestamp = system_clock_timestamp,
       .steady_clock_timestamp = steady_clock_timestamp,
       .event_count = event_count};
+}
+
+auto DiskFlushQueue::RunCompletionIfPossible() -> void {
+  std::optional<std::function<void()>> flush_completion{};
+  {
+    std::unique_lock lock{lock_};
+    if (manual_flush_record_ids_.empty()) {
+      flush_completion_.swap(flush_completion);
+    }
+  }
+  if (flush_completion.has_value() && flush_completion.value() != nullptr) {
+    std::thread{[completion{std::move(flush_completion.value())}] {
+      completion();
+    }}.detach();
+  }
 }
 
 }  // namespace spoor::runtime::flush_queue
