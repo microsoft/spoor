@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstring>
 #include <iterator>
 #include <string_view>
 #include <vector>
@@ -14,6 +15,8 @@
 #include "gtest/gtest.h"
 #include "spoor/instrumentation/config/config.h"
 #include "spoor/instrumentation/config/env_config.h"
+#include "util/env/env.h"
+#include "util/file_system/util.h"
 #include "util/flat_map/flat_map.h"
 
 namespace {
@@ -46,25 +49,30 @@ auto MakeArgv(const std::vector<std::string_view>& args) -> std::vector<char*> {
 }
 
 TEST(CommandLineConfig, ParsesCommandLine) {  // NOLINT
-  const auto get_env = [](const char* /*unused*/) -> const char* {
+  const auto get_env = [](const char* key) -> const char* {
+    if (key == nullptr) return nullptr;
+    if (std::strncmp(key, util::env::kHomeKey.data(),
+                     util::env::kHomeKey.size()) == 0) {
+      return "/usr/you";
+    }
     return nullptr;
   };
   const Config expected_config{
       .enable_runtime = false,
-      .filters_file = "/path/to/filters.toml",
+      .filters_file = "/usr/you/path/to/filters.toml",
       .force_binary_output = true,
       .initialize_runtime = false,
       .inject_instrumentation = false,
       .module_id = "ModuleId",
-      .output_file = "/path/to/output_file.ll",
-      .output_symbols_file = "/path/to/file.spoor_symbols",
+      .output_file = "/usr/you/path/to/output_file.ll",
+      .output_symbols_file = "/usr/you/path/to/file.spoor_symbols",
       .output_language = OutputLanguage::kIr};
   auto argv = MakeArgv(
       {"spoor_opt", "--enable_runtime=false",
-       "--filters_file=/path/to/filters.toml", "--force_binary_output=true",
+       "--filters_file=~/path/to/filters.toml", "--force_binary_output=true",
        "--initialize_runtime=false", "--inject_instrumentation=false",
-       "--module_id=ModuleId", "--output_file=/path/to/output_file.ll",
-       "--output_symbols_file=/path/to/file.spoor_symbols",
+       "--module_id=ModuleId", "--output_file=~/path/to/output_file.ll",
+       "--output_symbols_file=~/path/to/file.spoor_symbols",
        "--output_language=ir"});
   const auto expected_positional_args = MakeArgv({argv.front()});
   const auto [config, positional_args] = ConfigFromCommandLineOrEnv(

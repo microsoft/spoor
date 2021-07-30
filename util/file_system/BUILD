@@ -16,6 +16,7 @@ cc_library(
         "local_file_reader.cc",
         "local_file_system.cc",
         "local_file_writer.cc",
+        "util.cc",
     ],
     hdrs = [
         "file_reader.h",
@@ -24,13 +25,30 @@ cc_library(
         "local_file_reader.h",
         "local_file_system.h",
         "local_file_writer.h",
+        "util.h",
     ],
     copts = SPOOR_DEFAULT_COPTS,
     linkopts = SPOOR_DEFAULT_LINKOPTS,
     visibility = ["//visibility:public"],
     deps = [
         "//util:result",
+        "//util/env",
+        "@com_google_absl//absl/strings",
         "@com_microsoft_gsl//:gsl",
+    ],
+)
+
+cc_test(
+    name = "file_system_test",
+    size = "small",
+    srcs = ["util_test.cc"],
+    copts = SPOOR_DEFAULT_TEST_COPTS,
+    linkopts = SPOOR_DEFAULT_TEST_LINKOPTS,
+    visibility = ["//visibility:private"],
+    deps = [
+        ":file_system",
+        "//util/env",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 

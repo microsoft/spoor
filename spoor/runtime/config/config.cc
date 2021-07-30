@@ -4,15 +4,18 @@
 #include "spoor/runtime/config/config.h"
 
 #include "util/env/env.h"
+#include "util/file_system/util.h"
 
 namespace spoor::runtime::config {
 
 using util::env::GetEnvOrDefault;
+using util::file_system::ExpandTilde;
 
 auto Config::FromEnv(const util::env::GetEnv& get_env) -> Config {
-  return {.trace_file_path =
-              GetEnvOrDefault(kTraceFilePathKey.data(),
-                              std::string{kTraceFilePathDefaultValue}, get_env),
+  const auto trace_file_path =
+      GetEnvOrDefault(kTraceFilePathKey.data(),
+                      std::string{kTraceFilePathDefaultValue}, get_env);
+  return {.trace_file_path = ExpandTilde(trace_file_path, get_env),
           .compression_strategy = GetEnvOrDefault(
               kCompressionStrategyKey.data(), kCompressionStrategyDefaultValue,
               kCompressionStrategies, true, get_env),

@@ -23,6 +23,7 @@ cc_library(
         "//util:numeric",
         "//util/compression",
         "//util/env",
+        "//util/file_system",
         "//util/flat_map",
         "@com_microsoft_gsl//:gsl",
     ],
@@ -37,6 +38,7 @@ cc_test(
     visibility = ["//visibility:private"],
     deps = [
         ":config",
+        "//util/env",
         "//util/flat_map",
         "@com_google_googletest//:gtest_main",
     ],
