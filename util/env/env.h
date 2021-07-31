@@ -17,6 +17,8 @@ namespace util::env {
 
 using GetEnv = std::function<const char*(const char*)>;
 
+constexpr std::string_view kHomeKey{"HOME"};
+
 auto GetEnvOrDefault(const char* key, std::string default_value,
                      const GetEnv& get_env) -> std::string;
 

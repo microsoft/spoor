@@ -7,6 +7,7 @@
 
 #include "gtest/gtest.h"
 #include "spoor/instrumentation/config/config.h"
+#include "util/env/env.h"
 #include "util/flat_map/flat_map.h"
 #include "util/numeric.h"
 
@@ -27,29 +28,30 @@ using spoor::instrumentation::config::OutputLanguage;
 
 TEST(EnvConfig, GetsUserProvidedValue) {  // NOLINT
   const auto get_env = [](const char* key) {
-    constexpr util::flat_map::FlatMap<std::string_view, std::string_view, 9>
+    constexpr util::flat_map::FlatMap<std::string_view, std::string_view, 10>
         environment{
+            {util::env::kHomeKey, "/usr/you"},
             {kEnableRuntimeKey, "false"},
-            {kFiltersFileKey, "/path/to/filters.toml"},
+            {kFiltersFileKey, "~/path/to/filters.toml"},
             {kForceBinaryOutputKey, "true"},
             {kInitializeRuntimeKey, "false"},
             {kInjectInstrumentationKey, "false"},
             {kModuleIdKey, "ModuleId"},
-            {kOutputFileKey, "/path/to/output_file.ll"},
-            {kOutputSymbolsFileKey, "/path/to/file.spoor_symbols"},
+            {kOutputFileKey, "~/path/to/output_file.ll"},
+            {kOutputSymbolsFileKey, "~/path/to/file.spoor_symbols"},
             {kOutputLanguageKey, "      iR     "},
         };
     return environment.FirstValueForKey(key).value_or(nullptr).data();
   };
   const Config expected_config{
       .enable_runtime = false,
-      .filters_file = "/path/to/filters.toml",
+      .filters_file = "/usr/you/path/to/filters.toml",
       .force_binary_output = true,
       .initialize_runtime = false,
       .inject_instrumentation = false,
       .module_id = "ModuleId",
-      .output_file = "/path/to/output_file.ll",
-      .output_symbols_file = "/path/to/file.spoor_symbols",
+      .output_file = "/usr/you/path/to/output_file.ll",
+      .output_symbols_file = "/usr/you/path/to/file.spoor_symbols",
       .output_language = OutputLanguage::kIr};
   ASSERT_EQ(ConfigFromEnv(get_env), expected_config);
 }

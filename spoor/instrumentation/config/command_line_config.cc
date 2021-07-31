@@ -17,6 +17,7 @@
 #include "spoor/instrumentation/config/config.h"
 #include "spoor/instrumentation/config/env_config.h"
 #include "util/env/env.h"
+#include "util/file_system/util.h"
 #include "util/flags/optional.h"
 #include "util/numeric.h"
 
@@ -64,6 +65,8 @@ ABSL_FLAG(  // NOLINT
 
 namespace spoor::instrumentation::config {
 
+using util::file_system::ExpandTilde;
+
 auto ConfigFromCommandLineOrEnv(const int argc, char** argv,
                                 const util::env::GetEnv& get_env)
     -> std::pair<Config, std::vector<char*>> {
@@ -79,15 +82,21 @@ auto ConfigFromCommandLineOrEnv(const int argc, char** argv,
   absl::SetFlag(&FLAGS_output_symbols_file, env_config.output_symbols_file);
   absl::SetFlag(&FLAGS_output_language, env_config.output_language);
   auto positional_args = absl::ParseCommandLine(argc, argv);
+  auto filters_file = absl::GetFlag(FLAGS_filters_file).StdOptional();
+  if (filters_file.has_value()) {
+    filters_file = ExpandTilde(filters_file.value(), get_env);
+  }
+  const auto output_file = absl::GetFlag(FLAGS_output_file);
+  const auto output_symbols_file = absl::GetFlag(FLAGS_output_symbols_file);
   Config config{
       .enable_runtime = absl::GetFlag(FLAGS_enable_runtime),
-      .filters_file = absl::GetFlag(FLAGS_filters_file).StdOptional(),
+      .filters_file = filters_file,
       .force_binary_output = absl::GetFlag(FLAGS_force_binary_output),
       .initialize_runtime = absl::GetFlag(FLAGS_initialize_runtime),
       .inject_instrumentation = absl::GetFlag(FLAGS_inject_instrumentation),
       .module_id = absl::GetFlag(FLAGS_module_id).StdOptional(),
-      .output_file = absl::GetFlag(FLAGS_output_file),
-      .output_symbols_file = absl::GetFlag(FLAGS_output_symbols_file),
+      .output_file = ExpandTilde(output_file, get_env),
+      .output_symbols_file = ExpandTilde(output_symbols_file, get_env),
       .output_language = absl::GetFlag(FLAGS_output_language)};
   return std::make_pair(std::move(config), std::move(positional_args));
 }

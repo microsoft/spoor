@@ -35,6 +35,7 @@ cc_library(
         ":config",
         "//util:numeric",
         "//util/env",
+        "//util/file_system",
     ],
 )
 
@@ -50,6 +51,7 @@ cc_library(
         ":env_config",
         "//util:numeric",
         "//util/env",
+        "//util/file_system",
         "//util/flags:optional",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
@@ -81,6 +83,7 @@ cc_test(
         ":config",
         ":env_config",
         "//util:numeric",
+        "//util/env",
         "//util/flat_map",
         "@com_google_googletest//:gtest_main",
     ],
@@ -98,6 +101,7 @@ cc_test(
         ":config",
         ":env_config",
         "//util:numeric",
+        "//util/env",
         "@com_google_googletest//:gtest_main",
         "@com_microsoft_gsl//:gsl",
     ],

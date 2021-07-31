@@ -15,6 +15,8 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "spoor/tools/config/config.h"
+#include "util/env/env.h"
+#include "util/file_system/util.h"
 
 ABSL_FLAG(  // NOLINT
     std::string, output_file,
@@ -50,13 +52,15 @@ auto AbslUnparseFlag(const OutputFormat output_format) -> std::string {
   return std::string{value};
 }
 
-auto ConfigFromCommandLine(int argc, char** argv)
+auto ConfigFromCommandLine(int argc, char** argv,
+                           const util::env::GetEnv& get_env)
     -> std::pair<Config, std::vector<char*>> {
   absl::SetFlag(&FLAGS_output_file, kOutputFileDefaultValue);
   absl::SetFlag(&FLAGS_output_format, kOutputFormatDefaultValue);
   auto positional_args = absl::ParseCommandLine(argc, argv);
+  const auto output_file = absl::GetFlag(FLAGS_output_file);
   Config config{
-      .output_file = absl::GetFlag(FLAGS_output_file),
+      .output_file = util::file_system::ExpandTilde(output_file, get_env),
       .output_format = absl::GetFlag(FLAGS_output_format),
   };
   return std::make_pair(std::move(config), std::move(positional_args));

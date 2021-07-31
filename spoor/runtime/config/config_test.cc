@@ -8,6 +8,7 @@
 
 #include "gtest/gtest.h"
 #include "spoor/runtime/buffer/circular_buffer.h"
+#include "util/env/env.h"
 #include "util/flat_map/flat_map.h"
 
 namespace {
@@ -31,8 +32,9 @@ using SizeType = spoor::runtime::buffer::CircularBuffer<
 
 TEST(Config, GetsUserProvidedValue) {  // NOLINT
   const auto get_env = [](const char* key) {
-    constexpr util::flat_map::FlatMap<std::string_view, std::string_view, 12>
-        environment{{kTraceFilePathKey, "/path/to/file.extension"},
+    constexpr util::flat_map::FlatMap<std::string_view, std::string_view, 13>
+        environment{{util::env::kHomeKey, "/usr/you"},
+                    {kTraceFilePathKey, "~/path/to/file.extension"},
                     {kCompressionStrategyKey, "   SnApPy   "},
                     {kSessionIdKey, "42"},
                     {kThreadEventBufferCapacityKey, "42"},
@@ -47,7 +49,7 @@ TEST(Config, GetsUserProvidedValue) {  // NOLINT
     return environment.FirstValueForKey(key).value_or(nullptr).data();
   };
   const Config expected_options{
-      .trace_file_path = "/path/to/file.extension",
+      .trace_file_path = "/usr/you/path/to/file.extension",
       .compression_strategy = CompressionStrategy::kSnappy,
       .session_id = 42,
       .thread_event_buffer_capacity = 42,

@@ -9,6 +9,7 @@
 #include "gsl/gsl"
 #include "gtest/gtest.h"
 #include "spoor/tools/config/config.h"
+#include "util/env/env.h"
 
 namespace {
 
@@ -31,15 +32,23 @@ auto MakeArgv(const std::vector<std::string_view>& args) -> std::vector<char*> {
 }
 
 TEST(CommandLineConfig, ParsesCommandLine) {  // NOLINT
+  const auto get_env = [](const char* key) -> const char* {
+    if (key == nullptr) return nullptr;
+    if (std::strncmp(key, util::env::kHomeKey.data(),
+                     util::env::kHomeKey.size()) == 0) {
+      return "/usr/you";
+    }
+    return nullptr;
+  };
   const Config expected_config{
-      .output_file = "/path/to/output_file.perfetto",
+      .output_file = "/usr/you/path/to/output_file.perfetto",
       .output_format = OutputFormat::kPerfettoProto,
   };
-  auto argv = MakeArgv({"spoor", "--output_file=/path/to/output_file.perfetto",
+  auto argv = MakeArgv({"spoor", "--output_file=~/path/to/output_file.perfetto",
                         "--output_format=perfetto"});
   const auto expected_positional_args = MakeArgv({argv.front()});
-  const auto [config, positional_args] =
-      ConfigFromCommandLine(gsl::narrow_cast<int>(argv.size()), argv.data());
+  const auto [config, positional_args] = ConfigFromCommandLine(
+      gsl::narrow_cast<int>(argv.size()), argv.data(), get_env);
   ASSERT_EQ(config, expected_config);
   ASSERT_EQ(positional_args, expected_positional_args);
 }
