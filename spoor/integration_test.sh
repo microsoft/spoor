@@ -59,13 +59,15 @@ fi
 
 echo "SELECT COUNT(id) FROM slice;" >> "$TRACE_PROCESSOR_QUERY_FILE"
 
-TRACE_QUERY_RESULT="$("external/dev_perfetto_trace_processor/file/trace_processor" \
+TRACE_QUERY_RESULT="$(
+  PERFETTO_TRACE_PROCESSOR_INSTALL_PATH="external/dev_perfetto_trace_processor" \
+  "external/dev_perfetto_trace_processor/file/trace_processor" \
   "$OUTPUT_PERFETTO_FILE" \
   --query-file="$TRACE_PROCESSOR_QUERY_FILE" | tail -1)"
 
 EXPECTED_TRACE_QUERY_RESULT="42"
 if [ "$TRACE_QUERY_RESULT" != "$EXPECTED_TRACE_QUERY_RESULT" ]; then
   echo "Unexpected result for query '$(cat "$TRACE_PROCESSOR_QUERY_FILE")'." \
-    "Expected $EXPECTED_TRACE_QUERY_RESULT, got $TRACE_QUERY_RESULT."
+    "Expected '$EXPECTED_TRACE_QUERY_RESULT', got '$TRACE_QUERY_RESULT'."
   exit 1
 fi

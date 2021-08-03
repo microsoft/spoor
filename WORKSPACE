@@ -243,12 +243,14 @@ http_archive(
     url = "https://github.com/wikimedia/wikipedia-ios/archive/refs/tags/releases/6.8.1.tar.gz",
 )
 
+# TODO(#179): Use Perfetto's `trace_processor` when the configurable
+# installation path is checked in.
 http_file(
     name = "dev_perfetto_trace_processor",
     downloaded_file_path = "trace_processor",
     executable = True,
-    sha256 = "f43f1e444d6161a100b75cd98d91c8342dbfa8012bfb81d8b8dd0e722858feb8",
-    urls = ["https://get.perfetto.dev/trace_processor"],
+    sha256 = "50d15de361107ec275c9ea994541917171dff10319418de64799628db09083a2",
+    urls = ["https://raw.githubusercontent.com/lelandjansen/perfetto/lelandjansen/trace-processor-env/tools/trace_processor"],
 )
 
 http_file(
