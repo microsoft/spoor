@@ -92,7 +92,7 @@ def test_parses_compile_args(popen_mock):
       ]
   ]
   for input_args_file in input_args_files:
-    with open(input_args_file, 'r') as file:
+    with open(input_args_file, encoding='utf-8', mode='r') as file:
       input_args = file.read().strip().split(' ')
       for main in [clang.main, clangxx.main]:
         _test_parses_compile_args(input_args, input_args_file, main, popen_mock)
@@ -134,7 +134,7 @@ def test_parses_link_args(popen_mock):
       ]
   ]
   for input_args_file in input_args_files:
-    with open(input_args_file, 'r') as file:
+    with open(input_args_file, encoding='utf-8', mode='r') as file:
       input_args = file.read().strip().split(' ')
       for main in [clang.main, clangxx.main]:
         _test_parses_link_args(input_args, input_args_file, main, popen_mock)

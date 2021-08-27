@@ -19,7 +19,7 @@ def test_parses_swiftc_args_and_disables_batch_mode(popen_mock):
       ]
   ]
   for input_args_file in input_args_files:
-    with open(input_args_file, 'r') as file:
+    with open(input_args_file, encoding='utf-8', mode='r') as file:
       input_args = file.read().strip().split(' ')
       popen_handle.return_value.returncode = 0
       return_code = swiftc.main(['swiftc'] + input_args, 'default_swiftc',
@@ -43,7 +43,7 @@ def test_raises_when_compiling_with_whole_module_optimization(popen_mock):
   popen_handle = popen_mock.return_value.__enter__
   input_args_file = 'toolchain/xcode/test_data/build_args/' + \
           'swiftc_driver_swift_ios_arm64_whole_module_args.txt'
-  with open(input_args_file, 'r') as file:
+  with open(input_args_file, encoding='utf-8', mode='r') as file:
     input_args = file.read().strip().split(' ')
     with pytest.raises(ValueError) as error:
       swiftc.main(['swiftc'] + input_args, 'default_swiftc', 'wrapped_swift')
