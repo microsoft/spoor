@@ -101,7 +101,7 @@ unavoidable. Explicitly list the lint rules to ignore instead of using a blanket
 
 ```c++
 // ✅ Do this
-int64 a[] = {1, 2, 3};  // NOLINT(modernize-avoid-c-arrays)
+std::array<int64, 3> a = {1, 2, 3};  // NOLINT(modernize-avoid-c-arrays)
 
 // ❌ Not this
 int64 a[] = {1, 2, 3};  // NOLINT
