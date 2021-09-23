@@ -94,6 +94,8 @@ int64_t y{7};
 Use [Clang Format][clang-format] and [Clang Tidy][clang-tidy] to style and lint
 code.
 
+#### Ignore lint warnings
+
 In special circumstances it might make sense to ignore lint warnings, for
 example, when using an external library macro where the lint warning is
 unavoidable. Explicitly list the lint rules to ignore instead of using a blanket
