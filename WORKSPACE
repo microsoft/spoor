@@ -88,9 +88,7 @@ http_archive(
     name = "com_apple_swift",
     build_file = "@//toolchain:swift.BUILD",
     patch_cmds = [
-        "cat /dev/null > include/swift/Basic/STLExtras.h",
         "cat /dev/null > include/swift/Runtime/Config.h",
-        "cat /dev/null > include/swift/Runtime/CMakeConfig.h",
         """
         if [[ "$OSTYPE" == "darwin"* ]]; then
           sed -i '' 's/SWIFT_RUNTIME_EXPORT//g' include/swift/Demangling/Demangle.h
@@ -99,9 +97,9 @@ http_archive(
         fi
         """,
     ],
-    sha256 = "421dafdb0dd4c55cdfed4d8736e965b42a0d97f690bb13528947f9cc3f7ddca9",
-    strip_prefix = "swift-swift-5.4-RELEASE",
-    url = "https://github.com/apple/swift/archive/swift-5.4-RELEASE.tar.gz",
+    sha256 = "0f76c429e65f24d48a2a18b18e7b380a5c97be0d4370271ac3623e436332fd35",
+    strip_prefix = "swift-swift-5.5-RELEASE",
+    url = "https://github.com/apple/swift/archive/swift-5.5-RELEASE.tar.gz",
 )
 
 http_archive(
