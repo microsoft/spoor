@@ -17,9 +17,6 @@ steps:
     echo '##vso[task.prependpath]/usr/local/opt/llvm@11/bin'
   displayName: Install LLVM (macOS)
   condition: eq(variables['Agent.OS'], 'Darwin')
-- script: sudo xcode-select --switch /Applications/Xcode_12.5.app/Contents/Developer
-  displayName: Set Xcode version
-  condition: eq(variables['Agent.OS'], 'Darwin')
 - script: pip3 install pylint yapf
   displayName: Install Pylint and YAPF
 - script: cat .build/macos-ci.bazelrc .build/ci.bazelrc > .bazelrc

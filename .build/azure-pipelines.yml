@@ -13,6 +13,7 @@ jobs:
     matrix:
       mac:
         imageName: 'internal-macos-11'
+        xcodeVersion: 13.0
   pool:
     vmImage: $(imageName)
   steps:
