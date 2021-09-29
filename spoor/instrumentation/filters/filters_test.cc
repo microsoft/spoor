@@ -16,7 +16,7 @@ using spoor::instrumentation::filters::Filter;
 using spoor::instrumentation::filters::Filters;
 using spoor::instrumentation::filters::FunctionInfo;
 
-struct TestCase {
+struct alignas(128) TestCase {
   FunctionInfo function_info;
   bool instrument;
   std::optional<std::string> active_filter_rule_name;

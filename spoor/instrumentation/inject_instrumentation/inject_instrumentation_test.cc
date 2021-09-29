@@ -124,7 +124,7 @@ MATCHER_P(SymbolsEq, expected, "Symbols are not equal.") {  // NOLINT
 }
 
 TEST(InjectInstrumentation, InstrumentsModule) {  // NOLINT
-  struct TestCase {
+  struct alignas(32) TestCase {
     std::string_view expected_ir_file;
     bool initialize_runtime;
     bool enable_runtime;
@@ -180,7 +180,7 @@ TEST(InjectInstrumentation, InstrumentsModule) {  // NOLINT
 }
 
 TEST(InjectInstrumentation, OutputsInstrumentedSymbols) {  // NOLINT
-  struct TestCase {
+  struct alignas(128) TestCase {
     std::string_view ir_file;
     Filters filters;
     std::function<Symbols(const llvm::Module&)> expected_symbols;
@@ -758,7 +758,7 @@ TEST(InjectInstrumentation, FunctionAllowListOverridesBlocklist) {  // NOLINT
 }
 
 TEST(InjectInstrumentation, InstructionThreshold) {  // NOLINT
-  struct TestCaseConfig {
+  struct alignas(32) TestCaseConfig {
     int32 instruction_threshold;
     std::string_view expected_ir_file;
   };
@@ -886,7 +886,7 @@ TEST(InjectInstrumentation, DoNotInjectInstrumentationConfig) {  // NOLINT
 }
 
 TEST(InjectInstrumentation, ReturnValue) {  // NOLINT
-  struct TestCaseConfig {
+  struct alignas(32) TestCaseConfig {
     Filters filters;
     bool are_all_preserved;
   };

@@ -17,7 +17,7 @@ namespace spoor::runtime::trace {
 
 class TraceFileWriter final : public TraceWriter {
  public:
-  struct Options {
+  struct alignas(32) Options {
     std::unique_ptr<util::file_system::FileWriter> file_writer;
     util::compression::Strategy compression_strategy;
     util::compression::Compressor::SizeType initial_buffer_capacity;

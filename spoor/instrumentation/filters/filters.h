@@ -11,14 +11,14 @@
 
 namespace spoor::instrumentation::filters {
 
-struct FunctionInfo {
+struct alignas(128) FunctionInfo {
   std::string source_file_path;
   std::string demangled_name;
   std::string linkage_name;
   int32 ir_instruction_count;
 };
 
-struct Filter {
+struct alignas(128) Filter {
   enum class Action {
     kAllow,
     kBlock,
@@ -46,7 +46,7 @@ auto operator==(const Filter& lhs, const Filter& rhs) -> bool;
 
 class Filters {
  public:
-  struct InstrumentFunctionResult {
+  struct alignas(64) InstrumentFunctionResult {
     bool instrument;
     std::optional<std::string> active_filter_rule_name;
   };

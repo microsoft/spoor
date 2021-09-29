@@ -13,7 +13,7 @@ namespace spoor::instrumentation::filters {
 
 class FiltersReader {
  public:
-  struct Error {
+  struct alignas(32) Error {
     enum class Type {
       kFailedToOpenFile,
       kMalformedFile,

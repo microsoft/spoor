@@ -245,9 +245,10 @@ auto SpoorTraceToPerfettoTrace(const std::vector<SpoorTraceFile>& trace_files,
     const auto& symbols_table = symbols.function_symbols_table();
     auto* interned_data = packet.mutable_interned_data();
     auto* event_names = interned_data->mutable_event_names();
-    event_names->Reserve(called_function_ids.size());
+    event_names->Reserve(gsl::narrow_cast<int>(called_function_ids.size()));
     auto* source_locations = interned_data->mutable_source_locations();
-    source_locations->Reserve(called_function_ids.size());
+    source_locations->Reserve(
+        gsl::narrow_cast<int>(called_function_ids.size()));
     std::for_each(
         std::cbegin(symbols_table), std::cend(symbols_table),
         [&](const auto& key_value) {

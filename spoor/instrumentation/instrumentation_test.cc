@@ -11,9 +11,9 @@
 
 namespace {
 
-using FunctionSymbolsMapType = std::remove_reference_t<decltype(
-    std::declval<spoor::instrumentation::symbols::Symbols>()
-        .function_symbols_table())>;
+using FunctionSymbolsMapType = std::remove_reference_t<
+    decltype(std::declval<spoor::instrumentation::symbols::Symbols>()
+                 .function_symbols_table())>;
 
 static_assert(std::is_same_v<spoor::instrumentation::FunctionId,
                              FunctionSymbolsMapType::key_type>);

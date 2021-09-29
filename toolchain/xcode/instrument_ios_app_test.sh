@@ -8,7 +8,7 @@ export HOME="$(pwd)"
 APP_PATH="$(pwd)/$APP_RELATIVE_PATH"
 DESTINATION="platform=iOS Simulator,name=iPhone 12"
 CONFIGURATION="Debug"
-XCODE_TOOLCHAINS_PATH="$HOME/Library/Developer/Toolchains"
+XCODE_USER_TOOLCHAINS_PATH="$HOME/Library/Developer/Toolchains"
 SPOOR_TOOLCHAIN_PATH="$(pwd)/toolchain/xcode/$TOOLCHAIN_NAME"
 DERIVED_DATA_PATH="$(pwd)/DerivedData"
 OBJECT_FILE_PATH="$DERIVED_DATA_PATH/Build/Intermediates.noindex/$APP_NAME.build/$CONFIGURATION-iphonesimulator/$APP_NAME.build/Objects-normal"
@@ -16,7 +16,7 @@ BINARY_FILE_PATH="$DERIVED_DATA_PATH/Build/Products/$CONFIGURATION-iphonesimulat
 
 function clean_up {
   rm -rf "$DERIVED_DATA_PATH"
-  rm -rf "$XCODE_TOOLCHAINS_PATH"
+  rm -rf "$XCODE_USER_TOOLCHAINS_PATH"
 }
 
 # Manually clean up artifacts because the this test cannot be run in a sandbox.
@@ -33,12 +33,11 @@ find "$APP_PATH" -name '*__SPACE__*' -print0 |
     done
 
 mkdir -p "$DERIVED_DATA_PATH"
-mkdir -p "$XCODE_TOOLCHAINS_PATH"
-ln -s "$SPOOR_TOOLCHAIN_PATH" "$XCODE_TOOLCHAINS_PATH/$TOOLCHAIN_NAME"
+mkdir -p "$XCODE_USER_TOOLCHAINS_PATH"
+ln -s "$SPOOR_TOOLCHAIN_PATH" "$XCODE_USER_TOOLCHAINS_PATH/$TOOLCHAIN_NAME"
 
 xcodebuild \
   clean build \
-  -quiet \
   -configuration "$CONFIGURATION" \
   -destination "$DESTINATION" \
   -derivedDataPath "$DERIVED_DATA_PATH" \
