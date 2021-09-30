@@ -140,9 +140,9 @@ http_archive(
 http_archive(
     # Perfetto's build config requires deviating from the naming convention.
     name = "perfetto",
-    sha256 = "9f7f64733eac7021c71742635dba8db888f668af236f62dcf76742318b682c47",
-    strip_prefix = "perfetto-15.0",
-    urls = ["https://github.com/google/perfetto/archive/v15.0.tar.gz"],
+    sha256 = "9fb1ae06f43e8ee151bee02fbcadf95c4e4312598b52a8470d55776f5b9fb098",
+    strip_prefix = "perfetto-18.0",
+    urls = ["https://github.com/google/perfetto/archive/v18.0.tar.gz"],
 )
 
 new_local_repository(
