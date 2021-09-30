@@ -168,9 +168,9 @@ http_archive(
 
 http_archive(
     name = "com_bazelbuild_bazel",
-    sha256 = "2b9999d06466815ab1f2eb9c6fc6fceb6061efc715b4086fa99eac041976fb4f",
-    strip_prefix = "bazel-4.0.0",
-    url = "https://github.com/bazelbuild/bazel/archive/4.0.0.tar.gz",
+    sha256 = "7218ae58d0225582d38cc2fbeb6d48f9532e6cff7f4288828e055dae4324ab5b",
+    strip_prefix = "bazel-4.2.1",
+    url = "https://github.com/bazelbuild/bazel/archive/4.2.1.tar.gz",
 )
 
 http_archive(
