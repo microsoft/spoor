@@ -3,6 +3,11 @@
 
 steps:
 - script: |
+    pkgutil --pkg-info=com.apple.pkg.CLTools_Executables
+    softwareupdate --list
+  displayName: Update Xcode Command Line Tools
+  condition: eq(variables['Agent.OS'], 'Darwin')
+- script: |
     wget https://apt.llvm.org/llvm.sh
     chmod +x llvm.sh
     sudo ./llvm.sh 12
