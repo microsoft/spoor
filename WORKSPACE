@@ -93,13 +93,11 @@ http_archive(
     url = "https://github.com/apple/swift/archive/swift-5.4-RELEASE.tar.gz",
 )
 
-# TODO(#132): Upgrade Abseil when the linker issue is resolved in a later
-# release.
 http_archive(
     name = "com_google_absl",
-    sha256 = "ebe2ad1480d27383e4bf4211e2ca2ef312d5e6a09eba869fd2e8a5c5d553ded2",
-    strip_prefix = "abseil-cpp-20200923.3",
-    url = "https://github.com/abseil/abseil-cpp/archive/20200923.3.tar.gz",
+    sha256 = "59b862f50e710277f8ede96f083a5bb8d7c9595376146838b9580be90374ee1f",
+    strip_prefix = "abseil-cpp-20210324.2",
+    url = "https://github.com/abseil/abseil-cpp/archive/refs/tags/20210324.2.tar.gz",
 )
 
 http_archive(
