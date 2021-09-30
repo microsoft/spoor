@@ -14,6 +14,13 @@ namespace spoor::instrumentation::filters::testing {
 
 class FiltersReaderMock final : public FiltersReader {
  public:
+  FiltersReaderMock() = default;
+  FiltersReaderMock(const FiltersReaderMock&) = delete;
+  FiltersReaderMock(FiltersReaderMock&&) noexcept = delete;
+  auto operator=(const FiltersReaderMock&) -> FiltersReaderMock& = delete;
+  auto operator=(FiltersReaderMock&&) noexcept -> FiltersReaderMock& = delete;
+  ~FiltersReaderMock() override = default;
+
   MOCK_METHOD(  // NOLINT
       Result, Read, (const std::filesystem::path& file_path),
       (const, override));

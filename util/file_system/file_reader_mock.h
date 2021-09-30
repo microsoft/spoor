@@ -14,6 +14,13 @@ namespace util::file_system::testing {
 
 class FileReaderMock final : public FileReader {
  public:
+  FileReaderMock() = default;
+  FileReaderMock(const FileReaderMock&) = delete;
+  FileReaderMock(FileReaderMock&&) noexcept = delete;
+  auto operator=(const FileReaderMock&) -> FileReaderMock& = delete;
+  auto operator=(FileReaderMock&&) noexcept -> FileReaderMock& = delete;
+  ~FileReaderMock() override = default;
+
   MOCK_METHOD(  // NOLINT
       (void), Open, (const std::filesystem::path& path), (override));
   MOCK_METHOD(  // NOLINT

@@ -15,6 +15,13 @@ namespace util::file_system::testing {
 
 class FileSystemMock final : public FileSystem {
  public:
+  FileSystemMock() = default;
+  FileSystemMock(const FileSystemMock&) = delete;
+  FileSystemMock(FileSystemMock&&) noexcept = delete;
+  auto operator=(const FileSystemMock&) -> FileSystemMock& = delete;
+  auto operator=(FileSystemMock&&) noexcept -> FileSystemMock& = delete;
+  ~FileSystemMock() override = default;
+
   MOCK_METHOD(  // NOLINT
       (util::result::Result<bool, std::error_code>), IsRegularFile,
       (const std::filesystem::path& path), (const, override));

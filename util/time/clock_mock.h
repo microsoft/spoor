@@ -18,6 +18,13 @@ using SteadyClockMock = ClockMock<std::chrono::steady_clock>;
 template <class ChronoClock>
 class ClockMock final : public Clock<ChronoClock> {
  public:
+  ClockMock() = default;
+  ClockMock(const ClockMock&) = delete;
+  ClockMock(ClockMock&&) noexcept = delete;
+  auto operator=(const ClockMock&) -> ClockMock& = delete;
+  auto operator=(ClockMock&&) noexcept -> ClockMock& = delete;
+  ~ClockMock() override = default;
+
   MOCK_METHOD(  // NOLINT
       std::chrono::time_point<ChronoClock>, Now, (), (const, override));
 };

@@ -11,6 +11,13 @@ namespace spoor::runtime::trace::testing {
 
 class TraceWriterMock final : public TraceWriter {
  public:
+  TraceWriterMock() = default;
+  TraceWriterMock(const TraceWriterMock&) = delete;
+  TraceWriterMock(TraceWriterMock&&) noexcept = delete;
+  auto operator=(const TraceWriterMock&) -> TraceWriterMock& = delete;
+  auto operator=(TraceWriterMock&&) noexcept -> TraceWriterMock& = delete;
+  ~TraceWriterMock() override = default;
+
   MOCK_METHOD(  // NOLINT
       Result, Write,
       (const std::string& file_name, Header header,

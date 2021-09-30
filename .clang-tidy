@@ -5,6 +5,8 @@
 #   Some types (e.g., function pointers) have different sizes on different
 #   architectures so an optimal struct alignment on one architecture is not
 #   necessarily optimal on another.
+# clang-analyzer-cplusplus.NewDeleteLeaks
+#   Too many false-positives in test code. Leaks are also checked by ASAN.
 # cppcoreguidelines-init-variables
 #   Appears not to support the {} default initializer.
 # fuchsia-default-arguments
@@ -31,6 +33,7 @@
 Checks: '
   *,
   -altera-struct-pack-align,
+  -clang-analyzer-cplusplus.NewDeleteLeaks,
   -cppcoreguidelines-init-variables,
   -fuchsia-default-arguments,
   -fuchsia-default-arguments-calls,
