@@ -143,7 +143,7 @@ def test_parses_link_args(popen_mock):
 
 def _test_does_not_link_spoor_for_incremental_link(main, popen_mock):
   input_args = [
-      '-target', 'arm64-apple-ios14.4', '-o', 'a.o', '-r', 'foo', 'bar'
+      '-target', 'arm64-apple-ios15.0', '-o', 'a.o', '-r', 'foo', 'bar'
   ]
   popen_handle = popen_mock.return_value.__enter__
   popen_handle.return_value.returncode = 0
@@ -167,7 +167,7 @@ def test_clang_does_not_link_spoor_for_incremental_link(popen_mock):
 
 def _test_link_return_code(main, popen_mock):
   input_args = [
-      '-target', 'arm64-apple-ios14.4', '-o', 'a.o', '-r', 'foo', 'bar'
+      '-target', 'arm64-apple-ios15.0', '-o', 'a.o', '-r', 'foo', 'bar'
   ]
   for expected_return_code in range(3):
     popen_handle = popen_mock.return_value.__enter__
@@ -216,7 +216,7 @@ def test_raises_exception_with_unsupported_target():
 
 def test_raises_exception_with_multiple_outputs_when_compiling():
   input_args = [
-      '-target', 'arm64-apple-ios14.4', '-x', 'objective-c', '-o', 'a.o', '-o',
+      '-target', 'arm64-apple-ios15.0', '-x', 'objective-c', '-o', 'a.o', '-o',
       'b.o'
   ]
   expected_error = 'Expected exactly one output file, got 2.'
