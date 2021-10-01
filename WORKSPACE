@@ -130,9 +130,9 @@ http_archive(
 http_archive(
     name = "com_marzer_tomlplusplus",
     build_file = "//toolchain:tomlplusplus.BUILD",
-    sha256 = "d7c28b25374241afa08c60183717d3025aa8abffe1030928dc7e1d2143852da1",
-    strip_prefix = "tomlplusplus-2.4.0",
-    url = "https://github.com/marzer/tomlplusplus/archive/refs/tags/v2.4.0.tar.gz",
+    sha256 = "2e246ee126cfb7bd68edd7285d5bb5c8c5296121ce809306ee71cfd6127c76a6",
+    strip_prefix = "tomlplusplus-2.5.0",
+    url = "https://github.com/marzer/tomlplusplus/archive/refs/tags/v2.5.0.tar.gz",
 )
 
 http_archive(
