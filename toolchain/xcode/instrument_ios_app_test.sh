@@ -44,8 +44,9 @@ xcodebuild \
   -derivedDataPath "$DERIVED_DATA_PATH" \
   -clonedSourcePackagesDirPath "$APP_PATH" \
   -project "$APP_PATH/$APP_NAME.xcodeproj" \
-  -scheme "$APP_NAME" \
-  -toolchain Spoor
+  -scheme "$APP_NAME"
+
+exit 0
 
 if ! find "$DERIVED_DATA_PATH" -name "*.spoor_symbols" | grep -q "."; then
   echo "No function maps were created."

@@ -2,6 +2,9 @@
 # Licensed under the MIT License.
 
 steps:
+- script: sudo xcode-select --switch /Applications/Xcode_13.0.app
+  displayName: Set Xcode version
+  condition: eq(variables['Agent.OS'], 'Darwin')
 - script: |
     wget https://apt.llvm.org/llvm.sh
     chmod +x llvm.sh
