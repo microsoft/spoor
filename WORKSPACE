@@ -114,9 +114,9 @@ protobuf_deps()
 http_archive(
     name = "com_google_snappy",
     build_file = "//toolchain:snappy.BUILD",
-    sha256 = "16b677f07832a612b0836178db7f374e414f94657c138e6993cbfc5dcc58651f",
-    strip_prefix = "snappy-1.1.8",
-    url = "https://github.com/google/snappy/archive/1.1.8.tar.gz",
+    sha256 = "75c1fbb3d618dd3a0483bff0e26d0a92b495bbe5059c8b4f1c962b478b6e06e7",
+    strip_prefix = "snappy-1.1.9",
+    url = "https://github.com/google/snappy/archive/1.1.9.tar.gz",
 )
 
 http_archive(
