@@ -22,3 +22,17 @@ steps:
 - script: cat .build/macos-ci.bazelrc .build/ci.bazelrc > .bazelrc
   displayName: Create .bazelrc (macOS)
   condition: eq(variables['Agent.OS'], 'Darwin')
+- script: |
+    set -x
+    bazel --version
+    pkgutil --pkg-info=com.apple.pkg.CLTools_Executables
+    xcode-select --version
+    xcode-select --print-path
+    xcodebuild -version
+    $(xcode-select --print-path)/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift --version
+    $(xcode-select --print-path)/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ --version
+    $(brew --prefix llvm)/bin/clang++ --version
+    which clang++
+    which swift
+  displayName: Print environment (macOS)
+  condition: eq(variables['Agent.OS'], 'Darwin')
