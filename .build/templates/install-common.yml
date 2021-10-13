@@ -13,7 +13,10 @@ steps:
     sudo ./llvm.sh 12
   displayName: Install LLVM (Linux)
   condition: eq(variables['Agent.OS'], 'Linux')
-- script: echo '##vso[task.prependpath]/usr/local/opt/llvm@12/bin'
+- script: |
+    brew install llvm@12
+    ln -sfn /usr/local/Cellar/llvm /usr/local/Cellar/llvm@12
+    echo '##vso[task.prependpath]/usr/local/opt/llvm@12/bin'
   displayName: Install LLVM (macOS)
   condition: eq(variables['Agent.OS'], 'Darwin')
 - script: pip3 install pylint yapf
@@ -33,7 +36,11 @@ steps:
     $(brew --prefix llvm)/bin/clang++ --version
     which clang++
     which swift
+    which clang-tidy
+    which clang-format
     printenv | sort
-    ls -flhair /Applications
+    ls -lhai /Applications
+    ls -lhai /usr/local/opt
+    ls -lhai /usr/local/Cellar
   displayName: Print environment (macOS)
   condition: eq(variables['Agent.OS'], 'Darwin')
