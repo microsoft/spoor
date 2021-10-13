@@ -34,5 +34,7 @@ steps:
     $(brew --prefix llvm)/bin/clang++ --version
     which clang++
     which swift
+    printenv | sort
+    ls -flhair /Applications
   displayName: Print environment (macOS)
   condition: eq(variables['Agent.OS'], 'Darwin')
