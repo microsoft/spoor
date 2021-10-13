@@ -9,6 +9,7 @@
 
 #include "spoor/instrumentation/filters/filters.h"
 #include "spoor/instrumentation/filters/filters_reader.h"
+#include "tomlplusplus/toml.h"
 #include "util/file_system/file_reader.h"
 #include "util/flat_map/flat_map.h"
 #include "util/result.h"
@@ -53,6 +54,10 @@ class FiltersFileReader : public FiltersReader {
 
  private:
   Options options_;
+
+  static auto ParseFilter(Filter::Action action, std::string_view key,
+                          const toml::node& node)
+      -> util::result::Result<Filter, Error>;
 };
 
 }  // namespace spoor::instrumentation::filters

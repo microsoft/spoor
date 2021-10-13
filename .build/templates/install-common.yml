@@ -3,18 +3,17 @@
 
 steps:
 - script: |
+    sudo xcode-select --switch /Applications/Xcode_13.0.app
+    ln -sfn /Applications/Xcode_13.0.app /Applications/Xcode.app
+  displayName: Set Xcode version
+  condition: eq(variables['Agent.OS'], 'Darwin')
+- script: |
     wget https://apt.llvm.org/llvm.sh
     chmod +x llvm.sh
     sudo ./llvm.sh 12
-    sudo ./llvm.sh 11
   displayName: Install LLVM (Linux)
   condition: eq(variables['Agent.OS'], 'Linux')
-- script: |
-    brew install llvm@11
-    brew install llvm@12
-    echo '##vso[task.prependpath]/usr/local/opt/llvm@12/bin'
-    # The default compiler is added last.
-    echo '##vso[task.prependpath]/usr/local/opt/llvm@11/bin'
+- script: echo '##vso[task.prependpath]/usr/local/opt/llvm@12/bin'
   displayName: Install LLVM (macOS)
   condition: eq(variables['Agent.OS'], 'Darwin')
 - script: pip3 install pylint yapf

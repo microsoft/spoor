@@ -59,6 +59,7 @@ constexpr std::string_view kUsage{
 
 }  // namespace
 
+// Sorry. NOLINTNEXTLINE(readability-function-cognitive-complexity)
 auto main(const int argc, char** argv) -> int {
   const auto short_program_invocation_name = [argc, argv] {
     const gsl::span<char*> args{argv,

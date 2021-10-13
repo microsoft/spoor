@@ -175,7 +175,8 @@ auto InjectInstrumentation::InstrumentModule(
     function_info.set_demangled_name(demangled_name);
 
     const auto ir_instruction_count = function.getInstructionCount();
-    function_info.set_ir_instruction_count(ir_instruction_count);
+    function_info.set_ir_instruction_count(
+        gsl::narrow_cast<google::protobuf::int32>(ir_instruction_count));
 
     const auto* subprogram = function.getSubprogram();
     const auto directory =

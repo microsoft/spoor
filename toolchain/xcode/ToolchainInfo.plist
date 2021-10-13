@@ -11,7 +11,7 @@
     <key>CompatibilityVersion</key>
     <integer>2</integer>
     <key>CompatibilityVersionDisplayString</key>
-    <string>Xcode 12.5+</string>
+    <string>Xcode 13.0</string>
     <key>DisplayName</key>
     <string>Spoor</string>
     <key>ReportProblemURL</key>

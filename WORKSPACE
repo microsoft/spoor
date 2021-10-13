@@ -38,17 +38,28 @@ pip_install(
 # TODO(#133): Use LLVM's Bazel build configuration when it is checked in.
 http_archive(
     name = "com_google_llvm_bazel",
-    sha256 = "2eb64e813477e8009f4813aae5ae7f95090585a9a06f2437007e387551769dea",
-    strip_prefix = "llvm-bazel-lelandjansen-llvm-11.1.0/llvm-bazel",
-    url = "https://github.com/lelandjansen/llvm-bazel/archive/refs/heads/lelandjansen/llvm-11.1.0.tar.gz",
+    sha256 = "0aafa2c2f8d30d9cc7b88b3dd64137e510a2193003fce220020417b71f8e158e",
+    strip_prefix = "llvm-bazel-lelandjansen-llvm-12.0.1/llvm-bazel",
+    url = "https://github.com/lelandjansen/llvm-bazel/archive/refs/heads/lelandjansen/llvm-12.0.1.tar.gz",
 )
 
 http_archive(
     name = "org_llvm_llvm_project",
     build_file_content = "#empty",
-    sha256 = "d4dbca22c0056847a89d4335c172ecc14db8ef7c60f3a639b3cb91cb82961900",
-    strip_prefix = "llvm-project-1fdec59bffc11ae37eb51a1b9869f0696bfd5312",
-    url = "https://github.com/llvm/llvm-project/archive/1fdec59bffc11ae37eb51a1b9869f0696bfd5312.tar.gz",
+    patch_cmds = [
+        """
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+          sed -i '' 's|#include "llvm/Transforms/HelloNew/HelloWorld.h"||g' llvm/lib/Passes/PassBuilder.cpp
+          sed -i '' 's|FUNCTION_PASS("helloworld", HelloWorldPass())||g' llvm/lib/Passes/PassRegistry.def
+        else
+          sed -i 's|#include "llvm/Transforms/HelloNew/HelloWorld.h"||g' llvm/lib/Passes/PassBuilder.cpp
+          sed -i 's|FUNCTION_PASS("helloworld", HelloWorldPass())||g' llvm/lib/Passes/PassRegistry.def
+        fi
+        """,
+    ],
+    sha256 = "66b64aa301244975a4aea489f402f205cde2f53dd722dad9e7b77a0459b4c8df",
+    strip_prefix = "llvm-project-llvmorg-12.0.1",
+    url = "https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-12.0.1.tar.gz",
 )
 
 load("@com_google_llvm_bazel//:terminfo.bzl", "llvm_terminfo_disable")
