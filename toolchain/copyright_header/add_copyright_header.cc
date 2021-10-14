@@ -20,7 +20,7 @@ using Result = util::result::Result<util::result::None, util::result::None>;
 
 constexpr std::string_view kCopyrightHeaderFile{
     "toolchain/copyright_header/copyright_header.txt"};
-constexpr util::flat_map::FlatMap<std::string_view, std::string_view, 20>
+constexpr util::flat_map::FlatMap<std::string_view, std::string_view, 21>
     kFileExtensionComment{
         {"BUILD", "#"},
         {"WORKSPACE", "#"},
@@ -30,6 +30,7 @@ constexpr util::flat_map::FlatMap<std::string_view, std::string_view, 20>
         {"cc", "//"},
         {".clang-format", "#"},
         {".clang-tidy", "#"},
+        {".gitattributes", "#"},
         {".gitignore", "#"},
         {"h", "//"},
         {"ll", ";"},

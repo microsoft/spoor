@@ -11,35 +11,40 @@
 * [Material for MkDocs][mkdocs-material] to generate documentation.
 
 ## Build
-```
-$ bazel build //...
+
+```bash
+bazel build //...
 ```
 
 ## Test
-```
-$ bazel test //...
+
+```bash
+bazel test //...
 ```
 
 ## Style and lint
 
 ### Format C++, Objective-C, and Python
-```
-$ bazel build //... --aspects toolchain/style/style.bzl%format --output_groups=report
+
+```bash
+bazel build //... --aspects toolchain/style/style.bzl%format --output_groups=report
 ```
 
 ### Format Starlark
 ```
-$ bazel run //toolchain/style:buildifier
+bazel run //toolchain/style:buildifier
 ```
 
 ### Lint C++ and Python
-```
-$ bazel build //... --aspects toolchain/style/style.bzl%lint --output_groups=report
+
+```bash
+bazel build //... --aspects toolchain/style/style.bzl%lint --output_groups=report
 ```
 
 ### Add copyright header
-```
-$ ./toolchain/copyright_header/add_copyright_header.sh
+
+```bash
+./toolchain/copyright_header/add_copyright_header.sh
 ```
 
 ## Compilation database
@@ -47,8 +52,16 @@ Generate a `compile_commands.json` compilation database used by Clang Tidy for
 linting and by some IDEs to offer code completion.
 [Details][compilation-database-readme].
 
+```bash
+./toolchain/compilation_database/generate_compilation_database.sh
 ```
-$ ./toolchain/compilation_database/generate_compilation_database.sh
+
+## Documentation
+
+Preview the documentation website as you write it.
+
+```bash
+mkdocs serve
 ```
 
 # Contributing
