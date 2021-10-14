@@ -8,6 +8,7 @@
 * [Bazel][bazel].
 * [Clang Format][clang-format], [Clang Tidy][clang-tidy], [Pylint][pylint], and
   [YAPF][yapf] to format and lint code.
+* [Material for MkDocs][mkdocs-material] to generate documentation.
 
 ## Build
 ```
@@ -85,10 +86,11 @@ comments.
 [code-of-conduct-faq]: https://opensource.microsoft.com/codeofconduct/faq/
 [code-of-conduct]: https://opensource.microsoft.com/codeofconduct/
 [compilation-database-readme]: toolchain/compilation_database/README.md
+[mkdocs-material]: https://squidfunk.github.io/mkdocs-material/getting-started/
 [nodejs]: https://nodejs.org/
 [opencode-email]: mailto:opencode@microsoft.com
 [protoc-installation]: https://grpc.io/docs/protoc-installation/
+[pylint]: https://www.pylint.org/
 [style-guide]: STYLE_GUIDE.md
 [yapf]: https://github.com/google/yapf
-[pylint]: https://www.pylint.org/
 [yarn]: https://classic.yarnpkg.com/
