@@ -1,11 +1,12 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-trigger:
-- master
-
 # TODO(#58): Support Linux in CI and reintroduce UBSAN (Linux only).
 
+trigger:
+- master
+variables:
+- group: spoor
 jobs:
 - job: build_and_test
   timeoutInMinutes: 90
@@ -23,6 +24,8 @@ jobs:
     displayName: Test
   - script: ./toolchain/benchmark/run_benchmarks.sh
     displayName: Benchmark
+  - script: mkdocs build
+    displayName: Build documentation
 - job: build_and_test_llvm
   timeoutInMinutes: 90
   strategy:
@@ -92,3 +95,22 @@ jobs:
           --output_groups=report \
           --keep_going
     displayName: Lint
+- job: publish_documentation
+  pool:
+    vmImage: ubuntu-20.04
+  steps:
+  - task: InstallSSHKey@0
+    inputs:
+      knownHostsEntry: $(github_com_id_rsa_pub)
+      sshPublicKey: $(spoor_github_deploy_key_id_ed25519_pub)
+      sshKeySecureFile: spoor_github_deploy_key_id_ed25519
+  - script: |
+      git config --local user.name 'Azure DevOps'
+      git config --local user.email 'azuredevops@microsoft.com'
+      git remote set-url --push origin git@github.com:microsoft/spoor.git
+    displayName: Configure Git
+  - script: pip3 install mkdocs-material
+    displayName: Install Material for MkDocs
+  - script: mkdocs gh-deploy --force
+    displayName: Publish
+  condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
