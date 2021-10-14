@@ -131,7 +131,7 @@ def test_raises_exception_with_no_target():
 
 
 def test_raises_exception_with_multiple_outputs_when_compiling():
-  args = ['-target', 'arm64-apple-ios14.4', '-o', 'a.o', '-o', 'b.o']
+  args = ['-target', 'arm64-apple-ios15.0', '-o', 'a.o', '-o', 'b.o']
   with pytest.raises(ValueError) as error:
     swift.main(['swift'] + args, 'default_swift', 'spoor_opt',
                'default_clangxx')
