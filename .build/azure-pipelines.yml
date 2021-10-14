@@ -19,10 +19,13 @@ jobs:
   steps:
   - template: ./templates/install-common.yml
   - script: bazel build //...
+    condition: and(succeeded(), eq(variables['Changes.DocumentationOnly'], 'false'))
     displayName: Build
   - script: bazel test //...
+    condition: and(succeeded(), eq(variables['Changes.DocumentationOnly'], 'false'))
     displayName: Test
   - script: ./toolchain/benchmark/run_benchmarks.sh
+    condition: and(succeeded(), eq(variables['Changes.DocumentationOnly'], 'false'))
     displayName: Benchmark
   - script: mkdocs build
     displayName: Build documentation
@@ -36,11 +39,11 @@ jobs:
     vmImage: $(imageName)
   steps:
   - template: ./templates/install-common.yml
-  - script: |
-      bazel build //... --crosstool_top=//toolchain/crosstool:llvm_toolchain
+  - script: bazel build //... --crosstool_top=//toolchain/crosstool:llvm_toolchain
+    condition: and(succeeded(), eq(variables['Changes.DocumentationOnly'], 'false'))
     displayName: Build (LLVM toolchain)
-  - script: |
-      bazel test //... --crosstool_top=//toolchain/crosstool:llvm_toolchain
+  - script: bazel test //... --crosstool_top=//toolchain/crosstool:llvm_toolchain
+    condition: and(succeeded(), eq(variables['Changes.DocumentationOnly'], 'false'))
     displayName: Test (LLVM toolchain)
 - job: address_sanitizer
   timeoutInMinutes: 90
@@ -53,6 +56,7 @@ jobs:
   steps:
   - template: ./templates/install-common.yml
   - script: bazel test --config=asan $(bazel query 'kind(cc_.*, tests(//...))')
+    condition: and(succeeded(), eq(variables['Changes.DocumentationOnly'], 'false'))
     displayName: Address sanitizer
 - job: thread_sanitizer
   timeoutInMinutes: 90
@@ -65,6 +69,7 @@ jobs:
   steps:
   - template: ./templates/install-common.yml
   - script: bazel test --config=tsan $(bazel query 'kind(cc_.*, tests(//...))')
+    condition: and(succeeded(), eq(variables['Changes.DocumentationOnly'], 'false'))
     displayName: Thread sanitizer
 - job: style_and_lint
   timeoutInMinutes: 90
@@ -79,6 +84,7 @@ jobs:
   - script: |
       ./toolchain/copyright_header/add_copyright_header.sh
       git diff --exit-code
+    condition: and(succeeded(), eq(variables['Changes.DocumentationOnly'], 'false'))
     displayName: Copyright header
   - script: |
       bazel build //... \
@@ -87,6 +93,7 @@ jobs:
           --keep_going
       bazel run //toolchain/style:buildifier
       git diff --exit-code
+    condition: and(succeeded(), eq(variables['Changes.DocumentationOnly'], 'false'))
     displayName: Format
   - script: |
       bazel build //... \
@@ -94,6 +101,7 @@ jobs:
           --aspects toolchain/style/style.bzl%lint \
           --output_groups=report \
           --keep_going
+    condition: and(succeeded(), eq(variables['Changes.DocumentationOnly'], 'false'))
     displayName: Lint
 - job: publish_documentation
   pool:
@@ -113,4 +121,4 @@ jobs:
     displayName: Install Material for MkDocs
   - script: mkdocs gh-deploy --force
     displayName: Publish
-  condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))

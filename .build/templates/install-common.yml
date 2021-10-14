@@ -3,27 +3,52 @@
 
 steps:
 - script: |
+    set -e
+    if [ "$(Build.Reason)" != "PullRequest" ]; then
+      echo "##vso[task.setvariable variable=Changes.DocumentationOnly]false"
+    fi
+    if [ "$(Build.SourceBranch)" == "refs/heads/master" ]; then
+      echo "##vso[task.setvariable variable=Changes.DocumentationOnly]false"
+    fi
+    echo "version = $(Build.SourceVersion)"
+    FILES="$(git diff-tree --no-commit-id --name-only -r $(Build.SourceVersion))"
+    CHANGED_FILE_COUNT="$(echo "$FILES" | wc -l)"
+    CHANGED_DOCUMENTATION_FILE_COUNT="$(echo "$FILES" | grep -E "^docs\/.*$" | wc -l)"
+    echo "Changed files:"
+    echo "$FILES"
+    echo "Count: $CHANGED_FILE_COUNT"
+    if [ "$CHANGED_FILE_COUNT" -eq "0" ]; then
+      echo "##vso[task.setvariable variable=Changes.DocumentationOnly]false"
+    fi
+    if [ "$CHANGED_FILE_COUNT" -eq "$CHANGED_DOCUMENTATION_FILE_COUNT" ]; then
+      echo "##vso[task.setvariable variable=Changes.DocumentationOnly]true"
+    else
+      echo "##vso[task.setvariable variable=Changes.DocumentationOnly]false"
+    fi
+  name: Changes
+  displayName: Detect documentation-only changes
+- script: |
     sudo xcode-select --switch /Applications/Xcode_13.0.app
     ln -sfn /Applications/Xcode_13.0.app /Applications/Xcode.app
   displayName: Set Xcode version
-  condition: eq(variables['Agent.OS'], 'Darwin')
+  condition: and(succeeded(), eq(variables['Agent.OS'], 'Darwin'))
 - script: |
     wget https://apt.llvm.org/llvm.sh
     chmod +x llvm.sh
     sudo ./llvm.sh 12
   displayName: Install LLVM (Linux)
-  condition: eq(variables['Agent.OS'], 'Linux')
+  condition: and(succeeded(), eq(variables['Agent.OS'], 'Linux'), eq(variables['Changes.DocumentationOnly'], 'false'))
 - script: |
     brew install llvm@12
     ln -sfn /usr/local/Cellar/llvm /usr/local/Cellar/llvm@12
     echo '##vso[task.prependpath]/usr/local/opt/llvm@12/bin'
   displayName: Install LLVM (macOS)
-  condition: eq(variables['Agent.OS'], 'Darwin')
+  condition: and(succeeded(), eq(variables['Agent.OS'], 'Darwin'), eq(variables['Changes.DocumentationOnly'], 'false'))
 - script: pip3 install pylint yapf mkdocs-material
   displayName: Install pip dependencies
 - script: cat .build/macos-ci.bazelrc .build/ci.bazelrc > .bazelrc
   displayName: Create .bazelrc (macOS)
-  condition: eq(variables['Agent.OS'], 'Darwin')
+  condition: and(succeeded(), eq(variables['Agent.OS'], 'Darwin'))
 - script: |
     set -x
     bazel --version
@@ -42,4 +67,4 @@ steps:
     ls -lhai /usr/local/opt
     ls -lhai /usr/local/Cellar
   displayName: Print environment (macOS)
-  condition: eq(variables['Agent.OS'], 'Darwin')
+  condition: and(succeeded(), eq(variables['Agent.OS'], 'Darwin'))
