@@ -4,7 +4,7 @@ Configure Spoor's runtime with environment variables.
 
 ## Source code
 
-[spoor/runtime/config/][spoor-instrumentation-config]
+[spoor/runtime/config/][spoor-runtime-config]
 
 ## Calculating memory impact
 
