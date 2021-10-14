@@ -121,45 +121,45 @@ def darwin_llvm_toolchain_impl(ctx):
     tool_paths = [
         tool_path(
             name = "gcc",
-            path = "/usr/local/opt/llvm/bin/clang",
+            path = "/usr/local/opt/llvm@12/bin/clang",
         ),
         tool_path(
             name = "ld",
-            path = "/usr/local/opt/llvm/bin/ld64.lld",
+            path = "/usr/local/opt/llvm@12/bin/ld64.lld",
         ),
         tool_path(
             name = "ar",
-            path = "/usr/local/opt/llvm/bin/llvm-ar",
+            path = "/usr/local/opt/llvm@12/bin/llvm-ar",
         ),
         tool_path(
             name = "cpp",
-            path = "/usr/local/opt/llvm/bin/clang++",
+            path = "/usr/local/opt/llvm@12/bin/clang++",
         ),
         tool_path(
             name = "gcov",
-            path = "/usr/local/opt/llvm/bin/llvm-cov",
+            path = "/usr/local/opt/llvm@12/bin/llvm-cov",
         ),
         tool_path(
             name = "nm",
-            path = "/usr/local/opt/llvm/bin/llvm-nm",
+            path = "/usr/local/opt/llvm@12/bin/llvm-nm",
         ),
         tool_path(
             name = "objdump",
-            path = "/usr/local/opt/llvm/bin/llvm-objdump",
+            path = "/usr/local/opt/llvm@12/bin/llvm-objdump",
         ),
         tool_path(
             name = "strip",
-            path = "/usr/local/opt/llvm/bin/llvm-strip",
+            path = "/usr/local/opt/llvm@12/bin/llvm-strip",
         ),
     ]
     return cc_common.create_cc_toolchain_config_info(
         ctx = ctx,
         features = FEATURES,
         cxx_builtin_include_directories = [
-            "/usr/local/opt/llvm/include/c++/v1",
-            "/usr/local/Cellar/llvm/12.0.1/include/",
-            "/usr/local/Cellar/llvm/12.0.1/lib/clang/12.0.1/include",
-            "/usr/local/Cellar/llvm/12.0.1/lib/clang/12.0.1/share",
+            "/usr/local/opt/llvm@12/include/c++/v1",
+            "/usr/local/Cellar/llvm@12/12.0.1/include/",
+            "/usr/local/Cellar/llvm@12/12.0.1/lib/clang/12.0.1/include",
+            "/usr/local/Cellar/llvm@12/12.0.1/lib/clang/12.0.1/share",
             "/Library/Developer/CommandLineTools/SDKs/MacOSX11.sdk/usr/include",
             "/Library/Developer/CommandLineTools/SDKs/MacOSX11.sdk/System/Library/Frameworks",
         ],
