@@ -2,32 +2,63 @@
 # Licensed under the MIT License.
 
 site_name: Spoor
+site_url: https://www.spoor.dev
 repo_url: https://github.com/microsoft/spoor
+repo_name: microsoft/spoor
+site_description: Spoor documentation and reference.
+site_author: Microsoft Corporation
 copyright: Copyright &copy; Microsoft Corporation
 theme:
   name: material
   language: en
   palette:
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: blue grey
-      toggle:
-        icon: material/toggle-switch-off-outline
-        name: Switch to dark mode
-    - media: "(prefers-color-scheme: light)"
-      scheme: slate
-      primary: blue grey
-      toggle:
-        icon: material/toggle-switch
-        name: Switch to light mode
+    scheme: default
+    primary: blue grey
+      # accent: red
   icon:
     logo: fontawesome/solid/paw
     repo: fontawesome/brands/git-alt
   features:
-    - navigation.instant
-    - navigation.tabs
+  - navigation.instant
+  - navigation.tabs
 markdown_extensions:
- - pymdownx.highlight
- - pymdownx.inlinehilite
- - pymdownx.superfences
- - pymdownx.snippets
+- admonition
+- attr_list
+- md_in_html
+- pymdownx.arithmatex:
+    generic: true
+- pymdownx.details
+- pymdownx.emoji:
+    emoji_index: !!python/name:materialx.emoji.twemoji
+    emoji_generator: !!python/name:materialx.emoji.to_svg
+- pymdownx.highlight
+- pymdownx.inlinehilite
+- pymdownx.snippets
+- pymdownx.superfences
+- pymdownx.tabbed:
+    alternate_style: true 
+nav:
+- Home: index.md
+- Get Started:
+  - Overview: get-started/index.md
+  - Xcode Toolchain: get-started/xcode-toolchain.md
+- Tutorials:
+  - Overview: tutorials/index.md
+  - Fibonacci (Hello, World!): tutorials/fibonacci.md
+- Configuration:
+  - Overview: configuration/index.md
+  - Runtime: configuration/runtime.md
+  - Instrumentation: configuration/instrumentation.md
+- Contributing:
+  - Overview: contributing/index.md
+  - Getting Started: contributing/getting-started.md
+  - Style Guide: contributing/style-guide.md
+  - Code of Conduct: contributing/code-of-conduct.md
+  - Security: contributing/security.md
+  - License: contributing/license.md
+- About:
+  - Overview: about/index.md
+extra_javascript:
+  - js/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js

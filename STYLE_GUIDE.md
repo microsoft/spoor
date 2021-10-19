@@ -1,4 +1,4 @@
-# Spoor Style Guide
+# Style Guide
 
 ## General
 
@@ -204,5 +204,5 @@ Follow
 [microsoft-writing-style-guide]: https://docs.microsoft.com/en-us/style-guide/welcome/
 [rust-result]: https://doc.rust-lang.org/std/result/
 [starlark-style-guide]: https://docs.bazel.build/versions/master/skylark/bzl-style.html
-[util-numeric-h]: util/numeric.h
-[util-result-h]: util/result.h
+[util-numeric-h]: https://github.com/microsoft/spoor/blob/master/util/result.h
+[util-result-h]: https://github.com/microsoft/spoor/blob/master/util/numeric.h

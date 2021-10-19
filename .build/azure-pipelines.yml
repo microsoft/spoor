@@ -24,7 +24,7 @@ jobs:
     displayName: Test
   - script: ./toolchain/benchmark/run_benchmarks.sh
     displayName: Benchmark
-  - script: mkdocs build
+  - script: mkdocs build --strict
     displayName: Build documentation
 - job: build_and_test_llvm
   timeoutInMinutes: 90
