@@ -113,7 +113,6 @@ This recursive definition can be implemented as follows:
 === "C++"
     ```c++
     // fib.cc
-    #include <cstdint>
     #include <cstdio>
 
     auto Fib(const int n) -> int {
@@ -162,7 +161,8 @@ This recursive definition can be implemented as follows:
     ```
 
 !!! check "Sanity test"
-    Build and run your code to make sure that everything works as expected.
+    Build and run your (uninstrumented) code to make sure that everything works
+    as expected.
 
     === "C++"
         ```bash
@@ -204,6 +204,10 @@ Emit LLVM IR instead of compiling down to an object file.
     ```bash
     swiftc fib.swift -emit-ir -o fib.ll
     ```
+
+!!! info "Debug data"
+    Compile with debug data (`-g`) to include the source file and line number in
+    the symbolized trace.
 
 Inspect the file `fib.ll` to view the (uninstrumented) IR. Each language's
 emitted IR is different due to the nature of the source language and its
@@ -705,7 +709,7 @@ This behavior is [configurable][instrumentation-config].
       }
     ```
 
-Each call to `LogFunctionEntry` and `LogFunctionExit` contains a number
+Each call to `LogFunctionEntry` and `LogFunctionExit` contains a single numeric
 argument. This number uniquely identifies the function in your program and is
 logged in the trace at runtime. `fib.spoor_symbols` maps these numbers to debug
 data to symbolize the trace offline.
@@ -793,11 +797,11 @@ efficiently store the trace data for that execution. By default, Spoor's runtime
 saves trace files in the current directory.
 
 ```bash
-ls | grep spoor_trace
+find . -name "*.spoor_trace"
 ```
 
 ```
-xxxxxxxxxxxxxxxx-yyyyyyyyyyyyyyyy-zzzzzzzzzzzzzzzz.spoor_trace
+xxxxxxxxxxxxxxxx-xxxxxxxxxxxxxxxx-xxxxxxxxxxxxxxxx.spoor_trace
 ```
 
 ---
@@ -810,7 +814,7 @@ Finally, parse and symbolize the trace data to view it in
 ### 3.1 Parse and symbolize the trace
 
 Use `spoor`, Spoor's postprocessing tool, to parse the `.spoor_trace` file(s),
-symbolize the trace with the `spoor_symbols` file(s), and output a
+symbolize the trace with the `.spoor_symbols` file(s), and output a
 Perfetto-compatible trace.
 
 ```bash
@@ -879,7 +883,7 @@ WHERE name LIKE 'fib%';
 
 ## Going further
 
-The time complexity of this Fibonacci implementation is _exponential_ – a
+The time complexity of this Fibonacci implementation is _exponential_ &ndash; a
 suboptimal algorithm. Optimize the runtime of your Fibonacci program by caching
 already-computed values (i.e., dynamic programming), instrument your new code,
 and visualize the trace with Perfetto.
@@ -972,10 +976,11 @@ and visualize the trace with Perfetto.
 === "Swift"
     ![fib.swift with caching visualization][fib-cached-swift-visualized]
 
-By default, Spoor instruments all source code it compiles. This includes C++'s
-(header-only) standard library but not Swift's (dynamic) Foundations library.
-Therefore, calls to C++'s `std::unordered_map` appear in the trace but calls to
-Swift's `Dictionary` do not.
+By default, Spoor instruments all source code it compiles from source. This
+includes C++'s (header-only) standard template library but not Swift's
+(precompiled) Foundations library. Therefore, calls to C++'s
+`std::unordered_map` appear in the trace but calls to Swift's `Dictionary` do
+not.
 
 !!! tip "Filters file"
     Filter unwanted functions from the trace by configuring `spoor_opt` with a
@@ -996,7 +1001,7 @@ WHERE name LIKE 'fib%';
 ```
 
 Recall that original implementation (without caching) made 177 function calls to
-`Fib`.
+`Fib` &ndash; strong evidence that caching reduced unnecessary recursive calls.
 
 _What's the deepest stack?_
 
