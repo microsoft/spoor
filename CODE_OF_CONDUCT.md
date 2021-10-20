@@ -3,7 +3,8 @@
 This project has adopted the
 [Microsoft Open Source Code of Conduct][code-of-conduct].
 
-Resources:
+## Resources
+
 - [Microsoft Open Source Code of Conduct][code-of-conduct]
 - [Microsoft Code of Conduct FAQ][code-of-conduct-faq]
 - Contact [opencode@microsoft.com][opencode-email] with questions or concerns

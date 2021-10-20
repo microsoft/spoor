@@ -1,6 +1,6 @@
 <!-- BEGIN MICROSOFT SECURITY.MD V0.0.5 BLOCK -->
 
-## Security
+# Security
 
 Microsoft takes the security of our software products and services seriously,
 which includes all source code repositories managed through our GitHub
@@ -19,7 +19,7 @@ please report it to us as described below.
 **Please do not report security vulnerabilities through public GitHub issues.**
 
 Instead, please report them to the Microsoft Security Response Center (MSRC) at
-https://msrc.microsoft.com/create-report.
+[msrc.microsoft.com/create-report][msrc-create-report].
 
 If you prefer to submit without logging in, send email to
 [secure@microsoft.com][secure-microsoft-email]. If possible, encrypt your
@@ -68,6 +68,7 @@ Microsoft follows the principle of
 [microsoft-msrc]: https://www.microsoft.com/msrc
 [microsoft-open-source]: tttps://opensource.microsoft.com/
 [microsoft-pgp-key]: https://www.microsoft.com/en-us/msrc/pgp-key-msrc
+[msrc-create-report]: https://msrc.microsoft.com/create-report
 [msrc-cvd]: https://www.microsoft.com/en-us/msrc/cvd
 [secure-microsoft-email]: mailto:secure@microsoft.com
 [vulnerability-definition]: https://docs.microsoft.com/en-us/previous-versions/tn-archive/cc751383(v=technet.10)
