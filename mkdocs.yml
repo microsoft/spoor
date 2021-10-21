@@ -45,6 +45,7 @@ nav:
 - Tutorials:
   - Overview: tutorials/index.md
   - Fibonacci (Hello, World!): tutorials/fibonacci.md
+  - Wikipedia iOS (Xcode toolchain): tutorials/wikipedia-ios.md
 - Configuration:
   - Overview: configuration/index.md
   - Runtime: configuration/runtime.md
