@@ -136,25 +136,24 @@ auto RuntimeManager::DeleteFlushedTraceFilesOlderThan(
   std::thread{[directory_begin, directory_end, file_system, trace_reader,
                timestamp, completion{std::move(completion)}] {
     DeletedFilesInfo deleted_files_info{.deleted_files = 0, .deleted_bytes = 0};
-    for (auto file{directory_begin}; file != directory_end; ++file) {
-      if (!trace_reader->MatchesTraceFileConvention(file->path())) {
-        continue;
-      }
-      const auto result = trace_reader->ReadHeader(file->path());
-      if (result.IsErr()) continue;
+    std::for_each(directory_begin, directory_end, [&](const auto& file) {
+      const auto& file_path = file.path();
+      if (!trace_reader->MatchesTraceFileConvention(file_path)) return;
+      const auto result = trace_reader->ReadHeader(file_path);
+      if (result.IsErr()) return;
       const auto header = result.Ok();
       const auto header_system_clock_timestamp =
           std::chrono::time_point<std::chrono::system_clock>{
               std::chrono::duration_cast<std::chrono::microseconds>(
                   std::chrono::nanoseconds{header.system_clock_timestamp})};
-      if (timestamp < header_system_clock_timestamp) continue;
-      const auto file_size_result = file_system->FileSize(file->path());
-      const auto success_result = file_system->Remove(file->path());
+      if (timestamp <= header_system_clock_timestamp) return;
+      const auto file_size_result = file_system->FileSize(file_path);
+      const auto success_result = file_system->Remove(file_path);
       if (success_result.IsOk()) {
         ++deleted_files_info.deleted_files;
         deleted_files_info.deleted_bytes += file_size_result.OkOr(0);
       }
-    }
+    });
     if (completion != nullptr) completion(deleted_files_info);
   }}.detach();
 }

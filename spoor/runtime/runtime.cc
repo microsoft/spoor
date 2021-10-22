@@ -63,6 +63,8 @@ util::time::SystemClock system_clock_{};
 // clang-format off NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects) clang-format on
 util::time::SteadyClock steady_clock_{};
 // clang-format off NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects) clang-format on
+util::file_system::LocalFileSystem file_system_{};
+// clang-format off NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects) clang-format on
 spoor::runtime::trace::TraceFileReader trace_reader_{{
     .file_system{std::make_unique<util::file_system::LocalFileSystem>()},
     .file_reader{std::make_unique<util::file_system::LocalFileReader>()},
@@ -176,10 +178,9 @@ auto DeleteFlushedTraceFilesOlderThan(
   const auto system_timestamp =
       std::chrono::time_point<std::chrono::system_clock>{
           std::chrono::seconds{system_timestamp_seconds}};
-  util::file_system::LocalFileSystem file_system{};
   RuntimeManager::DeleteFlushedTraceFilesOlderThan(
       system_timestamp, std::filesystem::begin(directory),
-      std::filesystem::end(directory), &file_system, &trace_reader_,
+      std::filesystem::end(directory), &file_system_, &trace_reader_,
       std::move(callback_adapter));
 }
 
@@ -322,10 +323,9 @@ auto _spoor_runtime_DeleteFlushedTraceFilesOlderThan(
   const auto system_timestamp =
       std::chrono::time_point<std::chrono::system_clock>{
           std::chrono::seconds{system_timestamp_seconds}};
-  util::file_system::LocalFileSystem file_system{};
   RuntimeManager::DeleteFlushedTraceFilesOlderThan(
       system_timestamp, std::filesystem::begin(directory),
-      std::filesystem::end(directory), &file_system, &trace_reader_,
+      std::filesystem::end(directory), &file_system_, &trace_reader_,
       std::move(callback_adapter));
 }
 
