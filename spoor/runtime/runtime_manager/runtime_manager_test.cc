@@ -21,6 +21,7 @@
 #include "spoor/runtime/buffer/reserved_buffer_slice_pool.h"
 #include "spoor/runtime/event_logger/event_logger.h"
 #include "spoor/runtime/flush_queue/flush_queue_mock.h"
+#include "spoor/runtime/trace/trace.h"
 #include "spoor/runtime/trace/trace_reader_mock.h"
 #include "util/file_system/directory_entry_mock.h"
 #include "util/file_system/file_system_mock.h"
@@ -280,13 +281,22 @@ TEST(RuntimeManager, FlushedTraceFiles) {  // NOLINT
 }
 
 TEST(RuntimeManager, DeleteFlushedTraceFilesOlderThan) {  // NOLINT
-  constexpr auto trace_files_size{5};
-  const auto make_path = [](const SizeType n) {
-    return std::filesystem::path{absl::StrFormat("%d.spoor", n)};
+  struct alignas(64) FileInfo {
+    DirectoryEntryMock entry;
+    int64 size_bytes;
+    TimestampNanoseconds created_at;
   };
-  const auto make_timestamp = [](const int64 n) -> TimestampNanoseconds {
-    return n * 1'000'000;
+  const std::vector<FileInfo> files{
+      {.entry{"0.spoor_trace"}, .size_bytes = 10, .created_at = 0},
+      {.entry{"1.spoor_trace"}, .size_bytes = 99, .created_at = 1'000'000},
+      {.entry{"2.spoor_trace"}, .size_bytes = 1, .created_at = 2'000'000},
+      {.entry{"3.spoor_trace"}, .size_bytes = 0, .created_at = 3'000'000},
+      {.entry{"4.spoor_trace"}, .size_bytes = 42, .created_at = 4'000'000},
   };
+  std::vector<DirectoryEntryMock> directory_entries{};
+  std::transform(std::cbegin(files), std::cend(files),
+                 std::back_inserter(directory_entries),
+                 [](const auto& file) { return file.entry; });
   const auto make_header = [](TimestampNanoseconds system_clock_timestamp) {
     return Header{.compression_strategy = CompressionStrategy::kNone,
                   .session_id = 0,
@@ -296,51 +306,43 @@ TEST(RuntimeManager, DeleteFlushedTraceFilesOlderThan) {  // NOLINT
                   .steady_clock_timestamp = 0,
                   .event_count = 0};
   };
-  const auto make_file_size = [](const SizeType n) { return 1ULL << n; };
   FileSystemMock file_system{};
   TraceReaderMock trace_reader{};
-  std::vector<DirectoryEntryMock> directory_entries{};
-  directory_entries.reserve(trace_files_size);
-  for (SizeType i{0}; i < trace_files_size; ++i) {
-    const auto path = make_path(i);
-    const auto timestamp = make_timestamp(gsl::narrow_cast<int64>(i));
-    const auto header = make_header(timestamp);
-    const auto file_size = make_file_size(i);
-    directory_entries.emplace_back(path);
+  for (const auto& file : files) {
+    const auto path = file.entry.path();
+    const auto header = make_header(file.created_at);
     EXPECT_CALL(trace_reader, MatchesTraceFileConvention(path))
         .WillRepeatedly(Return(true));
     EXPECT_CALL(trace_reader, ReadHeader(path)).WillRepeatedly(Return(header));
-    EXPECT_CALL(file_system, FileSize(path)).WillRepeatedly(Return(file_size));
+    EXPECT_CALL(file_system, FileSize(path))
+        .WillRepeatedly(Return(file.size_bytes));
   }
-  for (auto i{-1}; i < trace_files_size + 3; ++i) {
-    for (auto j{0}; j < std::min(i, trace_files_size); ++j) {
-      const auto path = make_path(j);
-      EXPECT_CALL(file_system, Remove(path))
-          .WillOnce(
-              Return(util::result::Result<None, std::error_code>::Ok({})));
+  for (auto file = std::cbegin(files); file != std::cend(files); ++file) {
+    for (const auto offset : {-1'000, 0, 1'000}) {
+      const auto timestamp = file->created_at + offset;
+      RuntimeManager::DeletedFilesInfo expected_deleted_files_info{
+          .deleted_files = 0, .deleted_bytes = 0};
+      for (const auto& file : files) {
+        if (file.created_at < timestamp) {
+          EXPECT_CALL(file_system, Remove(file.entry.path()))
+              .WillOnce(
+                  Return(util::result::Result<None, std::error_code>::Ok({})));
+          ++expected_deleted_files_info.deleted_files;
+          expected_deleted_files_info.deleted_bytes += file.size_bytes;
+        }
+      }
+      MockFunction<void(RuntimeManager::DeletedFilesInfo)> callback{};
+      absl::Notification done{};
+      EXPECT_CALL(callback, Call(expected_deleted_files_info))
+          .WillOnce(Notify(&done));
+      RuntimeManager::DeleteFlushedTraceFilesOlderThan(
+          MakeTimePoint<std::chrono::system_clock>(timestamp),
+          std::cbegin(directory_entries), std::cend(directory_entries),
+          &file_system, &trace_reader, callback.AsStdFunction());
+      const auto success =
+          done.WaitForNotificationWithTimeout(kNotificationTimeout);
+      ASSERT_TRUE(success);
     }
-    const auto timestamp = make_timestamp(i) - 1'000;
-
-    RuntimeManager::DeletedFilesInfo expected_deleted_files_info{
-        .deleted_files = std::max(0, std::min(i, trace_files_size)),
-        .deleted_bytes = [&] {
-          // 2^0 + 2^1 + ... + 2^(n - 1) == 2^n - 1
-          const auto shift{
-              static_cast<uint64>(std::min(std::max(i, 0), trace_files_size))};
-          return gsl::narrow_cast<int64>((1ULL << shift) - 1);
-        }()};
-
-    MockFunction<void(RuntimeManager::DeletedFilesInfo)> callback{};
-    absl::Notification done{};
-    EXPECT_CALL(callback, Call(expected_deleted_files_info))
-        .WillOnce(Notify(&done));
-    RuntimeManager::DeleteFlushedTraceFilesOlderThan(
-        MakeTimePoint<std::chrono::system_clock>(timestamp),
-        std::cbegin(directory_entries), std::cend(directory_entries),
-        &file_system, &trace_reader, callback.AsStdFunction());
-    const auto success =
-        done.WaitForNotificationWithTimeout(kNotificationTimeout);
-    ASSERT_TRUE(success);
   }
 }
 

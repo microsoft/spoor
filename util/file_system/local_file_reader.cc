@@ -3,6 +3,7 @@
 
 #include "util/file_system/local_file_reader.h"
 
+#include <algorithm>
 #include <filesystem>
 #include <ios>
 
@@ -33,10 +34,12 @@ auto LocalFileReader::Read() -> std::string {
 
 auto LocalFileReader::Read(const std::streamsize max_bytes) -> std::string {
   std::string buffer{};
-  buffer.reserve(max_bytes);
-  ifstream_.read(buffer.data(),
-                 gsl::narrow_cast<std::streamsize>(buffer.size()));
-  buffer.resize(ifstream_.gcount());
+  if (ifstream_.good()) {
+    buffer.reserve(max_bytes);
+    ifstream_.seekg(0, std::ios::beg);
+    std::copy_n(std::istreambuf_iterator(ifstream_), max_bytes,
+                std::back_inserter(buffer));
+  }
   return buffer;
 }
 
