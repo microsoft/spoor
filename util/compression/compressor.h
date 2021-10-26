@@ -3,7 +3,11 @@
 
 #pragma once
 
+#include <array>
+#include <string_view>
+
 #include "gsl/gsl"
+#include "util/flat_map/flat_map.h"
 #include "util/numeric.h"
 #include "util/result.h"
 
@@ -16,6 +20,9 @@ enum class Strategy : uint8 {
 
 constexpr std::array<Strategy, 2> kStrategies{
     {Strategy::kNone, Strategy::kSnappy}};
+constexpr util::flat_map::FlatMap<std::string_view, Strategy,
+                                  std::size(kStrategies)>
+    kStrategyMap{{"none", Strategy::kNone}, {"snappy", Strategy::kSnappy}};
 
 class Compressor {
  public:

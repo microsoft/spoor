@@ -29,6 +29,7 @@ cc_library(
     deps = [
         "//util:numeric",
         "//util:result",
+        "//util/flat_map",
         "@com_google_snappy//:snappy",
         "@com_microsoft_gsl//:gsl",
     ],

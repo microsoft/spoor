@@ -37,7 +37,7 @@ auto FiltersFileReader::Read(const std::filesystem::path& file_path) const
   if (!toml_result) {
     return Error{
         .type = Error::Type::kMalformedFile,
-        .message = std::string{toml_result.error().description()},
+        .message{toml_result.error().description()},
     };
   }
   const auto table = std::move(toml_result).table();

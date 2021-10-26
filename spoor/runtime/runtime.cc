@@ -18,6 +18,9 @@
 #include "absl/strings/str_format.h"
 #include "gsl/gsl"
 #include "spoor/runtime/config/config.h"
+#include "spoor/runtime/config/env_source.h"
+#include "spoor/runtime/config/file_source.h"
+#include "spoor/runtime/config/source.h"
 #include "spoor/runtime/flush_queue/disk_flush_queue.h"
 #include "spoor/runtime/runtime_manager/runtime_manager.h"
 #include "spoor/runtime/trace/trace.h"
@@ -56,8 +59,22 @@ namespace {
 
 using spoor::runtime::runtime_manager::RuntimeManager;
 
-// NOLINTNEXTLINE(fuchsia-statically-constructed-objects)
-const auto kConfig = spoor::runtime::config::Config::FromEnv();
+const auto kConfig = [] {  // NOLINT(fuchsia-statically-constructed-objects)
+  spoor::runtime::config::EnvSource::Options env_source_options{
+      .get_env = std::getenv};
+  spoor::runtime::config::FileSource::Options file_source_options{
+      .file_reader{std::make_unique<util::file_system::LocalFileReader>()},
+      .file_path{"spoor_runtime_config.toml"},
+  };
+  auto sources = std::vector<std::unique_ptr<spoor::runtime::config::Source>>{};
+  sources.reserve(2);
+  sources.emplace_back(std::make_unique<spoor::runtime::config::EnvSource>(
+      std::move(env_source_options)));
+  sources.emplace_back(std::make_unique<spoor::runtime::config::FileSource>(
+      std::move(file_source_options)));
+  return spoor::runtime::config::Config::FromSourcesOrDefault(
+      std::move(sources), spoor::runtime::config::Config::Default());
+}();
 // clang-format off NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects) clang-format on
 util::time::SystemClock system_clock_{};
 // clang-format off NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects) clang-format on
