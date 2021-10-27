@@ -10,12 +10,11 @@
 
 namespace util::file_system {
 
-using std::literals::string_literals::operator""s;
-
-auto ExpandTilde(std::string path, const env::GetEnv& get_env) -> std::string {
+auto ExpandTilde(std::string path, const env::StdGetEnv& get_env)
+    -> std::string {
   if (!absl::StartsWith(path, "~/")) return path;
-  path.replace(std::cbegin(path), std::next(std::cbegin(path)),
-               env::GetEnvOrDefault(env::kHomeKey.data(), "~"s, get_env));
+  const auto home = env::GetEnv(env::kHomeKey, true, get_env).value_or("~");
+  path.replace(std::cbegin(path), std::next(std::cbegin(path)), home);
   return path;
 }
 

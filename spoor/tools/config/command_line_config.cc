@@ -53,7 +53,7 @@ auto AbslUnparseFlag(const OutputFormat output_format) -> std::string {
 }
 
 auto ConfigFromCommandLine(int argc, char** argv,
-                           const util::env::GetEnv& get_env)
+                           const util::env::StdGetEnv& get_env)
     -> std::pair<Config, std::vector<char*>> {
   absl::SetFlag(&FLAGS_output_file, kOutputFileDefaultValue);
   absl::SetFlag(&FLAGS_output_format, kOutputFormatDefaultValue);

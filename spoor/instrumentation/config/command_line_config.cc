@@ -68,7 +68,7 @@ namespace spoor::instrumentation::config {
 using util::file_system::ExpandTilde;
 
 auto ConfigFromCommandLineOrEnv(const int argc, char** argv,
-                                const util::env::GetEnv& get_env)
+                                const util::env::StdGetEnv& get_env)
     -> std::pair<Config, std::vector<char*>> {
   const auto env_config = ConfigFromEnv(get_env);
   absl::SetFlag(&FLAGS_enable_runtime, env_config.enable_runtime);

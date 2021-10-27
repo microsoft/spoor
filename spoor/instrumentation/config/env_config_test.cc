@@ -92,7 +92,7 @@ TEST(EnvConfig, UsesDefaultValueForEmptyStringValues) {  // NOLINT
                                .initialize_runtime = true,
                                .inject_instrumentation = true,
                                .module_id = {},
-                               .output_file = "",
+                               .output_file = "-",
                                .output_symbols_file = "",
                                .output_language = OutputLanguage::kBitcode};
   ASSERT_EQ(ConfigFromEnv(get_env), expected_config);
