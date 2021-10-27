@@ -29,8 +29,8 @@ ABSL_DECLARE_FLAG(                                                    // NOLINT
 
 namespace spoor::instrumentation::config {
 
-auto ConfigFromCommandLineOrEnv(int argc, char** argv,
-                                const util::env::GetEnv& get_env = std::getenv)
+auto ConfigFromCommandLineOrEnv(
+    int argc, char** argv, const util::env::StdGetEnv& get_env = std::getenv)
     -> std::pair<Config, std::vector<char*>>;
 
 auto AbslParseFlag(absl::string_view user_key, OutputLanguage* language,

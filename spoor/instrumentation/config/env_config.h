@@ -27,6 +27,6 @@ constexpr std::string_view kOutputSymbolsFileKey{
 constexpr std::string_view kOutputLanguageKey{
     "SPOOR_INSTRUMENTATION_OUTPUT_LANGUAGE"};
 
-auto ConfigFromEnv(const util::env::GetEnv& get_env = std::getenv) -> Config;
+auto ConfigFromEnv(const util::env::StdGetEnv& get_env = std::getenv) -> Config;
 
 }  // namespace spoor::instrumentation::config

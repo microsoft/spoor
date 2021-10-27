@@ -74,7 +74,8 @@ constexpr bool kFlushAllEventsDefaultValue{true};
 struct alignas(128) Config {
   using SizeType = buffer::CircularBuffer<trace::Event>::SizeType;
 
-  static auto FromEnv(const util::env::GetEnv& get_env = std::getenv) -> Config;
+  static auto FromEnv(const util::env::StdGetEnv& get_env = std::getenv)
+      -> Config;
 
   std::filesystem::path trace_file_path;
   CompressionStrategy compression_strategy;

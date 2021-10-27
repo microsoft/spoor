@@ -3,6 +3,7 @@
 
 #include "util/env/env.h"
 
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -13,96 +14,75 @@
 
 namespace {
 
-using util::env::GetEnvOrDefault;
+using util::env::GetEnv;
 
-TEST(GetEnvOrDefault, Int64) {  // NOLINT
-  constexpr int64 default_value{42};
+TEST(GetEnv, Int) {  // NOLINT
   for (const auto value : {0, 1, 7, 42, 1'000'000}) {
     auto env_value = std::to_string(value);
-    const auto retrieved_env_value = GetEnvOrDefault(
-        "KEY", default_value,
+    const auto retrieved_env_value = GetEnv<int>(
+        "KEY",
         [&env_value](const char* /*unused*/) { return env_value.data(); });
     ASSERT_EQ(retrieved_env_value, value);
   }
   for (const auto* env_value : {"", " ", "bad value"}) {
-    const auto retrieved_env_value = GetEnvOrDefault(
-        "KEY", default_value,
-        [&env_value](const char* /*unused*/) { return env_value; });
-    ASSERT_EQ(retrieved_env_value, default_value);
+    const auto retrieved_env_value = GetEnv<int>(
+        "KEY", [&env_value](const char* /*unused*/) { return env_value; });
+    ASSERT_EQ(retrieved_env_value, std::nullopt);
   }
-  const auto retrieved_default_value = GetEnvOrDefault(
-      "KEY", default_value, [](const char* /*unused*/) { return nullptr; });
-  ASSERT_EQ(retrieved_default_value, default_value);
+  const auto retrieved_env_value =
+      GetEnv<int>("KEY", [](const char* /*unused*/) { return nullptr; });
+  ASSERT_EQ(retrieved_env_value, std::nullopt);
 }
 
-TEST(GetEnvOrDefault, String) {  // NOLINT
-  const std::string default_value{"foo"};
+TEST(GetEnv, String) {  // NOLINT
   for (const auto* env_value : {"", "bar", "baz", "/path/to/file.extension"}) {
-    const auto retrieved_env_value = GetEnvOrDefault(
-        "KEY", default_value,
-        [&env_value](const char* /*unused*/) { return env_value; });
+    constexpr auto empty_string_is_nullopt{false};
+    const auto retrieved_env_value =
+        GetEnv("KEY", empty_string_is_nullopt,
+               [&env_value](const char* /*unused*/) { return env_value; });
     ASSERT_EQ(retrieved_env_value, env_value);
   }
-  const auto retrieved_default_value = GetEnvOrDefault(
-      "KEY", default_value, [](const char* /*unused*/) { return nullptr; });
-  ASSERT_EQ(retrieved_default_value, default_value);
-}
-
-TEST(GetEnvOrDefault, OptionalString) {  // NOLINT
-  const std::string default_value{"foo"};
-  for (const auto* env_value : {"bar", "baz", "/path/to/file.extension"}) {
-    const auto retrieved_env_value = GetEnvOrDefault(
-        "KEY", default_value, true,
-        [&env_value](const char* /*unused*/) { return env_value; });
-    ASSERT_EQ(retrieved_env_value, std::optional{env_value});
-  }
-  for (const auto empty_string_is_nullopt : {false, true}) {
+  {
+    constexpr auto empty_string_is_nullopt{true};
     const auto retrieved_env_value =
-        GetEnvOrDefault("KEY", default_value, empty_string_is_nullopt,
-                        [](const char* /*unused*/) { return ""; });
-    if (empty_string_is_nullopt) {
-      ASSERT_EQ(retrieved_env_value, std::nullopt);
-    } else {
-      ASSERT_EQ(retrieved_env_value, std::optional{""});
-    }
+        GetEnv("KEY", empty_string_is_nullopt,
+               [](const char* /*unused*/) { return ""; });
+    ASSERT_EQ(retrieved_env_value, std::nullopt);
   }
-  const auto retrieved_default_value = GetEnvOrDefault(
-      "KEY", default_value, [](const char* /*unused*/) { return nullptr; });
-  ASSERT_EQ(retrieved_default_value, default_value);
+  {
+    constexpr auto empty_string_is_nullopt{false};
+    const auto retrieved_env_value =
+        GetEnv("KEY", empty_string_is_nullopt,
+               [](const char* /*unused*/) { return nullptr; });
+    ASSERT_EQ(retrieved_env_value, std::nullopt);
+  }
 }
 
-TEST(GetEnvOrDefault, Bool) {  // NOLINT
+TEST(GetEnv, Bool) {  // NOLINT
   for (const auto* env_value : {"0", "no", "false"}) {
-    constexpr bool value{false};
-    const auto retrieved_env_value = GetEnvOrDefault(
-        "KEY", !value,
-        [&env_value](const char* /*unused*/) { return env_value; });
+    constexpr auto value{false};
+    const auto retrieved_env_value = GetEnv<bool>(
+        "KEY", [&env_value](const char* /*unused*/) { return env_value; });
     ASSERT_EQ(retrieved_env_value, value);
   }
-
   for (const auto* env_value : {"1", "yes", "true"}) {
-    constexpr bool value{true};
-    const auto retrieved_env_value = GetEnvOrDefault(
-        "KEY", !value,
-        [&env_value](const char* /*unused*/) { return env_value; });
+    constexpr auto value{true};
+    const auto retrieved_env_value = GetEnv<bool>(
+        "KEY", [&env_value](const char* /*unused*/) { return env_value; });
     ASSERT_EQ(retrieved_env_value, value);
   }
-
-  for (const auto default_value : {false, true}) {
-    const auto retrieved_value = GetEnvOrDefault(
-        "KEY", default_value, [](const char* /*unused*/) { return nullptr; });
-    ASSERT_EQ(retrieved_value, default_value);
-    for (const auto* bad_env_value : {"", "bad value"}) {
-      const auto retrieved_value = GetEnvOrDefault(
-          "KEY", default_value,
-          [&bad_env_value](const char* /*unused*/) { return bad_env_value; });
-      ASSERT_EQ(retrieved_value, default_value);
-    }
+  const auto retrieved_value =
+      GetEnv<bool>("KEY", [](const char* /*unused*/) { return nullptr; });
+  ASSERT_EQ(retrieved_value, std::nullopt);
+  for (const auto* bad_env_value : {"", "bad value"}) {
+    const auto retrieved_value = GetEnv<bool>(
+        "KEY",
+        [&bad_env_value](const char* /*unused*/) { return bad_env_value; });
+    ASSERT_EQ(retrieved_value, std::nullopt);
   }
 }
 
-TEST(GetEnvOrDefault, ValueMap) {  // NOLINT
-  constexpr uint32 default_value{3};
+TEST(GetEnv, ValueMap) {  // NOLINT
   const util::flat_map::FlatMap<std::string_view, uint32, 3> value_map{
       {"zero", 0}, {"one", 1}, {"two", 2}};
   for (const auto& [raw_key, raw_value] : value_map) {
@@ -110,26 +90,24 @@ TEST(GetEnvOrDefault, ValueMap) {  // NOLINT
     const auto messy_key =
         absl::StrCat("   ", absl::AsciiStrToUpper(key), "    ");
     const auto retrieved_env_value =
-        GetEnvOrDefault("KEY", default_value, value_map, false,
-                        [key](const char* /*unused*/) { return key.data(); });
+        GetEnv("KEY", value_map, false,
+               [key](const char* /*unused*/) { return key.data(); });
     ASSERT_EQ(retrieved_env_value, raw_value);
-    const auto retrieved_env_value_not_normalized = GetEnvOrDefault(
-        "KEY", default_value, value_map, false,
+    const auto retrieved_env_value_not_normalized = GetEnv(
+        "KEY", value_map, false,
         [messy_key](const char* /*unused*/) { return messy_key.data(); });
-    ASSERT_EQ(retrieved_env_value_not_normalized, default_value);
-    const auto retrieved_env_value_normalized = GetEnvOrDefault(
-        "KEY", default_value, value_map, true,
+    ASSERT_EQ(retrieved_env_value_not_normalized, std::nullopt);
+    const auto retrieved_env_value_normalized = GetEnv(
+        "KEY", value_map, true,
         [messy_key](const char* /*unused*/) { return messy_key.data(); });
     ASSERT_EQ(retrieved_env_value_normalized, raw_value);
   }
-  const auto retrieved_env_value_nullptr =
-      GetEnvOrDefault("KEY", default_value, value_map, true,
-                      [](const char* /*unused*/) { return nullptr; });
-  ASSERT_EQ(retrieved_env_value_nullptr, default_value);
-  const auto retrieved_env_value_invalid =
-      GetEnvOrDefault("KEY", default_value, value_map, true,
-                      [](const char* /*unused*/) { return "invalid"; });
-  ASSERT_EQ(retrieved_env_value_invalid, default_value);
+  const auto retrieved_env_value_nullptr = GetEnv(
+      "KEY", value_map, true, [](const char* /*unused*/) { return nullptr; });
+  ASSERT_EQ(retrieved_env_value_nullptr, std::nullopt);
+  const auto retrieved_env_value_invalid = GetEnv(
+      "KEY", value_map, true, [](const char* /*unused*/) { return "invalid"; });
+  ASSERT_EQ(retrieved_env_value_invalid, std::nullopt);
 }
 
 }  // namespace

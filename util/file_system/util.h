@@ -10,6 +10,7 @@
 
 namespace util::file_system {
 
-auto ExpandTilde(std::string path, const env::GetEnv& get_env) -> std::string;
+auto ExpandTilde(std::string path, const env::StdGetEnv& get_env)
+    -> std::string;
 
 }  // namespace util::file_system

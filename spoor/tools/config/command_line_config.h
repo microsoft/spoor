@@ -21,7 +21,7 @@ auto AbslParseFlag(absl::string_view user_key, OutputFormat* output_format,
 auto AbslUnparseFlag(OutputFormat output_format) -> std::string;
 
 auto ConfigFromCommandLine(int argc, char** argv,
-                           const util::env::GetEnv& get_env = std::getenv)
+                           const util::env::StdGetEnv& get_env = std::getenv)
     -> std::pair<Config, std::vector<char*>>;
 
 }  // namespace spoor::tools::config

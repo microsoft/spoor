@@ -5,48 +5,54 @@
 
 #include "util/env/env.h"
 #include "util/file_system/util.h"
+#include "util/numeric.h"
 
 namespace spoor::runtime::config {
 
-using util::env::GetEnvOrDefault;
+using util::env::GetEnv;
 using util::file_system::ExpandTilde;
 
-auto Config::FromEnv(const util::env::GetEnv& get_env) -> Config {
+auto Config::FromEnv(const util::env::StdGetEnv& get_env) -> Config {
+  constexpr auto normalize{true};
+  constexpr auto empty_string_is_nullopt{true};
   const auto trace_file_path =
-      GetEnvOrDefault(kTraceFilePathKey.data(),
-                      std::string{kTraceFilePathDefaultValue}, get_env);
-  return {.trace_file_path = ExpandTilde(trace_file_path, get_env),
-          .compression_strategy = GetEnvOrDefault(
-              kCompressionStrategyKey.data(), kCompressionStrategyDefaultValue,
-              kCompressionStrategies, true, get_env),
-          .session_id = GetEnvOrDefault(kSessionIdKey.data(),
-                                        kSessionIdDefaultValue(), get_env),
-          .thread_event_buffer_capacity =
-              GetEnvOrDefault(kThreadEventBufferCapacityKey.data(),
-                              kThreadEventBufferCapacityDefaultValue, get_env),
-          .max_reserved_event_buffer_slice_capacity = GetEnvOrDefault(
-              kMaxReservedEventBufferSliceCapacityKey.data(),
-              kMaxReservedEventBufferSliceCapacityDefaultValue, get_env),
-          .max_dynamic_event_buffer_slice_capacity = GetEnvOrDefault(
-              kMaxDynamicEventBufferSliceCapacityKey.data(),
-              kMaxDynamicEventBufferSliceCapacityDefaultValue, get_env),
-          .reserved_event_pool_capacity =
-              GetEnvOrDefault(kReservedEventPoolCapacityKey.data(),
-                              kReservedEventPoolCapacityDefaultValue, get_env),
-          .dynamic_event_pool_capacity =
-              GetEnvOrDefault(kDynamicEventPoolCapacityKey.data(),
-                              kDynamicEventPoolCapacityDefaultValue, get_env),
-          .dynamic_event_slice_borrow_cas_attempts = GetEnvOrDefault(
-              kDynamicEventSliceBorrowCasAttemptsKey.data(),
-              kDynamicEventSliceBorrowCasAttemptsDefaultValue, get_env),
-          .event_buffer_retention_duration_nanoseconds = GetEnvOrDefault(
-              kEventBufferRetentionDurationNanosecondsKey.data(),
-              kEventBufferRetentionNanosecondsDefaultValue, get_env),
-          .max_flush_buffer_to_file_attempts = GetEnvOrDefault(
-              kMaxFlushBufferToFileAttemptsKey.data(),
-              kMaxFlushBufferToFileAttemptsDefaultValue, get_env),
-          .flush_all_events = GetEnvOrDefault(
-              kFlushAllEventsKey.data(), kFlushAllEventsDefaultValue, get_env)};
+      GetEnv(kTraceFilePathKey, empty_string_is_nullopt, get_env)
+          .value_or(std::string{kTraceFilePathDefaultValue});
+  return {
+      .trace_file_path = ExpandTilde(trace_file_path, get_env),
+      .compression_strategy = GetEnv(kCompressionStrategyKey,
+                                     kCompressionStrategies, normalize, get_env)
+                                  .value_or(kCompressionStrategyDefaultValue),
+      .session_id = GetEnv<trace::SessionId>(kSessionIdKey, get_env)
+                        .value_or(kSessionIdDefaultValue()),
+      .thread_event_buffer_capacity =
+          GetEnv<SizeType>(kThreadEventBufferCapacityKey, get_env)
+              .value_or(kThreadEventBufferCapacityDefaultValue),
+      .max_reserved_event_buffer_slice_capacity =
+          GetEnv<SizeType>(kMaxReservedEventBufferSliceCapacityKey, get_env)
+              .value_or(kMaxReservedEventBufferSliceCapacityDefaultValue),
+      .max_dynamic_event_buffer_slice_capacity =
+          GetEnv<SizeType>(kMaxDynamicEventBufferSliceCapacityKey, get_env)
+              .value_or(kMaxDynamicEventBufferSliceCapacityDefaultValue),
+      .reserved_event_pool_capacity =
+          GetEnv<SizeType>(kReservedEventPoolCapacityKey, get_env)
+              .value_or(kReservedEventPoolCapacityDefaultValue),
+      .dynamic_event_pool_capacity =
+          GetEnv<SizeType>(kDynamicEventPoolCapacityKey, get_env)
+              .value_or(kDynamicEventPoolCapacityDefaultValue),
+      .dynamic_event_slice_borrow_cas_attempts =
+          GetEnv<SizeType>(kDynamicEventSliceBorrowCasAttemptsKey, get_env)
+              .value_or(kDynamicEventSliceBorrowCasAttemptsDefaultValue),
+      .event_buffer_retention_duration_nanoseconds =
+          GetEnv<trace::DurationNanoseconds>(
+              kEventBufferRetentionDurationNanosecondsKey, get_env)
+              .value_or(kEventBufferRetentionNanosecondsDefaultValue),
+      .max_flush_buffer_to_file_attempts =
+          GetEnv<int32>(kMaxFlushBufferToFileAttemptsKey, get_env)
+              .value_or(kMaxFlushBufferToFileAttemptsDefaultValue),
+      .flush_all_events = GetEnv<bool>(kFlushAllEventsKey, get_env)
+                              .value_or(kFlushAllEventsDefaultValue),
+  };
 }
 
 auto operator==(const Config& lhs, const Config& rhs) -> bool {
