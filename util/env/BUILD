@@ -18,6 +18,7 @@ cc_library(
     linkopts = SPOOR_DEFAULT_LINKOPTS,
     visibility = ["//visibility:public"],
     deps = [
+        "//util:result",
         "//util/flat_map",
         "@com_google_absl//absl/strings",
     ],
@@ -33,6 +34,7 @@ cc_test(
     deps = [
         ":env",
         "//util:numeric",
+        "//util:result",
         "//util/flat_map",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",
