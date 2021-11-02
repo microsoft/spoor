@@ -19,6 +19,7 @@ cc_library(
     visibility = ["//spoor/instrumentation:__pkg__"],
     deps = [
         "//util:numeric",
+        "//util:result",
         "//util/flags:optional",
         "//util/flat_map",
     ],
