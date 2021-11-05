@@ -41,7 +41,7 @@ constexpr std::array<std::string_view, 6> kFilterKeys{{
     kFunctionIrInstructionCountGtKey,
 }};
 
-class FiltersFileReader : public FiltersReader {
+class FiltersFileReader final : public FiltersReader {
  public:
   struct Options {
     std::unique_ptr<util::file_system::FileReader> file_reader;
