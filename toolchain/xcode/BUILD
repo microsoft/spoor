@@ -137,11 +137,11 @@ _TOOLCHAIN_TARGETS_TO_OUTS = [
         TOOLCHAIN_NAME + "/usr/bin/shared.py",
     ],
     [
-        "//spoor/runtime:spoor_runtime_ios",
+        "//spoor/runtime/wrappers/apple:spoor_runtime_ios",
         TOOLCHAIN_NAME + "/spoor/lib/libspoor_runtime_ios.a",
     ],
     [
-        "//spoor/runtime:spoor_runtime_macos",
+        "//spoor/runtime/wrappers/apple:spoor_runtime_macos",
         TOOLCHAIN_NAME + "/spoor/lib/libspoor_runtime_macos.a",
     ],
     [

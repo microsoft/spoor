@@ -39,22 +39,6 @@ cc_static_library(
     deps = [":runtime"],
 )
 
-apple_static_library(
-    name = "spoor_runtime_ios",
-    linkopts = SPOOR_DEFAULT_LINKOPTS,
-    platform_type = "ios",
-    visibility = ["//visibility:public"],
-    deps = [":runtime"],
-)
-
-apple_static_library(
-    name = "spoor_runtime_macos",
-    linkopts = SPOOR_DEFAULT_LINKOPTS,
-    platform_type = "macos",
-    visibility = ["//visibility:public"],
-    deps = [":runtime"],
-)
-
 cc_library(
     name = "runtime_stub",
     srcs = [
