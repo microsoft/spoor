@@ -13,8 +13,14 @@
 namespace spoor::instrumentation::config {
 
 using util::env::GetEnv;
-using util::file_system::ExpandTilde;
+using util::file_system::ExpandPath;
+using util::file_system::PathExpansionOptions;
 using util::result::None;
+
+constexpr PathExpansionOptions kPathExpansionOptions{
+    .expand_tilde = true,
+    .expand_environment_variables = true,
+};
 
 auto ConfigFromEnv(const util::env::StdGetEnv& get_env) -> Config {
   constexpr auto empty_string_is_nullopt{true};
@@ -29,7 +35,8 @@ auto ConfigFromEnv(const util::env::StdGetEnv& get_env) -> Config {
     const auto filters_file =
         GetEnv(kFiltersFileKey, empty_string_is_nullopt, get_env);
     if (!filters_file.has_value() || filters_file.value().IsErr()) return {};
-    return ExpandTilde(filters_file.value().Ok(), get_env);
+    return ExpandPath(filters_file.value().Ok(), kPathExpansionOptions,
+                      get_env);
   }();
   const auto force_binary_output =
       GetEnv<bool>(kForceBinaryOutputKey, get_env)
@@ -68,8 +75,9 @@ auto ConfigFromEnv(const util::env::StdGetEnv& get_env) -> Config {
       .initialize_runtime = initialize_runtime,
       .inject_instrumentation = inject_instrumentation,
       .module_id = module_id,
-      .output_file = ExpandTilde(output_file, get_env),
-      .output_symbols_file = ExpandTilde(output_symbols_file, get_env),
+      .output_file = ExpandPath(output_file, kPathExpansionOptions, get_env),
+      .output_symbols_file =
+          ExpandPath(output_symbols_file, kPathExpansionOptions, get_env),
       .output_language = output_language,
   };
 }

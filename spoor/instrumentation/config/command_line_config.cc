@@ -65,7 +65,13 @@ ABSL_FLAG(  // NOLINT
 
 namespace spoor::instrumentation::config {
 
-using util::file_system::ExpandTilde;
+using util::file_system::ExpandPath;
+using util::file_system::PathExpansionOptions;
+
+constexpr PathExpansionOptions kPathExpansionOptions{
+    .expand_tilde = true,
+    .expand_environment_variables = true,
+};
 
 auto ConfigFromCommandLineOrEnv(const int argc, char** argv,
                                 const util::env::StdGetEnv& get_env)
@@ -84,7 +90,8 @@ auto ConfigFromCommandLineOrEnv(const int argc, char** argv,
   auto positional_args = absl::ParseCommandLine(argc, argv);
   auto filters_file = absl::GetFlag(FLAGS_filters_file).StdOptional();
   if (filters_file.has_value()) {
-    filters_file = ExpandTilde(filters_file.value(), get_env);
+    filters_file =
+        ExpandPath(filters_file.value(), kPathExpansionOptions, get_env);
   }
   const auto output_file = absl::GetFlag(FLAGS_output_file);
   const auto output_symbols_file = absl::GetFlag(FLAGS_output_symbols_file);
@@ -95,8 +102,9 @@ auto ConfigFromCommandLineOrEnv(const int argc, char** argv,
       .initialize_runtime = absl::GetFlag(FLAGS_initialize_runtime),
       .inject_instrumentation = absl::GetFlag(FLAGS_inject_instrumentation),
       .module_id = absl::GetFlag(FLAGS_module_id).StdOptional(),
-      .output_file = ExpandTilde(output_file, get_env),
-      .output_symbols_file = ExpandTilde(output_symbols_file, get_env),
+      .output_file = ExpandPath(output_file, kPathExpansionOptions, get_env),
+      .output_symbols_file =
+          ExpandPath(output_symbols_file, kPathExpansionOptions, get_env),
       .output_language = absl::GetFlag(FLAGS_output_language)};
   return std::make_pair(std::move(config), std::move(positional_args));
 }
