@@ -31,6 +31,7 @@ cc_library(
     linkopts = SPOOR_DEFAULT_LINKOPTS,
     visibility = ["//visibility:public"],
     deps = [
+        "//util:numeric",
         "//util:result",
         "//util/env",
         "@com_google_absl//absl/strings",
