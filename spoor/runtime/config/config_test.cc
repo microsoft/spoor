@@ -3,6 +3,7 @@
 
 #include "spoor/runtime/config/config.h"
 
+#include <cstring>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -47,7 +48,8 @@ TEST(Config, Default) {  // NOLINT
 
 TEST(Config, UsesDefaultConfigWithNoSource) {  // NOLINT
   const auto default_config = Config::Default();
-  const auto config = Config::FromSourcesOrDefault({}, default_config);
+  const auto get_env = [](const char* /*unused*/) { return nullptr; };
+  const auto config = Config::FromSourcesOrDefault({}, default_config, get_env);
   ASSERT_EQ(config, default_config);
 }
 
@@ -122,8 +124,9 @@ TEST(Config, ConfiguresFromSource) {  // NOLINT
   sources.reserve(1);
   sources.emplace_back(std::move(source));
 
+  const auto get_env = [](const char* /*unused*/) { return nullptr; };
   const auto config =
-      Config::FromSourcesOrDefault(std::move(sources), default_config);
+      Config::FromSourcesOrDefault(std::move(sources), default_config, get_env);
   ASSERT_EQ(config, expected_config);
 }
 
@@ -216,8 +219,9 @@ TEST(Config, NeverReadsSecondarySourceIfPrimaryContainsAllConfigurations) {
   sources.emplace_back(std::move(source_a));
   sources.emplace_back(std::move(source_b));
 
+  const auto get_env = [](const char* /*unused*/) { return nullptr; };
   const auto config =
-      Config::FromSourcesOrDefault(std::move(sources), default_config);
+      Config::FromSourcesOrDefault(std::move(sources), default_config, get_env);
   ASSERT_EQ(config, expected_config);
 }
 
@@ -322,9 +326,90 @@ TEST(Config, ReadsSecondarySourceIfPrimaryDoesNotContainConfiguration) {
   sources.emplace_back(std::move(source_a));
   sources.emplace_back(std::move(source_b));
 
+  const auto get_env = [](const char* /*unused*/) { return nullptr; };
   const auto config =
-      Config::FromSourcesOrDefault(std::move(sources), default_config);
+      Config::FromSourcesOrDefault(std::move(sources), default_config, get_env);
   ASSERT_EQ(config, expected_config);
+}
+
+TEST(Config, ExpandsEnvironmentVariables) {  // NOLINT
+  const auto get_env = [](const char* key) -> const char* {
+    if (key == nullptr) return nullptr;
+    if (std::strncmp(key, util::env::kHomeKey.data(),
+                     util::env::kHomeKey.size()) == 0) {
+      return "/usr/you";
+    }
+    return nullptr;
+  };
+  const Config default_config{
+      .trace_file_path = "~/path/to/trace/",
+      .compression_strategy = util::compression::Strategy::kNone,
+      .session_id = 1,
+      .thread_event_buffer_capacity = 2,
+      .max_reserved_event_buffer_slice_capacity = 3,
+      .max_dynamic_event_buffer_slice_capacity = 4,
+      .reserved_event_pool_capacity = 5,
+      .dynamic_event_pool_capacity = 6,
+      .dynamic_event_slice_borrow_cas_attempts = 7,
+      .event_buffer_retention_duration_nanoseconds = 8,
+      .max_flush_buffer_to_file_attempts = 9,
+      .flush_all_events = false,
+  };
+  const Config expected_config{
+      .trace_file_path = "/usr/you/path/to/trace/",
+      .compression_strategy = util::compression::Strategy::kNone,
+      .session_id = 1,
+      .thread_event_buffer_capacity = 2,
+      .max_reserved_event_buffer_slice_capacity = 3,
+      .max_dynamic_event_buffer_slice_capacity = 4,
+      .reserved_event_pool_capacity = 5,
+      .dynamic_event_pool_capacity = 6,
+      .dynamic_event_slice_borrow_cas_attempts = 7,
+      .event_buffer_retention_duration_nanoseconds = 8,
+      .max_flush_buffer_to_file_attempts = 9,
+      .flush_all_events = false,
+  };
+  ASSERT_NE(default_config, expected_config);
+
+  const auto config_a =
+      Config::FromSourcesOrDefault({}, default_config, get_env);
+  ASSERT_EQ(config_a, expected_config);
+
+  auto source = std::make_unique<SourceMock>();
+  EXPECT_CALL(*source, Read())
+      .WillOnce(Return(std::vector<Source::ReadError>{}));
+  EXPECT_CALL(*source, IsRead())
+      .WillOnce(Return(false))
+      .WillRepeatedly(Return(true));
+  EXPECT_CALL(*source, TraceFilePath())
+      .WillRepeatedly(Return("$HOME/path/to/trace/"));
+  EXPECT_CALL(*source, CompressionStrategy())
+      .WillRepeatedly(Return(std::nullopt));
+  EXPECT_CALL(*source, SessionId()).WillRepeatedly(Return(std::nullopt));
+  EXPECT_CALL(*source, ThreadEventBufferCapacity())
+      .WillRepeatedly(Return(std::nullopt));
+  EXPECT_CALL(*source, MaxReservedEventBufferSliceCapacity())
+      .WillRepeatedly(Return(std::nullopt));
+  EXPECT_CALL(*source, MaxDynamicEventBufferSliceCapacity())
+      .WillRepeatedly(Return(std::nullopt));
+  EXPECT_CALL(*source, ReservedEventPoolCapacity())
+      .WillRepeatedly(Return(std::nullopt));
+  EXPECT_CALL(*source, DynamicEventPoolCapacity())
+      .WillRepeatedly(Return(std::nullopt));
+  EXPECT_CALL(*source, DynamicEventSliceBorrowCasAttempts())
+      .WillRepeatedly(Return(std::nullopt));
+  EXPECT_CALL(*source, EventBufferRetentionDurationNanoseconds())
+      .WillRepeatedly(Return(std::nullopt));
+  EXPECT_CALL(*source, MaxFlushBufferToFileAttempts())
+      .WillRepeatedly(Return(std::nullopt));
+  EXPECT_CALL(*source, FlushAllEvents()).WillRepeatedly(Return(std::nullopt));
+  std::vector<std::unique_ptr<Source>> sources{};
+  sources.reserve(1);
+  sources.emplace_back(std::move(source));
+
+  const auto config_b =
+      Config::FromSourcesOrDefault(std::move(sources), default_config, get_env);
+  ASSERT_EQ(config_b, expected_config);
 }
 
 }  // namespace

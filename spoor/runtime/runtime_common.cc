@@ -1,8 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-#include <cstring>
-
 #include "spoor/runtime/runtime.h"
 
 namespace spoor::runtime {

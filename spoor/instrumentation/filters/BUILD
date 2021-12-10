@@ -12,14 +12,18 @@ load(
 
 cc_library(
     name = "filters",
-    srcs = ["filters.cc"],
-    hdrs = ["filters.h"],
+    srcs = [
+        "filter.cc",
+        "filters.cc",
+    ],
+    hdrs = [
+        "filter.h",
+        "filters.h",
+    ],
     copts = SPOOR_DEFAULT_COPTS,
     linkopts = SPOOR_DEFAULT_LINKOPTS,
     visibility = ["//spoor/instrumentation:__subpackages__"],
-    deps = [
-        "//util:numeric",
-    ],
+    deps = ["//util:numeric"],
 )
 
 cc_test(
@@ -67,6 +71,30 @@ cc_test(
         ":filters_reader",
         "//util/file_system:file_system_mock",
         "@com_google_absl//absl/strings:str_format",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "default_filters",
+    srcs = ["default_filters.cc"],
+    hdrs = ["default_filters.h"],
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
+    visibility = ["//spoor/instrumentation:__subpackages__"],
+    deps = [":filters"],
+)
+
+cc_test(
+    name = "default_filters_test",
+    size = "small",
+    srcs = ["default_filters_test.cc"],
+    copts = SPOOR_DEFAULT_TEST_COPTS,
+    linkopts = SPOOR_DEFAULT_TEST_LINKOPTS,
+    visibility = ["//visibility:private"],
+    deps = [
+        ":default_filters",
+        ":filters",
         "@com_google_googletest//:gtest_main",
     ],
 )

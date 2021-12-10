@@ -41,6 +41,7 @@ fi
   "$INSTRUMENTED_IR_FILE" \
   -L"$BASE_PATH/runtime" \
   -lspoor_runtime \
+  -lspoor_runtime_default_config \
   -o "$OUTPUT_EXECUTABLE_FILE"
 
 FIB_RESULT="$($OUTPUT_EXECUTABLE_FILE)"

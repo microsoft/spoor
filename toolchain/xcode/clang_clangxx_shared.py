@@ -28,6 +28,14 @@ def _runtime_library_for_target(target):
   raise ValueError(f'Unsupported target {target}.')
 
 
+def _runtime_config_for_target(target):
+  if 'ios' in target:
+    return 'spoor_runtime_default_config_ios'
+  elif 'macos' in target:
+    return 'spoor_runtime_default_config_macos'
+  raise ValueError(f'Unsupported target {target}.')
+
+
 def _link_spoor_runtime(args):
   return CLANG_CLANGXX_ONLY_PREPROCESS_COMPILE_AND_ASSEMBLE_ARG not in args \
           and CLANG_CLANGXX_INCREMENTAL_LINK_ARG not in args
@@ -64,10 +72,16 @@ def parse_clang_clangxx_args(args, spoor_library_path):
     clang_args = args
     if _link_spoor_runtime(clang_args):
       runtime_library = _runtime_library_for_target(target)
+      runtime_config_library = _runtime_config_for_target(target)
       clang_args += [
           f'{CLANG_CLANGXX_LIBRARY_SEARCH_PATH_ARG}{spoor_library_path}',
           f'{CLANG_CLANGXX_LINK_LIBRARY_ARG}{runtime_library}',
           f'{CLANG_CLANGXX_LINK_LIBRARY_ARG}{LIB_CXX_LIBRARY}',
+          # Link order matters. The runtime config library must be linked
+          # *after* the target's object files to ensure that any user-provided
+          # configurations are not overridden by the (weak) default config
+          # symbols.
+          f'{CLANG_CLANGXX_LINK_LIBRARY_ARG}{runtime_config_library}',
       ]
     return ArgsInfo(clang_args, output_files, target, instrument=False)
 

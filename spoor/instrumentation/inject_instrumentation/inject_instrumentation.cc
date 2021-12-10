@@ -29,8 +29,8 @@
 #include "llvm/IR/Type.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "spoor/instrumentation/filters/default_filters.h"
 #include "spoor/instrumentation/filters/filters.h"
-#include "spoor/instrumentation/filters/filters_file_reader.h"
 #include "spoor/instrumentation/inject_instrumentation/inject_instrumentation_private.h"
 #include "spoor/instrumentation/instrumentation.h"
 #include "spoor/instrumentation/symbols/symbols.pb.h"
@@ -67,15 +67,18 @@ auto InjectInstrumentation::run(llvm::Module& llvm_module,
                                 /*unused*/) -> llvm::PreservedAnalyses {
   if (!options_.inject_instrumentation) return llvm::PreservedAnalyses::all();
 
-  Filters filters{{}};
+  auto filters_list = filters::DefaultFilters();
   if (options_.filters_file_path.has_value()) {
     auto filters_result =
         options_.filters_reader->Read(options_.filters_file_path.value());
     if (filters_result.IsErr()) {
       llvm::report_fatal_error(filters_result.Err().message, false);
     }
-    filters = std::move(filters_result).Ok();
+    auto file_filters = std::move(filters_result).Ok();
+    std::move(std::begin(file_filters), std::end(file_filters),
+              std::back_inserter(filters_list));
   }
+  const Filters filters{std::move(filters_list)};
 
   auto [symbols, modified] = InstrumentModule(&llvm_module, filters);
 

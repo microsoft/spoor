@@ -110,14 +110,16 @@ def _test_parses_link_args(input_args, input_args_file, main, popen_mock):
   popen_handle.return_value.wait.assert_called_once()
   assert return_code == 0
   popen_args = popen_mock.call_args.args[0]
-  assert popen_args[:-3] == ['default_clang_clangxx'] + input_args
+  assert popen_args[:-4] == ['default_clang_clangxx'] + input_args
   if 'ios' in input_args_file:
-    assert popen_args[-3:] == [
-        '-L/spoor/library/path', '-lspoor_runtime_ios', '-lc++'
+    assert popen_args[-4:] == [
+        '-L/spoor/library/path', '-lspoor_runtime_ios', '-lc++',
+        '-lspoor_runtime_default_config_ios'
     ]
   if 'macos' in input_args_file:
-    assert popen_args[-3:] == [
-        '-L/spoor/library/path', '-lspoor_runtime_macos', '-lc++'
+    assert popen_args[-4:] == [
+        '-L/spoor/library/path', '-lspoor_runtime_macos', '-lc++',
+        '-lspoor_runtime_default_config_macos'
     ]
 
 

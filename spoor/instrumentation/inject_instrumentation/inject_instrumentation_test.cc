@@ -43,7 +43,6 @@ namespace {
 using google::protobuf::util::MessageDifferencer;
 using google::protobuf::util::TimeUtil;
 using spoor::instrumentation::filters::Filter;
-using spoor::instrumentation::filters::Filters;
 using spoor::instrumentation::filters::FiltersReader;
 using spoor::instrumentation::filters::testing::FiltersReaderMock;
 using spoor::instrumentation::inject_instrumentation::InjectInstrumentation;
@@ -129,11 +128,12 @@ TEST(InjectInstrumentation, InstrumentsModule) {  // NOLINT
     bool initialize_runtime;
     bool enable_runtime;
   };
-  constexpr std::array<TestCase, 4> test_cases{
-      {{kInstrumentedIrFile, false, false},
-       {kInstrumentedIrFile, false, true},
-       {kInstrumentedInitializedIrFile, true, false},
-       {kInstrumentedInitializedEnabledIrFile, true, true}}};
+  constexpr std::array<TestCase, 4> test_cases{{
+      {kInstrumentedIrFile, false, false},
+      {kInstrumentedIrFile, false, true},
+      {kInstrumentedInitializedIrFile, true, false},
+      {kInstrumentedInitializedEnabledIrFile, true, true},
+  }};
   const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
 
   for (const auto& test_case : test_cases) {
@@ -182,7 +182,7 @@ TEST(InjectInstrumentation, InstrumentsModule) {  // NOLINT
 TEST(InjectInstrumentation, OutputsInstrumentedSymbols) {  // NOLINT
   struct alignas(128) TestCase {
     std::string_view ir_file;
-    Filters filters;
+    std::vector<Filter> filters;
     std::function<Symbols(const llvm::Module&)> expected_symbols;
   };
 
@@ -638,7 +638,7 @@ TEST(InjectInstrumentation, OutputsInstrumentedSymbols) {  // NOLINT
 
 TEST(InjectInstrumentation, FunctionBlocklist) {  // NOLINT
   const std::filesystem::path filters_file_path{"/path/to/filters.toml"};
-  const Filters filters{{
+  const std::vector<Filter> filters{{
       .action = Filter::Action::kBlock,
       .rule_name = "Block Fibonacci",
       .source_file_path = {},
@@ -693,7 +693,7 @@ TEST(InjectInstrumentation, FunctionBlocklist) {  // NOLINT
 
 TEST(InjectInstrumentation, FunctionAllowListOverridesBlocklist) {  // NOLINT
   const std::filesystem::path filters_file_path{"/path/to/filters.toml"};
-  const Filters filters{
+  const std::vector<Filter> filters{
       {
           .action = Filter::Action::kBlock,
           .rule_name = "Block Fibonacci",
@@ -779,7 +779,7 @@ TEST(InjectInstrumentation, InstructionThreshold) {  // NOLINT
   const std::filesystem::path symbols_file_path{"/path/to/file.spoor_symbols"};
 
   for (const auto& config : configs) {
-    const Filters filters{
+    const std::vector<Filter> filters{
         {
             .action = Filter::Action::kBlock,
             .rule_name = "Block small functions",
@@ -887,7 +887,7 @@ TEST(InjectInstrumentation, DoNotInjectInstrumentationConfig) {  // NOLINT
 
 TEST(InjectInstrumentation, ReturnValue) {  // NOLINT
   struct alignas(32) TestCaseConfig {
-    Filters filters;
+    std::vector<Filter> filters;
     bool are_all_preserved;
   };
   const std::vector<TestCaseConfig> configs{

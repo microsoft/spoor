@@ -5,8 +5,9 @@
 
 #include <filesystem>
 #include <string>
+#include <vector>
 
-#include "spoor/instrumentation/filters/filters.h"
+#include "spoor/instrumentation/filters/filter.h"
 #include "util/result.h"
 
 namespace spoor::instrumentation::filters {
@@ -25,7 +26,7 @@ class FiltersReader {
     std::string message;
   };
 
-  using Result = util::result::Result<Filters, Error>;
+  using Result = util::result::Result<std::vector<Filter>, Error>;
 
   constexpr FiltersReader() = default;
   constexpr FiltersReader(const FiltersReader&) = default;

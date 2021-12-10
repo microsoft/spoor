@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <memory>
 #include <sstream>
+#include <vector>
 
 #include "absl/strings/str_format.h"
 #include "gmock/gmock.h"
@@ -17,7 +18,6 @@
 namespace {
 
 using spoor::instrumentation::filters::Filter;
-using spoor::instrumentation::filters::Filters;
 using spoor::instrumentation::filters::FiltersFileReader;
 using spoor::instrumentation::filters::FiltersReader;
 using spoor::instrumentation::filters::kActions;
@@ -64,7 +64,7 @@ TEST(FiltersFileReader, ParsesConfig) {  // NOLINT
   FiltersFileReader filters_file_reader{{
       .file_reader = std::move(file_reader),
   }};
-  const Filters expected_filters{
+  const std::vector<Filter> expected_filters{
       {
           .action = Filter::Action::kAllow,
           .rule_name = "Rule 0",

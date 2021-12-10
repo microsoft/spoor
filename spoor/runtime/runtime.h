@@ -13,8 +13,22 @@
 #include <cstdint>
 #include <filesystem>
 #include <functional>
+#include <optional>
+#include <string>
 #include <vector>
 
+// Configuration
+// Implement these functions to configure Spoor's runtime. Return `std::nullopt`
+// or link against `libspoor_runtime_default_config.a` to use the default
+// config. Configuration implementations are never instrumented.
+namespace spoor::runtime {
+
+// Returns the path to Spoor's runtime config file.
+SPOOR_RUNTIME_EXPORT extern auto ConfigFilePath() -> std::optional<std::string>;
+
+}  // namespace spoor::runtime
+
+// Runtime API
 namespace spoor::runtime {
 
 using DurationNanoseconds = std::int64_t;
@@ -112,10 +126,12 @@ auto operator==(const Config& lhs, const Config& rhs) -> bool;
 
 }  // namespace spoor::runtime
 
-extern "C" {
-
 // Internal.
 // Exposed for use by Spoor's instrumentation.
+extern "C" {
+
+using _spoor_runtime_FunctionId = spoor::runtime::FunctionId;
+
 auto _spoor_runtime_Initialize() -> void;
 auto _spoor_runtime_Deinitialize() -> void;
 auto _spoor_runtime_Enable() -> void;
