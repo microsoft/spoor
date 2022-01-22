@@ -19,8 +19,9 @@ http_archive(
 
 http_archive(
     name = "rules_python",
-    sha256 = "954aa89b491be4a083304a2cb838019c8b8c3720a7abb9c4cb81ac7a24230cea",
-    url = "https://github.com/bazelbuild/rules_python/releases/download/0.4.0/rules_python-0.4.0.tar.gz",
+    sha256 = "a30abdfc7126d497a7698c29c46ea9901c6392d6ed315171a6df5ce433aa4502",
+    strip_prefix = "rules_python-0.6.0",
+    url = "https://github.com/bazelbuild/rules_python/archive/refs/tags/0.6.0.tar.gz",
 )
 
 load("@rules_python//python:pip.bzl", "pip_install")
@@ -38,7 +39,7 @@ pip_install(
 # TODO(#133): Use LLVM's Bazel build configuration when it is checked in.
 http_archive(
     name = "com_google_llvm_bazel",
-    sha256 = "0aafa2c2f8d30d9cc7b88b3dd64137e510a2193003fce220020417b71f8e158e",
+    sha256 = "910f4c87511d6add2a61128a95ea0afc123ac3a5d79675d4bbbd7d43577020af",
     strip_prefix = "llvm-bazel-lelandjansen-llvm-12.0.1/llvm-bazel",
     url = "https://github.com/lelandjansen/llvm-bazel/archive/refs/heads/lelandjansen/llvm-12.0.1.tar.gz",
 )
@@ -97,23 +98,23 @@ http_archive(
         fi
         """,
     ],
-    sha256 = "0f76c429e65f24d48a2a18b18e7b380a5c97be0d4370271ac3623e436332fd35",
-    strip_prefix = "swift-swift-5.5-RELEASE",
-    url = "https://github.com/apple/swift/archive/swift-5.5-RELEASE.tar.gz",
+    sha256 = "0046ecab640475441251b1cceb3dd167a4c7729852104d7675bdbd75fced6b82",
+    strip_prefix = "swift-swift-5.5.2-RELEASE",
+    url = "https://github.com/apple/swift/archive/swift-5.5.2-RELEASE.tar.gz",
 )
 
 http_archive(
     name = "com_google_absl",
-    sha256 = "59b862f50e710277f8ede96f083a5bb8d7c9595376146838b9580be90374ee1f",
-    strip_prefix = "abseil-cpp-20210324.2",
-    url = "https://github.com/abseil/abseil-cpp/archive/refs/tags/20210324.2.tar.gz",
+    sha256 = "dcf71b9cba8dc0ca9940c4b316a0c796be8fab42b070bb6b7cab62b48f0e66c4",
+    strip_prefix = "abseil-cpp-20211102.0",
+    url = "https://github.com/abseil/abseil-cpp/archive/refs/tags/20211102.0.tar.gz",
 )
 
 http_archive(
     name = "com_google_protobuf",
-    sha256 = "14e8042b5da37652c92ef6a2759e7d2979d295f60afd7767825e3de68c856c54",
-    strip_prefix = "protobuf-3.18.0",
-    url = "https://github.com/protocolbuffers/protobuf/archive/refs/tags/v3.18.0.tar.gz",
+    sha256 = "390191a0d7884b3e52bb812c440ad1497b9d484241f37bb8e2ccc8c2b72d6c36",
+    strip_prefix = "protobuf-3.19.3",
+    url = "https://github.com/protocolbuffers/protobuf/archive/refs/tags/v3.19.3.tar.gz",
 )
 
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
@@ -139,17 +140,26 @@ http_archive(
 http_archive(
     name = "com_marzer_tomlplusplus",
     build_file = "//toolchain:tomlplusplus.BUILD",
-    sha256 = "2e246ee126cfb7bd68edd7285d5bb5c8c5296121ce809306ee71cfd6127c76a6",
-    strip_prefix = "tomlplusplus-2.5.0",
-    url = "https://github.com/marzer/tomlplusplus/archive/refs/tags/v2.5.0.tar.gz",
+    patch_cmds = [
+        """
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+          sed -i '' 's|#pragma clang diagnostic ignored "-Wreserved-identifier"||g' toml.hpp
+        else
+          sed -i 's|#pragma clang diagnostic ignored "-Wreserved-identifier"||g' toml.hpp
+        fi
+        """,
+    ],
+    sha256 = "e05b2814b891e223d7546aa2408d6cba0628164a84ac453205c7743cb667b9cf",
+    strip_prefix = "tomlplusplus-3.0.1",
+    url = "https://github.com/marzer/tomlplusplus/archive/refs/tags/v3.0.1.tar.gz",
 )
 
 http_archive(
     # Perfetto's build config requires deviating from the naming convention.
     name = "perfetto",
-    sha256 = "9fb1ae06f43e8ee151bee02fbcadf95c4e4312598b52a8470d55776f5b9fb098",
-    strip_prefix = "perfetto-18.0",
-    urls = ["https://github.com/google/perfetto/archive/v18.0.tar.gz"],
+    sha256 = "9d2955736ce9d234e0f5153acfefea8facfa762c9167024902ea98f9010207aa",
+    strip_prefix = "perfetto-23.0",
+    url = "https://github.com/google/perfetto/archive/v23.0.tar.gz",
 )
 
 new_local_repository(
@@ -168,41 +178,37 @@ http_archive(
 
 http_archive(
     name = "com_google_benchmark",
-    sha256 = "1f71c72ce08d2c1310011ea6436b31e39ccab8c2db94186d26657d41747c85d6",
-    strip_prefix = "benchmark-1.6.0",
-    url = "https://github.com/google/benchmark/archive/v1.6.0.tar.gz",
+    sha256 = "6132883bc8c9b0df5375b16ab520fac1a85dc9e4cf5be59480448ece74b278d4",
+    strip_prefix = "benchmark-1.6.1",
+    url = "https://github.com/google/benchmark/archive/v1.6.1.tar.gz",
 )
 
 http_archive(
     name = "com_bazelbuild_bazel",
-    sha256 = "7218ae58d0225582d38cc2fbeb6d48f9532e6cff7f4288828e055dae4324ab5b",
-    strip_prefix = "bazel-4.2.1",
-    url = "https://github.com/bazelbuild/bazel/archive/4.2.1.tar.gz",
+    sha256 = "720c42ca793d6ff3050121140c17e3511f7e8306b252ebfb4310b124dbdac10c",
+    strip_prefix = "bazel-5.0.0",
+    url = "https://github.com/bazelbuild/bazel/archive/5.0.0.tar.gz",
 )
 
 http_archive(
-    # Dependencies require deviating from Spoor's project naming convention.
     name = "io_bazel_rules_go",
-    sha256 = "52d0a57ea12139d727883c2fef03597970b89f2cc2a05722c42d1d7d41ec065b",
-    url = "https://github.com/bazelbuild/rules_go/releases/download/v0.24.13/rules_go-v0.24.13.tar.gz",
+    sha256 = "7a89df64b765721be9bb73b3aa52c15209af3b6628cae4344b9516e8b21c2b8b",
+    strip_prefix = "rules_go-0.29.0",
+    url = "https://github.com/bazelbuild/rules_go/archive/refs/tags/v0.29.0.tar.gz",
 )
 
-http_archive(
-    # Dependencies require deviating from Spoor's project naming convention.
-    name = "bazel_gazelle",
-    sha256 = "222e49f034ca7a1d1231422cdb67066b885819885c356673cb1f72f748a3c9d4",
-    url = "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.22.3/bazel-gazelle-v0.22.3.tar.gz",
-)
-
-load(
-    "@io_bazel_rules_go//go:deps.bzl",
-    "go_register_toolchains",
-    "go_rules_dependencies",
-)
+load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
 
 go_rules_dependencies()
 
-go_register_toolchains()
+go_register_toolchains(version = "1.17.1")
+
+http_archive(
+    name = "bazel_gazelle",
+    sha256 = "fc4c319b9e32ea44be8a5e1a46746d93e8b6a8b104baf7cb6a344a0a08386fed",
+    strip_prefix = "bazel-gazelle-0.24.0",
+    url = "https://github.com/bazelbuild/bazel-gazelle/archive/refs/tags/v0.24.0.tar.gz",
+)
 
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
 
@@ -210,9 +216,9 @@ gazelle_dependencies()
 
 http_archive(
     name = "build_bazel_rules_apple",
-    sha256 = "d82e8687f473139ccdd6adbf94ab167af39d550dcefabcc79a7085cbf804dbba",
-    strip_prefix = "rules_apple-4a0caf9abd43380b86022e9d4e92194fba0b04fe",
-    url = "https://github.com/bazelbuild/rules_apple/archive/4a0caf9abd43380b86022e9d4e92194fba0b04fe.tar.gz",
+    sha256 = "c4ebd7ef433967eff4bcff5d6ad30691f9c62b2d3a708938e74a885c950c53b8",
+    strip_prefix = "rules_apple-70f528160238828d865d19b45375fedbb1a9ca32",
+    url = "https://github.com/bazelbuild/rules_apple/archive/70f528160238828d865d19b45375fedbb1a9ca32.tar.gz",
 )
 
 load(
