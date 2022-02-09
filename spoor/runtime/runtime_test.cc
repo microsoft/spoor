@@ -48,6 +48,9 @@ TEST(Runtime, Initialize) {  // NOLINT
     ASSERT_FALSE(spoor::runtime::Enabled());
     ASSERT_FALSE(spoor::runtime::Initialized());
   }
+
+  _spoor_runtime_Initialize();
+  _spoor_runtime_Deinitialize();
 }
 
 TEST(Runtime, Enable) {  // NOLINT
@@ -68,6 +71,12 @@ TEST(Runtime, Enable) {  // NOLINT
   ASSERT_TRUE(spoor::runtime::Enabled());
   spoor::runtime::Deinitialize();
   ASSERT_FALSE(spoor::runtime::Enabled());
+
+  _spoor_runtime_Enable();
+  _spoor_runtime_Initialize();
+  _spoor_runtime_Enable();
+  _spoor_runtime_Disable();
+  _spoor_runtime_Deinitialize();
 }
 
 TEST_F(RuntimeAutoInitialize, FlushTraceEvents) {  // NOLINT
