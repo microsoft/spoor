@@ -12,6 +12,7 @@ cc_toolchain_suite(
     toolchains = {
         "k8": ":linux_llvm_toolchain",
         "darwin": ":darwin_llvm_toolchain",
+        "darwin_arm64": ":darwin_llvm_toolchain",
     },
     visibility = ["//visibility:public"],
 )
