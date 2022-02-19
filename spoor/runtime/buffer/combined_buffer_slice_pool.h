@@ -28,7 +28,7 @@ class CombinedBufferSlicePool final : public BufferSlicePool<T> {
   using ReservedPool = ReservedBufferSlicePool<T>;
   using DynamicPool = DynamicBufferSlicePool<T>;
 
-  struct alignas(64) Options {
+  struct Options {
     typename ReservedPool::Options reserved_pool_options;
     typename DynamicPool::Options dynamic_pool_options;
   };

@@ -57,7 +57,7 @@ constexpr std::array<std::string_view, 12> kEnvConfigKeys{{
 
 class EnvSource final : public Source {
  public:
-  struct alignas(64) Options {
+  struct Options {
     util::env::StdGetEnv get_env;
   };
 

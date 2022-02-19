@@ -28,7 +28,7 @@ class DynamicBufferSlicePool final : public BufferSlicePool<T> {
   using BorrowResult = util::result::Result<OwnedSlicePtr, BorrowError>;
   using ReturnResult = typename util::memory::PtrOwner<Slice>::Result;
 
-  struct alignas(32) Options {
+  struct Options {
     SizeType max_slice_capacity;
     SizeType capacity;
     SizeType borrow_cas_attempts;

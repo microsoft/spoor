@@ -31,7 +31,7 @@ namespace spoor::instrumentation::inject_instrumentation {
 class InjectInstrumentation
     : public llvm::PassInfoMixin<InjectInstrumentation> {
  public:
-  struct alignas(128) Options {
+  struct Options {
     bool inject_instrumentation;
     std::unique_ptr<filters::FiltersReader> filters_reader;
     std::unique_ptr<symbols::SymbolsWriter> symbols_writer;
@@ -61,7 +61,7 @@ class InjectInstrumentation
       -> llvm::PreservedAnalyses;
 
  private:
-  struct alignas(128) InstrumentModuleResult {
+  struct InstrumentModuleResult {
     symbols::Symbols symbols;
     bool modified;
   };

@@ -14,7 +14,7 @@ namespace spoor::runtime::trace {
 
 class TraceFileReader final : public TraceReader {
  public:
-  struct alignas(16) Options {
+  struct Options {
     std::unique_ptr<util::file_system::FileSystem> file_system;
     std::unique_ptr<util::file_system::FileReader> file_reader;
   };

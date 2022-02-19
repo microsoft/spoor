@@ -1,6 +1,10 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+# altera-struct-pack-align
+#   Some types (e.g., function pointers) have different sizes on different
+#   architectures so an optimal struct alignment on one architecture is not
+#   necessarily optimal on another.
 # cppcoreguidelines-init-variables
 #   Appears not to support the {} default initializer.
 # fuchsia-default-arguments
@@ -26,6 +30,7 @@
 #   https://clang.llvm.org/extra/clang-tidy/checks/list.html#id117
 Checks: '
   *,
+  -altera-struct-pack-align,
   -cppcoreguidelines-init-variables,
   -fuchsia-default-arguments,
   -fuchsia-default-arguments-calls,
