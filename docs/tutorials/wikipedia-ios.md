@@ -51,14 +51,14 @@ and visualize and analyze your symbolized trace using Perfetto.
 === "Git (SSH)"
     ```bash
     git clone \
-      --branch releases/6.8.1 \
+      --branch releases/6.8.2 \
       --depth 1 \
       git@github.com:wikimedia/wikipedia-ios.git
     ```
 === "Git (HTTPS)"
     ```bash
     git clone \
-      --branch releases/6.8.1 \
+      --branch releases/6.8.2 \
       --depth 1 \
       https://github.com/wikimedia/wikipedia-ios.git
     ```
@@ -67,9 +67,9 @@ and visualize and analyze your symbolized trace using Perfetto.
     curl \
       --location \
       --output wikipedia-ios.tar.gz \
-      https://github.com/wikimedia/wikipedia-ios/archive/refs/tags/releases/6.8.1.tar.gz &&
+      https://github.com/wikimedia/wikipedia-ios/archive/refs/tags/releases/6.8.2.tar.gz &&
     tar -xf wikipedia-ios.tar.gz &&
-    mv wikipedia-ios-releases-6.8.1 wikipedia-ios
+    mv wikipedia-ios-releases-6.8.2 wikipedia-ios
     ```
 
 ```bash
@@ -77,7 +77,7 @@ cd wikipedia-ios
 ```
 
 !!! info "Version"
-    This tutorial is based on Wikipedia iOS version 6.8.1. Your mileage may vary
+    This tutorial is based on Wikipedia iOS version 6.8.2. Your mileage may vary
     with newer or older versions.
 
 !!! check "Sanity test"

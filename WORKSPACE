@@ -251,9 +251,9 @@ http_archive(
             done
         """,
     ],
-    sha256 = "dec60361d82b7d551ffe0f3e3d8d381047f91550c635accf2ec7b858483358ba",
-    strip_prefix = "wikipedia-ios-releases-6.8.1",
-    url = "https://github.com/wikimedia/wikipedia-ios/archive/refs/tags/releases/6.8.1.tar.gz",
+    sha256 = "e72ec3d81559aae7632a154ef5b08668c92fa326c049c83ed9e1e377932d4dbd",
+    strip_prefix = "wikipedia-ios-releases-6.8.2",
+    url = "https://github.com/wikimedia/wikipedia-ios/archive/refs/tags/releases/6.8.2.tar.gz",
 )
 
 # TODO(#179): Use Perfetto's `trace_processor` when the configurable
