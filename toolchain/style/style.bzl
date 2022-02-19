@@ -118,10 +118,7 @@ def _run_clang_tidy(
 
     # Exclude files by only linting lines out of its range.
     exclude = [[100000, 100000]]
-    filter_exclusions = [
-        ".pb.h",
-        "spoor/runtime/runtime.h",
-    ]
+    filter_exclusions = [".pb.h"]
     filter_inclusions = [
         ".cc",
         ".h",
