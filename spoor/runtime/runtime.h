@@ -7,6 +7,7 @@
 #define SPOOR_RUNTIME_RUNTIME_H_
 
 #ifndef SPOOR_RUNTIME_EXPORT
+// Clang Tidy false positive. NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define SPOOR_RUNTIME_EXPORT __attribute__((visibility("default")))
 #endif
 
@@ -130,14 +131,26 @@ auto operator==(const Config& lhs, const Config& rhs) -> bool;
 // Exposed for use by Spoor's instrumentation.
 extern "C" {
 
+// NOLINTNEXTLINE(readability-identifier-naming)
 using _spoor_runtime_FunctionId = spoor::runtime::FunctionId;
 
+// NOLINTNEXTLINE(readability-identifier-naming)
 auto _spoor_runtime_Initialize() -> void;
+
+// NOLINTNEXTLINE(readability-identifier-naming)
 auto _spoor_runtime_Deinitialize() -> void;
+
+// NOLINTNEXTLINE(readability-identifier-naming)
 auto _spoor_runtime_Enable() -> void;
+
+// NOLINTNEXTLINE(readability-identifier-naming)
 auto _spoor_runtime_Disable() -> void;
+
+// NOLINTNEXTLINE(readability-identifier-naming)
 auto _spoor_runtime_LogFunctionEntry(spoor::runtime::FunctionId function_id)
     -> void;
+
+// NOLINTNEXTLINE(readability-identifier-naming)
 auto _spoor_runtime_LogFunctionExit(spoor::runtime::FunctionId function_id)
     -> void;
 
