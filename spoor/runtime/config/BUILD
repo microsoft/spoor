@@ -52,6 +52,8 @@ cc_library(
         "//spoor/runtime/trace",
         "//util:numeric",
         "//util/compression",
+        "//util/env",
+        "//util/file_system",
     ],
 )
 

@@ -35,6 +35,8 @@ cc_library(
     deps = [
         ":inject_instrumentation_private",
         "//spoor/instrumentation:instrumentation_info",
+        "//spoor/instrumentation/filters",
+        "//spoor/instrumentation/filters:default_filters",
         "//spoor/instrumentation/filters:filters_reader",
         "//spoor/instrumentation/symbols:symbols_cc_proto",
         "//spoor/instrumentation/symbols:symbols_writer",

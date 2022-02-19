@@ -172,12 +172,10 @@ mkdir trace
 ```
 
 === "UI"
-    Configure Wikipedia's scheme with a `SPOOR_RUNTIME_TRACE_FILE_PATH`
-    _run action_ environment variable: `Wikipedia > Edit Scheme…`.
+    Configure Wikipedia's scheme with a _run action_ environment variable that
+    sets the trace file output path: `Wikipedia > Edit Scheme..`.
 
-    **Environment variables**
-
-    Name                          | Value
+    Key                           | Value
     ----------------------------- | ---------------
     SPOOR_RUNTIME_TRACE_FILE_PATH | /path/to/trace/
 
@@ -206,7 +204,7 @@ mkdir trace
       org.wikimedia.wikipedia
     ```
 
-Spoor's runtime emits trace files in the `trace` folder.
+Spoor's runtime emits trace files in the `trace` folder configured above.
 
 ```bash
 ls trace

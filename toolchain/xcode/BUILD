@@ -145,6 +145,14 @@ _TOOLCHAIN_TARGETS_TO_OUTS = [
         TOOLCHAIN_NAME + "/spoor/lib/libspoor_runtime_macos.a",
     ],
     [
+        "//spoor/runtime/wrappers/apple:spoor_runtime_default_config_ios",
+        TOOLCHAIN_NAME + "/spoor/lib/libspoor_runtime_default_config_ios.a",
+    ],
+    [
+        "//spoor/runtime/wrappers/apple:spoor_runtime_default_config_macos",
+        TOOLCHAIN_NAME + "/spoor/lib/libspoor_runtime_default_config_macos.a",
+    ],
+    [
         "//spoor/instrumentation:spoor_opt",
         TOOLCHAIN_NAME + "/spoor/bin/spoor_opt",
     ],

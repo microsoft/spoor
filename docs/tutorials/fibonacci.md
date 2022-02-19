@@ -20,6 +20,7 @@ You will need:
 * Spoor's toolchain including
     * `spoor_opt`: Compiler instrumentation
     * `libspoor_runtime.a`: Runtime library
+    * `libspoor_runtime_default_config.a`: Runtime library default configuration
     * `spoor`: Postprocessing tool
 * `clang++`, `rustc`, `swiftc`, or another LLVM-based compiler of your choice.
 * `clang++` to assemble the IR and link in the standard library.
@@ -754,16 +755,18 @@ in-memory and flushing them to disk.
     clang++ \
       fib_instrumented.ll \
       -o fib_instrumented \
-      -L/path/to/libspoor_runtime \
-      -lspoor_runtime
+      -L/path/to/spoor/libraries \
+      -lspoor_runtime \
+      -lspoor_runtime_default_config
     ```
 === "Rust"
     ```bash
     clang++ \
       fib_instrumented.ll \
       -o fib_instrumented \
-      -L/path/to/libspoor_runtime \
+      -L/path/to/spoor/libraries \
       -lspoor_runtime \
+      -lspoor_runtime_default_config \
       -L/path/to/.rustup/toolchains/stable-target/lib \
       -lstd-xxxxxxxxxxxxxxxx \
       -Wl,-rpath,/path/to/.rustup/toolchains/stable-target/lib
@@ -775,6 +778,7 @@ in-memory and flushing them to disk.
       -o fib_instrumented \
       -L/path/to/libspoor_runtime \
       -lspoor_runtime \
+      -lspoor_runtime_default_config \
       -L/usr/lib/swift
     ```
 

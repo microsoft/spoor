@@ -11,7 +11,7 @@
 
 #include "absl/strings/str_format.h"
 #include "gsl/gsl"
-#include "spoor/instrumentation/filters/filters.h"
+#include "spoor/instrumentation/filters/filter.h"
 #include "tomlplusplus/toml.h"
 #include "util/result.h"
 
@@ -68,7 +68,7 @@ auto FiltersFileReader::Read(const std::filesystem::path& file_path) const
     }
   }
 
-  return Filters{filters};
+  return filters;
 }
 
 auto FiltersFileReader::ParseFilter(const Filter::Action action,

@@ -58,6 +58,20 @@ cc_static_library(
     deps = [":runtime_stub"],
 )
 
+cc_library(
+    name = "runtime_default_config",
+    srcs = ["runtime_default_config.cc"],
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
+    visibility = ["//visibility:public"],
+)
+
+cc_static_library(
+    name = "spoor_runtime_default_config",
+    visibility = ["//visibility:public"],
+    deps = [":runtime_default_config"],
+)
+
 cc_test(
     name = "runtime_test",
     size = "small",
@@ -70,6 +84,7 @@ cc_test(
     visibility = ["//visibility:private"],
     deps = [
         ":runtime",
+        ":runtime_default_config",
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
         "@com_google_googletest//:gtest_main",
@@ -85,10 +100,37 @@ cc_test(
     linkopts = SPOOR_DEFAULT_TEST_LINKOPTS,
     visibility = ["//visibility:private"],
     deps = [
+        ":runtime_default_config",
         ":runtime_stub",
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
         "@com_google_googletest//:gtest_main",
         "@com_microsoft_gsl//:gsl",
+    ],
+)
+
+cc_test(
+    name = "runtime_default_config_test",
+    size = "small",
+    srcs = ["runtime_default_config_test.cc"],
+    copts = SPOOR_DEFAULT_TEST_COPTS,
+    linkopts = SPOOR_DEFAULT_TEST_LINKOPTS,
+    visibility = ["//visibility:private"],
+    deps = [
+        ":runtime_default_config",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "runtime_override_default_config_test",
+    size = "small",
+    srcs = ["runtime_override_default_config_test.cc"],
+    copts = SPOOR_DEFAULT_TEST_COPTS,
+    linkopts = SPOOR_DEFAULT_TEST_LINKOPTS,
+    visibility = ["//visibility:private"],
+    deps = [
+        ":runtime_default_config",
+        "@com_google_googletest//:gtest_main",
     ],
 )

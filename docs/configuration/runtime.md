@@ -1,107 +1,249 @@
 # Runtime
 
-Configure Spoor's runtime with environment variables.
+Configure Spoor's runtime with environment variables or a configuration file.
+
+!!! info "Precedence"
+    Environment configurations override file configurations.
 
 ## Source code
 
 [spoor/runtime/config/][spoor-runtime-config]
 
-## Calculating memory impact
-
-```
-event_size = 24 bytes
-min_memory_impact = event_size * SPOOR_RUNTIME_RESERVED_EVENT_POOL_CAPACITY
-max_memory_impact = min_memory_impact + event_size * SPOOR_RUNTIME_RESERVED_EVENT_POOL_CAPACITY
-```
-
 ## Runtime options
 
-### SPOOR_RUNTIME_TRACE_FILE_PATH
+### Trace file path
 
-Directory in which to save flushed trace files. The path must exist, and end
-with a trailing `/`.
+Directory in which to save flushed trace files.
+
+**Type:** `string`
 
 **Default:** `.`
 
-### SPOOR_RUNTIME_COMPRESSION_STRATEGY
+Source               | Key
+-------------------- | ------------------------------
+Environment variable | `SPOOR_RUNTIME_TRACE_FILE_PATH`
+Config file          | `trace_file_path`
+
+!!! warning "Path requirements"
+    The path must exist and end with a trailing `/`.
+
+!!! tip "Environment variable expansion"
+    Spoor automatically expands environment variables. A tilde (i.e., `~`)
+    expands to the value of `$HOME`.
+
+### Compression strategy
 
 Strategy used to compress the trace file on flush.
 
-**Options:** `none` or `snappy`.
+**Type:** `string`
 
-Snappy offers a ~3x compression ratio.
+**Options:** `none` or `snappy`
 
 **Default:** `snappy`
 
-### SPOOR_RUNTIME_SESSION_ID
+Source               | Key
+-------------------- | ------------------------------------
+Environment variable | `SPOOR_RUNTIME_COMPRESSION_STRATEGY`
+Config file          | `compression_strategy`
+
+!!! tip "Compression ratio"
+    Snappy offers a ~3x compression ratio.
+
+### Session ID
 
 Session identifier used to differentiate between runs.
 
-**Default:** Random number (distinct for each launch)
+**Type:** `uint64`
 
-### SPOOR_RUNTIME_THEAD_EVENT_BUFFER_CAPACITY
+**Default:** Random number (likely distinct for each launch)
+
+Source               | Key
+-------------------- | --------------------------
+Environment variable | `SPOOR_RUNTIME_SESSION_ID`
+Config file          | `session_id`
+
+### Thread event buffer capacity
 
 Maximum number of events (zero or more slices) a thread may hold in its buffer.
 
-**Default:** `10000`
+**Type:** `uint64`
 
-### SPOOR_RUNTIME_MAX_RESERVED_EVENT_BUFFER_SLICE_CAPACITY
+**Default:** `10,000`
+
+Source               | Key
+-------------------- | -------------------------------------------
+Environment variable | `SPOOR_RUNTIME_THEAD_EVENT_BUFFER_CAPACITY`
+Config file          | `thread_event_buffer_capacity`
+
+### Max reserved event buffer slice capacity
 
 Maximum number of events that a thread event buffer may request at once from
 the reserved pool. These events are stored in a contiguous slice of memory.
 
-**Default:** `1000`
+**Type:** `uint64`
 
-### SPOOR_RUNTIME_MAX_DYNAMIC_EVENT_BUFFER_SLICE_CAPACITY
+**Default:** `1,000`
+
+Source               | Key
+-------------------- | --------------------------------------------------------
+Environment variable | `SPOOR_RUNTIME_MAX_RESERVED_EVENT_BUFFER_SLICE_CAPACITY`
+Config file          | `max_reserved_event_buffer_slice_capacity`
+
+### Max dynamic event buffer slice capacity
 
 Maximum number of events that a thread event buffer may request at once from the
 dynamic pool. These events are stored in a contiguous slice of memory.
 
-**Default:** `1000`
+**Type:** `uint64`
 
-### SPOOR_RUNTIME_RESERVED_EVENT_POOL_CAPACITY
+**Default:** `1,000`
+
+Source               | Key
+-------------------- | -------------------------------------------------------
+Environment variable | `SPOOR_RUNTIME_MAX_DYNAMIC_EVENT_BUFFER_SLICE_CAPACITY`
+Config file          | `max_dynamic_event_buffer_slice_capacity`
+
+### Reserved event pool capacity
 
 Event object pool size. The reserved pool is (dynamically) allocated as a
 continuous block of memory on initialization and released on deinitialization.
 
+**Type:** `uint64`
+
 **Default:** `0`
 
-### SPOOR_RUNTIME_DYNAMIC_EVENT_POOL_CAPACITY
+Source               | Key
+-------------------- | --------------------------------------------
+Environment variable | `SPOOR_RUNTIME_RESERVED_EVENT_POOL_CAPACITY`
+Config file          | `reserved_event_pool_capacity`
+
+### Dynamic event pool capacity
 
 Maximum number of events that can be dynamically allocated.
 
-**Default:** `18446744073709551615` (i.e., `max(uint64)`)
+**Type:** `uint64`
 
-### SPOOR_RUNTIME_DYNAMIC_EVENT_SLICE_BORROW_CAS_ATTEMPTS
+**Default:** `18,446,744,073,709,551,615` (i.e., `max(uint64)`)
 
-Number of [compare and swap][compare_and_swap] attempts to borrow a slice from
+Source               | Key
+-------------------- | -------------------------------------------
+Environment variable | `SPOOR_RUNTIME_DYNAMIC_EVENT_POOL_CAPACITY`
+Config file          | `dynamic_event_pool_capacity`
+
+### Dynamic event slice borrow CAS attempts
+
+Number of [compare and swap][compare-and-swap] attempts to borrow a slice from
 the dynamic buffer pool.
+
+**Type:** `uint64`
 
 **Default:** `1`
 
-### SPOOR_RUNTIME_EVENT_BUFFER_RETENTION_DURATION_NANOSECONDS
+Source               | Key
+-------------------- | --------------------------
+Environment variable | `SPOOR_RUNTIME_DYNAMIC_EVENT_SLICE_BORROW_CAS_ATTEMPTS`
+Config file          | `dynamic_event_slice_borrow_cas_attempts`
 
-Duration to retain a thread's buffer after a thread ends (in anticipation of a
-flush event).
+### Event buffer retention duration
 
-This value is ignored when `SPOOR_RUNTIME_FLUSH_ALL_EVENTS` is `true`.
+Duration in nanoseconds to retain a thread's buffer after a thread ends (in
+anticipation of a flush event).
+
+This value is ignored when [flush all events][flush-all-events] is `true`.
+
+**Type:** `int64`
 
 **Default:** `0`
 
-### SPOOR_RUNTIME_MAX_FLUSH_BUFFER_TO_FILE_ATTEMPTS
+Source               | Key
+-------------------- | -----------------------------------------------------------
+Environment variable | `SPOOR_RUNTIME_EVENT_BUFFER_RETENTION_DURATION_NANOSECONDS`
+Config file          | `event_buffer_retention_duration_nanoseconds`
+
+### Max flush buffer to file attempts
 
 Maximum number of attempts to flush a buffer before discarding it.
 
+**Type:** `int32`
+
 **Default:** `2`
 
-### SPOOR_RUNTIME_FLUSH_ALL_EVENTS
+Source               | Key
+-------------------- | -------------------------------------------------
+Environment variable | `SPOOR_RUNTIME_MAX_FLUSH_BUFFER_TO_FILE_ATTEMPTS`
+Config file          | `max_flush_buffer_to_file_attempts`
+
+### Flush all events
 
 When `true`, flushes a buffer as soon as it fills. When `false`, the buffer acts
 as a circular buffer and old events are overridden.
 
+**Type:** `bool`
+
 **Default:** `true`
 
-[compare_and_swap]: https://en.wikipedia.org/wiki/Compare-and-swap
-[config_h]: https://github.com/microsoft/spoor/blob/master/spoor/runtime/config/config.h
+Source               | Key
+-------------------- | --------------------------
+Environment variable | `SPOOR_RUNTIME_FLUSH_ALL_EVENTS`
+Config file          | `flush_all_events`
+
+## Configuration file
+
+To set a configuration file, implement the symbol
+`spoor::runtime::ConfigFilePath()`.
+
+Return `std::nullopt` or link against `libspoor_runtime_default_config.a` to use
+the default config.
+
+```c++
+// spoor_config.cc
+
+namespace spoor::runtime {
+
+auto ConfigFilePath() -> std::optional<std::string> {
+  return "/path/to/spoor_runtime_config.toml";
+}
+
+}  // namespace spoor::runtime
+```
+
+**Example configuration file**
+
+```toml
+# spoor_runtime_config.toml
+
+trace_file_path = "/path/to/trace/"
+compression_strategy = "snappy"
+session_id = 42
+thread_event_buffer_capacity = 1_000_000
+max_reserved_event_buffer_slice_capacity = 1_000_000
+max_dynamic_event_buffer_slice_capacity = 1_000_000
+reserved_event_pool_capacity = 10_000_000
+dynamic_event_pool_capacity = 9_223_372_036_854_775_807
+dynamic_event_slice_borrow_cas_attempts = 1
+event_buffer_retention_duration_nanoseconds = 10_000_000_000
+max_flush_buffer_to_file_attempts = 2
+flush_all_events = true
+```
+
+!!! warning "Config file max value"
+    Many configuration types are **unsigned** 64-bit integers, however, TOML
+    only supports up to **signed** 64-bit integers. Therefore, the maximum
+    possilbe value in the config file is
+    `max(int64) = 9,223,372,036,854,775,807`, not
+    `max(uint64) = 18,446,744,073,709,551,615`.
+
+    See [microsoft/spoor/issues/219][toml-signed-integer-issue].
+
+## Calculating memory impact
+
+```
+event size = 24 bytes
+min memory impact = event_size * reserved event pool capacity
+max memory impact = min memory impact + event size * dynamic event pool capacity
+```
+
+[compare-and-swap]: https://en.wikipedia.org/wiki/Compare-and-swap
+[flush-all-events]: #flush-all-events
 [spoor-runtime-config]: https://github.com/microsoft/spoor/tree/master/spoor/runtime/config
-[trace_h]: https://github.com/microsoft/spoor/blob/master/spoor/runtime/trace/trace.h
+[toml-signed-integer-issue]: https://github.com/microsoft/spoor/issues/219

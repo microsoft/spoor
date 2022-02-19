@@ -14,6 +14,7 @@
 #include "spoor/runtime/config/source.h"
 #include "spoor/runtime/trace/trace.h"
 #include "util/compression/compressor.h"
+#include "util/env/env.h"
 #include "util/file_system/file_reader.h"
 #include "util/numeric.h"
 
@@ -56,9 +57,10 @@ constexpr std::array<std::string_view, 12> kFileConfigKeys{{
 
 class FileSource final : public Source {
  public:
-  struct alignas(32) Options {
+  struct alignas(128) Options {
     std::unique_ptr<util::file_system::FileReader> file_reader;
     std::filesystem::path file_path;
+    util::env::StdGetEnv get_env;
   };
 
   FileSource() = delete;

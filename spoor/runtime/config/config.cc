@@ -13,9 +13,19 @@
 #include "spoor/runtime/config/source.h"
 #include "spoor/runtime/trace/trace.h"
 #include "util/compression/compressor.h"
+#include "util/env/env.h"
+#include "util/file_system/util.h"
 #include "util/numeric.h"
 
 namespace spoor::runtime::config {
+
+using util::file_system::ExpandPath;
+using util::file_system::PathExpansionOptions;
+
+constexpr PathExpansionOptions kPathExpansionOptions{
+    .expand_tilde = true,
+    .expand_environment_variables = true,
+};
 
 constexpr std::string_view kTraceFilePathDefaultValue{"."};
 constexpr auto kCompressionStrategyDefaultValue{
@@ -84,10 +94,13 @@ auto Config::Default() -> Config {
 
 auto Config::FromSourcesOrDefault(
     std::vector<std::unique_ptr<Source>>&& sources,
-    const Config& default_config) -> Config {
+    const Config& default_config, const util::env::StdGetEnv& get_env)
+    -> Config {
   return {
-      .trace_file_path = ValueFromSourceOrDefault(
-          sources, &Source::TraceFilePath, default_config.trace_file_path),
+      .trace_file_path =
+          ExpandPath(ValueFromSourceOrDefault(sources, &Source::TraceFilePath,
+                                              default_config.trace_file_path),
+                     kPathExpansionOptions, get_env),
       .compression_strategy =
           ValueFromSourceOrDefault(sources, &Source::CompressionStrategy,
                                    default_config.compression_strategy),

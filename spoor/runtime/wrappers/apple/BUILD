@@ -104,6 +104,24 @@ apple_static_library(
     deps = [":runtime_stub_lib"],
 )
 
+apple_static_library(
+    name = "spoor_runtime_default_config_ios",
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
+    minimum_os_version = _MINIMUM_IOS_VERSION,
+    platform_type = "ios",
+    visibility = ["//visibility:public"],
+    deps = [":runtime_default_config_lib"],
+)
+
+apple_static_library(
+    name = "spoor_runtime_default_config_macos",
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
+    minimum_os_version = _MINIMUM_IOS_VERSION,
+    platform_type = "macos",
+    visibility = ["//visibility:public"],
+    deps = [":runtime_default_config_lib"],
+)
+
 objc_library(
     name = "runtime_lib",
     srcs = _LIB_SRCS,
@@ -122,6 +140,14 @@ objc_library(
     module_name = _STUB_MODULE_NAME,
     visibility = ["//visibility:private"],
     deps = ["//spoor/runtime:runtime_stub"],
+)
+
+objc_library(
+    name = "runtime_default_config_lib",
+    copts = _LIB_COPTS,
+    module_name = _MODULE_NAME,
+    visibility = ["//visibility:private"],
+    deps = ["//spoor/runtime:runtime_default_config"],
 )
 
 # Tests
@@ -198,6 +224,7 @@ objc_library(
     visibility = ["//visibility:private"],
     deps = [
         ":runtime_lib",
+        "//spoor/runtime:runtime_default_config",
     ],
 )
 
@@ -211,5 +238,6 @@ objc_library(
     visibility = ["//visibility:private"],
     deps = [
         ":runtime_stub_lib",
+        "//spoor/runtime:runtime_default_config",
     ],
 )

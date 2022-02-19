@@ -11,6 +11,7 @@
 #include "spoor/runtime/config/source.h"
 #include "spoor/runtime/trace/trace.h"
 #include "util/compression/compressor.h"
+#include "util/env/env.h"
 
 namespace spoor::runtime::config {
 
@@ -21,7 +22,8 @@ struct alignas(128) Config {
   static auto Default() -> Config;
   static auto FromSourcesOrDefault(
       std::vector<std::unique_ptr<Source>>&& sources,
-      const Config& default_config) -> Config;
+      const Config& default_config, const util::env::StdGetEnv& get_env)
+      -> Config;
 
   std::filesystem::path trace_file_path;
   util::compression::Strategy compression_strategy;

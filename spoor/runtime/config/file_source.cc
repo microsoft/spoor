@@ -17,9 +17,18 @@
 #include "spoor/runtime/trace/trace.h"
 #include "tomlplusplus/toml.h"
 #include "util/compression/compressor.h"
+#include "util/file_system/util.h"
 #include "util/numeric.h"
 
 namespace spoor::runtime::config {
+
+using util::file_system::ExpandPath;
+using util::file_system::PathExpansionOptions;
+
+constexpr PathExpansionOptions kPathExpansionOptions{
+    .expand_tilde = true,
+    .expand_environment_variables = true,
+};
 
 FileSource::FileSource(Options options)
     : options_{std::move(options)}, read_{false} {}
@@ -43,7 +52,9 @@ auto ReadConfig(const toml::table& table, const std::string_view key,
 auto FileSource::Read() -> std::vector<ReadError> {
   auto finally_set_read = gsl::finally([this] { read_ = true; });
 
-  const auto file_path = options_.file_path;
+  const auto file_path =
+      ExpandPath(options_.file_path, kPathExpansionOptions, options_.get_env);
+
   auto& file = *options_.file_reader;
   file.Open(file_path);
   if (!file.IsOpen()) {

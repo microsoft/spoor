@@ -1,61 +1,111 @@
 # Instrumentation
 
-Configure Spoor's instrumentation with environment variables.
-
 ## Source code
 
 [spoor/instrumentation/config/][spoor-instrumentation-config]
 
 ## Instrumentation options
 
-### SPOOR_INSTRUMENTATION_ENABLE_RUNTIME
+Configure Spoor's instrumentation with environment variables.
+
+!!! note "Config functions"
+    Spoor does not instrument
+    [user-defined config functions][user-defined-config] to prevent recursive
+    initialization.
+
+### Enable runtime
+
 Automatically enable Spoor's runtime.
 
 **Default:** `true`
 
-### SPOOR_INSTRUMENTATION_FILTERS_FILE
+Source               | Key
+-------------------- | --------------------------------------
+Environment variable | `SPOOR_INSTRUMENTATION_ENABLE_RUNTIME`
+
+### Filters file
+
 Path to the [filters file](#filters-file).
 
 **Default:** Empty (no filters)
 
-### SPOOR_INSTRUMENTATION_FORCE_BINARY_OUTPUT
+Source               | Key
+-------------------- | ------------------------------------
+Environment variable | `SPOOR_INSTRUMENTATION_FILTERS_FILE`
+
+### Force binary output
+
 Force printing binary data to the console.
 
 **Default:** `false`
 
-### SPOOR_INSTRUMENTATION_INITIALIZE_RUNTIME
+Source               | Key
+-------------------- | -------------------------------------------
+Environment variable | `SPOOR_INSTRUMENTATION_FORCE_BINARY_OUTPUT`
+
+### Initialize runtime
+
 Automatically initialize Spoor's runtime. This is achieved by injecting a call
 to `_spoor_runtime_Initialize()` at the start of `main`.
 
 **Default:** `true`
 
-### SPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION
+Source               | Key
+-------------------- | ------------------------------------------
+Environment variable | `SPOOR_INSTRUMENTATION_INITIALIZE_RUNTIME`
+
+### Inject instrumentation
+
 Inject Spoor instrumentation.
 
 **Default:** `true`
 
-### SPOOR_INSTRUMENTATION_MODULE_ID
+Source               | Key
+-------------------- | ----------------------------------------------
+Environment variable | `SPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION`
+
+### Module ID
+
 Override the LLVM module's ID.
 
 **Default:** Empty (do not override LLVM module ID)
 
-### SPOOR_INSTRUMENTATION_OUTPUT_FILE
+Source               | Key
+-------------------- | ---------------------------------
+Environment variable | `SPOOR_INSTRUMENTATION_MODULE_ID`
+
+### Output file
+
 Spoor instrumentation symbols output file.
 
 **Default:** `-` (stdout)
 
-### SPOOR_INSTRUMENTATION_OUTPUT_SYMBOLS_FILE
+Source               | Key
+-------------------- | -----------------------------------
+Environment variable | `SPOOR_INSTRUMENTATION_OUTPUT_FILE`
+
+### Output symbols file
+
 Spoor instrumentation symbols output file. The path must be absolute and all
 parent directories must exist. Tilde expansion is not supported.
 
 **Default:** Empty (error)
 
-### SPOOR_INSTRUMENTATION_OUTPUT_LANGUAGE
+Source               | Key
+-------------------- | -------------------------------------------
+Environment variable | `SPOOR_INSTRUMENTATION_OUTPUT_SYMBOLS_FILE`
+
+### Output language
+
 Language in which to output the transformed code.
 
 **Options:** `ir` or `bitcode`.
 
 **Default value:** `bitcode`
+
+Source               | Key
+-------------------- | ---------------------------------------
+Environment variable | `SPOOR_INSTRUMENTATION_OUTPUT_LANGUAGE`
 
 ## Filters file
 
@@ -64,9 +114,11 @@ match an allow list rule.
 
 A function must match all conditions within in a block or allow rule to apply.
 
-Note: An empty rule matches everything.
+!!! note "Match everything"
+    An empty rule matches everything.
 
-Tip: Escape backslashes in regular expressions.
+!!! info "Backslashes"
+    Escape backslashes in regular expressions.
 
 **Example filters file**
 
@@ -93,14 +145,24 @@ whose demangled name matches `^facebook::jsc::.*"`, **EXCEPT** for the main
 function which is always instrumented (regardless of its source file path or
 instruction count).
 
-### rule_name
+### Rule name
+
 Optional. Helpful description of the rule. If a filter matches a function during
 instrumentation (either blocking or allowing it), the rule's name is reported in
 the emitted symbols metadata. If multiple rules apply to a function, only one of
 the rules is reported.
 
-### source_file_path
+Source      | Key
+----------- | -----------
+Config file | `rule_name`
+
+### Source file path
+
 Optional. Regular expression (string) matching the source file path.
+
+Source      | Key
+----------- | ------------------
+Config file | `source_file_path`
 
 **Example source file paths**
 
@@ -112,8 +174,13 @@ Optional. Regular expression (string) matching the source file path.
 <compiler-generated>
 ```
 
-### function_demangled_name
+### Demangled function name
+
 Optional. Regular expression (string) matching the demangled function name.
+
+Source      | Key
+----------- | -------------------------
+Config file | `function_demangled_name`
 
 **Example demangled function names**
 
@@ -133,30 +200,48 @@ app_ios.Bootstrap.appDidFinish(with: Swift.Optional<Swift.Dictionary<__C.UIAppli
 +[RCTCxxBridge runRunLoop]
 ```
 
-### function_linkage_name
+### Function linkage name
+
 Optional. Regular expression (string) matching the function's linkage name.
+
+Source      | Key
+----------- | -----------------------
+Config file | `function_linkage_name`
 
 **Example function linkage names**
 
 ```
 main
 ```
+
 ```
 _ZNSt3__1L4sortINS_12basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEEEEvNS_11__wrap_iterIPT_EESA_
 ```
 ```
 $s7app_ios9BootstrapC0A9DidFinish4withySDySo29UIApplicationLaunchOptionsKeyaypGSg_tF
 ```
+
 ```
 +[RCTCxxBridge runRunLoop]
 ```
 
-### function_ir_instruction_count_lt
+### Function IR instruction count less than
+
 Optional. Integer. Matches all functions with an IR instruction count strictly
 less than the provided value.
 
-### function_ir_instruction_count_gt
+Source      | Key
+----------- | ----------------------------------
+Config file | `function_ir_instruction_count_lt`
+
+### Function IR instruction count greater than
+
 Optional. Integer. Matches all functions with an IR instruction count strictly
 greater than the provided value.
 
+Source      | Key
+----------- | ----------------------------------
+Config file | `function_ir_instruction_count_gt`
+
 [spoor-instrumentation-config]: https://github.com/microsoft/spoor/tree/master/spoor/instrumentation/config
+[user-defined-config]: /configuration/runtime/#configuration-file
