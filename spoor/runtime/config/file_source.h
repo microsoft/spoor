@@ -57,7 +57,7 @@ constexpr std::array<std::string_view, 12> kFileConfigKeys{{
 
 class FileSource final : public Source {
  public:
-  struct alignas(128) Options {
+  struct Options {
     std::unique_ptr<util::file_system::FileReader> file_reader;
     std::filesystem::path file_path;
     util::env::StdGetEnv get_env;

@@ -13,7 +13,7 @@ namespace spoor::instrumentation::filters {
 
 class Filters {
  public:
-  struct alignas(64) InstrumentFunctionResult {
+  struct InstrumentFunctionResult {
     bool instrument;
     std::optional<std::string> active_filter_rule_name;
   };

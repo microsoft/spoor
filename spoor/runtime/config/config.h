@@ -15,7 +15,7 @@
 
 namespace spoor::runtime::config {
 
-struct alignas(128) Config {
+struct Config {
   using SizeType = buffer::CircularBuffer<trace::Event>::SizeType;
   static_assert(std::is_same_v<SizeType, Source::SizeType>);
 

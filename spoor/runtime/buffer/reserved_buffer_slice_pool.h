@@ -30,7 +30,7 @@ class ReservedBufferSlicePool final : public BufferSlicePool<T> {
   using BorrowResult = util::result::Result<OwnedSlicePtr, BorrowError>;
   using ReturnResult = typename util::memory::PtrOwner<Slice>::Result;
 
-  struct alignas(16) Options {
+  struct Options {
     SizeType max_slice_capacity;
     SizeType capacity;
   };

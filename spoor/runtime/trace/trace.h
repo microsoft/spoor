@@ -60,7 +60,7 @@ enum class Endian : uint8 {
 constexpr Endian kEndianness{
     absl::little_endian::IsLittleEndian() ? Endian::kLittle : Endian::kBig};
 
-struct alignas(64) Header {
+struct Header {
   MagicNumber magic_number{kMagicNumber};
   Endian endianness{kEndianness};
   CompressionStrategy compression_strategy;
@@ -80,7 +80,7 @@ constexpr auto operator==(const Header& lhs, const Header& rhs) -> bool;
 
 // Aligning to 32 bytes (most efficient) results in an eight-byte space loss per
 // event which is undesirable given the quantity of events generated.
-struct alignas(8) Event {  // NOLINT(altera-struct-pack-align)
+struct alignas(8) Event {
   enum class Type : EventType {
     kFunctionEntry = 1,
     kFunctionExit = 2,
@@ -96,7 +96,7 @@ static_assert(sizeof(Event) == 24);
 
 constexpr auto operator==(const Event& lhs, const Event& rhs) -> bool;
 
-struct alignas(128) TraceFile {
+struct TraceFile {
   Header header;
   std::vector<Event> events;
 };

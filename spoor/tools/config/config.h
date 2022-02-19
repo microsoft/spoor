@@ -17,7 +17,7 @@ enum class OutputFormat {
   kSpoorSymbolsCsv,
 };
 
-struct alignas(32) Config {
+struct Config {
   // Alphabetized to match the order printed in --help.
   std::string output_file;
   OutputFormat output_format;

@@ -18,7 +18,7 @@ class Source {
  public:
   using SizeType = buffer::CircularBuffer<trace::Event>::SizeType;
 
-  struct alignas(32) ReadError {
+  struct ReadError {
     enum class Type {
       kFailedToOpenFile,
       kMalformedFile,

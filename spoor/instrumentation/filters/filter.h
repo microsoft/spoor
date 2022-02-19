@@ -10,14 +10,14 @@
 
 namespace spoor::instrumentation::filters {
 
-struct alignas(128) FunctionInfo {
+struct FunctionInfo {
   std::string source_file_path;
   std::string demangled_name;
   std::string linkage_name;
   int32 ir_instruction_count;
 };
 
-struct alignas(128) Filter {
+struct Filter {
   enum class Action {
     kAllow,
     kBlock,

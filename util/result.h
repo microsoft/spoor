@@ -10,8 +10,6 @@
 namespace util::result {
 
 // Use `None` to indicate an empty Ok or Err.
-// `__attribute__((aligned(0)))` is not a power of two and `alignas(0)` is
-// always ignored. NOLINTNEXTLINE(altera-struct-pack-align)
 struct None {};
 
 // `Result<T, E>` is the type used to return and propagate errors. It stores

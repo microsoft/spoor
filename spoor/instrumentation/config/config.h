@@ -19,7 +19,7 @@ enum class OutputLanguage {
 
 // Prefer alphabetization readability over optimal struct ordering for this
 // single-use config. NOLINTNEXTLINE(clang-analyzer-optin.performance.Padding)
-struct alignas(128) Config {
+struct Config {
   // Alphabetized to match the order printed in --help.
   bool enable_runtime;
   std::optional<std::string> filters_file;

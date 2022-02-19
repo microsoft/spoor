@@ -30,7 +30,7 @@ using CombinedPool = spoor::runtime::buffer::CombinedBufferSlicePool<ValueType>;
 using DynamicPool = spoor::runtime::buffer::DynamicBufferSlicePool<ValueType>;
 using ReservedPool = spoor::runtime::buffer::ReservedBufferSlicePool<ValueType>;
 
-struct alignas(32) Options {
+struct Options {
   SizeType max_slice_capacity;
   SizeType capacity;
   SizeType borrow_cas_attempts;

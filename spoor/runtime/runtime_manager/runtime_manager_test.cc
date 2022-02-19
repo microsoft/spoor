@@ -281,7 +281,7 @@ TEST(RuntimeManager, FlushedTraceFiles) {  // NOLINT
 }
 
 TEST(RuntimeManager, DeleteFlushedTraceFilesOlderThan) {  // NOLINT
-  struct alignas(64) FileInfo {
+  struct FileInfo {
     DirectoryEntryMock entry;
     int64 size_bytes;
     TimestampNanoseconds created_at;

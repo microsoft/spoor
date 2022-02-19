@@ -11,7 +11,7 @@
 
 namespace util::file_system {
 
-struct alignas(2) PathExpansionOptions {
+struct PathExpansionOptions {
   bool expand_tilde;
   bool expand_environment_variables;
 };
