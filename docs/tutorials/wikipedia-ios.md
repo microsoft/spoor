@@ -184,6 +184,10 @@ mkdir trace
     Run: `Product > Run (⌘R)`.
 
     ![Product > Run][xcode-product-run]
+    
+    !!! warning "Appling environment variables"
+        Environment variables are only applied when launching the app from Xcode
+        (i.e., not when tapping the app's icon on the homescreen).
 === "Command line"
     Install the instrumented build.
 
