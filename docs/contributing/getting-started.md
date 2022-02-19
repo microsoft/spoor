@@ -8,15 +8,19 @@
 * [Bazel][bazel] build system.
 * [Material for MkDocs][mkdocs-material] to generate documentation.
 
+!!! info "Bazel configuration"
+    Check out the `bazelrc` files in the `.build` folder to help configure Spoor
+    for your environment.
+
 ## Build
 
-```
+```bash
 bazel build //...
 ```
 
 ## Test
 
-```
+```bash
 bazel test //...
 ```
 
@@ -24,25 +28,32 @@ bazel test //...
 
 ### Format C++, Objective-C, and Python
 
-```
+```bash
 bazel build //... --aspects toolchain/style/style.bzl%format --output_groups=report
 ```
 
 ### Format Starlark
 
-```
+```bash
 bazel run //toolchain/style:buildifier
 ```
 
 ### Lint C++ and Python
 
-```
+```bash
 bazel build //... --aspects toolchain/style/style.bzl%lint --output_groups=report
 ```
 
+!!! info "CI toolchain"
+    CI uses the LLVM toolchain when running the linter.
+
+    ```bash
+    --crosstool_top=//toolchain/crosstool:llvm_toolchain
+    ```
+
 ### Add copyright header
 
-```
+```bash
 ./toolchain/copyright_header/add_copyright_header.sh
 ```
 
@@ -52,7 +63,7 @@ Generate a `compile_commands.json` compilation database used by Clang Tidy for
 linting and by some IDEs to offer code completion.
 [Details][compilation-database-readme].
 
-```
+```bash
 ./toolchain/compilation_database/generate_compilation_database.sh
 ```
 
@@ -60,14 +71,21 @@ linting and by some IDEs to offer code completion.
 
 ### Build 
 
-```
+```bash
 mkdocs build
 ```
 
 ### Live preview server
 
-```
+```bash
 mkdocs serve
+```
+
+```
+INFO     -  Building documentation...
+INFO     -  Cleaning site directory
+INFO     -  Documentation built in 0.80 seconds
+INFO     -  [00:00:00] Serving on http://127.0.0.1:8000/
 ```
 
 [bazel]: https://bazel.build/

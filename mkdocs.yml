@@ -21,6 +21,7 @@ theme:
   features:
   - navigation.instant
   - navigation.tabs
+  - navigation.top
 markdown_extensions:
 - admonition
 - attr_list
