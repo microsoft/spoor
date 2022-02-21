@@ -186,10 +186,13 @@ auto TraceFileReader::Instance() -> spoor::runtime::trace::TraceFileReader& {
 
 auto TraceFileWriter::Instance() -> spoor::runtime::trace::TraceFileWriter& {
   static spoor::runtime::trace::TraceFileWriter trace_file_writer{{
+      .file_system{std::make_unique<util::file_system::LocalFileSystem>()},
       .file_writer{std::make_unique<util::file_system::LocalFileWriter>()},
       .compression_strategy = Config::Instance().compression_strategy,
       .initial_buffer_capacity =
           Config::Instance().thread_event_buffer_capacity,
+      .directory = Config::Instance().trace_file_path,
+      .create_directory = true,
   }};
   return trace_file_writer;
 }
@@ -222,7 +225,6 @@ auto Config::Instance() -> const spoor::runtime::config::Config& {
 auto RuntimeManager::Instance()
     -> spoor::runtime::runtime_manager::RuntimeManager& {
   static spoor::runtime::flush_queue::DiskFlushQueue flush_queue{{
-      .trace_file_path = Config::Instance().trace_file_path,
       .buffer_retention_duration =
           std::chrono::nanoseconds{
               Config::Instance().event_buffer_retention_duration_nanoseconds},

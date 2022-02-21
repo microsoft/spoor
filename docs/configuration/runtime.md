@@ -24,9 +24,6 @@ Source               | Key
 Environment variable | `SPOOR_RUNTIME_TRACE_FILE_PATH`
 Config file          | `trace_file_path`
 
-!!! warning "Path requirements"
-    The path must exist and end with a trailing `/`.
-
 !!! tip "Environment variable expansion"
     Spoor automatically expands environment variables. A tilde (i.e., `~`)
     expands to the value of `$HOME`.

@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <filesystem>
+#include <string>
 
 #include "gsl/gsl"
 #include "spoor/runtime/buffer/circular_slice_buffer.h"
@@ -28,7 +28,9 @@ class TraceWriter {
   constexpr auto operator=(TraceWriter&&) -> TraceWriter& = default;
   virtual ~TraceWriter() = default;
 
-  virtual auto Write(const std::filesystem::path& file_path, Header header,
+  // Passing `const std::string&` instead of `std::string_view` for gMock
+  // compatibility.
+  virtual auto Write(const std::string& file_name, Header header,
                      gsl::not_null<Events*> events) -> Result = 0;
 };
 

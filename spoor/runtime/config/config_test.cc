@@ -44,6 +44,7 @@ TEST(Config, Default) {  // NOLINT
       .max_flush_buffer_to_file_attempts = 2,
       .flush_all_events = true,
   };
+  ASSERT_EQ(default_config, expected_default_config);
 }
 
 TEST(Config, UsesDefaultConfigWithNoSource) {  // NOLINT
@@ -410,6 +411,30 @@ TEST(Config, ExpandsEnvironmentVariables) {  // NOLINT
   const auto config_b =
       Config::FromSourcesOrDefault(std::move(sources), default_config, get_env);
   ASSERT_EQ(config_b, expected_config);
+}
+
+TEST(Config, AddsTrailingSlash) {  // NOLINT
+  const auto get_env = [](const char* /*unused*/) { return nullptr; };
+  const auto input_path =
+      std::filesystem::path{"/path/to/trace"}.make_preferred();
+  const auto parsed_path =
+      std::filesystem::path{"/path/to/trace/"}.make_preferred();
+  const Config default_config{
+      .trace_file_path = input_path,
+      .compression_strategy = util::compression::Strategy::kNone,
+      .session_id = 1,
+      .thread_event_buffer_capacity = 2,
+      .max_reserved_event_buffer_slice_capacity = 3,
+      .max_dynamic_event_buffer_slice_capacity = 4,
+      .reserved_event_pool_capacity = 5,
+      .dynamic_event_pool_capacity = 6,
+      .dynamic_event_slice_borrow_cas_attempts = 7,
+      .event_buffer_retention_duration_nanoseconds = 8,
+      .max_flush_buffer_to_file_attempts = 9,
+      .flush_all_events = false,
+  };
+  const auto config = Config::FromSourcesOrDefault({}, default_config, get_env);
+  ASSERT_EQ(config.trace_file_path, parsed_path);
 }
 
 }  // namespace

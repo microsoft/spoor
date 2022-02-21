@@ -10,6 +10,7 @@
 #include <string_view>
 #include <vector>
 
+#include "absl/strings/match.h"
 #include "spoor/runtime/config/source.h"
 #include "spoor/runtime/trace/trace.h"
 #include "util/compression/compressor.h"
@@ -96,11 +97,19 @@ auto Config::FromSourcesOrDefault(
     std::vector<std::unique_ptr<Source>>&& sources,
     const Config& default_config, const util::env::StdGetEnv& get_env)
     -> Config {
+  auto trace_file_path = [&] {
+    auto path = ValueFromSourceOrDefault(sources, &Source::TraceFilePath,
+                                         default_config.trace_file_path);
+    path = ExpandPath(path, kPathExpansionOptions, get_env);
+    // std::filesystem expects directories to end with a trailing slash.
+    const std::string separator{std::filesystem::path::preferred_separator};
+    if (path != "." && !absl::EndsWith(path.string(), separator)) {
+      path += separator;
+    }
+    return path;
+  }();
   return {
-      .trace_file_path =
-          ExpandPath(ValueFromSourceOrDefault(sources, &Source::TraceFilePath,
-                                              default_config.trace_file_path),
-                     kPathExpansionOptions, get_env),
+      .trace_file_path = std::move(trace_file_path),
       .compression_strategy =
           ValueFromSourceOrDefault(sources, &Source::CompressionStrategy,
                                    default_config.compression_strategy),
