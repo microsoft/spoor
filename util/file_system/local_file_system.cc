@@ -35,7 +35,7 @@ auto LocalFileSystem::IsDirectory(const std::filesystem::path& path) const
 auto LocalFileSystem::CreateDirectories(const std::filesystem::path& path) const
     -> util::result::Result<bool, std::error_code> {
   std::error_code error_code{};
-  const auto created = std::filesystem::is_directory(path, error_code);
+  const auto created = std::filesystem::create_directories(path, error_code);
   const auto error = static_cast<bool>(error_code);
   if (error) return error_code;
   return created;
