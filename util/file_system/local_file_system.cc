@@ -32,6 +32,15 @@ auto LocalFileSystem::IsDirectory(const std::filesystem::path& path) const
   return is_directory;
 }
 
+auto LocalFileSystem::CreateDirectories(const std::filesystem::path& path) const
+    -> util::result::Result<bool, std::error_code> {
+  std::error_code error_code{};
+  const auto created = std::filesystem::is_directory(path, error_code);
+  const auto error = static_cast<bool>(error_code);
+  if (error) return error_code;
+  return created;
+}
+
 auto LocalFileSystem::FileSize(const std::filesystem::path& path) const
     -> util::result::Result<std::uintmax_t, std::error_code> {
   std::error_code error_code{};

@@ -22,6 +22,9 @@ class FileSystemMock final : public FileSystem {
       (util::result::Result<bool, std::error_code>), IsDirectory,
       (const std::filesystem::path& path), (const, override));
   MOCK_METHOD(  // NOLINT
+      (util::result::Result<bool, std::error_code>), CreateDirectories,
+      (const std::filesystem::path& path), (const, override));
+  MOCK_METHOD(  // NOLINT
       (util::result::Result<std::uintmax_t, std::error_code>), FileSize,
       (const std::filesystem::path& path), (const, override));
   MOCK_METHOD(  // NOLINT
