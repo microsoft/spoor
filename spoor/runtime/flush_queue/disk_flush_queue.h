@@ -12,7 +12,7 @@
 #include <mutex>
 #include <optional>
 #include <shared_mutex>
-#include <string_view>
+#include <string>
 #include <thread>
 #include <unordered_set>
 
@@ -33,7 +33,6 @@ class DiskFlushQueue final
   using SizeType = Buffer::SizeType;
 
   struct Options {
-    std::filesystem::path trace_file_path;
     std::chrono::nanoseconds buffer_retention_duration;
     gsl::not_null<util::time::SystemClock*> system_clock;
     gsl::not_null<util::time::SteadyClock*> steady_clock;
@@ -86,8 +85,7 @@ class DiskFlushQueue final
   std::atomic_bool running_;
   std::atomic_bool draining_;
 
-  auto TraceFilePath(const FlushInfo& flush_info) const
-      -> std::filesystem::path;
+  auto TraceFilePath(const FlushInfo& flush_info) const -> std::string;
   auto TraceFileHeader(const FlushInfo& flush_info) const -> trace::Header;
   auto RunCompletionIfPossible() -> void;
 };

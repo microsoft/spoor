@@ -4,11 +4,11 @@
 #include "spoor/runtime/flush_queue/disk_flush_queue.h"
 
 #include <chrono>
-#include <filesystem>
 #include <functional>
 #include <mutex>
 #include <queue>
 #include <shared_mutex>
+#include <string>
 #include <thread>
 
 #include "absl/strings/str_format.h"
@@ -140,14 +140,13 @@ auto DiskFlushQueue::Size() const -> DiskFlushQueue::SizeType {
 auto DiskFlushQueue::Empty() const -> bool { return queue_size_ == 0; }
 
 auto DiskFlushQueue::TraceFilePath(const FlushInfo& flush_info) const
-    -> std::filesystem::path {
+    -> std::string {
   const auto timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(
                              flush_info.flush_timestamp.time_since_epoch())
                              .count();
-  const auto file_name = absl::StrFormat(
-      "%016x-%016x-%016x.%s", options_.session_id, flush_info.thread_id,
-      timestamp, trace::kTraceFileExtension);
-  return options_.trace_file_path / file_name;
+  return absl::StrFormat("%016x-%016x-%016x.%s", options_.session_id,
+                         flush_info.thread_id, timestamp,
+                         trace::kTraceFileExtension);
 }
 
 auto DiskFlushQueue::TraceFileHeader(const FlushInfo& flush_info) const

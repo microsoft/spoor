@@ -54,6 +54,7 @@ cc_library(
         "//util/compression",
         "//util/env",
         "//util/file_system",
+        "@com_google_absl//absl/strings",
     ],
 )
 

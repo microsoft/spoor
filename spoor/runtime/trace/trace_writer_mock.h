@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-#include <filesystem>
+#include <string>
 
 #include "gmock/gmock.h"
 #include "gsl/gsl"
@@ -13,7 +13,7 @@ class TraceWriterMock final : public TraceWriter {
  public:
   MOCK_METHOD(  // NOLINT
       Result, Write,
-      (const std::filesystem::path& file_path, Header header,
+      (const std::string& file_name, Header header,
        gsl::not_null<Events*> events),
       (override));
 };
