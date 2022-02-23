@@ -2,6 +2,9 @@
 # Licensed under the MIT License.
 '''Tests for the `clang` and `clang++` wrappers.'''
 
+from shared import SPOOR_INSTRUMENTATION_ENABLE_RUNTIME_KEY
+from shared import SPOOR_INSTRUMENTATION_INITIALIZE_RUNTIME_KEY
+from shared import SPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION_KEY
 from shared import arg_after
 from unittest import mock
 from unittest.mock import patch
@@ -40,6 +43,13 @@ def _test_parses_compile_args(input_args, input_args_file, main, popen_mock):
     assert 'apple-ios' in arg_after('-target', clang_clangxx_args.args[0])
   if 'macos' in input_args_file:
     assert 'apple-macos' in arg_after('-target', clang_clangxx_args.args[0])
+  assert '-D__SPOOR__=1' in clang_clangxx_args.args[0]
+  assert ('-DSPOOR_INSTRUMENTATION_ENABLE_RUNTIME=1'
+          in clang_clangxx_args.args[0])
+  assert ('-DSPOOR_INSTRUMENTATION_INITIALIZE_RUNTIME=1'
+          in clang_clangxx_args.args[0])
+  assert ('-DSPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION=1'
+          in clang_clangxx_args.args[0])
   assert '-x' in clang_clangxx_args.args[0]
   assert arg_after('-x', clang_clangxx_args.args[0]) == 'objective-c'
   assert '-o' in clang_clangxx_args.args[0]
@@ -83,6 +93,7 @@ def _test_parses_compile_args(input_args, input_args_file, main, popen_mock):
 
 
 @patch('subprocess.Popen')
+@patch.dict('os.environ', {})
 def test_parses_compile_args(popen_mock):
   input_args_files = [
       f'toolchain/xcode/test_data/build_args/{file}' for file in [
@@ -96,6 +107,65 @@ def test_parses_compile_args(popen_mock):
       input_args = file.read().strip().split(' ')
       for main in [clang.main, clangxx.main]:
         _test_parses_compile_args(input_args, input_args_file, main, popen_mock)
+        popen_mock.reset_mock()
+
+
+def _get_compile_args(input_args, main, popen_mock):
+  popen_handle = popen_mock.return_value.__enter__
+
+  clang_clangxx_process_mock = mock.Mock()
+  clang_clangxx_process_mock.returncode = 0
+  spoor_opt_process_mock = mock.Mock()
+  spoor_opt_process_mock.returncode = 0
+  clangxx_process_mock = mock.Mock()
+  clangxx_process_mock.returncode = 0
+  popen_handle.side_effect = [
+      clang_clangxx_process_mock, spoor_opt_process_mock, clangxx_process_mock
+  ]
+
+  _ = main(['clang_clangxx'] + input_args, 'default_clang_clangxx', 'spoor_opt',
+           'default_clangxx', '/spoor/library/path')
+
+  clang_clangxx_args, _, _ = popen_mock.call_args_list
+  assert len(clang_clangxx_args.args) == 1
+  return clang_clangxx_args.args[0]
+
+
+@patch('subprocess.Popen')
+def test_forwards_env_configs(popen_mock):
+  config_unspecified = {}
+  config_empty = {
+      SPOOR_INSTRUMENTATION_ENABLE_RUNTIME_KEY: '',
+      SPOOR_INSTRUMENTATION_INITIALIZE_RUNTIME_KEY: '',
+      SPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION_KEY: '',
+  }
+  config_disabled = {
+      SPOOR_INSTRUMENTATION_ENABLE_RUNTIME_KEY: 'false',
+      SPOOR_INSTRUMENTATION_INITIALIZE_RUNTIME_KEY: 'NO',
+      SPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION_KEY: '0',
+  }
+  config_enabled = {
+      SPOOR_INSTRUMENTATION_ENABLE_RUNTIME_KEY: 'true',
+      SPOOR_INSTRUMENTATION_INITIALIZE_RUNTIME_KEY: 'YES',
+      SPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION_KEY: '1',
+  }
+  input_args = [
+      '-target', 'arm64-apple-ios15.0', '-x', 'c', '-o', 'foo.o', 'foo'
+  ]
+  for main in [clang.main, clangxx.main]:
+    for env in [config_unspecified, config_empty, config_enabled]:
+      with patch.dict('os.environ', env, clear=True):
+        args = _get_compile_args(input_args, main, popen_mock)
+        assert '-DSPOOR_INSTRUMENTATION_ENABLE_RUNTIME=1' in args
+        assert '-DSPOOR_INSTRUMENTATION_INITIALIZE_RUNTIME=1' in args
+        assert '-DSPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION=1' in args
+        popen_mock.reset_mock()
+    for env in [config_disabled]:
+      with patch.dict('os.environ', env, clear=True):
+        args = _get_compile_args(input_args, main, popen_mock)
+        assert '-DSPOOR_INSTRUMENTATION_ENABLE_RUNTIME=0' in args
+        assert '-DSPOOR_INSTRUMENTATION_INITIALIZE_RUNTIME=0' in args
+        assert '-DSPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION=0' in args
         popen_mock.reset_mock()
 
 
@@ -124,6 +194,7 @@ def _test_parses_link_args(input_args, input_args_file, main, popen_mock):
 
 
 @patch('subprocess.Popen')
+@patch.dict('os.environ', {})
 def test_parses_link_args(popen_mock):
   input_args_files = [
       f'toolchain/xcode/test_data/build_args/{file}' for file in [
@@ -161,6 +232,7 @@ def _test_does_not_link_spoor_for_incremental_link(main, popen_mock):
 
 
 @patch('subprocess.Popen')
+@patch.dict('os.environ', {})
 def test_clang_does_not_link_spoor_for_incremental_link(popen_mock):
   for main in [clang.main, clangxx.main]:
     _test_does_not_link_spoor_for_incremental_link(main, popen_mock)
@@ -185,6 +257,7 @@ def _test_link_return_code(main, popen_mock):
 
 
 @patch('subprocess.Popen')
+@patch.dict('os.environ', {})
 def test_clang_link_return_code(popen_mock):
   for main in [clang.main, clangxx.main]:
     _test_link_return_code(main, popen_mock)
@@ -216,6 +289,7 @@ def test_raises_exception_with_unsupported_target():
     assert error == expected_error
 
 
+@patch.dict('os.environ', {})
 def test_raises_exception_with_multiple_outputs_when_compiling():
   input_args = [
       '-target', 'arm64-apple-ios15.0', '-x', 'objective-c', '-o', 'a.o', '-o',
