@@ -17,6 +17,8 @@ Configure Spoor's instrumentation with environment variables.
 
 Automatically enable Spoor's runtime.
 
+**Type:** `bool`
+
 **Default:** `true`
 
 Source               | Key
@@ -27,6 +29,8 @@ Environment variable | `SPOOR_INSTRUMENTATION_ENABLE_RUNTIME`
 
 Path to the [filters file](#filters-file).
 
+**Type:** `string`
+
 **Default:** Empty (no filters)
 
 Source               | Key
@@ -36,6 +40,8 @@ Environment variable | `SPOOR_INSTRUMENTATION_FILTERS_FILE`
 ### Force binary output
 
 Force printing binary data to the console.
+
+**Type:** `bool`
 
 **Default:** `false`
 
@@ -48,6 +54,8 @@ Environment variable | `SPOOR_INSTRUMENTATION_FORCE_BINARY_OUTPUT`
 Automatically initialize Spoor's runtime. This is achieved by injecting a call
 to `_spoor_runtime_Initialize()` at the start of `main`.
 
+**Type:** `bool`
+
 **Default:** `true`
 
 Source               | Key
@@ -57,6 +65,8 @@ Environment variable | `SPOOR_INSTRUMENTATION_INITIALIZE_RUNTIME`
 ### Inject instrumentation
 
 Inject Spoor instrumentation.
+
+**Type:** `bool`
 
 **Default:** `true`
 
@@ -68,6 +78,8 @@ Environment variable | `SPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION`
 
 Override the LLVM module's ID.
 
+**Type:** `string`
+
 **Default:** Empty (do not override LLVM module ID)
 
 Source               | Key
@@ -77,6 +89,8 @@ Environment variable | `SPOOR_INSTRUMENTATION_MODULE_ID`
 ### Output file
 
 Spoor instrumentation symbols output file.
+
+**Type:** `string`
 
 **Default:** `-` (stdout)
 
@@ -89,6 +103,8 @@ Environment variable | `SPOOR_INSTRUMENTATION_OUTPUT_FILE`
 Spoor instrumentation symbols output file. The path must be absolute and all
 parent directories must exist. Tilde expansion is not supported.
 
+**Type:** `string`
+
 **Default:** Empty (error)
 
 Source               | Key
@@ -99,6 +115,8 @@ Environment variable | `SPOOR_INSTRUMENTATION_OUTPUT_SYMBOLS_FILE`
 
 Language in which to output the transformed code.
 
+**Type:** `string`
+
 **Options:** `ir` or `bitcode`.
 
 **Default value:** `bitcode`
@@ -107,12 +125,33 @@ Source               | Key
 -------------------- | ---------------------------------------
 Environment variable | `SPOOR_INSTRUMENTATION_OUTPUT_LANGUAGE`
 
+## Xcode toolchain
+
+### Preprocessor macros
+
+Spoor's `clang` and `clang++` toolchain wrappers export the following
+preprocessor macros.
+
+Name        | Value
+------------|------
+`__SPOOR__` | `1`
+
+Additionally, the `clang` and `clang++` toolchain wrappers forward the following
+configuration values as a preprocessor macros. Their values are adopted from the
+configured value or take on the default value if not specified.
+
+* [`SPOOR_INSTRUMENTATION_ENABLE_RUNTIME`][enable-runtime]
+* [`SPOOR_INSTRUMENTATION_INITIALIZE_RUNTIME`][initialize-runtime]
+* [`SPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION`][inject-instrumentation]
+
 ## Filters file
 
 Policy: Do not instrument functions matching a blocklist rule that do not also
 match an allow list rule.
 
 A function must match all conditions within in a block or allow rule to apply.
+
+All configurations are optional.
 
 !!! note "Match everything"
     An empty rule matches everything.
@@ -147,10 +186,12 @@ instruction count).
 
 ### Rule name
 
-Optional. Helpful description of the rule. If a filter matches a function during
+Helpful description of the rule. If a filter matches a function during
 instrumentation (either blocking or allowing it), the rule's name is reported in
 the emitted symbols metadata. If multiple rules apply to a function, only one of
 the rules is reported.
+
+**Type:** `string`
 
 Source      | Key
 ----------- | -----------
@@ -158,7 +199,9 @@ Config file | `rule_name`
 
 ### Source file path
 
-Optional. Regular expression (string) matching the source file path.
+Regular expression matching the source file path.
+
+**Type:** `string`
 
 Source      | Key
 ----------- | ------------------
@@ -176,7 +219,9 @@ Config file | `source_file_path`
 
 ### Demangled function name
 
-Optional. Regular expression (string) matching the demangled function name.
+Regular expression matching the demangled function name.
+
+**Type:** `string`
 
 Source      | Key
 ----------- | -------------------------
@@ -202,7 +247,9 @@ app_ios.Bootstrap.appDidFinish(with: Swift.Optional<Swift.Dictionary<__C.UIAppli
 
 ### Function linkage name
 
-Optional. Regular expression (string) matching the function's linkage name.
+Regular expression matching the function's linkage name.
+
+**Type:** `string`
 
 Source      | Key
 ----------- | -----------------------
@@ -227,8 +274,10 @@ $s7app_ios9BootstrapC0A9DidFinish4withySDySo29UIApplicationLaunchOptionsKeyaypGS
 
 ### Function IR instruction count less than
 
-Optional. Integer. Matches all functions with an IR instruction count strictly
-less than the provided value.
+Matches all functions with an IR instruction count strictly less than the
+provided value.
+
+**Type:** `int32`
 
 Source      | Key
 ----------- | ----------------------------------
@@ -236,12 +285,17 @@ Config file | `function_ir_instruction_count_lt`
 
 ### Function IR instruction count greater than
 
-Optional. Integer. Matches all functions with an IR instruction count strictly
-greater than the provided value.
+Matches all functions with an IR instruction count strictly greater than the
+provided value.
+
+**Type:** `int32`
 
 Source      | Key
 ----------- | ----------------------------------
 Config file | `function_ir_instruction_count_gt`
 
+[enable-runtime]: #enable-runtime
+[initialize-runtime]: #initialize-runtime
+[inject-instrumentation]: #inject-instrumentation
 [spoor-instrumentation-config]: https://github.com/microsoft/spoor/tree/master/spoor/instrumentation/config
 [user-defined-config]: /configuration/runtime/#configuration-file
