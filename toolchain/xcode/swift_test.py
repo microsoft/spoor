@@ -5,8 +5,9 @@
 from shared import arg_after
 from unittest import mock
 from unittest.mock import patch
-import subprocess
 import pytest
+import shlex
+import subprocess
 import swift
 import sys
 
@@ -19,11 +20,13 @@ def test_parses_swift_compile_args(popen_mock):
           'swift_compile_swift_ios_arm64_args.txt',
           'swift_compile_swift_ios_x86_64_args.txt',
           'swift_compile_swift_macos_x86_64_args.txt',
+          'swift_compile_swift_watchos_arm64_args.txt',
+          'swift_compile_swift_watchos_x86_64_args.txt',
       ]
   ]
   for input_args_file in input_args_files:
     with open(input_args_file, encoding='utf-8', mode='r') as file:
-      input_args = file.read().strip().split(' ')
+      input_args = shlex.split(file.read())
       output_object_file = arg_after('-o', input_args)
 
       swift_process_mock = mock.Mock()

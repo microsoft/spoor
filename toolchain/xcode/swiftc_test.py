@@ -4,6 +4,7 @@
 
 from unittest.mock import patch
 import pytest
+import shlex
 import swiftc
 import sys
 
@@ -16,11 +17,13 @@ def test_parses_swiftc_args_and_disables_batch_mode(popen_mock):
           'swiftc_driver_swift_ios_arm64_args.txt',
           'swiftc_driver_swift_ios_x86_64_args.txt',
           'swiftc_driver_swift_macos_x86_64_args.txt',
+          'swiftc_driver_swift_watchos_arm64_args.txt',
+          'swiftc_driver_swift_watchos_x86_64_args.txt',
       ]
   ]
   for input_args_file in input_args_files:
     with open(input_args_file, encoding='utf-8', mode='r') as file:
-      input_args = file.read().strip().split(' ')
+      input_args = shlex.split(file.read())
       popen_handle.return_value.returncode = 0
       return_code = swiftc.main(['swiftc'] + input_args, 'default_swiftc',
                                 'wrapped_swift')
@@ -44,7 +47,7 @@ def test_raises_when_compiling_with_whole_module_optimization(popen_mock):
   input_args_file = 'toolchain/xcode/test_data/build_args/' + \
           'swiftc_driver_swift_ios_arm64_whole_module_args.txt'
   with open(input_args_file, encoding='utf-8', mode='r') as file:
-    input_args = file.read().strip().split(' ')
+    input_args = shlex.split(file.read())
     with pytest.raises(ValueError) as error:
       swiftc.main(['swiftc'] + input_args, 'default_swiftc', 'wrapped_swift')
       assert error == 'Whole module optimization is not supported yet.'

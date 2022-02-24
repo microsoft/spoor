@@ -11,6 +11,7 @@ from unittest.mock import patch
 import clang
 import clangxx
 import pytest
+import shlex
 import subprocess
 import sys
 
@@ -43,6 +44,8 @@ def _test_parses_compile_args(input_args, input_args_file, main, popen_mock):
     assert 'apple-ios' in arg_after('-target', clang_clangxx_args.args[0])
   if 'macos' in input_args_file:
     assert 'apple-macos' in arg_after('-target', clang_clangxx_args.args[0])
+  if 'watchos' in input_args_file:
+    assert 'apple-watchos' in arg_after('-target', clang_clangxx_args.args[0])
   assert '-D__SPOOR__=1' in clang_clangxx_args.args[0]
   assert ('-DSPOOR_INSTRUMENTATION_ENABLE_RUNTIME=1'
           in clang_clangxx_args.args[0])
@@ -100,11 +103,13 @@ def test_parses_compile_args(popen_mock):
           'clang_compile_objc_ios_arm64_args.txt',
           'clang_compile_objc_ios_x86_64_args.txt',
           'clang_compile_objc_macos_x86_64_args.txt',
+          'clang_compile_objc_watchos_arm64_args.txt',
+          'clang_compile_objc_watchos_x86_64_args.txt',
       ]
   ]
   for input_args_file in input_args_files:
     with open(input_args_file, encoding='utf-8', mode='r') as file:
-      input_args = file.read().strip().split(' ')
+      input_args = shlex.split(file.read())
       for main in [clang.main, clangxx.main]:
         _test_parses_compile_args(input_args, input_args_file, main, popen_mock)
         popen_mock.reset_mock()
@@ -191,6 +196,11 @@ def _test_parses_link_args(input_args, input_args_file, main, popen_mock):
         '-L/spoor/library/path', '-lspoor_runtime_macos', '-lc++',
         '-lspoor_runtime_default_config_macos'
     ]
+  if 'watchos' in input_args_file:
+    assert popen_args[-4:] == [
+        '-L/spoor/library/path', '-lspoor_runtime_watchos', '-lc++',
+        '-lspoor_runtime_default_config_watchos'
+    ]
 
 
 @patch('subprocess.Popen')
@@ -201,14 +211,18 @@ def test_parses_link_args(popen_mock):
           'clang_link_objc_ios_arm64_args.txt',
           'clang_link_objc_ios_x86_64_args.txt',
           'clang_link_objc_macos_x86_64_args.txt',
+          'clang_link_objc_watchos_arm64_args.txt',
+          'clang_link_objc_watchos_x86_64_args.txt',
           'clang_link_swift_ios_arm64_args.txt',
           'clang_link_swift_ios_x86_64_args.txt',
           'clang_link_swift_macos_x86_64_args.txt',
+          'clang_link_swift_watchos_arm64_args.txt',
+          'clang_link_swift_watchos_x86_64_args.txt',
       ]
   ]
   for input_args_file in input_args_files:
     with open(input_args_file, encoding='utf-8', mode='r') as file:
-      input_args = file.read().strip().split(' ')
+      input_args = shlex.split(file.read())
       for main in [clang.main, clangxx.main]:
         _test_parses_link_args(input_args, input_args_file, main, popen_mock)
         popen_mock.reset_mock()

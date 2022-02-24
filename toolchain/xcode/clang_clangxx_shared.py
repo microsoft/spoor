@@ -64,6 +64,8 @@ def _runtime_library_for_target(target):
     return 'spoor_runtime_ios'
   elif 'macos' in target:
     return 'spoor_runtime_macos'
+  elif 'watchos' in target:
+    return 'spoor_runtime_watchos'
   raise ValueError(f'Unsupported target {target}.')
 
 
@@ -72,6 +74,8 @@ def _runtime_config_for_target(target):
     return 'spoor_runtime_default_config_ios'
   elif 'macos' in target:
     return 'spoor_runtime_default_config_macos'
+  elif 'watchos' in target:
+    return 'spoor_runtime_default_config_watchos'
   raise ValueError(f'Unsupported target {target}.')
 
 
