@@ -2,8 +2,10 @@
 # Licensed under the MIT License.
 
 build --copt="-fembed-bitcode"
-build --ios_multi_cpus=arm64,x86_64
-build --macos_cpus=arm64,x86_64
+# Note: We cannot simultaneously build with both `arm64` and `sim_arm64` because
+# fat files cannot contain two binaries with the same architecture.
+build --ios_multi_cpus=arm64,armv7,i386,x86_64
+build --macos_cpus=arm64,arm64e,x86_64
 build --watchos_cpus=arm64,arm64_32,armv7k,i386,x86_64
 
 build --output_filter='^external/*'
