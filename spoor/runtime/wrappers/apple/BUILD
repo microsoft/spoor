@@ -9,6 +9,12 @@ load(
 )
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_unit_test")
 load(
+    "@build_bazel_rules_apple//apple:watchos.bzl",
+    "watchos_static_framework",
+    # TODO(237): Fix watchOS unit tests.
+    # "watchos_unit_test",
+)
+load(
     "//toolchain:config.bzl",
     "SPOOR_DEFAULT_COPTS",
     "SPOOR_DEFAULT_LINKOPTS",
@@ -19,11 +25,11 @@ _MINIMUM_IOS_VERSION = "13.0"
 
 _MINIMUM_MACOS_VERSION = "10.15"
 
+_MINIMUM_WATCHOS_VERSION = "6.0"
+
 _LIB_COPTS = SPOOR_DEFAULT_COPTS
 
-_TEST_COPTS = SPOOR_DEFAULT_TEST_COPTS + [
-    "-Wno-gnu-statement-expression",
-]
+_TEST_COPTS = SPOOR_DEFAULT_TEST_COPTS + ["-Wno-gnu-statement-expression"]
 
 _LIB_HDRS = [
     "SpoorConfig.h",
@@ -68,6 +74,24 @@ ios_static_framework(
     deps = [":runtime_stub_lib"],
 )
 
+watchos_static_framework(
+    name = "watchos_runtime_framework",
+    hdrs = _LIB_HDRS,
+    bundle_name = _MODULE_NAME,
+    minimum_os_version = _MINIMUM_WATCHOS_VERSION,
+    visibility = ["//visibility:public"],
+    deps = [":runtime_lib"],
+)
+
+watchos_static_framework(
+    name = "watchos_runtime_stub_framework",
+    hdrs = _LIB_HDRS,
+    bundle_name = _STUB_MODULE_NAME,
+    minimum_os_version = _MINIMUM_WATCHOS_VERSION,
+    visibility = ["//visibility:public"],
+    deps = [":runtime_stub_lib"],
+)
+
 apple_static_library(
     name = "spoor_runtime_ios",
     linkopts = SPOOR_DEFAULT_LINKOPTS,
@@ -82,6 +106,15 @@ apple_static_library(
     linkopts = SPOOR_DEFAULT_LINKOPTS,
     minimum_os_version = _MINIMUM_MACOS_VERSION,
     platform_type = "macos",
+    visibility = ["//visibility:public"],
+    deps = [":runtime_lib"],
+)
+
+apple_static_library(
+    name = "spoor_runtime_watchos",
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
+    minimum_os_version = _MINIMUM_WATCHOS_VERSION,
+    platform_type = "watchos",
     visibility = ["//visibility:public"],
     deps = [":runtime_lib"],
 )
@@ -105,6 +138,15 @@ apple_static_library(
 )
 
 apple_static_library(
+    name = "spoor_runtime_stub_watchos",
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
+    minimum_os_version = _MINIMUM_WATCHOS_VERSION,
+    platform_type = "watchos",
+    visibility = ["//visibility:public"],
+    deps = [":runtime_stub_lib"],
+)
+
+apple_static_library(
     name = "spoor_runtime_default_config_ios",
     linkopts = SPOOR_DEFAULT_LINKOPTS,
     minimum_os_version = _MINIMUM_IOS_VERSION,
@@ -118,6 +160,15 @@ apple_static_library(
     linkopts = SPOOR_DEFAULT_LINKOPTS,
     minimum_os_version = _MINIMUM_IOS_VERSION,
     platform_type = "macos",
+    visibility = ["//visibility:public"],
+    deps = [":runtime_default_config_lib"],
+)
+
+apple_static_library(
+    name = "spoor_runtime_default_config_watchos",
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
+    minimum_os_version = _MINIMUM_WATCHOS_VERSION,
+    platform_type = "watchos",
     visibility = ["//visibility:public"],
     deps = [":runtime_default_config_lib"],
 )
@@ -172,6 +223,17 @@ macos_unit_test(
     ],
 )
 
+# TODO(237): Fix watchOS unit tests.
+# watchos_unit_test(
+#     name = "watchos_runtime_test",
+#     minimum_os_version = _MINIMUM_WATCHOS_VERSION,
+#     visibility = ["//visibility:private"],
+#     deps = [
+#         ":runtime_test_lib",
+#         ":runtime_wrapper_test_lib",
+#     ],
+# )
+
 ios_unit_test(
     name = "ios_runtime_stub_test",
     minimum_os_version = _MINIMUM_IOS_VERSION,
@@ -192,15 +254,24 @@ macos_unit_test(
     ],
 )
 
+# TODO(237): Fix watchOS unit tests.
+# watchos_unit_test(
+#     name = "watchos_runtime_stub_test",
+#     minimum_os_version = _MINIMUM_WATCHOS_VERSION,
+#     visibility = ["//visibility:private"],
+#     deps = [
+#         ":runtime_stub_test_lib",
+#         ":runtime_stub_wrapper_test_lib",
+#     ],
+# )
+
 objc_library(
     name = "runtime_wrapper_test_lib",
     testonly = True,
     srcs = _WRAPPER_TEST_SRCS,
     copts = _TEST_COPTS,
     visibility = ["//visibility:private"],
-    deps = [
-        ":runtime_lib",
-    ],
+    deps = [":runtime_lib"],
 )
 
 objc_library(
@@ -209,17 +280,13 @@ objc_library(
     srcs = _WRAPPER_TEST_SRCS,
     copts = _TEST_COPTS,
     visibility = ["//visibility:private"],
-    deps = [
-        ":runtime_stub_lib",
-    ],
+    deps = [":runtime_stub_lib"],
 )
 
 objc_library(
     name = "runtime_test_lib",
     testonly = True,
-    srcs = [
-        "RuntimeTests.mm",
-    ],
+    srcs = ["RuntimeTests.mm"],
     copts = _TEST_COPTS,
     visibility = ["//visibility:private"],
     deps = [
@@ -231,9 +298,7 @@ objc_library(
 objc_library(
     name = "runtime_stub_test_lib",
     testonly = True,
-    srcs = [
-        "RuntimeStubTests.mm",
-    ],
+    srcs = ["RuntimeStubTests.mm"],
     copts = _TEST_COPTS,
     visibility = ["//visibility:private"],
     deps = [
