@@ -20,8 +20,8 @@ see the [Code of Conduct FAQ][code-of-conduct-faq] or contact
 [opencode@microsoft.com][opencode-email] with any additional questions or
 comments.
 
-[build-status]: https://outlookmobile.visualstudio.com/Github/_build?definitionId=89
-[build-status-badge]: https://outlookmobile.visualstudio.com/Github/_apis/build/status/microsoft.spoor
+[build-status]: https://github.com/microsoft/spoor/actions/workflows/build-and-test.yml
+[build-status-badge]: https://github.com/microsoft/spoor/actions/workflows/build-and-test.yml/badge.svg
 [code-of-conduct-faq]: https://opensource.microsoft.com/codeofconduct/faq/
 [code-of-conduct]: https://opensource.microsoft.com/codeofconduct/
 [microsoft-cla]: https://cla.opensource.microsoft.com
