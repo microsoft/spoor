@@ -9,10 +9,20 @@ jobs:
   publish-documentation:
     runs-on: ubuntu-latest
     name: Publish documentation
+    environment: github-pages
     steps:
-      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.x
       - name: Install Material for MkDocs
         run: pip3 install mkdocs-material
-      - name: Publish documentation
+      - name: Check out code
+        uses: actions/checkout@v3
+      - name: Configure Git
+        run: |
+          git config --local user.name "${{ github.actor }}"
+          git config --local user.email \
+            "${{ github.actor }}@users.noreply.github.com"
+      - name: Publish
         run: mkdocs gh-deploy --force
-
