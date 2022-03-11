@@ -1,0 +1,18 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
+name: Publish documentation
+on:
+  push:
+    branches: [master]
+jobs:
+  publish-documentation:
+    runs-on: ubuntu-latest
+    name: Publish documentation
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Material for MkDocs
+        run: pip3 install mkdocs-material
+      - name: Publish documentation
+        run: mkdocs gh-deploy --force
+
