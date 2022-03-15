@@ -175,7 +175,7 @@ source_file_path = ".*/Pods/React.*"
 
 [[allow]]
 rule_name = "Always instrument `main`"
-linkage_name = "main"
+function_linkage_name = "main"
 ```
 
 The above config file blocks all functions that are less than 100 instructions,
