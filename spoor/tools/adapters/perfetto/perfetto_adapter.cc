@@ -148,7 +148,8 @@ auto MakePerfettoTrackEventTracePacket(const SpoorHeader& spoor_header,
 
   auto* track_event = packet.mutable_track_event();
   const auto track_uuid =
-      internal::TrackUuid(spoor_header.process_id, spoor_header.thread_id);
+      internal::TrackUuid({.process_id = spoor_header.process_id,
+                           .thread_id = spoor_header.thread_id});
   track_event->set_track_uuid(track_uuid);
 
   switch (static_cast<SpoorEvent::Event::Type>(spoor_event.type)) {
@@ -195,7 +196,8 @@ auto MakePerfettoTrackDescriptorPackets(
   std::vector<PerfettoTracePacket> trace_packets{};
   for (const auto& trace_file : trace_files) {
     const auto& header = trace_file.header;
-    const auto uuid = internal::TrackUuid(header.process_id, header.thread_id);
+    const auto uuid = internal::TrackUuid(
+        {.process_id = header.process_id, .thread_id = header.thread_id});
     if (uuids.contains(uuid)) continue;
     PerfettoTracePacket packet{};
     auto* track_descriptor = packet.mutable_track_descriptor();

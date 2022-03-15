@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+#include "spoor/instrumentation/symbols/symbols_utility.h"
+
 #include <utility>
 
 #include "gsl/gsl"
@@ -8,8 +10,10 @@
 
 namespace spoor::instrumentation::symbols {
 
-auto ReduceSymbols(gsl::not_null<Symbols*> source,
-                   gsl::not_null<Symbols*> destination) -> void {
+auto ReduceSymbols(const SymbolsSourceDestination symbols_source_destination)
+    -> void {
+  const auto source = symbols_source_destination.source;
+  const auto destination = symbols_source_destination.destination;
   auto& source_symbols_table = *source->mutable_function_symbols_table();
   auto& destination_function_symbols_table =
       *destination->mutable_function_symbols_table();

@@ -32,8 +32,8 @@ and visualize and analyze your symbolized trace using Perfetto.
     ```
 
     ```
-    Xcode 13.0
-    Build version 13A233
+    Xcode 13.3
+    Build version 13E113
     ```
 
     **spoor**

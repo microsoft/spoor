@@ -39,7 +39,7 @@ You will need:
 
     ```
     spoor_opt 0.0.0
-    Based on LLVM 12.0.1
+    Based on LLVM 13.0.1
     ```
 
     **libspoor_runtime**

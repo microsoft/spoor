@@ -7,7 +7,11 @@
 
 namespace spoor::tools::adapters::perfetto::internal {
 
-auto TrackUuid(runtime::trace::ProcessId process_id,
-               runtime::trace::ThreadId thread_id) -> uint64;
+struct TrackUuidPieces {
+  runtime::trace::ProcessId process_id;
+  runtime::trace::ThreadId thread_id;
+};
+
+auto TrackUuid(TrackUuidPieces pieces) -> uint64;
 
 }  // namespace spoor::tools::adapters::perfetto::internal

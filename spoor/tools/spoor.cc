@@ -206,7 +206,7 @@ auto main(const int argc, char** argv) -> int {
       continue;
     }
     auto& file_symbols = result.Ok();
-    ReduceSymbols(&file_symbols, &symbols);
+    ReduceSymbols({.source = &file_symbols, .destination = &symbols});
   }
 
   const auto result = SerializeToOstream(trace_files, symbols, output_format,

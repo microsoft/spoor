@@ -88,6 +88,8 @@ constexpr std::string_view kDIFileFileNameContainsDirectoryIrFile{
 constexpr std::string_view kDISubprogramZeroLineNumberIrFile{
     "spoor/instrumentation/test_data/main_disubprogram_zero_line_number.ll"};
 
+// Equality doesn't rely on argument order.
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 auto AssertModulesEqual(gsl::not_null<llvm::Module*> computed_module,
                         gsl::not_null<llvm::Module*> expected_module) -> void {
   // Hack: Modules are equal if their IR string representations are equal,

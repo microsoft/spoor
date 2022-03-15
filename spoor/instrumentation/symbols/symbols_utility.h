@@ -8,7 +8,11 @@
 
 namespace spoor::instrumentation::symbols {
 
-auto ReduceSymbols(gsl::not_null<Symbols*> source,
-                   gsl::not_null<Symbols*> destination) -> void;
+struct SymbolsSourceDestination {
+  gsl::not_null<Symbols*> source;
+  gsl::not_null<Symbols*> destination;
+};
+
+auto ReduceSymbols(SymbolsSourceDestination symbols_source_destination) -> void;
 
 }  // namespace spoor::instrumentation::symbols

@@ -12,7 +12,9 @@ namespace spoor::tools::adapters::perfetto::internal {
 using spoor::runtime::trace::ProcessId;
 using spoor::runtime::trace::ThreadId;
 
-auto TrackUuid(const ProcessId process_id, const ThreadId thread_id) -> uint64 {
+auto TrackUuid(const TrackUuidPieces pieces) -> uint64 {
+  const auto process_id = pieces.process_id;
+  const auto thread_id = pieces.thread_id;
   const auto process_id_hash = CityHash64(
       // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
       reinterpret_cast<const char*>(&process_id), sizeof(process_id));
