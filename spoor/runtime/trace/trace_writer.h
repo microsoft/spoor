@@ -23,9 +23,9 @@ class TraceWriter {
 
   constexpr TraceWriter() = default;
   constexpr TraceWriter(const TraceWriter&) = default;
-  constexpr TraceWriter(TraceWriter&&) = default;
+  constexpr TraceWriter(TraceWriter&&) noexcept = default;
   constexpr auto operator=(const TraceWriter&) -> TraceWriter& = default;
-  constexpr auto operator=(TraceWriter&&) -> TraceWriter& = default;
+  constexpr auto operator=(TraceWriter&&) noexcept -> TraceWriter& = default;
   virtual ~TraceWriter() = default;
 
   // Passing `const std::string&` instead of `std::string_view` for gMock

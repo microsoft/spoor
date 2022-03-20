@@ -14,6 +14,13 @@ namespace util::file_system::testing {
 
 class FileWriterMock final : public FileWriter {
  public:
+  FileWriterMock() = default;
+  FileWriterMock(const FileWriterMock&) = delete;
+  FileWriterMock(FileWriterMock&&) noexcept = delete;
+  auto operator=(const FileWriterMock&) -> FileWriterMock& = delete;
+  auto operator=(FileWriterMock&&) noexcept -> FileWriterMock& = delete;
+  ~FileWriterMock() override = default;
+
   MOCK_METHOD(  // NOLINT
       (void), Open, (const std::filesystem::path& path), (override));
   MOCK_METHOD(  // NOLINT

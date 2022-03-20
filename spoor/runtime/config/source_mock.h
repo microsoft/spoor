@@ -17,6 +17,13 @@ namespace spoor::runtime::config::testing {
 
 class SourceMock final : public Source {
  public:
+  SourceMock() = default;
+  SourceMock(const SourceMock&) = delete;
+  SourceMock(SourceMock&&) noexcept = delete;
+  auto operator=(const SourceMock&) -> SourceMock& = delete;
+  auto operator=(SourceMock&&) noexcept -> SourceMock& = delete;
+  ~SourceMock() override = default;
+
   MOCK_METHOD((std::vector<ReadError>), Read, (), (override));  // NOLINT
   MOCK_METHOD(bool, IsRead, (), (const, override));             // NOLINT
 

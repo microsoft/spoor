@@ -14,6 +14,13 @@ namespace spoor::runtime::trace::testing {
 
 class TraceReaderMock final : public TraceReader {
  public:
+  TraceReaderMock() = default;
+  TraceReaderMock(const TraceReaderMock&) = delete;
+  TraceReaderMock(TraceReaderMock&&) noexcept = delete;
+  auto operator=(const TraceReaderMock&) -> TraceReaderMock& = delete;
+  auto operator=(TraceReaderMock&&) noexcept -> TraceReaderMock& = delete;
+  ~TraceReaderMock() override = default;
+
   MOCK_METHOD(  // NOLINT
       bool, MatchesTraceFileConvention,
       (const std::filesystem::path& file_path), (const, override));
