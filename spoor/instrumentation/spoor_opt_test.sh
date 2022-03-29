@@ -15,8 +15,8 @@ OUTPUT_INSTRUMENTED_SYMBOLS_FILE="fib.spoor_symbols"
   --output_file="$OUTPUT_IR_FILE"
 
 if ! [[ -s "$OUTPUT_INSTRUMENTED_SYMBOLS_FILE" ]]; then
-  echo "The function map file '$OUTPUT_INSTRUMENTED_SYMBOLS_FILE' is" \
-      "empty or was not created."
+  echo "The function map file '$OUTPUT_INSTRUMENTED_SYMBOLS_FILE' is empty " \
+    "or was not created."
   exit 1
 fi
 

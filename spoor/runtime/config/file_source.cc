@@ -17,21 +17,9 @@
 #include "spoor/runtime/trace/trace.h"
 #include "tomlplusplus/toml.h"
 #include "util/compression/compressor.h"
-#include "util/file_system/util.h"
 #include "util/numeric.h"
 
 namespace spoor::runtime::config {
-
-using util::file_system::ExpandPath;
-using util::file_system::PathExpansionOptions;
-
-constexpr PathExpansionOptions kPathExpansionOptions{
-    .expand_tilde = true,
-    .expand_environment_variables = true,
-};
-
-FileSource::FileSource(Options options)
-    : options_{std::move(options)}, read_{false} {}
 
 template <class T>
 auto ReadConfig(const toml::table& table, const std::string_view key,
@@ -49,19 +37,19 @@ auto ReadConfig(const toml::table& table, const std::string_view key,
   return value;
 }
 
+FileSource::FileSource(Options options)
+    : options_{std::move(options)}, read_{false} {}
+
 auto FileSource::Read() -> std::vector<ReadError> {
   auto finally_set_read = gsl::finally([this] { read_ = true; });
 
-  const auto file_path =
-      ExpandPath(options_.file_path, kPathExpansionOptions, options_.get_env);
-
   auto& file = *options_.file_reader;
-  file.Open(file_path);
+  file.Open(options_.file_path);
   if (!file.IsOpen()) {
     return {{
         .type = ReadError::Type::kFailedToOpenFile,
         .message = absl::StrFormat(
-            "Failed to open the file \"%s\" for reading.", file_path),
+            "Failed to open the file \"%s\" for reading.", options_.file_path),
     }};
   }
   auto finally_close_file = gsl::finally([&file] { file.Close(); });

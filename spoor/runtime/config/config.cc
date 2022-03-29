@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "absl/strings/match.h"
+#include "spoor/common/config/util.h"
 #include "spoor/runtime/config/source.h"
 #include "spoor/runtime/trace/trace.h"
 #include "util/compression/compressor.h"
@@ -20,13 +21,9 @@
 
 namespace spoor::runtime::config {
 
+using spoor::common::util::ValueFromSourceOrDefault;
 using util::file_system::ExpandPath;
 using util::file_system::PathExpansionOptions;
-
-constexpr PathExpansionOptions kPathExpansionOptions{
-    .expand_tilde = true,
-    .expand_environment_variables = true,
-};
 
 constexpr std::string_view kTraceFilePathDefaultValue{"."};
 constexpr auto kCompressionStrategyDefaultValue{
@@ -51,24 +48,6 @@ constexpr trace::DurationNanoseconds
     kEventBufferRetentionNanosecondsDefaultValue{0};
 constexpr int32 kMaxFlushBufferToFileAttemptsDefaultValue{2};
 constexpr auto kFlushAllEventsDefaultValue{true};
-
-template <class T, class F>
-auto ValueFromSourceOrDefault(
-    const std::vector<std::unique_ptr<Source>>& sources,
-    const F get_value_from_source, const T& default_value) -> T {
-  for (const auto& source : sources) {
-    if (!source->IsRead()) {
-      const auto errors = source->Read();
-      static_cast<void>(errors);  // Ignored.
-    }
-    // `std::bind` permits a cleaner API. The alternative approach using lambdas
-    // is much more verbose because the compiler cannot infer the type.
-    // NOLINTNEXTLINE(modernize-avoid-bind)
-    const auto source_value = std::bind(get_value_from_source, source.get())();
-    if (source_value.has_value()) return source_value.value();
-  }
-  return default_value;
-}
 
 auto Config::Default() -> Config {
   static const auto session_id = kSessionIdDefaultValue();
@@ -95,12 +74,12 @@ auto Config::Default() -> Config {
 
 auto Config::FromSourcesOrDefault(
     std::vector<std::unique_ptr<Source>>&& sources,
-    const Config& default_config, const util::env::StdGetEnv& get_env)
-    -> Config {
+    const Config& default_config,
+    const PathExpansionOptions& path_expansion_options) -> Config {
   auto trace_file_path = [&] {
     auto path = ValueFromSourceOrDefault(sources, &Source::TraceFilePath,
                                          default_config.trace_file_path);
-    path = ExpandPath(path, kPathExpansionOptions, get_env);
+    path = ExpandPath(path, path_expansion_options);
     // std::filesystem expects directories to end with a trailing slash.
     const std::string separator{std::filesystem::path::preferred_separator};
     if (path != "." && !absl::EndsWith(path.string(), separator)) {

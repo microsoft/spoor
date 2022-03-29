@@ -3,6 +3,7 @@
 
 #include "util/file_system/util.h"
 
+#include <iterator>
 #include <regex>
 #include <sstream>
 #include <string>
@@ -16,10 +17,10 @@ auto ExpandTilde(std::string path, const env::StdGetEnv& get_env)
     -> std::string {
   using Result = util::result::Result<std::string, util::result::None>;
   if (!(path == "~" || absl::StartsWith(path, "~/"))) return path;
-  const auto result =
+  const auto home_result =
       env::GetEnv(env::kHomeKey, true, get_env).value_or(Result::Ok("~"));
-  if (result.IsOk()) {
-    const auto& home = result.Ok();
+  if (home_result.IsOk()) {
+    const auto& home = home_result.Ok();
     path.replace(std::cbegin(path), std::next(std::cbegin(path)), home);
   }
   return path;
@@ -47,11 +48,11 @@ auto ExpandEnvironmentVariables(const std::string& path,
   return expanded_path.str();
 }
 
-auto ExpandPath(std::string path, PathExpansionOptions options,
-                const env::StdGetEnv& get_env) -> std::string {
-  if (options.expand_tilde) path = ExpandTilde(path, get_env);
+auto ExpandPath(std::string path, const PathExpansionOptions& options)
+    -> std::string {
+  if (options.expand_tilde) path = ExpandTilde(path, options.get_env);
   if (options.expand_environment_variables) {
-    path = ExpandEnvironmentVariables(path, get_env);
+    path = ExpandEnvironmentVariables(path, options.get_env);
   }
   return path;
 }

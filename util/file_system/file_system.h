@@ -24,6 +24,8 @@ class FileSystem {
       const -> util::result::Result<bool, std::error_code> = 0;
   [[nodiscard]] virtual auto IsDirectory(const std::filesystem::path& path)
       const -> util::result::Result<bool, std::error_code> = 0;
+  [[nodiscard]] virtual auto CurrentPath() const
+      -> util::result::Result<std::filesystem::path, std::error_code> = 0;
   [[nodiscard]] virtual auto CreateDirectories(
       const std::filesystem::path& path) const
       -> util::result::Result<bool, std::error_code> = 0;

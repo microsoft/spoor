@@ -12,18 +12,13 @@
 #include "spoor/runtime/trace/trace.h"
 #include "util/compression/compressor.h"
 #include "util/env/env.h"
+#include "util/file_system/util.h"
 
 namespace spoor::runtime::config {
 
 struct Config {
   using SizeType = buffer::CircularBuffer<trace::Event>::SizeType;
   static_assert(std::is_same_v<SizeType, Source::SizeType>);
-
-  static auto Default() -> Config;
-  static auto FromSourcesOrDefault(
-      std::vector<std::unique_ptr<Source>>&& sources,
-      const Config& default_config, const util::env::StdGetEnv& get_env)
-      -> Config;
 
   std::filesystem::path trace_file_path;
   util::compression::Strategy compression_strategy;
@@ -37,6 +32,13 @@ struct Config {
   trace::DurationNanoseconds event_buffer_retention_duration_nanoseconds;
   int32 max_flush_buffer_to_file_attempts;
   bool flush_all_events;
+
+  static auto Default() -> Config;
+  static auto FromSourcesOrDefault(
+      std::vector<std::unique_ptr<Source>>&& sources,
+      const Config& default_config,
+      const util::file_system::PathExpansionOptions& path_expansion_options)
+      -> Config;
 };
 
 auto operator==(const Config& lhs, const Config& rhs) -> bool;

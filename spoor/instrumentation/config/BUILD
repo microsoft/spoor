@@ -11,99 +11,139 @@ load(
 )
 
 cc_library(
-    name = "config",
-    srcs = ["config.cc"],
-    hdrs = ["config.h"],
+    name = "output_language",
+    hdrs = ["output_language.h"],
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
+    visibility = ["//spoor/instrumentation:__subpackages__"],
+    deps = ["//util/flat_map"],
+)
+
+cc_test(
+    name = "output_language_test",
+    size = "small",
+    srcs = ["output_language_test.cc"],
+    copts = SPOOR_DEFAULT_TEST_COPTS,
+    linkopts = SPOOR_DEFAULT_TEST_LINKOPTS,
+    visibility = ["//visibility:private"],
+    deps = [
+        ":output_language",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "source",
+    srcs = [
+        "env_source.cc",
+        "file_source.cc",
+    ],
+    hdrs = [
+        "env_source.h",
+        "file_source.h",
+        "source.h",
+    ],
     copts = SPOOR_DEFAULT_COPTS,
     linkopts = SPOOR_DEFAULT_LINKOPTS,
     visibility = ["//spoor/instrumentation:__pkg__"],
     deps = [
-        "//util:numeric",
+        ":output_language",
         "//util:result",
-        "//util/flags:optional",
-        "//util/flat_map",
-    ],
-)
-
-cc_library(
-    name = "env_config",
-    srcs = ["env_config.cc"],
-    hdrs = ["env_config.h"],
-    copts = SPOOR_DEFAULT_COPTS,
-    linkopts = SPOOR_DEFAULT_LINKOPTS,
-    visibility = ["//spoor/instrumentation:__pkg__"],
-    deps = [
-        ":config",
-        "//util:numeric",
-        "//util/env",
-        "//util/file_system",
-    ],
-)
-
-cc_library(
-    name = "command_line_config",
-    srcs = ["command_line_config.cc"],
-    hdrs = ["command_line_config.h"],
-    copts = SPOOR_DEFAULT_COPTS,
-    linkopts = SPOOR_DEFAULT_LINKOPTS,
-    visibility = ["//spoor/instrumentation:__pkg__"],
-    deps = [
-        ":config",
-        ":env_config",
-        "//util:numeric",
         "//util/env",
         "//util/file_system",
         "//util/flags:optional",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_marzer_tomlplusplus//:tomlplusplus",
+        "@com_microsoft_gsl//:gsl",
+    ],
+)
+
+cc_library(
+    name = "source_mock",
+    testonly = True,
+    hdrs = ["source_mock.h"],
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
+    visibility = ["//visibility:private"],
+    deps = [
+        ":source",
+        "@com_google_googletest//:gtest",
+    ],
+)
+
+cc_test(
+    name = "source_test",
+    size = "small",
+    srcs = [
+        "env_source_test.cc",
+        "file_source_test.cc",
+    ],
+    copts = SPOOR_DEFAULT_TEST_COPTS,
+    linkopts = SPOOR_DEFAULT_TEST_LINKOPTS,
+    visibility = ["//visibility:private"],
+    deps = [
+        ":output_language",
+        ":source",
+        "//util/env",
+        "//util/file_system",
+        "//util/file_system:file_system_mock",
+        "//util/flat_map",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "config_private",
+    hdrs = ["config_private.h"],
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
+    visibility = ["//visibility:private"],
+    deps = [":output_language"],
+)
+
+cc_library(
+    name = "config",
+    srcs = [
+        "command_line.cc",
+        "config.cc",
+    ],
+    hdrs = [
+        "command_line.h",
+        "config.h",
+    ],
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
+    visibility = ["//spoor/instrumentation:__pkg__"],
+    deps = [
+        ":config_private",
+        ":output_language",
+        ":source",
+        "//spoor/common/config:util",
+        "//util/file_system",
     ],
 )
 
 cc_test(
     name = "config_test",
     size = "small",
-    srcs = ["config_test.cc"],
-    copts = SPOOR_DEFAULT_TEST_COPTS,
-    linkopts = SPOOR_DEFAULT_TEST_LINKOPTS,
-    visibility = ["//visibility:private"],
-    deps = [
-        ":config",
-        "@com_google_googletest//:gtest_main",
+    srcs = [
+        "command_line_test.cc",
+        "config_test.cc",
     ],
-)
-
-cc_test(
-    name = "env_config_test",
-    size = "small",
-    srcs = ["env_config_test.cc"],
     copts = SPOOR_DEFAULT_TEST_COPTS,
     linkopts = SPOOR_DEFAULT_TEST_LINKOPTS,
     visibility = ["//visibility:private"],
     deps = [
         ":config",
-        ":env_config",
-        "//util:numeric",
+        ":output_language",
+        ":source",
+        ":source_mock",
         "//util/env",
+        "//util/file_system",
         "//util/flat_map",
         "@com_google_googletest//:gtest_main",
-    ],
-)
-
-cc_test(
-    name = "command_line_config_test",
-    size = "small",
-    srcs = ["command_line_config_test.cc"],
-    copts = SPOOR_DEFAULT_TEST_COPTS,
-    linkopts = SPOOR_DEFAULT_TEST_LINKOPTS,
-    visibility = ["//visibility:private"],
-    deps = [
-        ":command_line_config",
-        ":config",
-        ":env_config",
-        "//util:numeric",
-        "//util/env",
-        "@com_google_googletest//:gtest_main",
-        "@com_microsoft_gsl//:gsl",
     ],
 )

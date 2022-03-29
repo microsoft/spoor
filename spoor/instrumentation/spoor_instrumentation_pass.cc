@@ -20,21 +20,32 @@
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/WithColor.h"
-#include "spoor/instrumentation/config/env_config.h"
+#include "spoor/instrumentation/config/config.h"
+#include "spoor/instrumentation/config/env_source.h"
+#include "spoor/instrumentation/config/file_source.h"
+#include "spoor/instrumentation/config/source.h"
 #include "spoor/instrumentation/filters/filters_file_reader.h"
 #include "spoor/instrumentation/inject_instrumentation/inject_instrumentation.h"
 #include "spoor/instrumentation/instrumentation.h"
 #include "spoor/instrumentation/symbols/symbols_file_writer.h"
 #include "util/file_system/local_file_reader.h"
+#include "util/file_system/local_file_system.h"
 #include "util/file_system/local_file_writer.h"
+#include "util/file_system/util.h"
 #include "util/time/clock.h"
 
 namespace spoor::instrumentation {
 
 using filters::FiltersFileReader;
+using spoor::instrumentation::config::Config;
+using spoor::instrumentation::config::EnvSource;
+using spoor::instrumentation::config::FileSource;
 using symbols::SymbolsFileWriter;
 using util::file_system::LocalFileReader;
+using util::file_system::LocalFileSystem;
 using util::file_system::LocalFileWriter;
+using util::file_system::PathExpansionOptions;
+using ConfigSource = spoor::instrumentation::config::Source;
 
 auto PluginInfo() -> llvm::PassPluginLibraryInfo {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -44,7 +55,36 @@ auto PluginInfo() -> llvm::PassPluginLibraryInfo {
         [](llvm::StringRef pass_name, llvm::ModulePassManager& pass_manager,
            llvm::ArrayRef<llvm::PassBuilder::PipelineElement> /*unused*/) {
           if (pass_name != kPluginName.data()) return false;
-          const auto config = config::ConfigFromEnv();
+
+          const PathExpansionOptions path_expansion_options{
+              .get_env = std::getenv,
+              .expand_tilde = true,
+              .expand_environment_variables = true,
+          };
+
+          std::vector<std::unique_ptr<ConfigSource>> sources{};
+          EnvSource::Options env_source_options{
+              .path_expansion_options{path_expansion_options},
+              .file_system{std::make_unique<LocalFileSystem>()},
+              .get_env{std::getenv},
+          };
+          sources.emplace_back(
+              std::make_unique<EnvSource>(std::move(env_source_options)));
+          auto file_system = LocalFileSystem();
+          auto current_path = file_system.CurrentPath();
+          const auto config_file_path =
+              FileSource::FindConfigFile(current_path.Ok());
+          if (config_file_path.has_value()) {
+            FileSource::Options file_source_options{
+                .file_reader{std::make_unique<LocalFileReader>()},
+                .path_expansion_options{path_expansion_options},
+                .file_path{config_file_path.value()},
+            };
+            sources.emplace_back(
+                std::make_unique<FileSource>(std::move(file_source_options)));
+          }
+          const auto config = Config::FromSourcesOrDefault(std::move(sources),
+                                                           Config::Default());
 
           auto file_reader = std::make_unique<LocalFileReader>();
           auto filters_reader =

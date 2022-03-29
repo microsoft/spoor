@@ -1,17 +1,23 @@
 # Instrumentation
 
+Configure Spoor's instrumentation with command line flags, environment
+variables, or a configuration file.
+
+!!! info "Precedence"
+    1. Command line flags (`spoor_opt`).
+    2. Environment variables.
+    3. Config file.
+
+!!! info "Config functions"
+    Spoor does not instrument
+    [user-defined config functions][user-defined-config] to prevent recursive
+    initialization.
+
 ## Source code
 
 [spoor/instrumentation/config/][spoor-instrumentation-config]
 
 ## Instrumentation options
-
-Configure Spoor's instrumentation with environment variables.
-
-!!! note "Config functions"
-    Spoor does not instrument
-    [user-defined config functions][user-defined-config] to prevent recursive
-    initialization.
 
 ### Enable runtime
 
@@ -23,7 +29,9 @@ Automatically enable Spoor's runtime.
 
 Source               | Key
 -------------------- | --------------------------------------
+Command line         | `--enable_runtime`
 Environment variable | `SPOOR_INSTRUMENTATION_ENABLE_RUNTIME`
+Config file          | `enable_runtime`
 
 ### Filters file
 
@@ -35,7 +43,9 @@ Path to the [filters file](#filters-file).
 
 Source               | Key
 -------------------- | ------------------------------------
+Command line         | `--filters_file`
 Environment variable | `SPOOR_INSTRUMENTATION_FILTERS_FILE`
+Config file          | `filters_file`
 
 ### Force binary output
 
@@ -47,7 +57,9 @@ Force printing binary data to the console.
 
 Source               | Key
 -------------------- | -------------------------------------------
+Command line         | `--force_binary_output`
 Environment variable | `SPOOR_INSTRUMENTATION_FORCE_BINARY_OUTPUT`
+Config file          | `force_binary_output`
 
 ### Initialize runtime
 
@@ -60,7 +72,9 @@ to `_spoor_runtime_Initialize()` at the start of `main`.
 
 Source               | Key
 -------------------- | ------------------------------------------
+Command line         | `--initialize_runtime`
 Environment variable | `SPOOR_INSTRUMENTATION_INITIALIZE_RUNTIME`
+Config file          | `initialize_runtime`
 
 ### Inject instrumentation
 
@@ -72,7 +86,9 @@ Inject Spoor instrumentation.
 
 Source               | Key
 -------------------- | ----------------------------------------------
+Command line         | `--inject_instrumentation`
 Environment variable | `SPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION`
+Config file          | `inject_instrumentation`
 
 ### Module ID
 
@@ -84,11 +100,13 @@ Override the LLVM module's ID.
 
 Source               | Key
 -------------------- | ---------------------------------
+Command line         | `--module_id`
 Environment variable | `SPOOR_INSTRUMENTATION_MODULE_ID`
+Config file          | `module_id`
 
 ### Output file
 
-Spoor instrumentation symbols output file.
+Spoor instrumentation symbols output file. All parent directories must exist.
 
 **Type:** `string`
 
@@ -96,20 +114,9 @@ Spoor instrumentation symbols output file.
 
 Source               | Key
 -------------------- | -----------------------------------
+Command line         | `--output_file`
 Environment variable | `SPOOR_INSTRUMENTATION_OUTPUT_FILE`
-
-### Output symbols file
-
-Spoor instrumentation symbols output file. The path must be absolute and all
-parent directories must exist. Tilde expansion is not supported.
-
-**Type:** `string`
-
-**Default:** Empty (error)
-
-Source               | Key
--------------------- | -------------------------------------------
-Environment variable | `SPOOR_INSTRUMENTATION_OUTPUT_SYMBOLS_FILE`
+Config file          | `output_file`
 
 ### Output language
 
@@ -123,7 +130,23 @@ Language in which to output the transformed code.
 
 Source               | Key
 -------------------- | ---------------------------------------
+Command line         | `--output_language`
 Environment variable | `SPOOR_INSTRUMENTATION_OUTPUT_LANGUAGE`
+Config file          | `output_language`
+
+### Output symbols file
+
+Spoor instrumentation symbols output file. All parent directories must exist.
+
+**Type:** `string`
+
+**Default:** Empty (error)
+
+Source               | Key
+-------------------- | -------------------------------------------
+Command line         | `--output_symbols_file`
+Environment variable | `SPOOR_INSTRUMENTATION_OUTPUT_SYMBOLS_FILE`
+Config file          | `output_symbols_file`
 
 ## Xcode toolchain
 
@@ -144,6 +167,27 @@ configured value or take on the default value if not specified.
 * [`SPOOR_INSTRUMENTATION_INITIALIZE_RUNTIME`][initialize-runtime]
 * [`SPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION`][inject-instrumentation]
 
+## Configuration file
+
+Spoor's instrumentation tools search for a configuration file called
+`spoor_config.toml` from the present working directory up to root.
+
+**Example configuration file**
+
+```toml
+# spoor_config.toml
+
+enable_runtime = true
+filters_file = "/path/to/spoor_filters.toml"
+force_binary_output = false
+initialize_runtime = true
+inject_instrumentation = true
+module_id = "Module"
+output_file = "/path/to/output.perfetto"
+output_language = "bitcode"
+output_symbols_file = "/path/to/output.spoor_symbols"
+```
+
 ## Filters file
 
 Policy: Do not instrument functions matching a blocklist rule that do not also
@@ -162,7 +206,7 @@ All configurations are optional.
 **Example filters file**
 
 ```toml
-# filters.toml
+# spoor_filters.toml
 
 [[block]]
 rule_name = "Block small functions"
