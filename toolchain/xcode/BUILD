@@ -161,7 +161,7 @@ _TOOLCHAIN_TARGETS_TO_OUTS = [
         TOOLCHAIN_NAME + "/spoor/lib/libspoor_runtime_default_config_watchos.a",
     ],
     [
-        "//spoor/instrumentation:spoor_opt",
+        "//spoor/instrumentation/wrappers/apple:spoor_opt",
         TOOLCHAIN_NAME + "/spoor/bin/spoor_opt",
     ],
 ]
