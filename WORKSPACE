@@ -228,6 +228,7 @@ load(
 
 apple_rules_dependencies()
 
+# Only relevant in macOS environments.
 http_archive(
     name = "org_wikimedia_wikipedia_ios",
     build_file = "//toolchain:wikipedia_ios.BUILD",
@@ -235,11 +236,13 @@ http_archive(
         # Download the project's dependencies as a patch to leverage Bazel's
         # `http_archive` caching.
         """
-        xcodebuild clean build \
-          -resolvePackageDependencies \
-          -clonedSourcePackagesDirPath . \
-          -project Wikipedia.xcodeproj \
-          -scheme Wikipedia
+        if [[ $OSTYPE == 'darwin'* ]]; then
+          xcodebuild clean build \
+            -resolvePackageDependencies \
+            -clonedSourcePackagesDirPath . \
+            -project Wikipedia.xcodeproj \
+            -scheme Wikipedia
+        fi
         """,
         # Hack: Temporarily rename path names with spaces because they are not
         # supported by Bazel's `filegroup`.

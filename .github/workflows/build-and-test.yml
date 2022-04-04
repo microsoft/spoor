@@ -10,175 +10,171 @@ on:
   pull_request:
 jobs:
   build-and-test:
-    runs-on: macos-11
+    runs-on: ubuntu-20.04
     name: Build and test
     steps:
-      - name: Set up build cache
-        uses: actions/cache@v2
-        env:
-          cache-name: bazel-default-toolchain-cache
-        with:
-          path: /private/var/tmp/_bazel_runner
-          key: ${{ runner.os }}-${{ env.cache-name }}
+      # - name: Set up build cache
+      #   uses: actions/cache@v2
+      #   env:
+      #     cache-name: bazel-default-toolchain-cache
+      #   with:
+      #     path: /private/var/tmp/_bazel_runner  # TODO ~/.cache/bazel
+      #     key: ${{ runner.os }}-${{ env.cache-name }}
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
           python-version: 3.x
-      - name: Install LLVM
-        run: |
-          brew install llvm@12
-          ln -sfn /usr/local/Cellar/llvm /usr/local/Cellar/llvm@12
-          echo '/usr/local/opt/llvm@12/bin' >> $GITHUB_PATH
       - name: Check out code
         uses: actions/checkout@v3
       - name: Create .bazelrc
-        run: cat .build/macos-ci.bazelrc .build/ci.bazelrc > .bazelrc
+        run: cat .build/ubuntu-ci.bazelrc .build/ci.bazelrc > .bazelrc
       - name: Build
-        run: bazel build //...
-      - name: Test
-        run: bazel test //...
-      - name: Benchmark
-        run: ./toolchain/benchmark/run_benchmarks.sh
-  build-and-test-llvm-toolchain:
-    runs-on: macos-11
-    name: Build and test (LLVM toolchain)
-    steps:
-      - name: Set up build cache
-        uses: actions/cache@v2
-        env:
-          cache-name: bazel-llvm-toolchain-cache
-        with:
-          path: /private/var/tmp/_bazel_runner
-          key: ${{ runner.os }}-${{ env.cache-name }}
-      - name: Set up Python
-        uses: actions/setup-python@v3
-        with:
-          python-version: 3.x
-      - name: Install LLVM
-        run: |
-          brew install llvm@12
-          ln -sfn /usr/local/Cellar/llvm /usr/local/Cellar/llvm@12
-          echo '/usr/local/opt/llvm@12/bin' >> $GITHUB_PATH
-      - name: Check out code
-        uses: actions/checkout@v3
-      - name: Create .bazelrc
-        run: cat .build/macos-ci.bazelrc .build/ci.bazelrc > .bazelrc
-      - name: Build
-        run: |
-          bazel build //... --crosstool_top=//toolchain/crosstool:llvm_toolchain
-      - name: Test
-        run: |
-          bazel test //... --crosstool_top=//toolchain/crosstool:llvm_toolchain
-  build-and-test-address-sanitizer:
-    runs-on: macos-11
-    name: Build and test (AddressSanitizer)
-    steps:
-      - name: Set up build cache
-        uses: actions/cache@v2
-        env:
-          cache-name: bazel-default-toolchain-asan-cache
-        with:
-          path: /private/var/tmp/_bazel_runner
-          key: ${{ runner.os }}-${{ env.cache-name }}
-      - name: Check out code
-        uses: actions/checkout@v3
-      - name: Create .bazelrc
-        run: cat .build/macos-ci.bazelrc .build/ci.bazelrc > .bazelrc
-      - name: Build
-        run: |
-          bazel build --config=asan $(bazel query 'kind(cc_.*, tests(//...))')
-      - name: Test
-        run: bazel test --config=asan $(bazel query 'kind(cc_.*, tests(//...))')
-  build-and-test-thread-sanitizer:
-    runs-on: macos-11
-    name: Build and test (ThreadSanitizer)
-    steps:
-      - name: Set up build cache
-        uses: actions/cache@v2
-        env:
-          cache-name: bazel-default-toolchain-tsan-cache
-        with:
-          path: /private/var/tmp/_bazel_runner
-          key: ${{ runner.os }}-${{ env.cache-name }}
-      - name: Check out code
-        uses: actions/checkout@v3
-      - name: Create .bazelrc
-        run: cat .build/macos-ci.bazelrc .build/ci.bazelrc > .bazelrc
-      - name: Build
-        run: |
-          bazel build --config=tsan $(bazel query 'kind(cc_.*, tests(//...))')
-      - name: Test
-        run: bazel test --config=tsan $(bazel query 'kind(cc_.*, tests(//...))')
-  build-docs:
-    runs-on: ubuntu-latest
-    name: Build documentation
-    steps:
-      - name: Set up Python
-        uses: actions/setup-python@v3
-        with:
-          python-version: 3.x
-      - name: Install Material for MkDocs
-        run: pip3 install mkdocs-material
-      - name: Check out code
-        uses: actions/checkout@v3
-      - name: Build documentation
-        run: mkdocs build --strict
-  format-code:
-    runs-on: macos-11
-    name: Format code
-    steps:
-      - name: Set up Python
-        uses: actions/setup-python@v3
-        with:
-          python-version: 3.x
-      - name: Install YAPF
-        run: pip3 install yapf
-      - name: Install LLVM
-        run: |
-          brew install llvm@12
-          ln -sfn /usr/local/Cellar/llvm /usr/local/Cellar/llvm@12
-          echo '/usr/local/opt/llvm@12/bin' >> $GITHUB_PATH
-      - name: Check out code
-        uses: actions/checkout@v3
-      - name: Format
-        run: |
-          ./toolchain/copyright_header/add_copyright_header.sh
-          bazel build //... \
-            --aspects toolchain/style/style.bzl%format \
-            --output_groups=report \
-            --keep_going
-          bazel run //toolchain/style:buildifier
-          git diff --exit-code
-  lint-code:
-    runs-on: macos-11
-    name: Lint code
-    steps:
-      - name: Set up build cache
-        uses: actions/cache@v2
-        env:
-          cache-name: bazel-llvm-toolchain-lint-cache
-        with:
-          path: /private/var/tmp/_bazel_runner
-          key: ${{ runner.os }}-${{ env.cache-name }}
-      - name: Set up Python
-        uses: actions/setup-python@v3
-        with:
-          python-version: 3.x
-      - name: Install Pylint
-        run: pip3 install pylint
-      - name: Install LLVM
-        run: |
-          brew install llvm@12
-          ln -sfn /usr/local/Cellar/llvm /usr/local/Cellar/llvm@12
-          echo '/usr/local/opt/llvm@12/bin' >> $GITHUB_PATH
-      - name: Check out code
-        uses: actions/checkout@v3
-      - name: Create .bazelrc
-        run: cat .build/macos-ci.bazelrc .build/ci.bazelrc > .bazelrc
-      - name: Lint
-        run: |
-          bazel build //... \
-            --crosstool_top=//toolchain/crosstool:llvm_toolchain \
-            --aspects toolchain/style/style.bzl%lint \
-            --output_groups=report \
-            --keep_going
+        run: bazel build //spoor/runtime --crosstool_top=//toolchain/crosstool:llvm_toolchain
+
+      # - name: Test
+      #   run: bazel test //...
+      # - name: Benchmark
+      #   run: ./toolchain/benchmark/run_benchmarks.sh
+#  build-and-test-llvm-toolchain:
+#    runs-on: macos-11
+#    name: Build and test (LLVM toolchain)
+#    steps:
+#      - name: Set up build cache
+#        uses: actions/cache@v2
+#        env:
+#          cache-name: bazel-llvm-toolchain-cache
+#        with:
+#          path: /private/var/tmp/_bazel_runner
+#          key: ${{ runner.os }}-${{ env.cache-name }}
+#      - name: Set up Python
+#        uses: actions/setup-python@v3
+#        with:
+#          python-version: 3.x
+#      - name: Install LLVM
+#        run: |
+#          brew install llvm@12
+#          ln -sfn /usr/local/Cellar/llvm /usr/local/Cellar/llvm@12
+#          echo '/usr/local/opt/llvm@12/bin' >> $GITHUB_PATH
+#      - name: Check out code
+#        uses: actions/checkout@v3
+#      - name: Create .bazelrc
+#        run: cat .build/macos-ci.bazelrc .build/ci.bazelrc > .bazelrc
+#      - name: Build
+#        run: |
+#          bazel build //... --crosstool_top=//toolchain/crosstool:llvm_toolchain
+#      - name: Test
+#        run: |
+#          bazel test //... --crosstool_top=//toolchain/crosstool:llvm_toolchain
+#  build-and-test-address-sanitizer:
+#    runs-on: macos-11
+#    name: Build and test (AddressSanitizer)
+#    steps:
+#      - name: Set up build cache
+#        uses: actions/cache@v2
+#        env:
+#          cache-name: bazel-default-toolchain-asan-cache
+#        with:
+#          path: /private/var/tmp/_bazel_runner
+#          key: ${{ runner.os }}-${{ env.cache-name }}
+#      - name: Check out code
+#        uses: actions/checkout@v3
+#      - name: Create .bazelrc
+#        run: cat .build/macos-ci.bazelrc .build/ci.bazelrc > .bazelrc
+#      - name: Build
+#        run: |
+#          bazel build --config=asan $(bazel query 'kind(cc_.*, tests(//...))')
+#      - name: Test
+#        run: bazel test --config=asan $(bazel query 'kind(cc_.*, tests(//...))')
+#  build-and-test-thread-sanitizer:
+#    runs-on: macos-11
+#    name: Build and test (ThreadSanitizer)
+#    steps:
+#      - name: Set up build cache
+#        uses: actions/cache@v2
+#        env:
+#          cache-name: bazel-default-toolchain-tsan-cache
+#        with:
+#          path: /private/var/tmp/_bazel_runner
+#          key: ${{ runner.os }}-${{ env.cache-name }}
+#      - name: Check out code
+#        uses: actions/checkout@v3
+#      - name: Create .bazelrc
+#        run: cat .build/macos-ci.bazelrc .build/ci.bazelrc > .bazelrc
+#      - name: Build
+#        run: |
+#          bazel build --config=tsan $(bazel query 'kind(cc_.*, tests(//...))')
+#      - name: Test
+#        run: bazel test --config=tsan $(bazel query 'kind(cc_.*, tests(//...))')
+#  build-docs:
+#    runs-on: ubuntu-latest
+#    name: Build documentation
+#    steps:
+#      - name: Set up Python
+#        uses: actions/setup-python@v3
+#        with:
+#          python-version: 3.x
+#      - name: Install Material for MkDocs
+#        run: pip3 install mkdocs-material
+#      - name: Check out code
+#        uses: actions/checkout@v3
+#      - name: Build documentation
+#        run: mkdocs build --strict
+#  format-code:
+#    runs-on: macos-11
+#    name: Format code
+#    steps:
+#      - name: Set up Python
+#        uses: actions/setup-python@v3
+#        with:
+#          python-version: 3.x
+#      - name: Install YAPF
+#        run: pip3 install yapf
+#      - name: Install LLVM
+#        run: |
+#          brew install llvm@12
+#          ln -sfn /usr/local/Cellar/llvm /usr/local/Cellar/llvm@12
+#          echo '/usr/local/opt/llvm@12/bin' >> $GITHUB_PATH
+#      - name: Check out code
+#        uses: actions/checkout@v3
+#      - name: Format
+#        run: |
+#          ./toolchain/copyright_header/add_copyright_header.sh
+#          bazel build //... \
+#            --aspects toolchain/style/style.bzl%format \
+#            --output_groups=report \
+#            --keep_going
+#          bazel run //toolchain/style:buildifier
+#          git diff --exit-code
+#  lint-code:
+#    runs-on: macos-11
+#    name: Lint code
+#    steps:
+#      - name: Set up build cache
+#        uses: actions/cache@v2
+#        env:
+#          cache-name: bazel-llvm-toolchain-lint-cache
+#        with:
+#          path: /private/var/tmp/_bazel_runner
+#          key: ${{ runner.os }}-${{ env.cache-name }}
+#      - name: Set up Python
+#        uses: actions/setup-python@v3
+#        with:
+#          python-version: 3.x
+#      - name: Install Pylint
+#        run: pip3 install pylint
+#      - name: Install LLVM
+#        run: |
+#          brew install llvm@12
+#          ln -sfn /usr/local/Cellar/llvm /usr/local/Cellar/llvm@12
+#          echo '/usr/local/opt/llvm@12/bin' >> $GITHUB_PATH
+#      - name: Check out code
+#        uses: actions/checkout@v3
+#      - name: Create .bazelrc
+#        run: cat .build/macos-ci.bazelrc .build/ci.bazelrc > .bazelrc
+#      - name: Lint
+#        run: |
+#          bazel build //... \
+#            --crosstool_top=//toolchain/crosstool:llvm_toolchain \
+#            --aspects toolchain/style/style.bzl%lint \
+#            --output_groups=report \
+#            --keep_going
