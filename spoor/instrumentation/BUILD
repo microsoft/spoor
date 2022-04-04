@@ -33,12 +33,15 @@ cc_test(
     ],
 )
 
-cc_binary(
-    name = "spoor_opt",
+cc_library(
+    name = "spoor_opt_lib",
     srcs = ["spoor_opt.cc"],
     copts = SPOOR_DEFAULT_COPTS,
     linkopts = SPOOR_DEFAULT_LINKOPTS,
-    visibility = ["//visibility:public"],
+    visibility = [
+        "//spoor/instrumentation/wrappers/apple:__pkg__",
+        "//spoor_instrumentation:__pkg__",
+    ],
     deps = [
         ":instrumentation_info",
         "//spoor/instrumentation/config",
@@ -60,6 +63,14 @@ cc_binary(
         "@llvm-project//llvm:Support",
         "@llvm-project//llvm:config",
     ],
+)
+
+cc_binary(
+    name = "spoor_opt",
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
+    visibility = ["//visibility:public"],
+    deps = [":spoor_opt_lib"],
 )
 
 # TODO(#131): Fix `opt` pass plugin support for IR instrumentation. Spoor pass
