@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 '''Shared logic for the `clang` and `clang++` wrapper.'''
 
+from distutils.util import strtobool
 from shared import ArgsInfo, flatten
 from shared import CLANG_CLANGXX_LANGUAGE_ARG, CLANG_CLANGXX_OUTPUT_FILE_ARG
 from shared import CLANG_CLANGXX_ONLY_PREPROCESS_COMPILE_AND_ASSEMBLE_ARG
@@ -32,18 +33,6 @@ SUPPORTED_LANGUAGES = {
 }
 
 
-# distutils.util.strtobool is deprecated.
-def _strtobool(value):
-  truthy = {'y', 'yes', 't', 'true', 'on', '1'}
-  falsy = {'n', 'no', 'f', 'false', 'off', '0'}
-  value = value.lower().strip()
-  if value in truthy:
-    return 1
-  if value in falsy:
-    return 0
-  raise ValueError(f'Invalid truth value "{value}"')
-
-
 def _compiling(language, output_files):
   if language not in SUPPORTED_LANGUAGES:
     return False
@@ -64,7 +53,7 @@ def _preprocessor_macros(env):
   macros = SPOOR_CONSTANT_PREPROCESSOR_MACROS
   for key, default_value in configs.items():
     if key in env and env[key]:
-      macros[key] = _strtobool(env[key])
+      macros[key] = strtobool(env[key])
     else:
       macros[key] = int(default_value)
   return macros
