@@ -11,6 +11,7 @@
 #include <filesystem>
 #include <memory>
 #include <optional>
+#include <string>
 #include <system_error>
 #include <thread>
 #include <type_traits>
@@ -31,6 +32,7 @@
 #include "util/file_system/local_file_reader.h"
 #include "util/file_system/local_file_system.h"
 #include "util/file_system/local_file_writer.h"
+#include "util/file_system/util.h"
 #include "util/numeric.h"
 #include "util/time/clock.h"
 
@@ -198,13 +200,23 @@ auto TraceFileWriter::Instance() -> spoor::runtime::trace::TraceFileWriter& {
 }
 
 auto Config::Instance() -> const spoor::runtime::config::Config& {
-  static auto sources = [] {
+  static const util::file_system::PathExpansionOptions path_expansion_options{
+      .get_env = std::getenv,
+      .expand_tilde = true,
+      .expand_environment_variables = true,
+  };
+  static auto sources = [&] {
     std::vector<std::unique_ptr<spoor::runtime::config::Source>> sources{};
     spoor::runtime::config::EnvSource::Options env_source_options{
         .get_env = std::getenv};
     sources.emplace_back(std::make_unique<spoor::runtime::config::EnvSource>(
         std::move(env_source_options)));
-    const auto config_file_path = spoor::runtime::ConfigFilePath();
+    const auto config_file_path = [&]() -> std::optional<std::string> {
+      auto path = spoor::runtime::ConfigFilePath();
+      if (!path.has_value()) return {};
+      return util::file_system::ExpandPath(path.value(),
+                                           path_expansion_options);
+    }();
     if (config_file_path.has_value()) {
       spoor::runtime::config::FileSource::Options file_source_options{
           .file_reader{std::make_unique<util::file_system::LocalFileReader>()},
@@ -218,7 +230,7 @@ auto Config::Instance() -> const spoor::runtime::config::Config& {
   }();
   static auto instance = spoor::runtime::config::Config::FromSourcesOrDefault(
       std::move(sources), spoor::runtime::config::Config::Default(),
-      std::getenv);
+      path_expansion_options);
   return instance;
 };
 

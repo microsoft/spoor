@@ -45,7 +45,7 @@ cc_library(
     deps = [
         ":instrumentation_info",
         "//spoor/instrumentation/config",
-        "//spoor/instrumentation/config:command_line_config",
+        "//spoor/instrumentation/config:source",
         "//spoor/instrumentation/filters:filters_reader",
         "//spoor/instrumentation/inject_instrumentation",
         "//spoor/instrumentation/symbols:symbols_writer",
@@ -89,7 +89,9 @@ SHARED_LIBRARY_VISIBILITY = ["//visibility:public"]
 
 SHARED_LIBRARY_DEPS = [
     ":instrumentation_info",
-    "//spoor/instrumentation/config:env_config",
+    "//spoor/instrumentation/config",
+    "//spoor/instrumentation/config:source",
+    "//spoor/instrumentation/config:output_language",
     "//spoor/instrumentation/inject_instrumentation",
     "//spoor/instrumentation/symbols:symbols_writer",
     "//util/file_system",

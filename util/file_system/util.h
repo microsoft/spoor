@@ -6,17 +6,17 @@
 #include <string>
 
 #include "util/env/env.h"
-#include "util/flat_map/flat_map.h"
 #include "util/numeric.h"
 
 namespace util::file_system {
 
 struct PathExpansionOptions {
+  env::StdGetEnv get_env;
   bool expand_tilde;
   bool expand_environment_variables;
 };
 
-auto ExpandPath(std::string path, PathExpansionOptions options,
-                const env::StdGetEnv& get_env) -> std::string;
+auto ExpandPath(std::string path, const PathExpansionOptions& options)
+    -> std::string;
 
 }  // namespace util::file_system

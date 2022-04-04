@@ -3,7 +3,8 @@
 Configure Spoor's runtime with environment variables or a configuration file.
 
 !!! info "Precedence"
-    Environment configurations override file configurations.
+    1. Environment variables.
+    2. Config file.
 
 ## Source code
 

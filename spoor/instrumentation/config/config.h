@@ -3,19 +3,15 @@
 
 #pragma once
 
+#include <memory>
 #include <optional>
 #include <string>
-#include <string_view>
+#include <vector>
 
-#include "util/flat_map/flat_map.h"
-#include "util/numeric.h"
+#include "spoor/instrumentation/config/output_language.h"
+#include "spoor/instrumentation/config/source.h"
 
 namespace spoor::instrumentation::config {
-
-enum class OutputLanguage {
-  kBitcode,
-  kIr,
-};
 
 // Prefer alphabetization readability over optimal struct ordering for this
 // single-use config. NOLINTNEXTLINE(clang-analyzer-optin.performance.Padding)
@@ -28,54 +24,14 @@ struct Config {
   bool inject_instrumentation;
   std::optional<std::string> module_id;
   std::string output_file;
-  std::string output_symbols_file;
   OutputLanguage output_language;
+  std::string output_symbols_file;
+
+  static auto Default() -> Config;
+  static auto FromSourcesOrDefault(
+      std::vector<std::unique_ptr<Source>>&& sources,
+      const Config& default_config) -> Config;
 };
-
-constexpr util::flat_map::FlatMap<std::string_view, OutputLanguage, 2>
-    kOutputLanguages{{"bitcode", OutputLanguage::kBitcode},
-                     {"ir", OutputLanguage::kIr}};
-
-constexpr std::string_view kEnableRuntimeDoc{
-    "Automatically enable Spoor's runtime."};
-constexpr auto kEnableRuntimeDefaultValue{true};
-
-constexpr std::string_view kFiltersFileDoc{"File path to the filters file."};
-// This statically-constructed object is safe because its value is the type's
-// default.
-// NOLINTNEXTLINE(fuchsia-statically-constructed-objects)
-const std::optional<std::string> kFiltersFileDefaultValue{};
-
-constexpr std::string_view kForceBinaryOutputDoc{
-    "Force printing binary data to the console."};
-constexpr auto kForceBinaryOutputDefaultValue{false};
-
-constexpr std::string_view kInitializeRuntimeDoc{
-    "Automatically initialize Spoor's runtime."};
-constexpr auto kInitializeRuntimeDefaultValue{true};
-
-constexpr std::string_view kInjectInstrumentationDoc{
-    "Inject Spoor instrumentation."};
-constexpr auto kInjectInstrumentationDefaultValue{true};
-
-constexpr std::string_view kOutputSymbolsFileDoc{
-    "Spoor instrumentation symbols output file."};
-constexpr std::string_view kOutputSymbolsFileDefaultValue{};
-
-constexpr std::string_view kModuleIdDoc{"Override the LLVM module's ID."};
-// This statically-constructed object is safe because its value is the type's
-// default.
-// NOLINTNEXTLINE(fuchsia-statically-constructed-objects)
-const std::optional<std::string> kModuleIdDefaultValue{};
-
-constexpr std::string_view kOutputFileDoc{"Output file."};
-constexpr std::string_view kOutputFileDefaultValue{"-"};
-
-constexpr std::string_view kOutputLanguageDoc{
-    "Language in which to output the transformed code. Options: %s."};
-constexpr auto kOutputLanguageDefaultValue{OutputLanguage::kBitcode};
-
-auto BinaryOutput(OutputLanguage output_language) -> bool;
 
 auto operator==(const Config& lhs, const Config& rhs) -> bool;
 

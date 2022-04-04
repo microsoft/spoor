@@ -13,6 +13,7 @@
 #include "spoor/runtime/config/source_mock.h"
 #include "spoor/runtime/trace/trace.h"
 #include "util/compression/compressor.h"
+#include "util/file_system/util.h"
 
 namespace {
 
@@ -21,6 +22,7 @@ using spoor::runtime::config::Source;
 using spoor::runtime::config::testing::SourceMock;
 using spoor::runtime::trace::SessionId;
 using testing::Return;
+using util::file_system::PathExpansionOptions;
 
 TEST(Config, Default) {  // NOLINT
   constexpr SessionId session_id{42};
@@ -49,12 +51,22 @@ TEST(Config, Default) {  // NOLINT
 
 TEST(Config, UsesDefaultConfigWithNoSource) {  // NOLINT
   const auto default_config = Config::Default();
-  const auto get_env = [](const char* /*unused*/) { return nullptr; };
-  const auto config = Config::FromSourcesOrDefault({}, default_config, get_env);
+  const PathExpansionOptions path_expansion_options{
+      .get_env = [](const char* /*unused*/) { return nullptr; },
+      .expand_tilde = true,
+      .expand_environment_variables = true,
+  };
+  const auto config =
+      Config::FromSourcesOrDefault({}, default_config, path_expansion_options);
   ASSERT_EQ(config, default_config);
 }
 
 TEST(Config, ConfiguresFromSource) {  // NOLINT
+  const PathExpansionOptions path_expansion_options{
+      .get_env = [](const char* /*unused*/) { return nullptr; },
+      .expand_tilde = true,
+      .expand_environment_variables = true,
+  };
   const Config default_config{
       .trace_file_path = "/path/to/trace/",
       .compression_strategy = util::compression::Strategy::kNone,
@@ -125,14 +137,18 @@ TEST(Config, ConfiguresFromSource) {  // NOLINT
   sources.reserve(1);
   sources.emplace_back(std::move(source));
 
-  const auto get_env = [](const char* /*unused*/) { return nullptr; };
-  const auto config =
-      Config::FromSourcesOrDefault(std::move(sources), default_config, get_env);
+  const auto config = Config::FromSourcesOrDefault(
+      std::move(sources), default_config, path_expansion_options);
   ASSERT_EQ(config, expected_config);
 }
 
 // NOLINTNEXTLINE
 TEST(Config, NeverReadsSecondarySourceIfPrimaryContainsAllConfigurations) {
+  const PathExpansionOptions path_expansion_options{
+      .get_env = [](const char* /*unused*/) { return nullptr; },
+      .expand_tilde = true,
+      .expand_environment_variables = true,
+  };
   const Config default_config{
       .trace_file_path = "/path/to/trace/",
       .compression_strategy = util::compression::Strategy::kNone,
@@ -220,14 +236,18 @@ TEST(Config, NeverReadsSecondarySourceIfPrimaryContainsAllConfigurations) {
   sources.emplace_back(std::move(source_a));
   sources.emplace_back(std::move(source_b));
 
-  const auto get_env = [](const char* /*unused*/) { return nullptr; };
-  const auto config =
-      Config::FromSourcesOrDefault(std::move(sources), default_config, get_env);
+  const auto config = Config::FromSourcesOrDefault(
+      std::move(sources), default_config, path_expansion_options);
   ASSERT_EQ(config, expected_config);
 }
 
 // NOLINTNEXTLINE
 TEST(Config, ReadsSecondarySourceIfPrimaryDoesNotContainConfiguration) {
+  const PathExpansionOptions path_expansion_options{
+      .get_env = [](const char* /*unused*/) { return nullptr; },
+      .expand_tilde = true,
+      .expand_environment_variables = true,
+  };
   const Config default_config{
       .trace_file_path = "/path/to/trace/",
       .compression_strategy = util::compression::Strategy::kNone,
@@ -327,20 +347,23 @@ TEST(Config, ReadsSecondarySourceIfPrimaryDoesNotContainConfiguration) {
   sources.emplace_back(std::move(source_a));
   sources.emplace_back(std::move(source_b));
 
-  const auto get_env = [](const char* /*unused*/) { return nullptr; };
-  const auto config =
-      Config::FromSourcesOrDefault(std::move(sources), default_config, get_env);
+  const auto config = Config::FromSourcesOrDefault(
+      std::move(sources), default_config, path_expansion_options);
   ASSERT_EQ(config, expected_config);
 }
 
 TEST(Config, ExpandsEnvironmentVariables) {  // NOLINT
-  const auto get_env = [](const char* key) -> const char* {
-    if (key == nullptr) return nullptr;
-    if (std::strncmp(key, util::env::kHomeKey.data(),
-                     util::env::kHomeKey.size()) == 0) {
-      return "/usr/you";
-    }
-    return nullptr;
+  const PathExpansionOptions path_expansion_options{
+      .get_env = [](const char* key) -> const char* {
+        if (key == nullptr) return nullptr;
+        if (std::strncmp(key, util::env::kHomeKey.data(),
+                         util::env::kHomeKey.size()) == 0) {
+          return "/usr/you";
+        }
+        return nullptr;
+      },
+      .expand_tilde = true,
+      .expand_environment_variables = true,
   };
   const Config default_config{
       .trace_file_path = "~/path/to/trace/",
@@ -373,7 +396,7 @@ TEST(Config, ExpandsEnvironmentVariables) {  // NOLINT
   ASSERT_NE(default_config, expected_config);
 
   const auto config_a =
-      Config::FromSourcesOrDefault({}, default_config, get_env);
+      Config::FromSourcesOrDefault({}, default_config, path_expansion_options);
   ASSERT_EQ(config_a, expected_config);
 
   auto source = std::make_unique<SourceMock>();
@@ -408,13 +431,17 @@ TEST(Config, ExpandsEnvironmentVariables) {  // NOLINT
   sources.reserve(1);
   sources.emplace_back(std::move(source));
 
-  const auto config_b =
-      Config::FromSourcesOrDefault(std::move(sources), default_config, get_env);
+  const auto config_b = Config::FromSourcesOrDefault(
+      std::move(sources), default_config, path_expansion_options);
   ASSERT_EQ(config_b, expected_config);
 }
 
 TEST(Config, AddsTrailingSlash) {  // NOLINT
-  const auto get_env = [](const char* /*unused*/) { return nullptr; };
+  const PathExpansionOptions path_expansion_options{
+      .get_env = [](const char* /*unused*/) { return nullptr; },
+      .expand_tilde = true,
+      .expand_environment_variables = true,
+  };
   const auto input_path =
       std::filesystem::path{"/path/to/trace"}.make_preferred();
   const auto parsed_path =
@@ -433,7 +460,8 @@ TEST(Config, AddsTrailingSlash) {  // NOLINT
       .max_flush_buffer_to_file_attempts = 9,
       .flush_all_events = false,
   };
-  const auto config = Config::FromSourcesOrDefault({}, default_config, get_env);
+  const auto config =
+      Config::FromSourcesOrDefault({}, default_config, path_expansion_options);
   ASSERT_EQ(config.trace_file_path, parsed_path);
 }
 

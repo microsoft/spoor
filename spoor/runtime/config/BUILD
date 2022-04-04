@@ -48,6 +48,7 @@ cc_library(
     visibility = ["//spoor/runtime:__subpackages__"],
     deps = [
         ":source",
+        "//spoor/common/config:util",
         "//spoor/runtime/buffer",
         "//spoor/runtime/trace",
         "//util:numeric",

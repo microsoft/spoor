@@ -31,6 +31,7 @@
 #include "util/file_system/local_file_reader.h"
 #include "util/file_system/local_file_system.h"
 #include "util/file_system/local_file_writer.h"
+#include "util/file_system/util.h"
 
 namespace {
 
@@ -51,6 +52,7 @@ using spoor::tools::serialization::SerializeToOstream;
 using util::file_system::LocalFileReader;
 using util::file_system::LocalFileSystem;
 using util::file_system::LocalFileWriter;
+using util::file_system::PathExpansionOptions;
 
 constexpr std::string_view kVersion{"%s %s\n"};
 constexpr std::string_view kUsage{
@@ -85,7 +87,13 @@ auto main(const int argc, char** argv) -> int {
   absl::SetProgramUsageMessage(
       absl::StrFormat(kUsage, short_program_invocation_name));
 
-  const auto [config, positional_args] = ConfigFromCommandLine(argc, argv);
+  const PathExpansionOptions path_expansion_options{
+      .get_env = std::getenv,
+      .expand_tilde = true,
+      .expand_environment_variables = true,
+  };
+  const auto [config, positional_args] =
+      ConfigFromCommandLine(argc, argv, path_expansion_options);
 
   if (positional_args.size() < 2) {
     std::cerr << "error: Expected at least one input source.\n\n"

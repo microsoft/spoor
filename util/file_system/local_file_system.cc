@@ -32,6 +32,15 @@ auto LocalFileSystem::IsDirectory(const std::filesystem::path& path) const
   return is_directory;
 }
 
+auto LocalFileSystem::CurrentPath() const
+    -> util::result::Result<std::filesystem::path, std::error_code> {
+  std::error_code error_code{};
+  auto current_path = std::filesystem::current_path(error_code);
+  const auto error = static_cast<bool>(error_code);
+  if (error) return error_code;
+  return current_path;
+}
+
 auto LocalFileSystem::CreateDirectories(const std::filesystem::path& path) const
     -> util::result::Result<bool, std::error_code> {
   std::error_code error_code{};

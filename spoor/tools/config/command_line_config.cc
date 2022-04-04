@@ -31,10 +31,7 @@ ABSL_FLAG(  // NOLINT
 
 namespace spoor::tools::config {
 
-constexpr util::file_system::PathExpansionOptions kPathExpansionOptions{
-    .expand_tilde = true,
-    .expand_environment_variables = true,
-};
+using util::file_system::PathExpansionOptions;
 
 auto AbslParseFlag(absl::string_view user_key, OutputFormat* output_format,
                    std::string* error) -> bool {
@@ -58,15 +55,15 @@ auto AbslUnparseFlag(const OutputFormat output_format) -> std::string {
 }
 
 auto ConfigFromCommandLine(int argc, char** argv,
-                           const util::env::StdGetEnv& get_env)
+                           const PathExpansionOptions& path_expansion_options)
     -> std::pair<Config, std::vector<char*>> {
   absl::SetFlag(&FLAGS_output_file, kOutputFileDefaultValue);
   absl::SetFlag(&FLAGS_output_format, kOutputFormatDefaultValue);
   auto positional_args = absl::ParseCommandLine(argc, argv);
   const auto output_file = absl::GetFlag(FLAGS_output_file);
   Config config{
-      .output_file = util::file_system::ExpandPath(
-          output_file, kPathExpansionOptions, get_env),
+      .output_file =
+          util::file_system::ExpandPath(output_file, path_expansion_options),
       .output_format = absl::GetFlag(FLAGS_output_format),
   };
   return std::make_pair(std::move(config), std::move(positional_args));
