@@ -20,8 +20,6 @@ jobs:
         with:
           path: /private/var/tmp/_bazel_runner
           key: ${{ runner.os }}-${{ env.cache-name }}
-      - name: Set up Xcode
-        run: sudo xcode-select --switch /Applications/Xcode_13.3.app
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
@@ -52,8 +50,6 @@ jobs:
         with:
           path: /private/var/tmp/_bazel_runner
           key: ${{ runner.os }}-${{ env.cache-name }}
-      - name: Set up Xcode
-        run: sudo xcode-select --switch /Applications/Xcode_13.3.app
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
@@ -84,8 +80,6 @@ jobs:
         with:
           path: /private/var/tmp/_bazel_runner
           key: ${{ runner.os }}-${{ env.cache-name }}
-      - name: Set up Xcode
-        run: sudo xcode-select --switch /Applications/Xcode_13.3.app
       - name: Check out code
         uses: actions/checkout@v3
       - name: Create .bazelrc
@@ -106,8 +100,6 @@ jobs:
         with:
           path: /private/var/tmp/_bazel_runner
           key: ${{ runner.os }}-${{ env.cache-name }}
-      - name: Set up Xcode
-        run: sudo xcode-select --switch /Applications/Xcode_13.3.app
       - name: Check out code
         uses: actions/checkout@v3
       - name: Create .bazelrc
@@ -135,8 +127,6 @@ jobs:
     runs-on: macos-12
     name: Format code
     steps:
-      - name: Set up Xcode
-        run: sudo xcode-select --switch /Applications/Xcode_13.3.app
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
@@ -170,8 +160,6 @@ jobs:
         with:
           path: /private/var/tmp/_bazel_runner
           key: ${{ runner.os }}-${{ env.cache-name }}
-      - name: Set up Xcode
-        run: sudo xcode-select --switch /Applications/Xcode_13.3.app
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
