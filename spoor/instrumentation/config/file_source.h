@@ -9,6 +9,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <system_error>
 #include <vector>
 
 #include "gsl/gsl"
@@ -17,6 +18,7 @@
 #include "util/env/env.h"
 #include "util/file_system/file_reader.h"
 #include "util/file_system/util.h"
+#include "util/result.h"
 
 namespace spoor::instrumentation::config {
 
@@ -63,7 +65,8 @@ class FileSource final : public Source {
 
   [[nodiscard]] static auto FindConfigFile(
       const std::filesystem::path& deepest_search_path)
-      -> std::optional<std::filesystem::path>;
+      -> util::result::Result<std::optional<std::filesystem::path>,
+                              std::error_code>;
 
   [[nodiscard]] auto Read() -> std::vector<ReadError> override;
   [[nodiscard]] auto IsRead() const -> bool override;

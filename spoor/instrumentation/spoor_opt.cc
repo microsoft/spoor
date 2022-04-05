@@ -128,7 +128,15 @@ auto main(int argc, char** argv) -> int {
                  << "Try --help to list available flags.\n";
     return EXIT_FAILURE;
   }
-  const auto config_file_path = FileSource::FindConfigFile(current_path.Ok());
+  const auto config_file_result = FileSource::FindConfigFile(current_path.Ok());
+  if (config_file_result.IsErr()) {
+    llvm::WithColor::error();
+    llvm::errs() << config_file_result.Err().message() << "\n\n"
+                 << absl::ProgramUsageMessage() << "\n\n"
+                 << "Try --help to list available flags.\n";
+    return EXIT_FAILURE;
+  }
+  const auto& config_file_path = config_file_result.Ok();
   if (config_file_path.has_value()) {
     FileSource::Options file_source_options{
         .file_reader{std::make_unique<util::file_system::LocalFileReader>()},

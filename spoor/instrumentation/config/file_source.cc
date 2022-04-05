@@ -8,6 +8,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <system_error>
 #include <utility>
 #include <vector>
 
@@ -24,6 +25,7 @@
 namespace spoor::instrumentation::config {
 
 using util::file_system::PathExpansionOptions;
+using util::result::Result;
 
 FileSource::FileSource(Options options)
     : options_{std::move(options)}, read_{false} {}
@@ -59,18 +61,22 @@ auto ReadFilePathConfig(const toml::table& table, const std::string_view key,
 
 auto FileSource::FindConfigFile(
     const std::filesystem::path& deepest_search_path)
-    -> std::optional<std::filesystem::path> {
+    -> Result<std::optional<std::filesystem::path>, std::error_code> {
+  using Result = Result<std::optional<std::filesystem::path>, std::error_code>;
   std::error_code error{};
   for (auto path = deepest_search_path; path != path.root_path();
        path = path.parent_path()) {
-    const auto iterator = std::filesystem::directory_iterator{path};
+    const auto iterator = std::filesystem::directory_iterator{path, error};
+    if (error) return error;
     const auto config_file = std::find_if(
         iterator, std::filesystem::end(iterator), [](const auto& entry) {
           return entry.path().filename() == kConfigFileName;
         });
-    if (config_file != std::filesystem::end(iterator)) return *config_file;
+    if (config_file != std::filesystem::end(iterator)) {
+      return Result::Ok(*config_file);
+    }
   }
-  return {};
+  return Result::Ok({});
 }
 
 auto FileSource::Read() -> std::vector<ReadError> {
