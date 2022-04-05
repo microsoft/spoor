@@ -253,6 +253,36 @@ def test_clang_does_not_link_spoor_for_incremental_link(popen_mock):
     popen_mock.reset_mock()
 
 
+def _test_does_not_link_analyze(main, popen_mock):
+  input_args = [
+      '-target',
+      'arm64-apple-ios15.0',
+      '--analyze',
+      'source.m',
+      '-o',
+      'out.plist',
+  ]
+  popen_handle = popen_mock.return_value.__enter__
+  popen_handle.return_value.returncode = 0
+
+  return_code = main(['clang_clangxx'] + input_args, 'default_clang_clangxx',
+                     'spoor_opt', 'default_clangxx', '/spoor/library/path')
+
+  popen_handle.assert_called_once()
+  popen_handle.return_value.wait.assert_called_once()
+  assert return_code == 0
+  popen_args = popen_mock.call_args.args[0]
+  assert popen_args == ['default_clang_clangxx'] + input_args
+
+
+@patch('subprocess.Popen')
+@patch.dict('os.environ', {})
+def test_clang_does_not_link_analyze(popen_mock):
+  for main in [clang.main, clangxx.main]:
+    _test_does_not_link_analyze(main, popen_mock)
+    popen_mock.reset_mock()
+
+
 def _test_link_return_code(main, popen_mock):
   input_args = [
       '-target', 'arm64-apple-ios15.0', '-o', 'a.o', '-r', 'foo', 'bar'

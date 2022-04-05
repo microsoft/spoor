@@ -17,6 +17,7 @@ from shared import SPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION_KEY
 import argparse
 import os
 
+CLANG_CLANGXX_ANALYZE_ARG = '--analyze'
 CLANG_CLANGXX_EMIT_LLVM_ARG = '-emit-llvm'
 CLANG_CLANGXX_INCREMENTAL_LINK_ARG = '-r'
 CLANG_CLANGXX_LIBRARY_SEARCH_PATH_ARG = '-L'
@@ -91,8 +92,9 @@ def _runtime_config_for_target(target):
 
 
 def _link_spoor_runtime(args):
-  return CLANG_CLANGXX_ONLY_PREPROCESS_COMPILE_AND_ASSEMBLE_ARG not in args \
-          and CLANG_CLANGXX_INCREMENTAL_LINK_ARG not in args
+  return (CLANG_CLANGXX_ONLY_PREPROCESS_COMPILE_AND_ASSEMBLE_ARG not in args and
+          CLANG_CLANGXX_INCREMENTAL_LINK_ARG not in args and
+          CLANG_CLANGXX_ANALYZE_ARG not in args)
 
 
 def parse_clang_clangxx_args(args, spoor_library_path):
