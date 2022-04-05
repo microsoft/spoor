@@ -74,11 +74,11 @@ auto PluginInfo() -> llvm::PassPluginLibraryInfo {
           auto current_path = file_system.CurrentPath();
           const auto config_file_path =
               FileSource::FindConfigFile(current_path.Ok());
-          if (config_file_path.has_value()) {
+          if (config_file_path.IsOk() && config_file_path.Ok().has_value()) {
             FileSource::Options file_source_options{
                 .file_reader{std::make_unique<LocalFileReader>()},
                 .path_expansion_options{path_expansion_options},
-                .file_path{config_file_path.value()},
+                .file_path{config_file_path.Ok().value()},
             };
             sources.emplace_back(
                 std::make_unique<FileSource>(std::move(file_source_options)));
