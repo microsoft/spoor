@@ -10,7 +10,7 @@ on:
   pull_request:
 jobs:
   build-and-test:
-    runs-on: macos-11
+    runs-on: macos-12
     name: Build and test
     steps:
       - name: Set up build cache
@@ -40,7 +40,7 @@ jobs:
       - name: Benchmark
         run: ./toolchain/benchmark/run_benchmarks.sh
   build-and-test-llvm-toolchain:
-    runs-on: macos-11
+    runs-on: macos-12
     name: Build and test (LLVM toolchain)
     steps:
       - name: Set up build cache
@@ -70,7 +70,7 @@ jobs:
         run: |
           bazel test //... --crosstool_top=//toolchain/crosstool:llvm_toolchain
   build-and-test-address-sanitizer:
-    runs-on: macos-11
+    runs-on: macos-12
     name: Build and test (AddressSanitizer)
     steps:
       - name: Set up build cache
@@ -90,7 +90,7 @@ jobs:
       - name: Test
         run: bazel test --config=asan $(bazel query 'kind(cc_.*, tests(//...))')
   build-and-test-thread-sanitizer:
-    runs-on: macos-11
+    runs-on: macos-12
     name: Build and test (ThreadSanitizer)
     steps:
       - name: Set up build cache
@@ -124,7 +124,7 @@ jobs:
       - name: Build documentation
         run: mkdocs build --strict
   format-code:
-    runs-on: macos-11
+    runs-on: macos-12
     name: Format code
     steps:
       - name: Set up Python
@@ -150,7 +150,7 @@ jobs:
           bazel run //toolchain/style:buildifier
           git diff --exit-code
   lint-code:
-    runs-on: macos-11
+    runs-on: macos-12
     name: Lint code
     steps:
       - name: Set up build cache
