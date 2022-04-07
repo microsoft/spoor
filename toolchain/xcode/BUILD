@@ -3,6 +3,13 @@
 
 load("@rules_python//python:defs.bzl", "py_library", "py_test")
 load("@pip_deps_dev//:requirements.bzl", "requirement")
+load(
+    "//spoor/runtime/wrappers/apple:config.bzl",
+    "RUNTIME_STUB_TARGET_NAME",
+    "RUNTIME_STUB_XCFRAMEWORK_FILES",
+    "RUNTIME_TARGET_NAME",
+    "RUNTIME_XCFRAMEWORK_FILES",
+)
 
 TOOLCHAIN_NAME = "MicrosoftSpoor.xctoolchain"
 
@@ -18,6 +25,12 @@ _INSTRUMENT_APP_TAGS = [
 filegroup(
     name = "toolchain_info",
     srcs = ["ToolchainInfo.plist"],
+    visibility = ["//visibility:private"],
+)
+
+py_library(
+    name = "init",
+    srcs = ["__init__.py"],
     visibility = ["//visibility:private"],
 )
 
@@ -61,10 +74,14 @@ py_library(
 py_test(
     name = "clang_clangxx_test",
     srcs = ["clang_clangxx_test.py"],
-    data = ["//toolchain/xcode/test_data/build_args"],
+    data = [
+        "//toolchain/xcode/test_data/build_args",
+        "//toolchain/xcode/test_data/info_plists",
+    ],
     visibility = ["//visibility:private"],
     deps = [
         ":clang",
+        ":clang_clangxx_shared",
         ":clangxx",
         ":shared",
         requirement("pytest"),
@@ -113,6 +130,10 @@ _TOOLCHAIN_TARGETS_TO_OUTS = [
         TOOLCHAIN_NAME + "/ToolchainInfo.plist",
     ],
     [
+        ":init",
+        TOOLCHAIN_NAME + "/usr/bin/__init__.py",
+    ],
+    [
         ":clang",
         TOOLCHAIN_NAME + "/usr/bin/clang",
     ],
@@ -137,54 +158,55 @@ _TOOLCHAIN_TARGETS_TO_OUTS = [
         TOOLCHAIN_NAME + "/usr/bin/shared.py",
     ],
     [
-        "//spoor/runtime/wrappers/apple:spoor_runtime_ios",
-        TOOLCHAIN_NAME + "/spoor/lib/libspoor_runtime_ios.a",
-    ],
-    [
-        "//spoor/runtime/wrappers/apple:spoor_runtime_macos",
-        TOOLCHAIN_NAME + "/spoor/lib/libspoor_runtime_macos.a",
-    ],
-    [
-        "//spoor/runtime/wrappers/apple:spoor_runtime_watchos",
-        TOOLCHAIN_NAME + "/spoor/lib/libspoor_runtime_watchos.a",
-    ],
-    [
-        "//spoor/runtime/wrappers/apple:spoor_runtime_default_config_ios",
-        TOOLCHAIN_NAME + "/spoor/lib/libspoor_runtime_default_config_ios.a",
-    ],
-    [
-        "//spoor/runtime/wrappers/apple:spoor_runtime_default_config_macos",
-        TOOLCHAIN_NAME + "/spoor/lib/libspoor_runtime_default_config_macos.a",
-    ],
-    [
-        "//spoor/runtime/wrappers/apple:spoor_runtime_default_config_watchos",
-        TOOLCHAIN_NAME + "/spoor/lib/libspoor_runtime_default_config_watchos.a",
-    ],
-    [
         "//spoor/instrumentation/wrappers/apple:spoor_opt",
         TOOLCHAIN_NAME + "/spoor/bin/spoor_opt",
     ],
 ]
 
-_TOOLCHAIN_GENERATED_OUTS = [
-    TOOLCHAIN_NAME + "/usr/bin/__init__.py",
+_RUNTIME_XCFRAMEWORK_TARGET = "//spoor/runtime/wrappers/apple:{}".format(
+    RUNTIME_TARGET_NAME,
+)
+
+_RUNTIME_STUB_XCFRAMEWORK_TARGET = "//spoor/runtime/wrappers/apple:{}".format(
+    RUNTIME_STUB_TARGET_NAME,
+)
+
+_FRAMEWORKS_PATH = "{}/spoor/frameworks".format(TOOLCHAIN_NAME)
+
+_XCFRAMEWORKS_FILES = [
+    "{}/{}".format(_FRAMEWORKS_PATH, file)
+    for file in RUNTIME_XCFRAMEWORK_FILES
+] + [
+    "{}/{}".format(_FRAMEWORKS_PATH, file)
+    for file in RUNTIME_STUB_XCFRAMEWORK_FILES
 ]
 
 genrule(
     name = "toolchain",
-    srcs = [src for (src, _) in _TOOLCHAIN_TARGETS_TO_OUTS],
+    srcs = [src for (src, _) in _TOOLCHAIN_TARGETS_TO_OUTS] + [
+        _RUNTIME_XCFRAMEWORK_TARGET,
+        _RUNTIME_STUB_XCFRAMEWORK_TARGET,
+    ],
     # Note: Bazel forces all outputs to be executable.
     # Ticket: https://github.com/bazelbuild/bazel/issues/3359
     # Additional context:
     #   https://github.com/bazelbuild/bazel/issues/5588#issuecomment-628689827
     outs = [out for (_, out) in _TOOLCHAIN_TARGETS_TO_OUTS] +
-           _TOOLCHAIN_GENERATED_OUTS,
+           _XCFRAMEWORKS_FILES,
     cmd = " && ".join(
         [
             "cp $(location {}) $(@D)/{}".format(src, out)
             for (src, out) in _TOOLCHAIN_TARGETS_TO_OUTS
-        ] +
-        ["touch $(@D)/{}".format(out) for out in _TOOLCHAIN_GENERATED_OUTS],
+        ] + [
+            "unzip $(location {}) -d $(@D)/{}".format(
+                _RUNTIME_XCFRAMEWORK_TARGET,
+                _FRAMEWORKS_PATH,
+            ),
+            "unzip $(location {}) -d $(@D)/{}".format(
+                _RUNTIME_STUB_XCFRAMEWORK_TARGET,
+                _FRAMEWORKS_PATH,
+            ),
+        ],
     ),
     visibility = ["//visibility:public"],
 )

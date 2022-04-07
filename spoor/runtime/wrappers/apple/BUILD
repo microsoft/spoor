@@ -7,12 +7,19 @@ load(
     "ios_static_framework",
     "ios_unit_test",
 )
+load("@build_bazel_rules_apple//apple:apple.bzl", "apple_xcframework")
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_unit_test")
 load(
     "@build_bazel_rules_apple//apple:watchos.bzl",
     "watchos_static_framework",
     # TODO(237): Fix watchOS unit tests.
     # "watchos_unit_test",
+)
+load(
+    "//spoor/runtime/wrappers/apple:config.bzl",
+    "RUNTIME_HDRS",
+    "RUNTIME_STUB_TARGET_NAME",
+    "RUNTIME_TARGET_NAME",
 )
 load(
     "//toolchain:config.bzl",
@@ -31,13 +38,6 @@ _LIB_COPTS = SPOOR_DEFAULT_COPTS
 
 _TEST_COPTS = SPOOR_DEFAULT_TEST_COPTS + ["-Wno-gnu-statement-expression"]
 
-_LIB_HDRS = [
-    "SpoorConfig.h",
-    "SpoorDeletedFilesInfo.h",
-    "Runtime.h",
-    "SpoorTypes.h",
-]
-
 _LIB_SRCS = [
     "SpoorConfig.mm",
     "SpoorConfig_private.h",
@@ -52,31 +52,99 @@ _WRAPPER_TEST_SRCS = [
     "SpoorTypesTests.mm",
 ]
 
-_MODULE_NAME = "SpoorRuntime"
+_MODULE_NAME = RUNTIME_TARGET_NAME
 
-_STUB_MODULE_NAME = "SpoorRuntimeStub"
+_STUB_MODULE_NAME = RUNTIME_STUB_TARGET_NAME
 
 ios_static_framework(
     name = "ios_runtime_framework",
-    hdrs = _LIB_HDRS,
+    hdrs = RUNTIME_HDRS,
     bundle_name = _MODULE_NAME,
     minimum_os_version = _MINIMUM_IOS_VERSION,
     visibility = ["//visibility:public"],
     deps = [":runtime_lib"],
 )
 
+_XCFRAMEWORK_BUNDLE_ID_TEMPLATE = "com.microsoft.spoor.{}"
+
+apple_xcframework(
+    name = RUNTIME_TARGET_NAME,
+    bundle_id = _XCFRAMEWORK_BUNDLE_ID_TEMPLATE.format(RUNTIME_TARGET_NAME),
+    families_required = {
+        "ios": [
+            "ipad",
+            "iphone",
+        ],
+    },
+    framework_type = ["dynamic"],
+    infoplists = ["SpoorRuntimeInfo.plist"],
+    ios = {
+        "simulator": [
+            "arm64",
+            "x86_64",
+        ],
+        "device": ["arm64"],
+    },
+    minimum_deployment_os_versions = {
+        "ios": _MINIMUM_IOS_VERSION,
+    },
+    minimum_os_versions = {
+        "ios": _MINIMUM_IOS_VERSION,
+    },
+    public_hdrs = RUNTIME_HDRS,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":runtime_default_config_lib",
+        ":runtime_lib",
+    ],
+)
+
 ios_static_framework(
     name = "ios_runtime_stub_framework",
-    hdrs = _LIB_HDRS,
+    hdrs = RUNTIME_HDRS,
     bundle_name = _STUB_MODULE_NAME,
     minimum_os_version = _MINIMUM_IOS_VERSION,
     visibility = ["//visibility:public"],
     deps = [":runtime_stub_lib"],
 )
 
+apple_xcframework(
+    name = RUNTIME_STUB_TARGET_NAME,
+    bundle_id = _XCFRAMEWORK_BUNDLE_ID_TEMPLATE.format(
+        RUNTIME_STUB_TARGET_NAME,
+    ),
+    families_required = {
+        "ios": [
+            "ipad",
+            "iphone",
+        ],
+    },
+    framework_type = ["dynamic"],
+    infoplists = ["SpoorRuntimeInfo.plist"],
+    ios = {
+        "simulator": [
+            "arm64",
+            "x86_64",
+        ],
+        "device": ["arm64"],
+    },
+    minimum_deployment_os_versions = {
+        "ios": _MINIMUM_IOS_VERSION,
+    },
+    minimum_os_versions = {
+        "ios": _MINIMUM_IOS_VERSION,
+    },
+    public_hdrs = RUNTIME_HDRS,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":runtime_default_config_lib",
+        ":runtime_stub_lib",
+    ],
+)
+
 watchos_static_framework(
     name = "watchos_runtime_framework",
-    hdrs = _LIB_HDRS,
+    hdrs = RUNTIME_HDRS,
     bundle_name = _MODULE_NAME,
     minimum_os_version = _MINIMUM_WATCHOS_VERSION,
     visibility = ["//visibility:public"],
@@ -85,7 +153,7 @@ watchos_static_framework(
 
 watchos_static_framework(
     name = "watchos_runtime_stub_framework",
-    hdrs = _LIB_HDRS,
+    hdrs = RUNTIME_HDRS,
     bundle_name = _STUB_MODULE_NAME,
     minimum_os_version = _MINIMUM_WATCHOS_VERSION,
     visibility = ["//visibility:public"],
@@ -176,7 +244,7 @@ apple_static_library(
 objc_library(
     name = "runtime_lib",
     srcs = _LIB_SRCS,
-    hdrs = _LIB_HDRS,
+    hdrs = RUNTIME_HDRS,
     copts = _LIB_COPTS,
     module_name = _MODULE_NAME,
     visibility = ["//visibility:private"],
@@ -186,7 +254,7 @@ objc_library(
 objc_library(
     name = "runtime_stub_lib",
     srcs = _LIB_SRCS,
-    hdrs = _LIB_HDRS,
+    hdrs = RUNTIME_HDRS,
     copts = _LIB_COPTS,
     module_name = _STUB_MODULE_NAME,
     visibility = ["//visibility:private"],

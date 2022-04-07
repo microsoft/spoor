@@ -2,12 +2,42 @@
 # Licensed under the MIT License.
 '''Tests for shared wrapper logic.'''
 
-from shared import arg_after, flatten, instrument_and_compile_ir
+from shared import Target, arg_after, flatten, instrument_and_compile_ir
 from unittest import mock
 from unittest.mock import patch
 import pytest
 import subprocess
 import sys
+
+
+def test_target_parses_string_without_platform_variant():
+  target_string = 'arm64-apple-ios15.0'
+  target = Target(target_string)
+  assert target.string == target_string
+  assert target.architecture == 'arm64'
+  assert target.vendor == 'apple'
+  assert target.platform == 'ios'
+  assert target.platform_version == '15.0'
+  assert target.platform_variant is None
+
+
+def test_target_parses_string_with_platform_variant():
+  target_string = 'x86_64-apple-ios15.0-simulator'
+  target = Target(target_string)
+  assert target.string == target_string
+  assert target.architecture == 'x86_64'
+  assert target.vendor == 'apple'
+  assert target.platform == 'ios'
+  assert target.platform_version == '15.0'
+  assert target.platform_variant == 'simulator'
+
+
+def test_target_fails_to_parse_bad_target_string():
+  target_string = 'foo'
+  expected_error = f'Cannot parse target "{target_string}".'
+  with pytest.raises(ValueError) as error:
+    _ = Target(target_string)
+  assert str(error.value) == expected_error
 
 
 def test_arg_after():

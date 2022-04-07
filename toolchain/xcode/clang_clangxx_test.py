@@ -5,15 +5,22 @@
 from shared import SPOOR_INSTRUMENTATION_ENABLE_RUNTIME_KEY
 from shared import SPOOR_INSTRUMENTATION_INITIALIZE_RUNTIME_KEY
 from shared import SPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION_KEY
-from shared import arg_after
+from shared import Target, arg_after
 from unittest import mock
-from unittest.mock import patch
+from unittest.mock import mock_open, patch
 import clang
 import clangxx
 import pytest
 import shlex
 import subprocess
 import sys
+
+
+def _read_xctoolchain_info_plist():
+  plist_path = ('toolchain/xcode/test_data/info_plists/'
+                'spoor_runtime_xctoolchain_info.plist')
+  with open(plist_path, mode='rb') as file:
+    return file.read()
 
 
 def _test_parses_compile_args(input_args, input_args_file, main, popen_mock):
@@ -32,7 +39,8 @@ def _test_parses_compile_args(input_args, input_args_file, main, popen_mock):
   ]
 
   return_code = main(['clang_clangxx'] + input_args, 'default_clang_clangxx',
-                     'spoor_opt', 'default_clangxx', '/spoor/library/path')
+                     'spoor_opt', 'default_clangxx',
+                     '/path/to/spoor/frameworks')
 
   assert return_code == 0
   clang_clangxx_args, spoor_opt_args, clangxx_args = popen_mock.call_args_list
@@ -102,16 +110,20 @@ def test_parses_compile_args(popen_mock):
       f'toolchain/xcode/test_data/build_args/{file}' for file in [
           'clang_compile_objc_ios_arm64_args.txt',
           'clang_compile_objc_ios_x86_64_args.txt',
-          'clang_compile_objc_macos_x86_64_args.txt',
-          'clang_compile_objc_watchos_arm64_args.txt',
-          'clang_compile_objc_watchos_x86_64_args.txt',
+          # TODO(#257): Reintroduce macOS and watchOS support.
+          # 'clang_compile_objc_macos_x86_64_args.txt',
+          # 'clang_compile_objc_watchos_arm64_args.txt',
+          # 'clang_compile_objc_watchos_x86_64_args.txt',
       ]
   ]
   for input_args_file in input_args_files:
     with open(input_args_file, encoding='utf-8', mode='r') as file:
       input_args = shlex.split(file.read())
       for main in [clang.main, clangxx.main]:
-        _test_parses_compile_args(input_args, input_args_file, main, popen_mock)
+        with patch('builtins.open', mock_open()) as open_mock:
+          _test_parses_compile_args(input_args, input_args_file, main,
+                                    popen_mock)
+          open_mock.assert_not_called()
         popen_mock.reset_mock()
 
 
@@ -129,7 +141,7 @@ def _get_compile_args(input_args, main, popen_mock):
   ]
 
   _ = main(['clang_clangxx'] + input_args, 'default_clang_clangxx', 'spoor_opt',
-           'default_clangxx', '/spoor/library/path')
+           'default_clangxx', '/path/to/spoor/frameworks')
 
   clang_clangxx_args, _, _ = popen_mock.call_args_list
   assert len(clang_clangxx_args.args) == 1
@@ -137,7 +149,8 @@ def _get_compile_args(input_args, main, popen_mock):
 
 
 @patch('subprocess.Popen')
-def test_forwards_env_configs(popen_mock):
+@patch('builtins.open')
+def test_forwards_env_configs(open_mock, popen_mock):
   config_unspecified = {}
   config_empty = {
       SPOOR_INSTRUMENTATION_ENABLE_RUNTIME_KEY: '',
@@ -164,6 +177,8 @@ def test_forwards_env_configs(popen_mock):
         assert '-DSPOOR_INSTRUMENTATION_ENABLE_RUNTIME=1' in args
         assert '-DSPOOR_INSTRUMENTATION_INITIALIZE_RUNTIME=1' in args
         assert '-DSPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION=1' in args
+        open_mock.assert_not_called()
+        open_mock.reset_mock()
         popen_mock.reset_mock()
     for env in [config_disabled]:
       with patch.dict('os.environ', env, clear=True):
@@ -171,36 +186,31 @@ def test_forwards_env_configs(popen_mock):
         assert '-DSPOOR_INSTRUMENTATION_ENABLE_RUNTIME=0' in args
         assert '-DSPOOR_INSTRUMENTATION_INITIALIZE_RUNTIME=0' in args
         assert '-DSPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION=0' in args
+        open_mock.assert_not_called()
+        open_mock.reset_mock()
         popen_mock.reset_mock()
 
 
-def _test_parses_link_args(input_args, input_args_file, main, popen_mock):
+def _test_parses_link_args(input_args, main, popen_mock):
   popen_handle = popen_mock.return_value.__enter__
   popen_handle.return_value.returncode = 0
 
+  spoor_frameworks_path = '/path/to/spoor/frameworks'
   return_code = main(['clang_clangxx'] + input_args, 'default_clang_clangxx',
-                     'spoor_opt', 'default_clangxx', '/spoor/library/path')
+                     'spoor_opt', 'default_clangxx', spoor_frameworks_path)
 
   popen_handle.assert_called_once()
   popen_handle.return_value.wait.assert_called_once()
   assert return_code == 0
   popen_args = popen_mock.call_args.args[0]
-  assert popen_args[:-4] == ['default_clang_clangxx'] + input_args
-  if 'ios' in input_args_file:
-    assert popen_args[-4:] == [
-        '-L/spoor/library/path', '-lspoor_runtime_ios', '-lc++',
-        '-lspoor_runtime_default_config_ios'
-    ]
-  if 'macos' in input_args_file:
-    assert popen_args[-4:] == [
-        '-L/spoor/library/path', '-lspoor_runtime_macos', '-lc++',
-        '-lspoor_runtime_default_config_macos'
-    ]
-  if 'watchos' in input_args_file:
-    assert popen_args[-4:] == [
-        '-L/spoor/library/path', '-lspoor_runtime_watchos', '-lc++',
-        '-lspoor_runtime_default_config_watchos'
-    ]
+  target = Target(arg_after('-target', popen_args))
+  assert popen_args[:-3] == ['default_clang_clangxx'] + input_args
+  framework_search_path = popen_args[-3]
+  assert framework_search_path.startswith(
+      f'-F{spoor_frameworks_path}/SpoorRuntime.xcframework/')
+  assert target.architecture in framework_search_path
+  assert target.platform in framework_search_path
+  assert popen_args[-2:] == ['-framework', 'SpoorRuntime']
 
 
 @patch('subprocess.Popen')
@@ -210,21 +220,29 @@ def test_parses_link_args(popen_mock):
       f'toolchain/xcode/test_data/build_args/{file}' for file in [
           'clang_link_objc_ios_arm64_args.txt',
           'clang_link_objc_ios_x86_64_args.txt',
-          'clang_link_objc_macos_x86_64_args.txt',
-          'clang_link_objc_watchos_arm64_args.txt',
-          'clang_link_objc_watchos_x86_64_args.txt',
+          # TODO(#257): Reintroduce macOS and watchOS support.
+          # 'clang_link_objc_macos_x86_64_args.txt',
+          # 'clang_link_objc_watchos_arm64_args.txt',
+          # 'clang_link_objc_watchos_x86_64_args.txt',
           'clang_link_swift_ios_arm64_args.txt',
           'clang_link_swift_ios_x86_64_args.txt',
-          'clang_link_swift_macos_x86_64_args.txt',
-          'clang_link_swift_watchos_arm64_args.txt',
-          'clang_link_swift_watchos_x86_64_args.txt',
+          # TODO(#257): Reintroduce macOS and watchOS support.
+          # 'clang_link_swift_macos_x86_64_args.txt',
+          # 'clang_link_swift_watchos_arm64_args.txt',
+          # 'clang_link_swift_watchos_x86_64_args.txt',
       ]
   ]
   for input_args_file in input_args_files:
     with open(input_args_file, encoding='utf-8', mode='r') as file:
       input_args = shlex.split(file.read())
       for main in [clang.main, clangxx.main]:
-        _test_parses_link_args(input_args, input_args_file, main, popen_mock)
+        with patch(
+            'builtins.open',
+            mock_open(read_data=_read_xctoolchain_info_plist())) as open_mock:
+          _test_parses_link_args(input_args, main, popen_mock)
+          open_mock.assert_called_once_with(
+              '/path/to/spoor/frameworks/SpoorRuntime.xcframework/Info.plist',
+              mode='rb')
         popen_mock.reset_mock()
 
 
@@ -236,7 +254,8 @@ def _test_does_not_link_spoor_for_incremental_link(main, popen_mock):
   popen_handle.return_value.returncode = 0
 
   return_code = main(['clang_clangxx'] + input_args, 'default_clang_clangxx',
-                     'spoor_opt', 'default_clangxx', '/spoor/library/path')
+                     'spoor_opt', 'default_clangxx',
+                     '/path/to/spoor/frameworks')
 
   popen_handle.assert_called_once()
   popen_handle.return_value.wait.assert_called_once()
@@ -266,7 +285,8 @@ def _test_does_not_link_analyze(main, popen_mock):
   popen_handle.return_value.returncode = 0
 
   return_code = main(['clang_clangxx'] + input_args, 'default_clang_clangxx',
-                     'spoor_opt', 'default_clangxx', '/spoor/library/path')
+                     'spoor_opt', 'default_clangxx',
+                     '/path/to/spoor/frameworks')
 
   popen_handle.assert_called_once()
   popen_handle.return_value.wait.assert_called_once()
@@ -292,7 +312,8 @@ def _test_link_return_code(main, popen_mock):
     popen_handle.return_value.returncode = expected_return_code
 
     return_code = main(['clang_clangxx'] + input_args, 'default_clang_clangxx',
-                       'spoor_opt', 'default_clangxx', '/spoor/library/path')
+                       'spoor_opt', 'default_clangxx',
+                       '/path/to/spoor/frameworks')
 
     popen_handle.assert_called_once()
     popen_handle.return_value.wait.assert_called_once()
@@ -307,47 +328,118 @@ def test_clang_link_return_code(popen_mock):
     _test_link_return_code(main, popen_mock)
 
 
-def test_raises_exception_with_no_target():
-  input_args = ['foo', '-x', 'bar', '-y', 'baz']
-  expected_error = 'No target was supplied.'
-  with pytest.raises(ValueError) as error:
-    clang.main(input_args, 'clang', 'spoor_opt', 'clang++',
-               '/path/to/spoor/lib')
-    assert error == expected_error
-  with pytest.raises(ValueError) as error:
-    clangxx.main(input_args, 'clang++', 'spoor_opt', 'clang++',
-                 '/path/to/spoor/lib')
-    assert error == expected_error
-
-
-def test_raises_exception_with_unsupported_target():
-  input_args = ['-target', 'arm64-apple-jetpack1.0']
-  expected_error = 'Unsupported target arm64-apple-jetpack1.0.'
-  with pytest.raises(ValueError) as error:
-    clang.main(input_args, 'clang', 'spoor_opt', 'clang++',
-               '/spoor/library/path')
-    assert error == expected_error
-  with pytest.raises(ValueError) as error:
-    clangxx.main(input_args, 'clang++', 'spoor_opt', 'clang++',
-                 '/spoor/library/path')
-    assert error == expected_error
+def _test_raises_error_linking_unsupported_target(main):
+  targets = [
+      'armv7k-apple-ios1.0',
+      'arm64-apple-jetpack1.0',
+      'arm64-apple-ios1.0-other',
+  ]
+  for target in targets:
+    input_args = ['-target', target, '-o', 'a.o', 'foo', 'bar']
+    expected_error = f'No runtime library for target "{target}".'
+    with patch(
+        'builtins.open',
+        mock_open(read_data=_read_xctoolchain_info_plist())) as open_mock:
+      with pytest.raises(ValueError) as error:
+        main(['clang_clangxx'] + input_args, 'default_clang_clangxx',
+             'spoor_opt', 'default_clangxx', '/path/to/spoor/frameworks')
+      assert str(error.value) == expected_error
+      open_mock.assert_called_once_with(
+          '/path/to/spoor/frameworks/SpoorRuntime.xcframework/Info.plist',
+          mode='rb')
 
 
 @patch.dict('os.environ', {})
-def test_raises_exception_with_multiple_outputs_when_compiling():
+def test_raises_error_linking_unsupported_target():
+  for main in [clang.main, clangxx.main]:
+    _test_raises_error_linking_unsupported_target(main)
+
+
+def _test_raises_error_with_unsupported_vendor(main):
+  input_args = ['-target', 'arm64-unknown-ios15.0']
+  expected_error = 'Unsupported vendor "unknown".'
+  with patch('builtins.open',
+             mock_open(read_data=_read_xctoolchain_info_plist())) as open_mock:
+    with pytest.raises(ValueError) as error:
+      main(['default_clang_clangxx'] + input_args, 'clang', 'spoor_opt',
+           'clang++', '/path/to/spoor/frameworks')
+    assert str(error.value) == expected_error
+    open_mock.assert_called_once_with(
+        '/path/to/spoor/frameworks/SpoorRuntime.xcframework/Info.plist',
+        mode='rb')
+
+
+@patch.dict('os.environ', {})
+def test_raises_error_with_unsupported_vendor():
+  for main in [clang.main, clangxx.main]:
+    _test_raises_error_with_unsupported_vendor(main)
+
+
+def _test_raises_error_with_unsupported_plist_version(main):
+  plist_path = ('toolchain/xcode/test_data/info_plists/'
+                'unknown_xctoolchain_version.plist')
+  input_args = ['-target', 'arm64-apple-ios15.0']
+  expected_error = 'Unknown xcframework format version "2.0".'
+  with open(plist_path, mode='rb') as file:
+    with patch('builtins.open', mock_open(read_data=file.read())) as open_mock:
+      with pytest.raises(ValueError) as error:
+        main(['default_clang_clangxx'] + input_args, 'clang', 'spoor_opt',
+             'clang++', '/path/to/spoor/frameworks')
+      assert str(error.value) == expected_error
+      open_mock.assert_called_once_with(
+          '/path/to/spoor/frameworks/SpoorRuntime.xcframework/Info.plist',
+          mode='rb')
+
+
+@patch.dict('os.environ', {})
+def test_raises_error_with_unsupported_plist_veresion():
+  for main in [clang.main, clangxx.main]:
+    _test_raises_error_with_unsupported_plist_version(main)
+
+
+@patch.dict('os.environ', {})
+def test_raises_exception_with_no_target():
+  input_args = ['foo', '-x', 'bar', '-y', 'baz']
+  expected_error = 'No target was supplied.'
+  for main in [clang.main, clangxx.main]:
+    with pytest.raises(ValueError) as error:
+      main(['default_clang_clangxx'] + input_args, 'clang', 'spoor_opt',
+           'clang++', '/path/to/spoor/frameworks')
+    assert str(error.value) == expected_error
+
+
+@patch.dict('os.environ', {})
+def test_raises_exception_with_unsupported_target():
+  input_args = ['-target', 'arm64-apple-jetpack1.0']
+  expected_error = 'No runtime library for target "arm64-apple-jetpack1.0".'
+  for main in [clang.main, clangxx.main]:
+    with patch(
+        'builtins.open',
+        mock_open(read_data=_read_xctoolchain_info_plist())) as open_mock:
+      with pytest.raises(ValueError) as error:
+        main(['default_clang_clangxx'] + input_args, 'clang', 'spoor_opt',
+             'clang++', '/path/to/spoor/frameworks')
+      assert str(error.value) == expected_error
+      open_mock.assert_called_once_with(
+          '/path/to/spoor/frameworks/SpoorRuntime.xcframework/Info.plist',
+          mode='rb')
+
+
+@patch('builtins.open')
+@patch.dict('os.environ', {})
+def test_raises_exception_with_multiple_outputs_when_compiling(open_mock):
   input_args = [
       '-target', 'arm64-apple-ios15.0', '-x', 'objective-c', '-o', 'a.o', '-o',
       'b.o'
   ]
   expected_error = 'Expected exactly one output file, got 2.'
-  with pytest.raises(ValueError) as error:
-    clang.main(input_args, 'clang', 'spoor_opt', 'clang++',
-               '/spoor/library/path')
-    assert error == expected_error
-  with pytest.raises(ValueError) as error:
-    clangxx.main(input_args, 'clang++', 'spoor_opt', 'clang++',
-                 '/spoor/library/path')
-    assert error == expected_error
+  for main in [clang.main, clangxx.main]:
+    with pytest.raises(ValueError) as error:
+      main(['default_clang_clangxx'] + input_args, 'clang', 'spoor_opt',
+           'clang++', '/path/to/spoor/frameworks')
+    assert str(error.value) == expected_error
+    open_mock.assert_not_called()
+    open_mock.reset_mock()
 
 
 if __name__ == '__main__':
