@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 '''Shared logic for the `clang` and `clang++` wrapper.'''
 
-from shared import ArgsInfo, flatten
+from shared import ArgsInfo, Target, flatten
 from shared import CLANG_CLANGXX_LANGUAGE_ARG, CLANG_CLANGXX_OUTPUT_FILE_ARG
 from shared import CLANG_CLANGXX_ONLY_PREPROCESS_COMPILE_AND_ASSEMBLE_ARG
 from shared import CLANG_CLANGXX_TARGET_ARG
@@ -13,24 +13,32 @@ from shared import SPOOR_INSTRUMENTATION_INITIALIZE_RUNTIME_DEFAULT_VALUE
 from shared import SPOOR_INSTRUMENTATION_INITIALIZE_RUNTIME_KEY
 from shared import SPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION_DEFAULT_VALUE
 from shared import SPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION_KEY
-
+import plistlib
 import argparse
 import os
 
 CLANG_CLANGXX_ANALYZE_ARG = '--analyze'
 CLANG_CLANGXX_EMIT_LLVM_ARG = '-emit-llvm'
+CLANG_CLANGXX_FRAMEWORK_SEARCH_PATH_ARG = '-F'
 CLANG_CLANGXX_INCREMENTAL_LINK_ARG = '-r'
-CLANG_CLANGXX_LIBRARY_SEARCH_PATH_ARG = '-L'
-CLANG_CLANGXX_LINK_LIBRARY_ARG = '-l'
+CLANG_CLANGXX_LINK_FRAMEWORK_ARG = '-framework'
 CLANG_CLANGXX_OUTPUT_STDOUT_VALUE = '-'
 CLANG_CLANGXX_PREPROCESSOR_DEFINE = '-D'
-LIB_CXX_LIBRARY = 'c++'
-SPOOR_CONSTANT_PREPROCESSOR_MACROS = {
-    '__SPOOR__': 1,
-}
+INFO_PLIST_FILE_NAME = 'Info.plist'
+SPOOR_CONSTANT_PREPROCESSOR_MACROS = {'__SPOOR__': 1}
+SPOOR_RUNTIME_XCFRAMEWORK_NAME = 'SpoorRuntime.xcframework'
 SUPPORTED_LANGUAGES = {
     'c', 'c++', LLVM_IR_LANGUAGE, 'objective-c', 'objective-c++'
 }
+XCFRAMEWORK_INFO_PLIST_AVAILABLE_LIBRARIES_KEY = 'AvailableLibraries'
+XCFRAMEWORK_INFO_PLIST_LIBRARY_IDENTIFIER_KEY = 'LibraryIdentifier'
+XCFRAMEWORK_INFO_PLIST_LIBRARY_PATH_KEY = 'LibraryPath'
+XCFRAMEWORK_INFO_PLIST_SUPPORTED_ARCHITECTURES_KEY = 'SupportedArchitectures'
+XCFRAMEWORK_INFO_PLIST_SUPPORTED_PLATFORM_KEY = 'SupportedPlatform'
+XCFRAMEWORK_INFO_PLIST_SUPPORTED_PLATFORM_VARIANT_KEY = \
+    'SupportedPlatformVariant'
+XCFRAMEWORK_INFO_PLIST_XCFRAMEWORK_FORMAT_VERSION_KEY = \
+    'XCFrameworkFormatVersion'
 
 
 # distutils.util.strtobool is deprecated.
@@ -71,33 +79,52 @@ def _preprocessor_macros(env):
   return macros
 
 
-def _runtime_library_for_target(target):
-  if 'ios' in target:
-    return 'spoor_runtime_ios'
-  elif 'macos' in target:
-    return 'spoor_runtime_macos'
-  elif 'watchos' in target:
-    return 'spoor_runtime_watchos'
-  raise ValueError(f'Unsupported target {target}.')
-
-
-def _runtime_config_for_target(target):
-  if 'ios' in target:
-    return 'spoor_runtime_default_config_ios'
-  elif 'macos' in target:
-    return 'spoor_runtime_default_config_macos'
-  elif 'watchos' in target:
-    return 'spoor_runtime_default_config_watchos'
-  raise ValueError(f'Unsupported target {target}.')
-
-
 def _link_spoor_runtime(args):
   return (CLANG_CLANGXX_ONLY_PREPROCESS_COMPILE_AND_ASSEMBLE_ARG not in args and
           CLANG_CLANGXX_INCREMENTAL_LINK_ARG not in args and
           CLANG_CLANGXX_ANALYZE_ARG not in args)
 
 
-def parse_clang_clangxx_args(args, spoor_library_path):
+def _runtime_framework(spoor_frameworks_path, target):
+  supported_xcframework_format_versions = set(['1.0'])
+  supported_target_vendors = set(['apple'])
+  plist_path = (f'{spoor_frameworks_path}/{SPOOR_RUNTIME_XCFRAMEWORK_NAME}/'
+                f'{INFO_PLIST_FILE_NAME}')
+
+  with open(plist_path, mode='rb') as file:
+    data = file.read()
+    plist = plistlib.loads(data)
+    format_version = plist[
+        XCFRAMEWORK_INFO_PLIST_XCFRAMEWORK_FORMAT_VERSION_KEY]
+    if format_version not in supported_xcframework_format_versions:
+      raise ValueError(
+          f'Unknown xcframework format version "{format_version}".')
+
+    if target.vendor not in supported_target_vendors:
+      raise ValueError(f'Unsupported vendor "{target.vendor}".')
+
+    for library in plist[XCFRAMEWORK_INFO_PLIST_AVAILABLE_LIBRARIES_KEY]:
+      identifier = library[XCFRAMEWORK_INFO_PLIST_LIBRARY_IDENTIFIER_KEY]
+      path = library[XCFRAMEWORK_INFO_PLIST_LIBRARY_PATH_KEY]
+      framework_name = path[:-1 * len('.framework')]
+      architectures = library[
+          XCFRAMEWORK_INFO_PLIST_SUPPORTED_ARCHITECTURES_KEY]
+      platform = library[XCFRAMEWORK_INFO_PLIST_SUPPORTED_PLATFORM_KEY]
+      if XCFRAMEWORK_INFO_PLIST_SUPPORTED_PLATFORM_VARIANT_KEY in library:
+        platform_variant = library[
+            XCFRAMEWORK_INFO_PLIST_SUPPORTED_PLATFORM_VARIANT_KEY]
+      else:
+        platform_variant = None
+      if (platform == target.platform and
+          platform_variant == target.platform_variant and
+          target.architecture in architectures):
+        framework_path = (f'{spoor_frameworks_path}/'
+                          f'{SPOOR_RUNTIME_XCFRAMEWORK_NAME}/{identifier}')
+        return (framework_path, framework_name)
+    raise ValueError(f'No runtime library for target "{target.string}".')
+
+
+def parse_clang_clangxx_args(args, spoor_frameworks_path):
   parser = argparse.ArgumentParser(add_help=False)
   parser.add_argument(CLANG_CLANGXX_OUTPUT_FILE_ARG,
                       action='append',
@@ -109,7 +136,7 @@ def parse_clang_clangxx_args(args, spoor_library_path):
 
   if not known_args.target:
     raise ValueError('No target was supplied.')
-  target = known_args.target[0]
+  target = Target(known_args.target[0])
 
   output_files = flatten(known_args.output_files)
 
@@ -119,19 +146,14 @@ def parse_clang_clangxx_args(args, spoor_library_path):
   if not _compiling(language, output_files):
     clang_args = args
     if _link_spoor_runtime(clang_args):
-      runtime_library = _runtime_library_for_target(target)
-      runtime_config_library = _runtime_config_for_target(target)
+      framework_path, framework_name = _runtime_framework(
+          spoor_frameworks_path, target)
       clang_args += [
-          f'{CLANG_CLANGXX_LIBRARY_SEARCH_PATH_ARG}{spoor_library_path}',
-          f'{CLANG_CLANGXX_LINK_LIBRARY_ARG}{runtime_library}',
-          f'{CLANG_CLANGXX_LINK_LIBRARY_ARG}{LIB_CXX_LIBRARY}',
-          # Link order matters. The runtime config library must be linked
-          # *after* the target's object files to ensure that any user-provided
-          # configurations are not overridden by the (weak) default config
-          # symbols.
-          f'{CLANG_CLANGXX_LINK_LIBRARY_ARG}{runtime_config_library}',
+          f'{CLANG_CLANGXX_FRAMEWORK_SEARCH_PATH_ARG}{framework_path}',
+          CLANG_CLANGXX_LINK_FRAMEWORK_ARG,
+          framework_name,
       ]
-    return ArgsInfo(clang_args, output_files, target, instrument=False)
+    return ArgsInfo(clang_args, output_files, target.string, instrument=False)
 
   if len(output_files) != 1:
     message = f'Expected exactly one output file, got {len(output_files)}.'
@@ -139,7 +161,7 @@ def parse_clang_clangxx_args(args, spoor_library_path):
   output_file = output_files[0]
 
   clang_args = [CLANG_CLANGXX_LANGUAGE_ARG, language]
-  clang_args += [CLANG_CLANGXX_TARGET_ARG, target]
+  clang_args += [CLANG_CLANGXX_TARGET_ARG, target.string]
   clang_args += sorted([
       f'{CLANG_CLANGXX_PREPROCESSOR_DEFINE}{key}={value}'
       for key, value in _preprocessor_macros(os.environ.copy()).items()
@@ -150,4 +172,4 @@ def parse_clang_clangxx_args(args, spoor_library_path):
   ]
   clang_args += [CLANG_CLANGXX_EMIT_LLVM_ARG]
 
-  return ArgsInfo(clang_args, [output_file], target, instrument=True)
+  return ArgsInfo(clang_args, [output_file], target.string, instrument=True)

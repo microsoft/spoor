@@ -7,6 +7,7 @@ import operator
 import os
 import pathlib
 import subprocess
+import re
 
 DEVELOPER_PATH = os.getenv('DEVELOPER_DIR',
                            '/Applications/Xcode.app/Contents/Developer')
@@ -20,7 +21,7 @@ DEFAULT_SWIFTC = f'{DEFAULT_TOOLCHAIN_PATH}/usr/bin/swiftc'
 CUSTOM_TOOLCHAIN_PATH = pathlib.Path(
     *pathlib.Path(__file__).parent.absolute().parts[:-2])
 SPOOR_OPT = f'{CUSTOM_TOOLCHAIN_PATH}/spoor/bin/spoor_opt'
-SPOOR_LIBRARY_PATH = f'{CUSTOM_TOOLCHAIN_PATH}/spoor/lib'
+SPOOR_FRAMEWORKS_PATH = f'{CUSTOM_TOOLCHAIN_PATH}/spoor/frameworks'
 WRAPPED_SWIFT = f'{CUSTOM_TOOLCHAIN_PATH}/usr/bin/swift'
 
 CLANG_CLANGXX_INPUT_STDIN_VALUE = '-'
@@ -57,6 +58,27 @@ class ArgsInfo:
     self.output_files = output_files
     self.target = target
     self.instrument = instrument
+
+
+class Target:
+  '''Parses a target string's components.'''
+
+  def __init__(self, target_string):
+    components = target_string.split('-')
+    if len(components) == 3:
+      architecture, vendor, platform = components
+      platform_variant = None
+    elif len(components) == 4:
+      architecture, vendor, platform, platform_variant = components
+    else:
+      raise ValueError(f'Cannot parse target "{target_string}".')
+    self.string = target_string
+    self.architecture = architecture
+    self.vendor = vendor
+    platform_components = re.search('([a-zA-Z]+)([0-9.]+)', platform)
+    self.platform = platform_components.group(1)
+    self.platform_version = platform_components.group(2)
+    self.platform_variant = platform_variant
 
 
 def arg_after(arg, args):

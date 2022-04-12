@@ -5,7 +5,7 @@
 runtime library.'''
 
 from clang_clangxx_shared import parse_clang_clangxx_args
-from shared import DEFAULT_CLANGXX, SPOOR_LIBRARY_PATH, SPOOR_OPT
+from shared import DEFAULT_CLANGXX, SPOOR_FRAMEWORKS_PATH, SPOOR_OPT
 from shared import instrument_and_compile_ir
 import subprocess
 import sys
@@ -31,5 +31,5 @@ def main(argv, frontend_clangxx, spoor_opt, backend_clangxx,
 
 if __name__ == '__main__':
   return_code = main(sys.argv, DEFAULT_CLANGXX, SPOOR_OPT, DEFAULT_CLANGXX,
-                     SPOOR_LIBRARY_PATH)
+                     SPOOR_FRAMEWORKS_PATH)
   sys.exit(return_code)
