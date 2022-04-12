@@ -1,7 +1,8 @@
-# Fibonacci (Hello, World!)
+# Fibonacci
 
 This tutorial uses Spoor to instrument a program that calculates
 [Fibonacci numbers][fibonacci-wikipedia].
+
 
 You'll learn Spoor's pipeline to automatically inject instrumentation into your
 source code, build and run your Spoor-instrumented program, symbolize the trace,

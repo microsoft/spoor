@@ -37,7 +37,7 @@ project's tooling does not support automatically enforcing the header guard
 convention where the `#define` guard's identifier mirrors the file's path to
 guarantee uniqueness. Despite being non-standard, `#pragma once` carries
 advantages such as reducing the maintenance burden when renaming and moving
-files, and in some cases improves compilation speed.
+files improves compilation speed in some cases.
 
 ```c++
 // ✅ Do this

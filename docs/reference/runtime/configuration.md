@@ -1,14 +1,10 @@
-# Runtime
+# Runtime Configuration
 
 Configure Spoor's runtime with environment variables or a configuration file.
 
 !!! info "Precedence"
     1. Environment variables.
     2. Config file.
-
-## Source code
-
-[spoor/runtime/config/][spoor-runtime-config]
 
 ## Runtime options
 
@@ -243,5 +239,4 @@ max memory impact = min memory impact + event size * dynamic event pool capacity
 
 [compare-and-swap]: https://en.wikipedia.org/wiki/Compare-and-swap
 [flush-all-events]: #flush-all-events
-[spoor-runtime-config]: https://github.com/microsoft/spoor/tree/master/spoor/runtime/config
 [toml-signed-integer-issue]: https://github.com/microsoft/spoor/issues/219

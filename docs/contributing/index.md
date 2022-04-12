@@ -1,4 +1,7 @@
-# Get Involved
+# Contributing
+
+Thank you for your interest in Spoor. There are several ways to get involved in
+Spoor's development.
 
 ## Provide feedback
 
@@ -24,8 +27,8 @@ process.
 The most helpful contributions fix bugs, improve performance, or add features
 (as opposed to stylistic or "gardening" changes). Test and document your work.
 
-When you're read to roll up your sleeves and start coding, see
-[Getting Started][getting-started].
+When you're read to roll up your sleeves and start coding, check out the
+[development setup][development-setup] guide.
 
 ### Style guide
 
@@ -52,7 +55,7 @@ see the [Code of Conduct FAQ][code-of-conduct-faq] or contact
 
 [code-of-conduct-faq]: https://opensource.microsoft.com/codeofconduct/faq/
 [code-of-conduct]: https://opensource.microsoft.com/codeofconduct/
-[getting-started]: getting-started.md
+[development-setup]: development-setup.md
 [github-issue]: https://github.com/microsoft/spoor/issues
 [github-pr]: https://github.com/microsoft/spoor/issues
 [github]: https://github.com/microsoft/spoor

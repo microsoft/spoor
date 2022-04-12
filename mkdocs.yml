@@ -14,7 +14,6 @@ theme:
   palette:
     scheme: default
     primary: blue grey
-      # accent: red
   icon:
     logo: fontawesome/solid/paw
     repo: fontawesome/brands/git-alt
@@ -43,23 +42,31 @@ nav:
 - Get Started:
   - Overview: get-started/index.md
   - Xcode Toolchain: get-started/xcode-toolchain.md
+- Reference:
+  - Overview: reference/index.md
+  - Instrumentation:
+    - Overview: reference/instrumentation/index.md
+    - Configuration: reference/instrumentation/configuration.md
+  - Runtime:
+    - Overview: reference/runtime/index.md
+    - Configuration: reference/runtime/configuration.md
+  - Postprocessing:
+    - Overview: reference/postprocessing/index.md
 - Tutorials:
   - Overview: tutorials/index.md
-  - Fibonacci (Hello, World!): tutorials/fibonacci.md
-  - Wikipedia iOS (Xcode toolchain): tutorials/wikipedia-ios.md
-- Configuration:
-  - Overview: configuration/index.md
-  - Runtime: configuration/runtime.md
-  - Instrumentation: configuration/instrumentation.md
+  - Fibonacci: tutorials/fibonacci.md
+  - Wikipedia iOS: tutorials/wikipedia-ios.md
 - Contributing:
   - Overview: contributing/index.md
-  - Getting Started: contributing/getting-started.md
+  - Development Setup: contributing/development-setup.md
   - Style Guide: contributing/style-guide.md
   - Code of Conduct: contributing/code-of-conduct.md
   - Security: contributing/security.md
   - License: contributing/license.md
-- About:
-  - Overview: about/index.md
+extra:
+  social:
+  - icon: fontawesome/brands/github
+    link: https://github.com/microsoft/spoor
 extra_javascript:
   - js/mathjax.js
   - https://polyfill.io/v3/polyfill.min.js?features=es6
