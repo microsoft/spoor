@@ -17,7 +17,7 @@ import sys
 
 
 def _read_xctoolchain_info_plist():
-  plist_path = ('toolchain/xcode/test_data/info_plists/'
+  plist_path = ('spoor/toolchains/xcode/test_data/info_plists/'
                 'spoor_runtime_xctoolchain_info.plist')
   with open(plist_path, mode='rb') as file:
     return file.read()
@@ -107,7 +107,7 @@ def _test_parses_compile_args(input_args, input_args_file, main, popen_mock):
 @patch.dict('os.environ', {})
 def test_parses_compile_args(popen_mock):
   input_args_files = [
-      f'toolchain/xcode/test_data/build_args/{file}' for file in [
+      f'spoor/toolchains/xcode/test_data/build_args/{file}' for file in [
           'clang_compile_objc_ios_arm64_args.txt',
           'clang_compile_objc_ios_x86_64_args.txt',
           # TODO(#257): Reintroduce macOS and watchOS support.
@@ -217,7 +217,7 @@ def _test_parses_link_args(input_args, main, popen_mock):
 @patch.dict('os.environ', {})
 def test_parses_link_args(popen_mock):
   input_args_files = [
-      f'toolchain/xcode/test_data/build_args/{file}' for file in [
+      f'spoor/toolchains/xcode/test_data/build_args/{file}' for file in [
           'clang_link_objc_ios_arm64_args.txt',
           'clang_link_objc_ios_x86_64_args.txt',
           # TODO(#257): Reintroduce macOS and watchOS support.
@@ -376,7 +376,7 @@ def test_raises_error_with_unsupported_vendor():
 
 
 def _test_raises_error_with_unsupported_plist_version(main):
-  plist_path = ('toolchain/xcode/test_data/info_plists/'
+  plist_path = ('spoor/toolchains/xcode/test_data/info_plists/'
                 'unknown_xctoolchain_version.plist')
   input_args = ['-target', 'arm64-apple-ios15.0']
   expected_error = 'Unknown xcframework format version "2.0".'

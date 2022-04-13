@@ -10,10 +10,10 @@ load("//toolchain:config.bzl", "SPOOR_DEFAULT_LINKOPTS")
 _MINIMUM_MACOS_VERSION = "10.15"
 
 macos_command_line_application(
-    name = "spoor_opt",
+    name = "spoor",
     linkopts = SPOOR_DEFAULT_LINKOPTS,
     minimum_deployment_os_version = _MINIMUM_MACOS_VERSION,
     minimum_os_version = _MINIMUM_MACOS_VERSION,
     visibility = ["//visibility:public"],
-    deps = ["//spoor/instrumentation:spoor_opt_lib"],
+    deps = ["//spoor/tools:spoor_lib"],
 )

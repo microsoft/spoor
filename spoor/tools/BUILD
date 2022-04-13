@@ -18,12 +18,15 @@ cc_library(
     visibility = ["//visibility:private"],
 )
 
-cc_binary(
-    name = "spoor",
+cc_library(
+    name = "spoor_lib",
     srcs = ["spoor.cc"],
     copts = SPOOR_DEFAULT_COPTS,
     linkopts = SPOOR_DEFAULT_LINKOPTS,
-    visibility = ["//visibility:public"],
+    visibility = [
+        "//spoor/tools:__pkg__",
+        "//spoor/tools/wrappers/apple:__pkg__",
+    ],
     deps = [
         ":tools_info",
         "//spoor/instrumentation:instrumentation_info",
@@ -45,4 +48,12 @@ cc_binary(
         "@com_google_absl//absl/strings:str_format",
         "@com_microsoft_gsl//:gsl",
     ],
+)
+
+cc_binary(
+    name = "spoor",
+    copts = SPOOR_DEFAULT_COPTS,
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
+    visibility = ["//visibility:public"],
+    deps = [":spoor_lib"],
 )
