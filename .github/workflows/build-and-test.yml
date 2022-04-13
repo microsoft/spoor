@@ -14,7 +14,7 @@ jobs:
     name: Build and test
     steps:
       - name: Set up build cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           cache-name: bazel-default-toolchain-cache
         with:
@@ -44,7 +44,7 @@ jobs:
     name: Build and test (LLVM toolchain)
     steps:
       - name: Set up build cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           cache-name: bazel-llvm-toolchain-cache
         with:
@@ -74,7 +74,7 @@ jobs:
     name: Build and test (AddressSanitizer)
     steps:
       - name: Set up build cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           cache-name: bazel-default-toolchain-asan-cache
         with:
@@ -94,7 +94,7 @@ jobs:
     name: Build and test (ThreadSanitizer)
     steps:
       - name: Set up build cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           cache-name: bazel-default-toolchain-tsan-cache
         with:
@@ -154,7 +154,7 @@ jobs:
     name: Lint code
     steps:
       - name: Set up build cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           cache-name: bazel-llvm-toolchain-lint-cache
         with:
