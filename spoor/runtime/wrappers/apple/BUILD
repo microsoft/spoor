@@ -128,6 +128,7 @@ apple_xcframework(
         ],
         "device": ["arm64"],
     },
+    linkopts = SPOOR_DEFAULT_LINKOPTS,
     minimum_deployment_os_versions = {
         "ios": _MINIMUM_IOS_VERSION,
     },
