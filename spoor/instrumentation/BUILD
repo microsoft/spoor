@@ -39,8 +39,8 @@ cc_library(
     copts = SPOOR_DEFAULT_COPTS,
     linkopts = SPOOR_DEFAULT_LINKOPTS,
     visibility = [
+        "//spoor/instrumentation:__pkg__",
         "//spoor/instrumentation/wrappers/apple:__pkg__",
-        "//spoor_instrumentation:__pkg__",
     ],
     deps = [
         ":instrumentation_info",

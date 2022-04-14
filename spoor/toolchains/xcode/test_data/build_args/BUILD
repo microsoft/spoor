@@ -32,5 +32,5 @@ filegroup(
         "swiftc_driver_swift_watchos_arm64_args.txt",
         "swiftc_driver_swift_watchos_x86_64_args.txt",
     ],
-    visibility = ["//toolchain/xcode:__subpackages__"],
+    visibility = ["//spoor/toolchains/xcode:__pkg__"],
 )

@@ -8,5 +8,5 @@ filegroup(
         "spoor_runtime_xctoolchain_info.plist",
         "unknown_xctoolchain_version.plist",
     ],
-    visibility = ["//toolchain/xcode:__subpackages__"],
+    visibility = ["//spoor/toolchains/xcode:__pkg__"],
 )

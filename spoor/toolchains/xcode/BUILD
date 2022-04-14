@@ -43,7 +43,7 @@ py_library(
 py_test(
     name = "shared_test",
     srcs = ["shared_test.py"],
-    data = ["//toolchain/xcode/test_data/build_args"],
+    data = ["//spoor/toolchains/xcode/test_data/build_args"],
     visibility = ["//visibility:private"],
     deps = [
         ":shared",
@@ -75,8 +75,8 @@ py_test(
     name = "clang_clangxx_test",
     srcs = ["clang_clangxx_test.py"],
     data = [
-        "//toolchain/xcode/test_data/build_args",
-        "//toolchain/xcode/test_data/info_plists",
+        "//spoor/toolchains/xcode/test_data/build_args",
+        "//spoor/toolchains/xcode/test_data/info_plists",
     ],
     visibility = ["//visibility:private"],
     deps = [
@@ -98,7 +98,7 @@ py_library(
 py_test(
     name = "swift_test",
     srcs = ["swift_test.py"],
-    data = ["//toolchain/xcode/test_data/build_args"],
+    data = ["//spoor/toolchains/xcode/test_data/build_args"],
     visibility = ["//visibility:private"],
     deps = [
         ":swift",
@@ -116,7 +116,7 @@ py_library(
 py_test(
     name = "swiftc_test",
     srcs = ["swiftc_test.py"],
-    data = ["//toolchain/xcode/test_data/build_args"],
+    data = ["//spoor/toolchains/xcode/test_data/build_args"],
     visibility = ["//visibility:private"],
     deps = [
         ":swiftc",
@@ -156,6 +156,10 @@ _TOOLCHAIN_TARGETS_TO_OUTS = [
     [
         ":shared",
         TOOLCHAIN_NAME + "/usr/bin/shared.py",
+    ],
+    [
+        "//spoor/tools/wrappers/apple:spoor",
+        TOOLCHAIN_NAME + "/spoor/bin/spoor",
     ],
     [
         "//spoor/instrumentation/wrappers/apple:spoor_opt",
@@ -211,17 +215,21 @@ genrule(
     visibility = ["//visibility:public"],
 )
 
+_MINIMAL_APP_RELATIVE_PATH = "spoor/toolchains/xcode/test_data"
+
 sh_test(
     name = "instrument_minimal_objc_ios_app_test",
     size = "large",
     srcs = ["instrument_ios_app_test.sh"],
     data = [
         ":toolchain",
-        "//toolchain/xcode/test_data/minimal_objc_ios_app",
+        "//spoor/toolchains/xcode/test_data/minimal_objc_ios_app",
     ],
     env = {
         "APP_NAME": "MinimalObjcApp",
-        "APP_RELATIVE_PATH": "toolchain/xcode/test_data/minimal_objc_ios_app",
+        "APP_RELATIVE_PATH": "{}/minimal_objc_ios_app".format(
+            _MINIMAL_APP_RELATIVE_PATH,
+        ),
         "TOOLCHAIN_NAME": TOOLCHAIN_NAME,
     },
     tags = _INSTRUMENT_APP_TAGS,
@@ -235,11 +243,13 @@ sh_test(
     srcs = ["instrument_ios_app_test.sh"],
     data = [
         ":toolchain",
-        "//toolchain/xcode/test_data/minimal_swift_ios_app",
+        "//spoor/toolchains/xcode/test_data/minimal_swift_ios_app",
     ],
     env = {
         "APP_NAME": "MinimalSwiftApp",
-        "APP_RELATIVE_PATH": "toolchain/xcode/test_data/minimal_swift_ios_app",
+        "APP_RELATIVE_PATH": "{}/minimal_swift_ios_app".format(
+            _MINIMAL_APP_RELATIVE_PATH,
+        ),
         "TOOLCHAIN_NAME": TOOLCHAIN_NAME,
     },
     tags = _INSTRUMENT_APP_TAGS,

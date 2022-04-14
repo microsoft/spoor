@@ -16,7 +16,7 @@ import sys
 def test_parses_swift_compile_args(popen_mock):
   popen_handle = popen_mock.return_value.__enter__
   input_args_files = [
-      f'toolchain/xcode/test_data/build_args/{file}' for file in [
+      f'spoor/toolchains/xcode/test_data/build_args/{file}' for file in [
           'swift_compile_swift_ios_arm64_args.txt',
           'swift_compile_swift_ios_x86_64_args.txt',
           'swift_compile_swift_macos_x86_64_args.txt',

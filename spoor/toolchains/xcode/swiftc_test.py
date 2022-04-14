@@ -13,7 +13,7 @@ import sys
 def test_parses_swiftc_args_and_disables_batch_mode(popen_mock):
   popen_handle = popen_mock.return_value.__enter__
   input_args_files = [
-      f'toolchain/xcode/test_data/build_args/{file}' for file in [
+      f'spoor/toolchains/xcode/test_data/build_args/{file}' for file in [
           'swiftc_driver_swift_ios_arm64_args.txt',
           'swiftc_driver_swift_ios_x86_64_args.txt',
           'swiftc_driver_swift_macos_x86_64_args.txt',
@@ -44,7 +44,7 @@ def test_parses_swiftc_args_and_disables_batch_mode(popen_mock):
 @patch('swiftc.subprocess.Popen')
 def test_raises_when_compiling_with_whole_module_optimization(popen_mock):
   popen_handle = popen_mock.return_value.__enter__
-  input_args_file = 'toolchain/xcode/test_data/build_args/' + \
+  input_args_file = 'spoor/toolchains/xcode/test_data/build_args/' + \
           'swiftc_driver_swift_ios_arm64_whole_module_args.txt'
   with open(input_args_file, encoding='utf-8', mode='r') as file:
     input_args = shlex.split(file.read())

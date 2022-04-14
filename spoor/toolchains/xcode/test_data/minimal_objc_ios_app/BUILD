@@ -5,5 +5,5 @@ filegroup(
     name = "minimal_objc_ios_app",
     testonly = True,
     srcs = glob(["**/*"]),
-    visibility = ["//toolchain/xcode:__subpackages__"],
+    visibility = ["//spoor/toolchains/xcode:__pkg__"],
 )
