@@ -13,7 +13,10 @@ RUNTIME_HDRS = [
 ]
 
 def _runtime_framework_files(framework_name):
-    headers = ["Headers/{}".format(header) for header in RUNTIME_HDRS]
+    headers = [
+        "Headers/{}".format(header)
+        for header in RUNTIME_HDRS + ["{}.h".format(framework_name)]
+    ]
     modules = ["Modules/module.modulemap"]
     info_plists = ["Info.plist"]
     executables = [framework_name]
