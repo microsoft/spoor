@@ -2,6 +2,8 @@
 # Licensed under the MIT License.
 '''Tests for the `clang` and `clang++` wrappers.'''
 
+from shared import CLANG_CLANGXX_EMBED_BITCODE_ARG
+from shared import CLANG_CLANGXX_EMBED_BITCODE_MARKER_ARG
 from shared import SPOOR_INSTRUMENTATION_ENABLE_RUNTIME_KEY
 from shared import SPOOR_INSTRUMENTATION_INITIALIZE_RUNTIME_KEY
 from shared import SPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION_KEY
@@ -235,6 +237,10 @@ def test_parses_link_args(popen_mock):
   for input_args_file in input_args_files:
     with open(input_args_file, encoding='utf-8', mode='r') as file:
       input_args = shlex.split(file.read())
+      input_args = list(
+          filter((CLANG_CLANGXX_EMBED_BITCODE_ARG).__ne__, input_args))
+      input_args = list(
+          filter((CLANG_CLANGXX_EMBED_BITCODE_MARKER_ARG).__ne__, input_args))
       for main in [clang.main, clangxx.main]:
         with patch(
             'builtins.open',
@@ -270,6 +276,54 @@ def test_clang_does_not_link_spoor_for_incremental_link(popen_mock):
   for main in [clang.main, clangxx.main]:
     _test_does_not_link_spoor_for_incremental_link(main, popen_mock)
     popen_mock.reset_mock()
+
+
+def _test_does_not_embed_bitcode(main, popen_mock):
+  input_args = [
+      '-target',
+      'arm64-apple-ios15.0',
+      '-fembed-bitcode',
+      '-fembed-bitcode-marker',
+      '-o',
+      'lib.a',
+  ]
+  parsed_input_args = [
+      '-target',
+      'arm64-apple-ios15.0',
+      '-o',
+      'lib.a',
+      '-F/path/to/spoor/frameworks/SpoorRuntime.xcframework/ios-arm64',
+      '-framework',
+      'SpoorRuntime',
+  ]
+  popen_handle = popen_mock.return_value.__enter__
+  popen_handle.return_value.returncode = 0
+
+  return_code = main(['clang_clangxx'] + input_args, 'default_clang_clangxx',
+                     'spoor_opt', 'default_clangxx',
+                     '/path/to/spoor/frameworks')
+
+  popen_handle.assert_called_once()
+  popen_handle.return_value.wait.assert_called_once()
+  assert return_code == 0
+  popen_args = popen_mock.call_args.args[0]
+  print(popen_args)
+  print(parsed_input_args)
+  assert popen_args == ['default_clang_clangxx'] + parsed_input_args
+
+
+@patch('subprocess.Popen')
+@patch.dict('os.environ', {})
+def test_does_not_embed_bitcode(popen_mock):
+  for main in [clang.main, clangxx.main]:
+    with patch(
+        'builtins.open',
+        mock_open(read_data=_read_xctoolchain_info_plist())) as open_mock:
+      _test_does_not_embed_bitcode(main, popen_mock)
+      open_mock.assert_called_once_with(
+          '/path/to/spoor/frameworks/SpoorRuntime.xcframework/Info.plist',
+          mode='rb')
+      popen_mock.reset_mock()
 
 
 def _test_does_not_link_analyze(main, popen_mock):
