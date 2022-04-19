@@ -5,8 +5,6 @@
 from shared import ArgsInfo, Target, flatten
 from shared import CLANG_CLANGXX_LANGUAGE_ARG, CLANG_CLANGXX_OUTPUT_FILE_ARG
 from shared import CLANG_CLANGXX_ONLY_PREPROCESS_COMPILE_AND_ASSEMBLE_ARG
-from shared import CLANG_CLANGXX_EMBED_BITCODE_ARG
-from shared import CLANG_CLANGXX_EMBED_BITCODE_MARKER_ARG
 from shared import CLANG_CLANGXX_TARGET_ARG
 from shared import OBJECT_FILE_EXTENSION, LLVM_IR_LANGUAGE
 from shared import SPOOR_INSTRUMENTATION_ENABLE_RUNTIME_DEFAULT_VALUE
@@ -146,11 +144,7 @@ def parse_clang_clangxx_args(args, spoor_frameworks_path):
       known_args.language) else None
 
   if not _compiling(language, output_files):
-    # TODO(265): Support embedded bitcode when the Runtime xcframework also
-    # supports embedded bitcode.
-    clang_args = list(filter((CLANG_CLANGXX_EMBED_BITCODE_ARG).__ne__, args))
-    clang_args = list(
-        filter((CLANG_CLANGXX_EMBED_BITCODE_MARKER_ARG).__ne__, clang_args))
+    clang_args = args
     if _link_spoor_runtime(clang_args):
       framework_path, framework_name = _runtime_framework(
           spoor_frameworks_path, target)
