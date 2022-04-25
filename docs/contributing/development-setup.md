@@ -1,4 +1,4 @@
-# Getting Started
+# Development Setup
 
 ## Requirements
 * [LLVM 12][llvm-download] including `clang++`, `opt`, `clang-format`,

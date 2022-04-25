@@ -1,4 +1,4 @@
-# Instrumentation
+# Instrumentation Configuration
 
 Configure Spoor's instrumentation with command line flags, environment
 variables, or a configuration file.
@@ -10,12 +10,8 @@ variables, or a configuration file.
 
 !!! info "Config functions"
     Spoor does not instrument
-    [user-defined config functions][user-defined-config] to prevent recursive
-    initialization.
-
-## Source code
-
-[spoor/instrumentation/config/][spoor-instrumentation-config]
+    [user-defined config functions][runtime-configuration-file] to prevent
+    recursive initialization.
 
 ## Instrumentation options
 
@@ -341,5 +337,4 @@ Config file | `function_ir_instruction_count_gt`
 [enable-runtime]: #enable-runtime
 [initialize-runtime]: #initialize-runtime
 [inject-instrumentation]: #inject-instrumentation
-[spoor-instrumentation-config]: https://github.com/microsoft/spoor/tree/master/spoor/instrumentation/config
-[user-defined-config]: /configuration/runtime/#configuration-file
+[runtime-configuration-file]: /reference/runtime/configuration#configuration-file

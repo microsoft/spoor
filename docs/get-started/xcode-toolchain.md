@@ -19,8 +19,8 @@
 
     ![Xcode > Toolchains > Spoor][xcode-toolchain-selection]
 === "xcodebuild"
-    Pass `-toolchain Spoor` to `xcodebuild`.
-
+    Pass `-toolchain Spoor` to `xcodebuild` or set the `TOOLCHAINS` environment
+    variable to `Spoor`.
 
 [github-releases]: https://github.com/microsoft/spoor/releases
 [xcode-toolchain-selection]: xcode-toolchain-selection.png

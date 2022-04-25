@@ -1,5 +1,23 @@
 # Spoor [![Build Status][build-status-badge]][build-status]
 
+![Wikipedia iOS app boot trace][wikipedia-trace-png]
+
+Spoor gives you deep insight into your application's performance. Its three-part
+toolchain enables you to analyze your application down to the function call with
+nanosecond precision and includes:
+
+1. [Compiler instrumentation][site-instrumentation] to auto-inject trace events.
+2. A [runtime library][site-runtime] to capture and buffer events.
+3. [Tools][site-postprocessing] to process and visualize the traces.
+
+--------------------------------------------------------------------------------
+
+### Browse the documentation and tutorials on Spoor's website.
+
+### [www.spoor.dev][site]
+
+--------------------------------------------------------------------------------
+
 ## Contributor License Agreement
 
 Most contributions require you to agree to a Contributor License Agreement (CLA)
@@ -20,9 +38,14 @@ see the [Code of Conduct FAQ][code-of-conduct-faq] or contact
 [opencode@microsoft.com][opencode-email] with any additional questions or
 comments.
 
-[build-status]: https://github.com/microsoft/spoor/actions/workflows/build-and-test.yml
 [build-status-badge]: https://github.com/microsoft/spoor/actions/workflows/build-and-test.yml/badge.svg?branch=master
+[build-status]: https://github.com/microsoft/spoor/actions/workflows/build-and-test.yml
 [code-of-conduct-faq]: https://opensource.microsoft.com/codeofconduct/faq/
 [code-of-conduct]: https://opensource.microsoft.com/codeofconduct/
 [microsoft-cla]: https://cla.opensource.microsoft.com
 [opencode-email]: mailto:opencode@microsoft.com
+[site-instrumentation]: https://www.spoor.dev/reference/instrumentation
+[site-postprocessing]: https://www.spoor.dev/reference/postprocessing
+[site-runtime]: https://www.spoor.dev/reference/runtime
+[site]: https://www.spoor.dev
+[wikipedia-trace-png]: docs/wikipedia-ios-boot-trace.png

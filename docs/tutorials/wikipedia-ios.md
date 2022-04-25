@@ -1,4 +1,4 @@
-# Wikipedia iOS (Xcode toolchain)
+# Wikipedia iOS
 
 This tutorial uses Spoor to instrument
 [Wikipedia's iOS app][wikipedia-ios-github].
