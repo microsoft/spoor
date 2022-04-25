@@ -16,6 +16,8 @@ nanosecond precision and includes:
 
 ### [www.spoor.dev][site]
 
+[![www.spoor.dev screenshot][spoor-website-screenshot]][site]
+
 --------------------------------------------------------------------------------
 
 ## Contributor License Agreement
@@ -48,4 +50,5 @@ comments.
 [site-postprocessing]: https://www.spoor.dev/reference/postprocessing
 [site-runtime]: https://www.spoor.dev/reference/runtime
 [site]: https://www.spoor.dev
+[spoor-website-screenshot]: docs/spoor-website-screenshot.png
 [wikipedia-trace-png]: docs/wikipedia-ios-boot-trace.png
