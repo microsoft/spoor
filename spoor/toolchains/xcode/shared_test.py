@@ -2,12 +2,34 @@
 # Licensed under the MIT License.
 '''Tests for shared wrapper logic.'''
 
-from shared import Target, arg_after, flatten, instrument_and_compile_ir
+from shared import arg_after, flatten, get_developer_path
+from shared import instrument_and_compile_ir
+from shared import Target
 from unittest import mock
 from unittest.mock import patch
 import pytest
 import subprocess
 import sys
+
+
+@patch('subprocess.run')
+@patch.dict('os.environ', {})
+def test_get_developer_path(run_mock):
+  type(run_mock.return_value).stdout = '/foo/bar\n'
+  developer_dir = get_developer_path()
+  run_mock.assert_called_once_with(['xcode-select', '--print-path'],
+                                   stdout=subprocess.PIPE,
+                                   check=True,
+                                   text=True)
+  assert developer_dir == '/foo/bar'
+
+
+@patch('subprocess.run')
+@patch.dict('os.environ', {'DEVELOPER_DIR': '/foo/bar'})
+def test_get_developer_path_env_override(run_mock):
+  developer_dir = get_developer_path()
+  run_mock.assert_not_called()
+  assert developer_dir == '/foo/bar'
 
 
 def test_target_parses_string_without_platform_variant():
