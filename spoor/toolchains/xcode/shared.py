@@ -9,8 +9,19 @@ import pathlib
 import subprocess
 import re
 
-DEVELOPER_PATH = os.getenv('DEVELOPER_DIR',
-                           '/Applications/Xcode.app/Contents/Developer')
+
+def get_developer_path():
+  developer_dir = os.getenv('DEVELOPER_DIR')
+  if developer_dir:
+    return developer_dir
+  result = subprocess.run(['xcode-select', '--print-path'],
+                          stdout=subprocess.PIPE,
+                          check=True,
+                          text=True)
+  return result.stdout.strip()
+
+
+DEVELOPER_PATH = get_developer_path()
 DEFAULT_TOOLCHAIN_PATH = f'{DEVELOPER_PATH}/Toolchains/XcodeDefault.xctoolchain'
 DEFAULT_CLANG = f'{DEFAULT_TOOLCHAIN_PATH}/usr/bin/clang'
 DEFAULT_CLANGXX = f'{DEFAULT_TOOLCHAIN_PATH}/usr/bin/clang++'
