@@ -2,69 +2,68 @@
 # Licensed under the MIT License.
 '''Tests for the `swiftc` wrapper.'''
 
-from unittest.mock import patch
+from shared import SPOOR_INSTRUMENTATION_XCODE_OUTPUT_FILE_MAP_KEY
+from swiftc import main
+from test_util import build_intermediate_fixture, MOCK_BUILD_TOOLS
+from unittest.mock import mock_open, patch
+import json
 import pytest
-import shlex
-import swiftc
 import sys
 
 
-@patch('swiftc.subprocess.Popen')
-def test_parses_swiftc_args_and_disables_batch_mode(popen_mock):
-  popen_handle = popen_mock.return_value.__enter__
-  input_args_files = [
-      f'spoor/toolchains/xcode/test_data/build_args/{file}' for file in [
-          'swiftc_driver_swift_ios_arm64_args.txt',
-          'swiftc_driver_swift_ios_x86_64_args.txt',
-          'swiftc_driver_swift_macos_x86_64_args.txt',
-          'swiftc_driver_swift_watchos_arm64_args.txt',
-          'swiftc_driver_swift_watchos_x86_64_args.txt',
-      ]
+@patch('subprocess.run')
+@patch.dict('os.environ', {}, clear=True)
+def test_runs_swiftc(run_mock):
+  build_tools = MOCK_BUILD_TOOLS
+  output_file_map_path = '/path/to/module-OutputFileMap.json'
+  input_args = [
+      build_tools.swiftc,
+      'arg0',
+      '-flag',
+      'value',
+      '-output-file-map',
+      output_file_map_path,
+      'arg1',
   ]
-  for input_args_file in input_args_files:
-    with open(input_args_file, encoding='utf-8', mode='r') as file:
-      input_args = shlex.split(file.read())
-      popen_handle.return_value.returncode = 0
-      return_code = swiftc.main(['swiftc'] + input_args, 'default_swiftc',
-                                'wrapped_swift')
-      popen_handle.assert_called_once()
-      popen_handle.return_value.wait.assert_called_once()
-      assert len(popen_mock.call_args.args) == 1
-      popen_args = popen_mock.call_args.args[0]
-      assert popen_args[:3] == [
-          'default_swiftc', '-driver-use-frontend-path', 'wrapped_swift'
-      ]
-      assert '-enable-batch-mode' in input_args
-      input_args.remove('-enable-batch-mode')
-      assert popen_args[3:] == input_args
-      assert return_code == 0
-      popen_mock.reset_mock()
+
+  expected_written_data = build_intermediate_fixture(
+      'modified-module-OutputFileMap.json')
+
+  with patch(
+      'builtins.open',
+      mock_open(read_data=build_intermediate_fixture(
+          'module-OutputFileMap.json'))) as open_mock:
+    main(input_args, build_tools)
+
+    open_mock.return_value.seek.assert_called_once_with(0)
+    open_mock.return_value.truncate.assert_called_once_with(0)
+
+    written_data = ''.join([
+        call.args[0]
+        for call in open_mock.return_value.mock_calls
+        if str(call).startswith('call.write')
+    ])
+    assert json.loads(written_data) == json.loads(expected_written_data)
+
+  run_mock.assert_called_once_with(
+      [
+          build_tools.swiftc, '-driver-use-frontend-path',
+          build_tools.spoor_swift
+      ] + input_args[1:] + ['-emit-bc'],
+      env={
+          SPOOR_INSTRUMENTATION_XCODE_OUTPUT_FILE_MAP_KEY: output_file_map_path
+      },
+      check=True)
 
 
-@patch('swiftc.subprocess.Popen')
-def test_raises_when_compiling_with_whole_module_optimization(popen_mock):
-  popen_handle = popen_mock.return_value.__enter__
-  input_args_file = 'spoor/toolchains/xcode/test_data/build_args/' + \
-          'swiftc_driver_swift_ios_arm64_whole_module_args.txt'
-  with open(input_args_file, encoding='utf-8', mode='r') as file:
-    input_args = shlex.split(file.read())
-    with pytest.raises(ValueError) as error:
-      swiftc.main(['swiftc'] + input_args, 'default_swiftc', 'wrapped_swift')
-      assert error == 'Whole module optimization is not supported yet.'
-      popen_handle.assert_not_called()
+def test_fails_without_output_file_map():
+  build_tools = MOCK_BUILD_TOOLS
+  input_args = [build_tools.swiftc, 'arg0', '-flag', 'value', 'arg1']
 
-
-@patch('swiftc.subprocess.Popen')
-def test_returns_subprocess_return_code(popen_mock):
-  popen_handle = popen_mock.return_value.__enter__
-  input_args = ['foo', 'bar', 'baz']
-  for expected_return_code in range(3):
-    popen_handle.return_value.returncode = expected_return_code
-    return_code = swiftc.main(['swiftc'] + input_args, 'default_swiftc',
-                              'wrapped_swift')
-    popen_handle.assert_called_once()
-    assert return_code == expected_return_code
-    popen_mock.reset_mock()
+  with pytest.raises(NotImplementedError) as error:
+    main(input_args, build_tools)
+  assert (str(
+      error.value) == "Spoor's swiftc wrapper requires an output file map.")
 
 
 if __name__ == '__main__':

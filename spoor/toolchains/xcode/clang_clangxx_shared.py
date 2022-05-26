@@ -1,46 +1,97 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
-'''Shared logic for the `clang` and `clang++` wrapper.'''
+'''Shared logic for the `clang` and `clang++` wrappers.'''
 
-from shared import ArgsInfo, Target, flatten
-from shared import CLANG_CLANGXX_LANGUAGE_ARG, CLANG_CLANGXX_OUTPUT_FILE_ARG
-from shared import CLANG_CLANGXX_ONLY_PREPROCESS_COMPILE_AND_ASSEMBLE_ARG
-from shared import CLANG_CLANGXX_EMBED_BITCODE_ARG
-from shared import CLANG_CLANGXX_EMBED_BITCODE_MARKER_ARG
-from shared import CLANG_CLANGXX_TARGET_ARG
-from shared import OBJECT_FILE_EXTENSION, LLVM_IR_LANGUAGE
+from enum import Enum
+from shared import RuntimeFramework, Target, make_spoor_opt_env
 from shared import SPOOR_INSTRUMENTATION_ENABLE_RUNTIME_DEFAULT_VALUE
 from shared import SPOOR_INSTRUMENTATION_ENABLE_RUNTIME_KEY
 from shared import SPOOR_INSTRUMENTATION_INITIALIZE_RUNTIME_DEFAULT_VALUE
 from shared import SPOOR_INSTRUMENTATION_INITIALIZE_RUNTIME_KEY
 from shared import SPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION_DEFAULT_VALUE
 from shared import SPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION_KEY
-import plistlib
-import argparse
+import sys
+import re
 import os
+import subprocess
+import argparse
+import pathlib
 
-CLANG_CLANGXX_ANALYZE_ARG = '--analyze'
-CLANG_CLANGXX_EMIT_LLVM_ARG = '-emit-llvm'
-CLANG_CLANGXX_FRAMEWORK_SEARCH_PATH_ARG = '-F'
-CLANG_CLANGXX_INCREMENTAL_LINK_ARG = '-r'
-CLANG_CLANGXX_LINK_FRAMEWORK_ARG = '-framework'
-CLANG_CLANGXX_OUTPUT_STDOUT_VALUE = '-'
-CLANG_CLANGXX_PREPROCESSOR_DEFINE = '-D'
-INFO_PLIST_FILE_NAME = 'Info.plist'
-SPOOR_CONSTANT_PREPROCESSOR_MACROS = {'__SPOOR__': 1}
-SPOOR_RUNTIME_XCFRAMEWORK_NAME = 'SpoorRuntime.xcframework'
-SUPPORTED_LANGUAGES = {
-    'c', 'c++', LLVM_IR_LANGUAGE, 'objective-c', 'objective-c++'
-}
-XCFRAMEWORK_INFO_PLIST_AVAILABLE_LIBRARIES_KEY = 'AvailableLibraries'
-XCFRAMEWORK_INFO_PLIST_LIBRARY_IDENTIFIER_KEY = 'LibraryIdentifier'
-XCFRAMEWORK_INFO_PLIST_LIBRARY_PATH_KEY = 'LibraryPath'
-XCFRAMEWORK_INFO_PLIST_SUPPORTED_ARCHITECTURES_KEY = 'SupportedArchitectures'
-XCFRAMEWORK_INFO_PLIST_SUPPORTED_PLATFORM_KEY = 'SupportedPlatform'
-XCFRAMEWORK_INFO_PLIST_SUPPORTED_PLATFORM_VARIANT_KEY = \
-    'SupportedPlatformVariant'
-XCFRAMEWORK_INFO_PLIST_XCFRAMEWORK_FORMAT_VERSION_KEY = \
-    'XCFrameworkFormatVersion'
+
+class BuildPhase:
+  '''Models Clang's driver build phases.'''
+
+  class Type(Enum):
+    ANALYZER = 'analyzer'
+    ASSEMBLER = 'assembler'
+    BACKEND = 'backend'
+    COMPILER = 'compiler'
+    LINKER = 'linker'
+    LIPO = 'lipo'
+    PREPROCESSOR = 'preprocessor'
+    BIND_ARCH = 'bind-arch'
+    INPUT = 'input'
+
+  def __init__(self, phase_id, phase_type, input_file, dependency_ids, language,
+               arch):
+    self.phase_id = phase_id
+    self.phase_type = phase_type
+    self.input_file = input_file
+    self.dependency_ids = dependency_ids
+    self.language = language
+    self.arch = arch
+
+  @staticmethod
+  def get(frontend_clang_clangxx, args):
+    phases_result = subprocess.run(
+        [frontend_clang_clangxx, '-ccc-print-phases'] + args,
+        check=True,
+        capture_output=True)
+    # `phases_result` can contain invalid unicode characters.
+    raw_phases = phases_result.stderr.decode('utf-8', 'ignore')
+    return BuildPhase._parse(raw_phases)
+
+  @staticmethod
+  def _parse(raw_phases):
+    phases = []
+    for raw_phase in raw_phases.strip().splitlines():
+      raw_phase = raw_phase.strip(' |+-')
+      expression = r'^(\d+): (.+?),'
+      result = re.search(expression, raw_phase)
+      phase_id = int(result.group(1))
+      phase_type = BuildPhase.Type(result.group(2))
+      if phase_type in {
+          BuildPhase.Type.ANALYZER, BuildPhase.Type.ASSEMBLER,
+          BuildPhase.Type.BACKEND, BuildPhase.Type.COMPILER,
+          BuildPhase.Type.LINKER, BuildPhase.Type.LIPO,
+          BuildPhase.Type.PREPROCESSOR
+      }:
+        expression = r'^\d+: .*, {(.+)}, (.+)$'
+        result = re.search(expression, raw_phase)
+        raw_dependencies = result.group(1)
+        dependency_ids = {int(dep) for dep in raw_dependencies.split(', ')}
+        language = result.group(2)
+        phase = BuildPhase(phase_id, phase_type, None, dependency_ids, language,
+                           None)
+      elif phase_type == BuildPhase.Type.BIND_ARCH:
+        expression = r'^\d+: bind-arch, "(.+)", {(.*)}, (.+)$'
+        result = re.search(expression, raw_phase)
+        arch = result.group(1)
+        raw_dependencies = result.group(2)
+        dependency_ids = {int(dep) for dep in raw_dependencies.split(', ')}
+        language = result.group(3)
+        phase = BuildPhase(phase_id, phase_type, None, dependency_ids, language,
+                           arch)
+      elif phase_type == BuildPhase.Type.INPUT:
+        expression = r'^\d+: input, "(.*)", (.+)'
+        result = re.search(expression, raw_phase)
+        input_file = result.group(1)
+        language = result.group(2)
+        phase = BuildPhase(phase_id, phase_type, input_file, {}, language, None)
+      else:
+        raise ValueError(f'Unhandled Clang driver phase "{phase_type}"')
+      phases.append(phase)
+    return phases
 
 
 # distutils.util.strtobool is deprecated.
@@ -55,14 +106,6 @@ def _strtobool(value):
   raise ValueError(f'Invalid truth value "{value}"')
 
 
-def _compiling(language, output_files):
-  if language not in SUPPORTED_LANGUAGES:
-    return False
-  if not output_files:
-    return False
-  return all(f.endswith(OBJECT_FILE_EXTENSION) for f in output_files)
-
-
 def _preprocessor_macros(env):
   configs = {
       SPOOR_INSTRUMENTATION_ENABLE_RUNTIME_KEY:
@@ -72,7 +115,7 @@ def _preprocessor_macros(env):
       SPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION_KEY:
           SPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION_DEFAULT_VALUE,
   }
-  macros = SPOOR_CONSTANT_PREPROCESSOR_MACROS
+  macros = {'__SPOOR__': 1}
   for key, default_value in configs.items():
     if key in env and env[key]:
       macros[key] = _strtobool(env[key])
@@ -81,101 +124,93 @@ def _preprocessor_macros(env):
   return macros
 
 
-def _link_spoor_runtime(args):
-  return (CLANG_CLANGXX_ONLY_PREPROCESS_COMPILE_AND_ASSEMBLE_ARG not in args and
-          CLANG_CLANGXX_INCREMENTAL_LINK_ARG not in args and
-          CLANG_CLANGXX_ANALYZE_ARG not in args)
-
-
-def _runtime_framework(spoor_frameworks_path, target):
-  supported_xcframework_format_versions = set(['1.0'])
-  supported_target_vendors = set(['apple'])
-  plist_path = (f'{spoor_frameworks_path}/{SPOOR_RUNTIME_XCFRAMEWORK_NAME}/'
-                f'{INFO_PLIST_FILE_NAME}')
-
-  with open(plist_path, mode='rb') as file:
-    data = file.read()
-    plist = plistlib.loads(data)
-    format_version = plist[
-        XCFRAMEWORK_INFO_PLIST_XCFRAMEWORK_FORMAT_VERSION_KEY]
-    if format_version not in supported_xcframework_format_versions:
-      raise ValueError(
-          f'Unknown xcframework format version "{format_version}".')
-
-    if target.vendor not in supported_target_vendors:
-      raise ValueError(f'Unsupported vendor "{target.vendor}".')
-
-    for library in plist[XCFRAMEWORK_INFO_PLIST_AVAILABLE_LIBRARIES_KEY]:
-      identifier = library[XCFRAMEWORK_INFO_PLIST_LIBRARY_IDENTIFIER_KEY]
-      path = library[XCFRAMEWORK_INFO_PLIST_LIBRARY_PATH_KEY]
-      framework_name = path[:-1 * len('.framework')]
-      architectures = library[
-          XCFRAMEWORK_INFO_PLIST_SUPPORTED_ARCHITECTURES_KEY]
-      platform = library[XCFRAMEWORK_INFO_PLIST_SUPPORTED_PLATFORM_KEY]
-      if XCFRAMEWORK_INFO_PLIST_SUPPORTED_PLATFORM_VARIANT_KEY in library:
-        platform_variant = library[
-            XCFRAMEWORK_INFO_PLIST_SUPPORTED_PLATFORM_VARIANT_KEY]
-      else:
-        platform_variant = None
-      if (platform == target.platform and
-          platform_variant == target.platform_variant and
-          target.architecture in architectures):
-        framework_path = (f'{spoor_frameworks_path}/'
-                          f'{SPOOR_RUNTIME_XCFRAMEWORK_NAME}/{identifier}')
-        return (framework_path, framework_name)
-    raise ValueError(f'No runtime library for target "{target.string}".')
-
-
-def parse_clang_clangxx_args(args, spoor_frameworks_path):
-  parser = argparse.ArgumentParser(add_help=False)
-  parser.add_argument(CLANG_CLANGXX_OUTPUT_FILE_ARG,
-                      action='append',
-                      dest='output_files',
-                      nargs=1)
-  parser.add_argument(CLANG_CLANGXX_TARGET_ARG, dest='target', nargs=1)
-  parser.add_argument(CLANG_CLANGXX_LANGUAGE_ARG, dest='language', nargs=1)
-  known_args, other_args = parser.parse_known_args(args)
-
-  if not known_args.target:
-    raise ValueError('No target was supplied.')
-  target = Target(known_args.target[0])
-
-  output_files = flatten(known_args.output_files)
-
-  language = known_args.language[0] if known_args.language and 0 < len(
-      known_args.language) else None
-
-  if not _compiling(language, output_files):
-    # TODO(265): Support embedded bitcode when the Runtime xcframework also
-    # supports embedded bitcode.
-    clang_args = list(filter((CLANG_CLANGXX_EMBED_BITCODE_ARG).__ne__, args))
-    clang_args = list(
-        filter((CLANG_CLANGXX_EMBED_BITCODE_MARKER_ARG).__ne__, clang_args))
-    if _link_spoor_runtime(clang_args):
-      framework_path, framework_name = _runtime_framework(
-          spoor_frameworks_path, target)
-      clang_args += [
-          f'{CLANG_CLANGXX_FRAMEWORK_SEARCH_PATH_ARG}{framework_path}',
-          CLANG_CLANGXX_LINK_FRAMEWORK_ARG,
-          framework_name,
-      ]
-    return ArgsInfo(clang_args, output_files, target.string, instrument=False)
-
-  if len(output_files) != 1:
-    message = f'Expected exactly one output file, got {len(output_files)}.'
-    raise ValueError(message)
-  output_file = output_files[0]
-
-  clang_args = [CLANG_CLANGXX_LANGUAGE_ARG, language]
-  clang_args += [CLANG_CLANGXX_TARGET_ARG, target.string]
-  clang_args += sorted([
-      f'{CLANG_CLANGXX_PREPROCESSOR_DEFINE}{key}={value}'
-      for key, value in _preprocessor_macros(os.environ.copy()).items()
+def _compile(args, target, output_file, build_tools, frontend_clang_clangxx):
+  frontend_args = [frontend_clang_clangxx] + args + sorted([
+      f'-D{key}={value}'
+      for key, value in _preprocessor_macros(os.environ).items()
   ])
-  clang_args += other_args
-  clang_args += [
-      CLANG_CLANGXX_OUTPUT_FILE_ARG, CLANG_CLANGXX_OUTPUT_STDOUT_VALUE
-  ]
-  clang_args += [CLANG_CLANGXX_EMIT_LLVM_ARG]
+  frontend_args.append('-emit-llvm')
+  frontend_args[frontend_args.index('-o') + 1] = '/dev/stdout'
 
-  return ArgsInfo(clang_args, [output_file], target.string, instrument=True)
+  spoor_opt_args = [build_tools.spoor_opt]
+  spoor_opt_env = make_spoor_opt_env(
+      os.environ.copy(), str(pathlib.Path(output_file).with_suffix('.bc')),
+      str(pathlib.Path(output_file).with_suffix('.spoor_symbols')))
+
+  backend_args = [
+      build_tools.clangxx,
+      '-x',
+      'ir',
+      '-',
+      '-c',
+      '-target',
+      target.string,
+      '-o',
+      output_file,
+  ]
+
+  with subprocess.Popen(frontend_args, stdout=subprocess.PIPE) as frontend:
+    with subprocess.Popen(spoor_opt_args,
+                          env=spoor_opt_env,
+                          stdin=frontend.stdout,
+                          stdout=subprocess.PIPE) as spoor_opt:
+      subprocess.run(backend_args, stdin=spoor_opt.stdout, check=True)
+
+
+def _link(args, runtime_framework, frontend_clang_clangxx):
+  link_args = [frontend_clang_clangxx] + args + [
+      f'-F{runtime_framework.path}',
+      '-framework',
+      runtime_framework.name,
+  ]
+  subprocess.run(link_args, check=True)
+
+
+def main(argv, build_tools, frontend_clang_clangxx):
+  args = argv[1:]
+  args = [
+      arg for arg in args
+      if arg not in ('-fembed-bitcode-marker', '-fembed-bitcode')
+  ]
+
+  parser = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
+  parser.add_argument('-target')
+  parser.add_argument('-o', dest='output_file')
+  known_args, _ = parser.parse_known_args(argv)
+
+  target = Target(known_args.target) if known_args.target else None
+  if target is None:
+    raise NotImplementedError(
+        "Spoor's clang and clang++ wrappers require an explicit target.")
+
+  if known_args.output_file is None:
+    raise NotImplementedError(
+        "Spoor's clang and clang++ wrappers require an explicit output file.")
+
+  phases = BuildPhase.get(frontend_clang_clangxx, args)
+  phase_types = {phase.phase_type for phase in phases}
+
+  if (BuildPhase.Type.COMPILER in phase_types and
+      BuildPhase.Type.LINKER in phase_types):
+    raise NotImplementedError(
+        'Compiling and linking simultaneously is not supported.')
+
+  runtime_framework = RuntimeFramework.get(build_tools.spoor_frameworks_path,
+                                           target)
+  if runtime_framework is None:
+    print(
+        f'Warning: Skipping instrumentation for unsupported target "{target}".',
+        file=sys.stderr)
+    subprocess.run([frontend_clang_clangxx] + args, check=True)
+    return
+
+  if BuildPhase.Type.COMPILER in phase_types:
+    _compile(args, target, known_args.output_file, build_tools,
+             frontend_clang_clangxx)
+    return
+
+  if BuildPhase.Type.LINKER in phase_types:
+    _link(args, runtime_framework, frontend_clang_clangxx)
+    return
+
+  subprocess.run([frontend_clang_clangxx] + args, check=True)

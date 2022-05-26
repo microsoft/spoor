@@ -2,210 +2,183 @@
 # Licensed under the MIT License.
 '''Tests for shared wrapper logic.'''
 
-from shared import arg_after, flatten, get_developer_path
-from shared import instrument_and_compile_ir
-from shared import Target
-from unittest import mock
-from unittest.mock import patch
+from shared import BuildTools, Target, RuntimeFramework, make_spoor_opt_env
+from unittest.mock import mock_open, patch
 import pytest
-import subprocess
 import sys
 
 
+def _plist_fixture(file_name):
+  plist_path = f'spoor/toolchains/xcode/test_data/info_plists/{file_name}'
+  with open(plist_path, mode='rb') as file:
+    return file.read()
+
+
+@patch('shared.__file__', '/path/to/spoor/toolchain/usr/bin/shared.py')
 @patch('subprocess.run')
 @patch.dict('os.environ', {})
 def test_get_developer_path(run_mock):
-  type(run_mock.return_value).stdout = '/foo/bar\n'
-  developer_dir = get_developer_path()
+  developer_dir = '/Applications/Xcode.app/Contents/Developer'
+  run_mock.return_value.stdout = f'{developer_dir}\n'
+
+  spoor_toolchain_dir = '/path/to/spoor/toolchain'
+  default_toolchain_dir = f'{developer_dir}/Toolchains/XcodeDefault.xctoolchain'
+
+  build_tools = BuildTools.get()
+
   run_mock.assert_called_once_with(['xcode-select', '--print-path'],
-                                   stdout=subprocess.PIPE,
-                                   check=True,
-                                   text=True)
-  assert developer_dir == '/foo/bar'
+                                   capture_output=True,
+                                   text=True,
+                                   check=True)
+
+  assert build_tools.clang == f'{default_toolchain_dir}/usr/bin/clang'
+  assert build_tools.clangxx == f'{default_toolchain_dir}/usr/bin/clang++'
+  assert build_tools.swift == f'{default_toolchain_dir}/usr/bin/swift'
+  assert build_tools.swiftc == f'{default_toolchain_dir}/usr/bin/swiftc'
+  assert build_tools.spoor_opt == f'{spoor_toolchain_dir}/spoor/bin/spoor_opt'
+  assert (build_tools.spoor_frameworks_path ==
+          f'{spoor_toolchain_dir}/spoor/frameworks')
+  assert build_tools.spoor_swift == f'{spoor_toolchain_dir}/usr/bin/swift'
 
 
+@patch('shared.__file__', '/path/to/spoor/toolchain/usr/bin/shared.py')
 @patch('subprocess.run')
-@patch.dict('os.environ', {'DEVELOPER_DIR': '/foo/bar'})
+@patch.dict('os.environ', {'DEVELOPER_DIR': '/path/to/developer/dir'})
 def test_get_developer_path_env_override(run_mock):
-  developer_dir = get_developer_path()
+  toolchain_dir = '/path/to/developer/dir/Toolchains/XcodeDefault.xctoolchain'
+  spoor_toolchain_dir = '/path/to/spoor/toolchain'
+
+  build_tools = BuildTools.get()
+
   run_mock.assert_not_called()
-  assert developer_dir == '/foo/bar'
+
+  assert build_tools.clang == f'{toolchain_dir}/usr/bin/clang'
+  assert build_tools.clangxx == f'{toolchain_dir}/usr/bin/clang++'
+  assert build_tools.swift == f'{toolchain_dir}/usr/bin/swift'
+  assert build_tools.swiftc == f'{toolchain_dir}/usr/bin/swiftc'
+  assert build_tools.spoor_opt == f'{spoor_toolchain_dir}/spoor/bin/spoor_opt'
+  assert (build_tools.spoor_frameworks_path ==
+          f'{spoor_toolchain_dir}/spoor/frameworks')
+  assert build_tools.spoor_swift == f'{spoor_toolchain_dir}/usr/bin/swift'
 
 
-def test_target_parses_string_without_platform_variant():
-  target_string = 'arm64-apple-ios15.0'
-  target = Target(target_string)
-  assert target.string == target_string
-  assert target.architecture == 'arm64'
-  assert target.vendor == 'apple'
-  assert target.platform == 'ios'
-  assert target.platform_version == '15.0'
-  assert target.platform_variant is None
+def test_target():
+  target_a = Target('x86_64-apple-ios15.0-simulator')
+  assert target_a.architecture == 'x86_64'
+  assert target_a.vendor == 'apple'
+  assert target_a.platform == 'ios'
+  assert target_a.platform_version == '15.0'
+  assert target_a.platform_variant == 'simulator'
 
+  target_b = Target('arm64-apple-ios15.0')
+  assert target_b.architecture == 'arm64'
+  assert target_b.vendor == 'apple'
+  assert target_b.platform == 'ios'
+  assert target_b.platform_version == '15.0'
+  assert target_b.platform_variant is None
 
-def test_target_parses_string_with_platform_variant():
-  target_string = 'x86_64-apple-ios15.0-simulator'
-  target = Target(target_string)
-  assert target.string == target_string
-  assert target.architecture == 'x86_64'
-  assert target.vendor == 'apple'
-  assert target.platform == 'ios'
-  assert target.platform_version == '15.0'
-  assert target.platform_variant == 'simulator'
-
-
-def test_target_fails_to_parse_bad_target_string():
-  target_string = 'foo'
-  expected_error = f'Cannot parse target "{target_string}".'
   with pytest.raises(ValueError) as error:
-    _ = Target(target_string)
-  assert str(error.value) == expected_error
+    _ = Target('bad-target')
+  assert str(error.value) == 'Cannot parse target "bad-target"'
 
 
-def test_arg_after():
-  args = ['foo', '-x', 'bar', '-y', 'baz']
-  assert arg_after('-x', args) == 'bar'
-  assert arg_after('-y', args) == 'baz'
+@patch('builtins.open',
+       new_callable=mock_open,
+       read_data=_plist_fixture('xcframework_info.plist'))
+def test_get_runtime_framework(_):
+  frameworks_path = '/path/to/frameworks'
+
+  simulator_target = Target('x86_64-apple-ios15.0-simulator')
+  simulator_framework = RuntimeFramework.get(frameworks_path, simulator_target)
+  assert simulator_framework.name == 'SpoorRuntime'
+  assert (
+      simulator_framework.path ==
+      f'{frameworks_path}/SpoorRuntime.xcframework/ios-arm64_x86_64-simulator')
+
+  device_target = Target('arm64-apple-ios15.0')
+  simulator_framework = RuntimeFramework.get(frameworks_path, device_target)
+  assert simulator_framework.name == 'SpoorRuntime'
+  assert (simulator_framework.path ==
+          f'{frameworks_path}/SpoorRuntime.xcframework/ios-arm64')
 
 
-def test_flatten():
-  input_list = [[1], [2], [3, 4]]
-  expected_list = [1, 2, 3, 4]
-  flattened_list = flatten(input_list)
-  assert flattened_list == expected_list
+@patch('builtins.open',
+       new_callable=mock_open,
+       read_data=_plist_fixture('xcframework_info_unknown_version.plist'))
+def test_get_runtime_framework_unknown_xcframework_version(_):
+  frameworks_path = '/path/to/frameworks'
+  target = Target('arm64-apple-ios15.0')
+
+  with pytest.raises(ValueError) as error:
+    _ = RuntimeFramework.get(frameworks_path, target)
+  assert str(error.value) == 'Unknown XCFramework format version "2.0"'
 
 
-@patch('subprocess.Popen')
-def test_early_exit_on_frontend_process_failure(popen_mock):
-  popen_handle = popen_mock.return_value.__enter__
-  frontend_process_mock = mock.Mock()
-  frontend_process_mock.returncode = 1
-  spoor_opt_process_mock = mock.Mock()
-  spoor_opt_process_mock.returncode = 0
-  clangxx_process_mock = mock.Mock()
-  clangxx_process_mock.returncode = 0
-  popen_handle.side_effect = [
-      frontend_process_mock, spoor_opt_process_mock, clangxx_process_mock
-  ]
-  with subprocess.Popen(['frontend'],
-                        stdout=subprocess.PIPE) as frontend_process:
-    return_code = instrument_and_compile_ir(frontend_process, 'spoor_opt',
-                                            'clang++', 'a.o', 'target')
+@patch('builtins.open',
+       new_callable=mock_open,
+       read_data=_plist_fixture('xcframework_info.plist'))
+def test_get_runtime_framework_unsupported_vendor(_):
+  frameworks_path = '/path/to/frameworks'
+  target = Target('arm64-orange-ios15.0')
 
-    frontend_process.stdout.close.assert_called_once()
-    frontend_process.wait.assert_called_once()
-    spoor_opt_process_mock.stdout.close.assert_not_called()
-    spoor_opt_process_mock.wait.assert_not_called()
-    clangxx_process_mock.stdout.close.assert_not_called()
-    clangxx_process_mock.wait.assert_not_called()
-    assert return_code == 1
+  framework = RuntimeFramework.get(frameworks_path, target)
+  assert framework is None
 
 
-@patch('subprocess.Popen')
-def test_early_exit_on_spoor_opt_process_failure(popen_mock):
-  popen_handle = popen_mock.return_value.__enter__
-  frontend_process_mock = mock.Mock()
-  frontend_process_mock.returncode = 0
-  spoor_opt_process_mock = mock.Mock()
-  spoor_opt_process_mock.returncode = 2
-  clangxx_process_mock = mock.Mock()
-  clangxx_process_mock.returncode = 0
-  popen_handle.side_effect = [
-      frontend_process_mock, spoor_opt_process_mock, clangxx_process_mock
-  ]
-  with subprocess.Popen(['frontend'],
-                        stdout=subprocess.PIPE) as frontend_process:
-    return_code = instrument_and_compile_ir(frontend_process, 'spoor_opt',
-                                            'clang++', 'a.o', 'target')
-
-    frontend_process.stdout.close.assert_called_once()
-    frontend_process.wait.assert_called_once()
-    spoor_opt_process_mock.stdout.close.assert_called_once()
-    spoor_opt_process_mock.wait.assert_called_once()
-    clangxx_process_mock.stdout.close.assert_not_called()
-    clangxx_process_mock.wait.assert_not_called()
-    assert return_code == 2
+@patch('builtins.open',
+       new_callable=mock_open,
+       read_data=_plist_fixture('xcframework_info.plist'))
+def test_get_runtime_framework_unsupported_architecture(_):
+  frameworks_path = '/path/to/frameworks'
+  target = Target('riscv-apple-ios15.0')
+  framework = RuntimeFramework.get(frameworks_path, target)
+  assert framework is None
 
 
-@patch('subprocess.Popen')
-def test_exit_on_backend_process_failure(popen_mock):
-  popen_handle = popen_mock.return_value.__enter__
-  frontend_process_mock = mock.Mock()
-  frontend_process_mock.returncode = 0
-  spoor_opt_process_mock = mock.Mock()
-  spoor_opt_process_mock.returncode = 0
-  clangxx_process_mock = mock.Mock()
-  clangxx_process_mock.returncode = 3
-  popen_handle.side_effect = [
-      frontend_process_mock, spoor_opt_process_mock, clangxx_process_mock
-  ]
-  with subprocess.Popen(['frontend'],
-                        stdout=subprocess.PIPE) as frontend_process:
-    return_code = instrument_and_compile_ir(frontend_process, 'spoor_opt',
-                                            'clang++', 'a.o', 'target')
-
-    frontend_process.stdout.close.assert_called_once()
-    frontend_process.wait.assert_called_once()
-    spoor_opt_process_mock.stdout.close.assert_called_once()
-    spoor_opt_process_mock.wait.assert_called_once()
-    clangxx_process_mock.wait.assert_called_once()
-    assert return_code == 3
+@patch('builtins.open',
+       new_callable=mock_open,
+       read_data=_plist_fixture('xcframework_info.plist'))
+def test_get_runtime_framework_unsupported_platform(_):
+  frameworks_path = '/path/to/frameworks'
+  target = Target('arm64-apple-jetpackos15.0')
+  framework = RuntimeFramework.get(frameworks_path, target)
+  assert framework is None
 
 
-@patch('subprocess.Popen')
-@patch.dict('os.environ', {})
-def test_sets_environment_if_not_defined(popen_mock):
-  popen_handle = popen_mock.return_value.__enter__
-  frontend_process_mock = mock.Mock()
-  frontend_process_mock.returncode = 0
-  spoor_opt_process_mock = mock.Mock()
-  spoor_opt_process_mock.returncode = 0
-  clangxx_process_mock = mock.Mock()
-  clangxx_process_mock.returncode = 0
-  popen_handle.side_effect = [
-      frontend_process_mock, spoor_opt_process_mock, clangxx_process_mock
-  ]
-  with subprocess.Popen(['frontend'],
-                        stdout=subprocess.PIPE) as frontend_process:
-    return_code = instrument_and_compile_ir(frontend_process, 'spoor_opt',
-                                            'clang++', 'a.o', 'target')
-    assert return_code == 0
-    _, spoor_opt_args, _ = popen_mock.call_args_list
-    expected_env = {
-        'SPOOR_INSTRUMENTATION_MODULE_ID': 'a.o',
-        'SPOOR_INSTRUMENTATION_OUTPUT_SYMBOLS_FILE': 'a.spoor_symbols',
-    }
-    assert expected_env.items() <= spoor_opt_args.kwargs['env'].items()
+@patch('builtins.open',
+       new_callable=mock_open,
+       read_data=_plist_fixture('xcframework_info.plist'))
+def test_get_runtime_framework_unsupported_platform_version(_):
+  frameworks_path = '/path/to/frameworks'
+  target = Target('arm64-apple-ios15.0-emulator')
+  framework = RuntimeFramework.get(frameworks_path, target)
+  assert framework is None
 
 
-@patch('subprocess.Popen')
-@patch.dict(
-    'os.environ', {
-        'SPOOR_INSTRUMENTATION_MODULE_ID': 'module_id',
-        'SPOOR_INSTRUMENTATION_OUTPUT_SYMBOLS_FILE': 'map.spoor_symbols',
-    })
-def test_does_not_override_environment(popen_mock):
-  popen_handle = popen_mock.return_value.__enter__
-  frontend_process_mock = mock.Mock()
-  frontend_process_mock.returncode = 0
-  spoor_opt_process_mock = mock.Mock()
-  spoor_opt_process_mock.returncode = 0
-  clangxx_process_mock = mock.Mock()
-  clangxx_process_mock.returncode = 0
-  popen_handle.side_effect = [
-      frontend_process_mock, spoor_opt_process_mock, clangxx_process_mock
-  ]
-  with subprocess.Popen(['frontend'],
-                        stdout=subprocess.PIPE) as frontend_process:
-    return_code = instrument_and_compile_ir(frontend_process, 'spoor_opt',
-                                            'clang++', 'a.o', 'target')
-    assert return_code == 0
-    _, spoor_opt_args, _ = popen_mock.call_args_list
-    expected_env = {
-        'SPOOR_INSTRUMENTATION_MODULE_ID': 'module_id',
-        'SPOOR_INSTRUMENTATION_OUTPUT_SYMBOLS_FILE': 'map.spoor_symbols',
-    }
-    assert expected_env.items() <= spoor_opt_args.kwargs['env'].items()
+def test_make_spoor_opt_env():
+  module_id = 'module_id'
+  output_symbols_file = '/path/to/symbols.spoor_symbols'
+  env = {}
+  new_env = make_spoor_opt_env(env, module_id, output_symbols_file)
+  assert new_env['SPOOR_INSTRUMENTATION_MODULE_ID'] == module_id
+  assert (new_env['SPOOR_INSTRUMENTATION_OUTPUT_SYMBOLS_FILE'] ==
+          output_symbols_file)
+
+
+def test_make_spoor_opt_env_does_not_override_env():
+  module_id = 'module_id'
+  output_symbols_file = '/path/to/symbols.spoor_symbols'
+  env = {
+      'SPOOR_INSTRUMENTATION_MODULE_ID':
+          'module_id',
+      'SPOOR_INSTRUMENTATION_OUTPUT_SYMBOLS_FILE':
+          '/path/to/symbols.spoor_symbols',
+  }
+  new_env = make_spoor_opt_env(env, 'new_module_id',
+                               '/path/to/new_symbols.spoor_symbols')
+  assert new_env['SPOOR_INSTRUMENTATION_MODULE_ID'] == module_id
+  assert (new_env['SPOOR_INSTRUMENTATION_OUTPUT_SYMBOLS_FILE'] ==
+          output_symbols_file)
 
 
 if __name__ == '__main__':
