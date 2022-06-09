@@ -58,7 +58,8 @@ TEST(ReduceSymbols, ReducesUniqueSymbols) {  // NOLINT
     function_info_d.set_module_id("d");
     return symbols;
   }();
-  ReduceSymbols(&source_symbols, &destination_symbols);
+  ReduceSymbols(
+      {.source = &source_symbols, .destination = &destination_symbols});
   ASSERT_TRUE(
       MessageDifferencer::Equals(source_symbols, expected_source_symbols));
   ASSERT_TRUE(MessageDifferencer::Equals(destination_symbols,

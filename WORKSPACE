@@ -36,54 +36,54 @@ pip_install(
     requirements = "//:requirements-dev.txt",
 )
 
-# TODO(#133): Use LLVM's Bazel build configuration when it is checked in.
+# LLVM's build config requires deviating from the naming convention.
 http_archive(
-    name = "com_google_llvm_bazel",
-    sha256 = "910f4c87511d6add2a61128a95ea0afc123ac3a5d79675d4bbbd7d43577020af",
-    strip_prefix = "llvm-bazel-lelandjansen-llvm-12.0.1/llvm-bazel",
-    url = "https://github.com/lelandjansen/llvm-bazel/archive/refs/heads/lelandjansen/llvm-12.0.1.tar.gz",
+    name = "bazel_skylib",
+    sha256 = "f7be3474d42aae265405a592bb7da8e171919d74c16f082a5457840f06054728",
+    url = "https://github.com/bazelbuild/bazel-skylib/releases/download/1.2.1/bazel-skylib-1.2.1.tar.gz",
 )
 
+_LLVM_VERSION = "13.0.1"
+
+_LLVM_SHA256 = "09c50d558bd975c41157364421820228df66632802a4a6a7c9c17f86a7340802"
+
 http_archive(
-    name = "org_llvm_llvm_project",
-    build_file_content = "#empty",
+    name = "org_llvm_llvm_project_raw",
+    build_file_content = "# empty",
     patch_cmds = [
         """
         if [[ "$OSTYPE" == "darwin"* ]]; then
-          sed -i '' 's|#include "llvm/Transforms/HelloNew/HelloWorld.h"||g' llvm/lib/Passes/PassBuilder.cpp
-          sed -i '' 's|FUNCTION_PASS("helloworld", HelloWorldPass())||g' llvm/lib/Passes/PassRegistry.def
+          sed -i '' 's|Locs\\[Idx\\].Value.RegNo == Reg|false|g' llvm/lib/CodeGen/LiveDebugValues/VarLocBasedImpl.cpp
         else
-          sed -i 's|#include "llvm/Transforms/HelloNew/HelloWorld.h"||g' llvm/lib/Passes/PassBuilder.cpp
-          sed -i 's|FUNCTION_PASS("helloworld", HelloWorldPass())||g' llvm/lib/Passes/PassRegistry.def
+          sed -i 's|Locs\\[Idx\\].Value.RegNo == Reg|false|g' llvm/lib/CodeGen/LiveDebugValues/VarLocBasedImpl.cpp
         fi
         """,
     ],
-    sha256 = "66b64aa301244975a4aea489f402f205cde2f53dd722dad9e7b77a0459b4c8df",
-    strip_prefix = "llvm-project-llvmorg-12.0.1",
-    url = "https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-12.0.1.tar.gz",
+    sha256 = _LLVM_SHA256,
+    strip_prefix = "llvm-project-llvmorg-{version}".format(version = _LLVM_VERSION),
+    url = "https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-{version}.tar.gz".format(version = _LLVM_VERSION),
 )
 
-load("@com_google_llvm_bazel//:terminfo.bzl", "llvm_terminfo_disable")
-
-llvm_terminfo_disable(
-    name = "llvm_terminfo",
+http_archive(
+    name = "org_llvm_llvm_project_bazel",
+    sha256 = _LLVM_SHA256,
+    strip_prefix = "llvm-project-llvmorg-{version}/utils/bazel".format(version = _LLVM_VERSION),
+    url = "https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-{version}.tar.gz".format(version = _LLVM_VERSION),
 )
 
-load("@com_google_llvm_bazel//:zlib.bzl", "llvm_zlib_disable")
-
-llvm_zlib_disable(
-    name = "llvm_zlib",
+load(
+    "@org_llvm_llvm_project_bazel//:configure.bzl",
+    "llvm_configure",
+    "llvm_disable_optional_support_deps",
 )
-
-load("@com_google_llvm_bazel//:configure.bzl", "llvm_configure")
 
 llvm_configure(
-    # The LLVM Bazel project's configuration requires deviating from Spoor's
-    # project naming convention.
     name = "llvm-project",
     src_path = ".",
-    src_workspace = "@org_llvm_llvm_project//:WORKSPACE",
+    src_workspace = "@org_llvm_llvm_project_raw//:WORKSPACE",
 )
+
+llvm_disable_optional_support_deps()
 
 http_archive(
     name = "com_apple_swift",

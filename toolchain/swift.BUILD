@@ -15,6 +15,7 @@ cc_library(
         "include/swift/**/*.def",
     ]),
     copts = [
+        "-std=c++17",
         "-Wno-dollar-in-identifier-extension",
         "-Wno-unused-parameter",
     ],

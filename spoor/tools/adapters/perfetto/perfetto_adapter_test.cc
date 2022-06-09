@@ -75,8 +75,10 @@ TEST(PerfettoAdapter, AdaptsEntryExitTraces) {  // NOLINT
   constexpr FunctionId function_a_id{0};
   constexpr FunctionId function_b_id{1};
   constexpr FunctionId function_c{2};
-  const auto thread_a_track_uuid = TrackUuid(process_id, thread_a_id);
-  const auto thread_b_track_uuid = TrackUuid(process_id, thread_b_id);
+  const auto thread_a_track_uuid =
+      TrackUuid({.process_id = process_id, .thread_id = thread_a_id});
+  const auto thread_b_track_uuid =
+      TrackUuid({.process_id = process_id, .thread_id = thread_b_id});
 
   const Symbols symbols{};
 
@@ -192,7 +194,8 @@ TEST(PerfettoAdapter, AdaptsEntryExitTraces) {  // NOLINT
         [&] {
           TracePacket packet{};
           auto* track_descriptor = packet.mutable_track_descriptor();
-          track_descriptor->set_uuid(TrackUuid(process_id, thread_a_id));
+          track_descriptor->set_uuid(
+              TrackUuid({.process_id = process_id, .thread_id = thread_a_id}));
           auto* thread_descriptor = track_descriptor->mutable_thread();
           thread_descriptor->set_pid(process_id);
           thread_descriptor->set_tid(thread_a_id);
@@ -201,7 +204,8 @@ TEST(PerfettoAdapter, AdaptsEntryExitTraces) {  // NOLINT
         [&] {
           TracePacket packet{};
           auto* track_descriptor = packet.mutable_track_descriptor();
-          track_descriptor->set_uuid(TrackUuid(process_id, thread_b_id));
+          track_descriptor->set_uuid(
+              TrackUuid({.process_id = process_id, .thread_id = thread_b_id}));
           auto* thread_descriptor = track_descriptor->mutable_thread();
           thread_descriptor->set_pid(process_id);
           thread_descriptor->set_tid(thread_b_id);
