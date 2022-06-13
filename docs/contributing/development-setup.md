@@ -1,7 +1,7 @@
 # Development Setup
 
 ## Requirements
-* [LLVM 12][llvm-download] including `clang++`, `opt`, `clang-format`,
+* [LLVM 13][llvm-download] including `clang++`, `opt`, `clang-format`,
   `clang-tidy`, and `libc++`.
 * [Python 3][python-download], and [Pylint][pylint] and [YAPF][yapf] to format
   and lint code.
