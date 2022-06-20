@@ -6,18 +6,20 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 cc_library(
     name = "demangle",
     srcs = glob([
-        "swift/lib/Demangling/**/*.cpp",
         "lib/Demangling/**/*.cpp",
         "lib/Demangling/**/*.h",
+        "stdlib/public/**/*.h",
+        "swift/lib/Demangling/**/*.cpp",
+        "swift/lib/SwiftDemangle/**/*.cpp",
+        "swift/lib/SwiftDemangle/**/*.h",
     ]),
     hdrs = glob([
         "include/swift/**/*.h",
         "include/swift/**/*.def",
     ]),
     copts = [
-        "-std=c++17",
-        "-Wno-dollar-in-identifier-extension",
-        "-Wno-unused-parameter",
+        "-std=c++14",
+        "-DSWIFT_STDLIB_HAS_TYPE_PRINTING=1",
     ],
     strip_include_prefix = "include",
     visibility = ["//visibility:public"],

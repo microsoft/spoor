@@ -30,7 +30,7 @@ class PtrOwner {
   using ReturnRawPtrResult =
       util::result::Result<util::result::None, util::result::None>;
 
-  virtual auto Return(T* t) -> ReturnRawPtrResult = 0;
+  virtual auto Return(T* ptr) -> ReturnRawPtrResult = 0;
 };
 
 }  // namespace util::memory

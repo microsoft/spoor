@@ -19,6 +19,7 @@
 #include "google/protobuf/util/time_util.h"
 #include "gsl/gsl"
 #include "llvm/ADT/APInt.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Demangle/Demangle.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -72,7 +73,8 @@ auto InjectInstrumentation::run(llvm::Module& llvm_module,
     auto filters_result =
         options_.filters_reader->Read(options_.filters_file_path.value());
     if (filters_result.IsErr()) {
-      llvm::report_fatal_error(filters_result.Err().message, false);
+      llvm::report_fatal_error(llvm::StringRef{filters_result.Err().message},
+                               false);
     }
     auto file_filters = std::move(filters_result).Ok();
     std::move(std::begin(file_filters), std::end(file_filters),
@@ -104,7 +106,7 @@ auto InjectInstrumentation::run(llvm::Module& llvm_module,
         }
       }
     }();
-    llvm::report_fatal_error(message, false);
+    llvm::report_fatal_error(llvm::StringRef{message}, false);
   }
 
   return preserved_analyses;
@@ -165,8 +167,7 @@ auto InjectInstrumentation::InstrumentModule(
 
     const auto demangled_name = [&function_name] {
       if (swift::Demangle::isSwiftSymbol(function_name)) {
-        return swift::Demangle::demangleSymbolAsString(
-            function_name.c_str(), function_name.size(), {});
+        return swift::Demangle::demangleSymbolAsString(function_name);
       }
       std::string sanitized_function_name{};
       std::copy_if(

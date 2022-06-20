@@ -85,7 +85,8 @@ auto BenchmarkCircularSliceBufferCreateFillClear(benchmark::State& state)
   };
   for (auto _ : state) {  // NOLINT(clang-analyzer-deadcode.DeadStores)
     CircularSliceBuffer circular_slice_buffer{circular_slice_buffer_options};
-    for (SizeType i{0}; i < circular_slice_buffer_options.capacity; ++i) {
+    for (SizeType capacity{0};
+         capacity < circular_slice_buffer_options.capacity; ++capacity) {
       circular_slice_buffer.Push(42);
     }
     circular_slice_buffer.Clear();

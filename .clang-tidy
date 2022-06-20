@@ -116,6 +116,8 @@ CheckOptions:
     value: 1
   - key: llvm-namespace-comment.SpacesBeforeComments
     value: 2  # Match clang-format
+  - key: readability-identifier-length.IgnoredVariableNames
+    value: ^(_|ok|id)$
   - key: readability-identifier-naming.ClassCase
     value: CamelCase
   - key: readability-identifier-naming.ClassMethodCase

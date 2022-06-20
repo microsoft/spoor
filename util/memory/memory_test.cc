@@ -35,7 +35,7 @@ class Owner : public PtrOwner {
   auto Return(Value* value) -> PtrOwner::ReturnRawPtrResult override;
 
  private:
-  uint32 borrowed_size_;
+  uint32 borrowed_size_{0};
   Value value_;
 };
 
@@ -43,7 +43,7 @@ constexpr Value::Value(const int32 value) : value_{value} {}
 
 constexpr auto Value::Get() const -> int32 { return value_; };
 
-constexpr Owner::Owner(const int32 value) : borrowed_size_{0}, value_{value} {}
+constexpr Owner::Owner(const int32 value) : value_{value} {}
 
 constexpr auto Owner::Borrow() -> OwnedPtr {
   ++borrowed_size_;

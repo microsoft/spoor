@@ -29,8 +29,8 @@ auto operator==(const std::vector<gsl::span<ValueType>>& result_chunks,
     -> bool {
   if (std::size(result_chunks) != std::size(expected_chunks)) return false;
   for (SizeType index{0}; index < std::size(expected_chunks); ++index) {
-    const auto result_chunk = result_chunks.at(index);
-    const auto expected_chunk = expected_chunks.at(index);
+    const auto& result_chunk = result_chunks.at(index);
+    const auto& expected_chunk = expected_chunks.at(index);
     const auto equal =
         std::equal(std::cbegin(result_chunk), std::cend(result_chunk),
                    std::cbegin(expected_chunk));

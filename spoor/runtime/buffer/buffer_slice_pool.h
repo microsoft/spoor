@@ -28,7 +28,9 @@ class BufferSlicePool : public util::memory::PtrOwner<CircularBuffer<T>> {
   constexpr BufferSlicePool(BufferSlicePool&&) noexcept = delete;
   constexpr auto operator=(BufferSlicePool&&) noexcept
       -> BufferSlicePool& = delete;
-  constexpr ~BufferSlicePool() override = default;
+  // Conflicts with the `cppcoreguidelines-virtual-class-destructor` rule.
+  // NOLINTNEXTLINE(modernize-use-override)
+  virtual constexpr ~BufferSlicePool() = default;
 
   [[nodiscard]] virtual constexpr auto Borrow(SizeType preferred_slice_capacity)
       -> BorrowResult = 0;

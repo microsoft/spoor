@@ -7,8 +7,8 @@
 
 set -eu
 
-if command -v clang-format-12 &> /dev/null; then
-  CLANG_FORMAT="clang-format-12"
+if command -v clang-format-14 &> /dev/null; then
+  CLANG_FORMAT="clang-format-14"
 elif command -v clang-format &> /dev/null; then
   CLANG_FORMAT="clang-format"
 else

@@ -17,6 +17,7 @@
 
 namespace spoor::runtime::flush_queue {
 
+// False positive. NOLINTNEXTLINE(misc-unused-using-decls)
 using std::literals::chrono_literals::operator""ns;
 
 DiskFlushQueue::DiskFlushQueue(Options options)
