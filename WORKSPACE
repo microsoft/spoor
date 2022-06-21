@@ -269,6 +269,6 @@ http_file(
 http_file(
     name = "com_google_style_guide_pylintrc",
     downloaded_file_path = "pylintrc",
-    sha256 = "c93e541953066272d590b43d1a86ceeb3c0ef06ed5a7d74b799185ff6162ea9e",
-    urls = ["https://raw.githubusercontent.com/google/styleguide/9c8784ded344f6a35d1e1550385002f613a0c788/pylintrc"],
+    sha256 = "74e3ca4f45e5df3d7bfd0729c0e6635078a13a46866fcd652b31be45ea80219d",
+    urls = ["https://raw.githubusercontent.com/google/styleguide/25bd3525fa8277d40a0163df04f6a06277e6265b/pylintrc"],
 )
