@@ -1,0 +1,26 @@
+{
+  "": {
+    "diagnostics": "/path/to/module-master.dia",
+    "swift-dependencies": "/path/to/module-master.swiftdeps"
+  },
+  "/path/to/a.swift": {
+    "dependencies": "/path/to/a.d",
+    "diagnostics": "/path/to/a.dia",
+    "llvm-bc": "/path/to/a.bc",
+    "object": "/path/to/a.o",
+    "swift-dependencies": "/path/to/a.swiftdeps",
+    "swiftmodule": "/path/to/a~partial.swiftmodule",
+    "instrumented-llvm-bc": "/path/to/a.instrumented.bc",
+    "spoor-symbols": "/path/to/a.spoor_symbols"
+  },
+  "/path/to/b.swift": {
+    "dependencies": "/path/to/b.d",
+    "diagnostics": "/path/to/b.dia",
+    "llvm-bc": "/path/to/b.bc",
+    "object": "/path/to/b.o",
+    "swift-dependencies": "/path/to/b.swiftdeps",
+    "swiftmodule": "/path/to/b~partial.swiftmodule",
+    "instrumented-llvm-bc": "/path/to/b.instrumented.bc",
+    "spoor-symbols": "/path/to/b.spoor_symbols"
+  }
+}

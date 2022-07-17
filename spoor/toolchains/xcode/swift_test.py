@@ -2,143 +2,327 @@
 # Licensed under the MIT License.
 '''Tests for the `swift` wrapper.'''
 
-from shared import arg_after
-from unittest import mock
-from unittest.mock import patch
+from shared import Target, SPOOR_INSTRUMENTATION_XCODE_OUTPUT_FILE_MAP_KEY
+from swift import main
+from test_util import MOCK_BUILD_TOOLS
+from test_util import build_intermediate_fixture, plist_fixture
+from unittest.mock import call, mock_open, patch
 import pytest
-import shlex
-import subprocess
-import swift
 import sys
 
 
-@patch('swiftc.subprocess.Popen')
-def test_parses_swift_compile_args(popen_mock):
-  popen_handle = popen_mock.return_value.__enter__
-  input_args_files = [
-      f'spoor/toolchains/xcode/test_data/build_args/{file}' for file in [
-          'swift_compile_swift_ios_arm64_args.txt',
-          'swift_compile_swift_ios_x86_64_args.txt',
-          'swift_compile_swift_macos_x86_64_args.txt',
-          'swift_compile_swift_watchos_arm64_args.txt',
-          'swift_compile_swift_watchos_x86_64_args.txt',
-      ]
+@patch('subprocess.run')
+@patch.dict('os.environ', {
+    SPOOR_INSTRUMENTATION_XCODE_OUTPUT_FILE_MAP_KEY:
+        '/path/to/module-OutputFileMap.json'
+},
+            clear=True)
+def test_runs_swift(run_mock):
+  build_tools = MOCK_BUILD_TOOLS
+  target = Target('arm64-apple-ios15.0')
+  input_args = [
+      build_tools.swift,
+      '-target',
+      target.string,
+      '-primary-file',
+      '/path/to/a.swift',
+      '-primary-file',
+      '/path/to/b.swift',
+      'arg0',
+      'arg1',
+      '-o',
+      '/path/to/a.bc',
+      '-o',
+      '/path/to/b.bc',
   ]
-  for input_args_file in input_args_files:
-    with open(input_args_file, encoding='utf-8', mode='r') as file:
-      input_args = shlex.split(file.read())
-      output_object_file = arg_after('-o', input_args)
 
-      swift_process_mock = mock.Mock()
-      swift_process_mock.returncode = 0
-      spoor_opt_process_mock = mock.Mock()
-      spoor_opt_process_mock.returncode = 0
-      clangxx_process_mock = mock.Mock()
-      clangxx_process_mock.returncode = 0
-      popen_handle.side_effect = [
-          swift_process_mock,
-          spoor_opt_process_mock,
-          clangxx_process_mock,
-      ]
+  open_output_file_map_handle = mock_open(read_data=build_intermediate_fixture(
+      'modified-module-OutputFileMap.json'))
+  open_xcframework_info_handle = mock_open(
+      read_data=plist_fixture('xcframework_info.plist'))
 
-      return_code = swift.main(['swift'] + input_args, 'default_swift',
-                               'spoor_opt', 'default_clangxx')
+  with patch('builtins.open') as open_mock:
+    open_mock.side_effect = [
+        open_output_file_map_handle.return_value,
+        open_xcframework_info_handle.return_value,
+    ]
 
-      assert return_code == 0
-      assert len(popen_mock.call_args_list) == 3
-      swift_args, spoor_opt_args, clangxx_args = popen_mock.call_args_list
+    main(input_args, build_tools)
 
-      assert len(swift_args.args) == 1
-      assert swift_args.args[0][0] == 'default_swift'
-      assert '-target' in swift_args.args[0]
-      if 'ios' in input_args_file:
-        assert 'apple-ios' in arg_after('-target', swift_args.args[0])
-      if 'macos' in input_args_file:
-        assert 'apple-macos' in arg_after('-target', swift_args.args[0])
-      assert '-o' not in swift_args.args[0]
-      assert output_object_file not in swift_args.args[0]
-      assert '-emit-ir' in swift_args.args[0]
-      assert swift_args.kwargs['stdout'] == subprocess.PIPE
-      swift_process_mock.stdout.close.assert_called_once()
-      swift_process_mock.wait.assert_called_once()
-
-      assert len(spoor_opt_args.args) == 1
-      expected_spoor_opt_args = ['spoor_opt', '--output_language', 'ir']
-      assert spoor_opt_args.args[0] == expected_spoor_opt_args
-      assert spoor_opt_args.kwargs['stdin'] == swift_process_mock.stdout
-      assert spoor_opt_args.kwargs['stdout'] == subprocess.PIPE
-      expected_env = {
+  expected_compile_all_source_to_bitcode_call = call([
+      build_tools.swift,
+      '-target',
+      'arm64-apple-ios15.0',
+      '-primary-file',
+      '/path/to/a.swift',
+      '-primary-file',
+      '/path/to/b.swift',
+      'arg0',
+      'arg1',
+      '-o',
+      '/path/to/a.bc',
+      '-o',
+      '/path/to/b.bc',
+  ],
+                                                     check=True)
+  expected_instrument_a_call = call(
+      [
+          'spoor_opt',
+          '/path/to/a.bc',
+          '--output_file=/path/to/a.instrumented.bc',
+          '--output_symbols_file=/path/to/a.spoor_symbols',
+          '--output_language=bitcode',
+      ],
+      env={
+          '_SPOOR_INSTRUMENTATION_XCODE_OUTPUT_FILE_MAP':
+              '/path/to/module-OutputFileMap.json',
           'SPOOR_INSTRUMENTATION_MODULE_ID':
-              output_object_file,
+              '/path/to/a.o',
           'SPOOR_INSTRUMENTATION_OUTPUT_SYMBOLS_FILE':
-              output_object_file[:-2] + '.spoor_symbols',
-      }
-      assert expected_env.items() <= spoor_opt_args.kwargs['env'].items()
-      spoor_opt_process_mock.stdout.close.assert_called_once()
-      spoor_opt_process_mock.wait.assert_called_once()
+              '/path/to/a.spoor_symbols',
+      },
+      check=True)
+  expected_compile_a_to_object_call = call([
+      'clang++',
+      '-c',
+      '-target',
+      'arm64-apple-ios15.0',
+      '/path/to/a.instrumented.bc',
+      '-o',
+      '/path/to/a.o',
+  ],
+                                           check=True)
+  expected_instrument_b_call = call(
+      [
+          'spoor_opt',
+          '/path/to/b.bc',
+          '--output_file=/path/to/b.instrumented.bc',
+          '--output_symbols_file=/path/to/b.spoor_symbols',
+          '--output_language=bitcode',
+      ],
+      env={
+          '_SPOOR_INSTRUMENTATION_XCODE_OUTPUT_FILE_MAP':
+              '/path/to/module-OutputFileMap.json',
+          'SPOOR_INSTRUMENTATION_MODULE_ID':
+              '/path/to/b.o',
+          'SPOOR_INSTRUMENTATION_OUTPUT_SYMBOLS_FILE':
+              '/path/to/b.spoor_symbols',
+      },
+      check=True)
+  expected_compile_b_to_object_call = call([
+      'clang++',
+      '-c',
+      '-target',
+      'arm64-apple-ios15.0',
+      '/path/to/b.instrumented.bc',
+      '-o',
+      '/path/to/b.o',
+  ],
+                                           check=True)
 
-      assert len(clangxx_args.args) == 1
-      expected_clangxx_args = [
-          'default_clangxx',
-          '-target',
-          arg_after('-target', input_args),
-          '-c',
-          '-x',
-          'ir',
-          '-',
-          '-o',
-          output_object_file,
-      ]
-      assert clangxx_args.args[0] == expected_clangxx_args
-      assert clangxx_args.kwargs['stdin'] == spoor_opt_process_mock.stdout
-      clangxx_process_mock.wait.assert_called_once()
+  assert len(run_mock.call_args_list) == 5
 
-      popen_mock.reset_mock()
+  assert run_mock.call_args_list[
+      0] == expected_compile_all_source_to_bitcode_call
 
+  assert expected_instrument_a_call in run_mock.call_args_list
+  assert expected_compile_a_to_object_call in run_mock.call_args_list
+  assert (run_mock.call_args_list.index(expected_instrument_a_call) <
+          run_mock.call_args_list.index(expected_compile_a_to_object_call))
 
-@patch('swift.subprocess.Popen')
-def test_parses_swift_non_compile_args(popen_mock):
-  popen_handle = popen_mock.return_value.__enter__
-  input_args = ['foo', 'bar', 'baz']
-  assert '-o' not in input_args
-  popen_handle.return_value.returncode = 0
-  return_code = swift.main(['swift'] + input_args, 'default_swift', 'spoor_opt',
-                           'default_clangxx')
-  popen_handle.assert_called_once()
-  popen_handle.return_value.wait.assert_called_once()
-  assert return_code == 0
-  assert len(popen_mock.call_args.args) == 1
-  assert popen_mock.call_args.args[0] == ['default_swift'] + input_args
+  assert expected_instrument_b_call in run_mock.call_args_list
+  assert expected_compile_b_to_object_call in run_mock.call_args_list
+  assert (run_mock.call_args_list.index(expected_instrument_b_call) <
+          run_mock.call_args_list.index(expected_compile_b_to_object_call))
+
+  open_output_file_map_call, open_xcframework_info_call = \
+          open_mock.call_args_list
+
+  expected_open_output_file_map_call = call(
+      '/path/to/module-OutputFileMap.json', 'r', encoding='utf-8')
+  assert open_output_file_map_call == expected_open_output_file_map_call
+
+  expected_open_xcframework_info_call = call(
+      '/path/to/frameworks/SpoorRuntime.xcframework/Info.plist', mode='rb')
+  assert open_xcframework_info_call == expected_open_xcframework_info_call
 
 
-@patch('swift.subprocess.Popen')
-def test_non_compile_return_code(popen_mock):
-  popen_handle = popen_mock.return_value.__enter__
-  input_args = ['foo', 'bar', 'baz']
-  assert '-o' not in input_args
-  for expected_return_code in range(3):
-    popen_handle.return_value.returncode = expected_return_code
-    return_code = swift.main(['swift'] + input_args, 'default_swift',
-                             'spoor_opt', 'default_clangxx')
-    popen_handle.assert_called_once()
-    popen_handle.return_value.wait.assert_called_once()
-    assert return_code == expected_return_code
-    popen_mock.reset_mock()
+@patch('subprocess.run')
+@patch.dict('os.environ', {}, clear=True)
+def test_does_not_instrument_if_not_invoked_by_swiftc_driver(run_mock):
+  build_tools = MOCK_BUILD_TOOLS
+  target = Target('arm64-apple-ios15.0')
+
+  input_args = [
+      build_tools.swift,
+      '-target',
+      target.string,
+      '-primary-file',
+      '/path/to/a.swift',
+      '-primary-file',
+      '/path/to/b.swift',
+      'arg0',
+      'arg1',
+      '-o',
+      '/path/to/a.bc',
+      '-o',
+      '/path/to/b.bc',
+  ]
+
+  main(input_args, build_tools)
+
+  run_mock.assert_called_once_with(input_args, check=True)
 
 
-def test_raises_exception_with_no_target():
-  with pytest.raises(ValueError) as error:
-    swift.main(['swift', '-o', 'a.o'], 'default_swift', 'spoor_opt',
-               'default_clangxx')
-    assert error == 'No target was supplied.'
+@patch('subprocess.run')
+@patch.dict('os.environ', {
+    SPOOR_INSTRUMENTATION_XCODE_OUTPUT_FILE_MAP_KEY:
+        '/path/to/module-OutputFileMap.json'
+},
+            clear=True)
+def test_does_not_instrument_without_output_files(run_mock):
+  build_tools = MOCK_BUILD_TOOLS
+  target = Target('arm64-apple-ios15.0')
+
+  input_args = [
+      build_tools.swift, '-target', target.string, 'arg0', 'arg1', 'arg2'
+  ]
+
+  main(input_args, build_tools)
+
+  run_mock.assert_called_once_with(input_args, check=True)
 
 
-def test_raises_exception_with_multiple_outputs_when_compiling():
-  args = ['-target', 'arm64-apple-ios15.0', '-o', 'a.o', '-o', 'b.o']
-  with pytest.raises(ValueError) as error:
-    swift.main(['swift'] + args, 'default_swift', 'spoor_opt',
-               'default_clangxx')
-    assert error == 'Expected exactly one output file, got 2.'
+@patch('subprocess.run')
+@patch.dict('os.environ', {
+    SPOOR_INSTRUMENTATION_XCODE_OUTPUT_FILE_MAP_KEY:
+        '/path/to/module-OutputFileMap.json'
+},
+            clear=True)
+def test_does_not_instrument_unsupported_target(run_mock):
+  build_tools = MOCK_BUILD_TOOLS
+  target = Target('arm64-apple-jetpack1.0')
+
+  input_args = [
+      build_tools.swift,
+      '-target',
+      target.string,
+      '-primary-file',
+      '/path/to/a.swift',
+      '-primary-file',
+      '/path/to/b.swift',
+      'arg0',
+      'arg1',
+      '-o',
+      '/path/to/a.bc',
+      '-o',
+      '/path/to/b.bc',
+  ]
+
+  open_output_file_map_handle = mock_open(read_data=build_intermediate_fixture(
+      'modified-module-OutputFileMap.json'))
+  open_xcframework_info_handle = mock_open(
+      read_data=plist_fixture('xcframework_info.plist'))
+
+  with patch('builtins.open') as open_mock:
+    open_mock.side_effect = [
+        open_output_file_map_handle.return_value,
+        open_xcframework_info_handle.return_value,
+    ]
+
+    main(input_args, build_tools)
+
+  open_output_file_map_call, open_xcframework_info_call = \
+          open_mock.call_args_list
+
+  assert len(run_mock.call_args_list) == 3
+
+  expected_compile_all_source_to_bitcode_call = call([
+      'swift',
+      '-target',
+      'arm64-apple-jetpack1.0',
+      '-primary-file',
+      '/path/to/a.swift',
+      '-primary-file',
+      '/path/to/b.swift',
+      'arg0',
+      'arg1',
+      '-o',
+      '/path/to/a.bc',
+      '-o',
+      '/path/to/b.bc',
+  ],
+                                                     check=True)
+  assert run_mock.call_args_list[
+      0] == expected_compile_all_source_to_bitcode_call
+
+  expected_compile_a_to_object_call = call([
+      'clang++',
+      '-c',
+      '-target',
+      'arm64-apple-jetpack1.0',
+      '/path/to/a.bc',
+      '-o',
+      '/path/to/a.o',
+  ],
+                                           check=True)
+  assert expected_compile_a_to_object_call in run_mock.call_args_list
+
+  expected_compile_b_to_object_call = call([
+      'clang++',
+      '-c',
+      '-target',
+      'arm64-apple-jetpack1.0',
+      '/path/to/b.bc',
+      '-o',
+      '/path/to/b.o',
+  ],
+                                           check=True)
+  assert expected_compile_b_to_object_call in run_mock.call_args_list
+
+  expected_open_output_file_map_call = call(
+      '/path/to/module-OutputFileMap.json', 'r', encoding='utf-8')
+  assert open_output_file_map_call == expected_open_output_file_map_call
+
+  expected_open_xcframework_info_call = call(
+      '/path/to/frameworks/SpoorRuntime.xcframework/Info.plist', mode='rb')
+  assert open_xcframework_info_call == expected_open_xcframework_info_call
+
+
+@patch('builtins.open',
+       new_callable=mock_open,
+       read_data=build_intermediate_fixture('module-OutputFileMap.json'))
+@patch('subprocess.run')
+@patch.dict('os.environ', {
+    SPOOR_INSTRUMENTATION_XCODE_OUTPUT_FILE_MAP_KEY:
+        '/path/to/module-OutputFileMap.json'
+},
+            clear=True)
+def test_fails_without_explicit_target_argument(run_mock, open_mock):
+  build_tools = MOCK_BUILD_TOOLS
+  input_args = [
+      build_tools.swift,
+      '-primary-file',
+      '/path/to/a.swift',
+      '-primary-file',
+      '/path/to/b.swift',
+      'arg0',
+      'arg1',
+      '-o',
+      '/path/to/a.bc',
+      '-o',
+      '/path/to/b.bc',
+  ]
+
+  with pytest.raises(NotImplementedError) as error:
+    main(input_args, build_tools)
+  assert (str(
+      error.value) == "Spoor's swift wrapper requires an explicit target.")
+
+  run_mock.assert_called_once_with(input_args, check=True)
+  open_mock.assert_called_once_with('/path/to/module-OutputFileMap.json',
+                                    'r',
+                                    encoding='utf-8')
 
 
 if __name__ == '__main__':

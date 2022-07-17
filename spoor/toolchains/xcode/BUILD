@@ -35,6 +35,18 @@ py_library(
 )
 
 py_library(
+    name = "test_util",
+    testonly = True,
+    srcs = ["test_util.py"],
+    data = [
+        "//spoor/toolchains/xcode/test_data/build_intermediates",
+        "//spoor/toolchains/xcode/test_data/info_plists",
+    ],
+    visibility = ["//visibility:private"],
+    deps = [":shared"],
+)
+
+py_library(
     name = "shared",
     srcs = ["shared.py"],
     visibility = ["//visibility:private"],
@@ -43,10 +55,10 @@ py_library(
 py_test(
     name = "shared_test",
     srcs = ["shared_test.py"],
-    data = ["//spoor/toolchains/xcode/test_data/build_args"],
     visibility = ["//visibility:private"],
     deps = [
         ":shared",
+        ":test_util",
         requirement("pytest"),
     ],
 )
@@ -72,18 +84,13 @@ py_library(
 )
 
 py_test(
-    name = "clang_clangxx_test",
-    srcs = ["clang_clangxx_test.py"],
-    data = [
-        "//spoor/toolchains/xcode/test_data/build_args",
-        "//spoor/toolchains/xcode/test_data/info_plists",
-    ],
+    name = "clang_clangxx_shared_test",
+    srcs = ["clang_clangxx_shared_test.py"],
     visibility = ["//visibility:private"],
     deps = [
-        ":clang",
         ":clang_clangxx_shared",
-        ":clangxx",
         ":shared",
+        ":test_util",
         requirement("pytest"),
     ],
 )
@@ -98,10 +105,10 @@ py_library(
 py_test(
     name = "swift_test",
     srcs = ["swift_test.py"],
-    data = ["//spoor/toolchains/xcode/test_data/build_args"],
     visibility = ["//visibility:private"],
     deps = [
         ":swift",
+        ":test_util",
         requirement("pytest"),
     ],
 )
@@ -116,10 +123,10 @@ py_library(
 py_test(
     name = "swiftc_test",
     srcs = ["swiftc_test.py"],
-    data = ["//spoor/toolchains/xcode/test_data/build_args"],
     visibility = ["//visibility:private"],
     deps = [
         ":swiftc",
+        ":test_util",
         requirement("pytest"),
     ],
 )

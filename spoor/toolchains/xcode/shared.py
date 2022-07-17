@@ -2,54 +2,13 @@
 # Licensed under the MIT License.
 '''Shared logic for the wrapper scripts.'''
 
-import functools
-import operator
 import os
 import pathlib
-import subprocess
+import plistlib
 import re
+import subprocess
 
-
-def get_developer_path():
-  developer_dir = os.getenv('DEVELOPER_DIR')
-  if developer_dir:
-    return developer_dir
-  result = subprocess.run(['xcode-select', '--print-path'],
-                          stdout=subprocess.PIPE,
-                          check=True,
-                          text=True)
-  return result.stdout.strip()
-
-
-DEVELOPER_PATH = get_developer_path()
-DEFAULT_TOOLCHAIN_PATH = f'{DEVELOPER_PATH}/Toolchains/XcodeDefault.xctoolchain'
-DEFAULT_CLANG = f'{DEFAULT_TOOLCHAIN_PATH}/usr/bin/clang'
-DEFAULT_CLANGXX = f'{DEFAULT_TOOLCHAIN_PATH}/usr/bin/clang++'
-DEFAULT_SWIFT = f'{DEFAULT_TOOLCHAIN_PATH}/usr/bin/swift'
-DEFAULT_SWIFTC = f'{DEFAULT_TOOLCHAIN_PATH}/usr/bin/swiftc'
-
-# This path is correct when inside the (generated) toolchain.
-CUSTOM_TOOLCHAIN_PATH = pathlib.Path(
-    *pathlib.Path(__file__).parent.absolute().parts[:-2])
-SPOOR_OPT = f'{CUSTOM_TOOLCHAIN_PATH}/spoor/bin/spoor_opt'
-SPOOR_FRAMEWORKS_PATH = f'{CUSTOM_TOOLCHAIN_PATH}/spoor/frameworks'
-WRAPPED_SWIFT = f'{CUSTOM_TOOLCHAIN_PATH}/usr/bin/swift'
-
-CLANG_CLANGXX_EMBED_BITCODE_ARG = '-fembed-bitcode'
-CLANG_CLANGXX_EMBED_BITCODE_MARKER_ARG = '-fembed-bitcode-marker'
-CLANG_CLANGXX_INPUT_STDIN_VALUE = '-'
-CLANG_CLANGXX_LANGUAGE_ARG = '-x'
-CLANG_CLANGXX_ONLY_PREPROCESS_COMPILE_AND_ASSEMBLE_ARG = '-c'
-CLANG_CLANGXX_OUTPUT_FILE_ARG = '-o'
-CLANG_CLANGXX_TARGET_ARG = '-target'
-LLVM_IR_LANGUAGE = 'ir'
-OBJECT_FILE_EXTENSION = '.o'
-EXIT_SUCCESS = 0
-INSTRUMENTATION_MODULE_ID_KEY = 'SPOOR_INSTRUMENTATION_MODULE_ID'
-SPOOR_OPT_OUTPUT_LANGUGAGE_ARG = '--output_language'
-
-# SPOOR_INSTRUMENTATION_* keys and default values should match
-# spoor/instrumentation/config/config.h.
+# Keys and default values should match spoor/instrumentation/config/config.h.
 SPOOR_INSTRUMENTATION_ENABLE_RUNTIME_DEFAULT_VALUE = True
 SPOOR_INSTRUMENTATION_ENABLE_RUNTIME_KEY = \
     'SPOOR_INSTRUMENTATION_ENABLE_RUNTIME'
@@ -61,20 +20,73 @@ SPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION_KEY = \
     'SPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION'
 SPOOR_INSTRUMENTATION_OUTPUT_SYMBOLS_FILE_KEY = \
     'SPOOR_INSTRUMENTATION_OUTPUT_SYMBOLS_FILE'
-SPOOR_SYMBOLS_FILE_EXTENSION = 'spoor_symbols'
+
+# The key should match spoor/instrumentation/config/env_source.h.
+SPOOR_INSTRUMENTATION_MODULE_ID_KEY = 'SPOOR_INSTRUMENTATION_MODULE_ID'
+
+SPOOR_INSTRUMENTATION_XCODE_OUTPUT_FILE_MAP_KEY = \
+    '_SPOOR_INSTRUMENTATION_XCODE_OUTPUT_FILE_MAP'
 
 
-class ArgsInfo:
+class BuildTools:
+  '''Paths to the toolchain's build tools.'''
 
-  def __init__(self, args, output_files, target, instrument):
-    self.args = args
-    self.output_files = output_files
-    self.target = target
-    self.instrument = instrument
+  def __init__(self, clang, clangxx, swift, swiftc, spoor_opt,
+               spoor_frameworks_path, spoor_swift):
+    self.clang = clang
+    self.clangxx = clangxx
+    self.swift = swift
+    self.swiftc = swiftc
+    self.spoor_opt = spoor_opt
+    self.spoor_frameworks_path = spoor_frameworks_path
+    self.spoor_swift = spoor_swift
+
+  @staticmethod
+  def get():
+    developer_path = BuildTools._get_developer_path()
+    default_toolchain_path = \
+        f'{developer_path}/Toolchains/XcodeDefault.xctoolchain'
+    clang = f'{default_toolchain_path}/usr/bin/clang'
+    clangxx = f'{default_toolchain_path}/usr/bin/clang++'
+    swift = f'{default_toolchain_path}/usr/bin/swift'
+    swiftc = f'{default_toolchain_path}/usr/bin/swiftc'
+
+    custom_toolchain_path = BuildTools._get_custom_toolchain_path()
+    spoor_opt = f'{custom_toolchain_path}/spoor/bin/spoor_opt'
+    spoor_frameworks_path = f'{custom_toolchain_path}/spoor/frameworks'
+    spoor_swift = f'{custom_toolchain_path}/usr/bin/swift'
+
+    return BuildTools(clang, clangxx, swift, swiftc, spoor_opt,
+                      spoor_frameworks_path, spoor_swift)
+
+  @staticmethod
+  def _get_developer_path():
+    developer_dir = os.getenv('DEVELOPER_DIR')
+    if developer_dir:
+      return developer_dir
+    result = subprocess.run(['xcode-select', '--print-path'],
+                            capture_output=True,
+                            text=True,
+                            check=True)
+    return result.stdout.strip()
+
+  @staticmethod
+  def _get_custom_toolchain_path():
+    # This path is correct when inside the (generated) toolchain.
+    return pathlib.Path(*pathlib.Path(__file__).parent.absolute().parts[:-2])
 
 
 class Target:
-  '''Parses a target string's components.'''
+  '''Represents a build target platform and architecture.
+
+  Example
+  string = 'arm64-apple-ios15.0-simulator'
+  architecture = 'arm64'
+  vendor = 'apple'
+  platform = 'ios'
+  platform_version = '15.0'
+  platform_variant = 'simulator'
+  '''
 
   def __init__(self, target_string):
     components = target_string.split('-')
@@ -84,7 +96,7 @@ class Target:
     elif len(components) == 4:
       architecture, vendor, platform, platform_variant = components
     else:
-      raise ValueError(f'Cannot parse target "{target_string}".')
+      raise ValueError(f'Cannot parse target "{target_string}"')
     self.string = target_string
     self.architecture = architecture
     self.vendor = vendor
@@ -93,57 +105,56 @@ class Target:
     self.platform_version = platform_components.group(2)
     self.platform_variant = platform_variant
 
-
-def arg_after(arg, args):
-  return args[args.index(arg) + 1]
-
-
-def flatten(nested_list):
-  return functools.reduce(operator.iconcat, nested_list or [], [])
+  def __str__(self):
+    return self.string
 
 
-def _make_clangxx_args(target, output_file):
-  clangxx_args = [CLANG_CLANGXX_TARGET_ARG, target]
-  clangxx_args += [CLANG_CLANGXX_ONLY_PREPROCESS_COMPILE_AND_ASSEMBLE_ARG]
-  clangxx_args += [CLANG_CLANGXX_LANGUAGE_ARG, LLVM_IR_LANGUAGE]
-  clangxx_args += [CLANG_CLANGXX_INPUT_STDIN_VALUE]
-  clangxx_args += [CLANG_CLANGXX_OUTPUT_FILE_ARG, output_file]
-  return clangxx_args
+class RuntimeFramework:
+  '''Spoor's runtime framework information.'''
+
+  def __init__(self, framework_path, framework_name):
+    self.path = framework_path
+    self.name = framework_name
+
+  @staticmethod
+  def get(spoor_frameworks_path, target):
+    supported_xcframework_format_versions = {'1.0'}
+    supported_target_vendors = {'apple'}
+    plist_path = f'{spoor_frameworks_path}/SpoorRuntime.xcframework/Info.plist'
+
+    if target.vendor not in supported_target_vendors:
+      return None
+
+    with open(plist_path, mode='rb') as file:
+      data = file.read()
+      plist = plistlib.loads(data)
+      format_version = plist['XCFrameworkFormatVersion']
+      if format_version not in supported_xcframework_format_versions:
+        raise ValueError(
+            f'Unknown XCFramework format version "{format_version}"')
+
+      for library in plist['AvailableLibraries']:
+        identifier = library['LibraryIdentifier']
+        path = library['LibraryPath']
+        framework_name = str(pathlib.Path(path).with_suffix(''))
+        architectures = library['SupportedArchitectures']
+        platform = library['SupportedPlatform']
+        if 'SupportedPlatformVariant' in library:
+          platform_variant = library['SupportedPlatformVariant']
+        else:
+          platform_variant = None
+        if (platform == target.platform and
+            platform_variant == target.platform_variant and
+            target.architecture in architectures):
+          framework_path = \
+              f'{spoor_frameworks_path}/SpoorRuntime.xcframework/{identifier}'
+          return RuntimeFramework(framework_path, framework_name)
+    return None
 
 
-def _make_spoor_opt_args():
-  return [SPOOR_OPT_OUTPUT_LANGUGAGE_ARG, LLVM_IR_LANGUAGE]
-
-
-def _make_spoor_opt_env(env, output_file):
-  if INSTRUMENTATION_MODULE_ID_KEY not in env:
-    env[INSTRUMENTATION_MODULE_ID_KEY] = output_file
+def make_spoor_opt_env(env, module_id, output_symbols_file):
+  if SPOOR_INSTRUMENTATION_MODULE_ID_KEY not in env:
+    env[SPOOR_INSTRUMENTATION_MODULE_ID_KEY] = module_id
   if SPOOR_INSTRUMENTATION_OUTPUT_SYMBOLS_FILE_KEY not in env:
-    path = pathlib.Path(output_file)
-    env[SPOOR_INSTRUMENTATION_OUTPUT_SYMBOLS_FILE_KEY] = str(
-        path.with_suffix(f'.{SPOOR_SYMBOLS_FILE_EXTENSION}'))
+    env[SPOOR_INSTRUMENTATION_OUTPUT_SYMBOLS_FILE_KEY] = output_symbols_file
   return env
-
-
-def instrument_and_compile_ir(frontend_process, spoor_opt, backend_clangxx,
-                              output_file, target):
-  spoor_opt_args = [spoor_opt] + _make_spoor_opt_args()
-  clangxx_args = [backend_clangxx] + _make_clangxx_args(target, output_file)
-  spoor_opt_env = _make_spoor_opt_env(os.environ.copy(), output_file)
-
-  with subprocess.Popen(spoor_opt_args,
-                        stdin=frontend_process.stdout,
-                        stdout=subprocess.PIPE,
-                        env=spoor_opt_env) as spoor_opt_process:
-    frontend_process.stdout.close()
-    frontend_process.wait()
-    if frontend_process.returncode != EXIT_SUCCESS:
-      return frontend_process.returncode
-    with subprocess.Popen(clangxx_args,
-                          stdin=spoor_opt_process.stdout) as clangxx_process:
-      spoor_opt_process.stdout.close()
-      spoor_opt_process.wait()
-      if spoor_opt_process.returncode != EXIT_SUCCESS:
-        return spoor_opt_process.returncode
-      clangxx_process.wait()
-      return clangxx_process.returncode

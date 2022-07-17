@@ -1,0 +1,22 @@
+{
+  "": {
+    "diagnostics": "/path/to/module-master.dia",
+    "swift-dependencies": "/path/to/module-master.swiftdeps"
+  },
+  "/path/to/a.swift": {
+    "dependencies": "/path/to/a.d",
+    "diagnostics": "/path/to/a.dia",
+    "llvm-bc": "/path/to/a.bc",
+    "object": "/path/to/a.o",
+    "swift-dependencies": "/path/to/a.swiftdeps",
+    "swiftmodule": "/path/to/a~partial.swiftmodule"
+  },
+  "/path/to/b.swift": {
+    "dependencies": "/path/to/b.d",
+    "diagnostics": "/path/to/b.dia",
+    "llvm-bc": "/path/to/b.bc",
+    "object": "/path/to/b.o",
+    "swift-dependencies": "/path/to/b.swiftdeps",
+    "swiftmodule": "/path/to/b~partial.swiftmodule"
+  }
+}

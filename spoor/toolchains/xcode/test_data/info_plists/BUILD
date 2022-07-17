@@ -7,6 +7,8 @@ filegroup(
     srcs = [
         "spoor_runtime_xctoolchain_info.plist",
         "unknown_xctoolchain_version.plist",
+        "xcframework_info.plist",
+        "xcframework_info_unknown_version.plist",
     ],
     visibility = ["//spoor/toolchains/xcode:__pkg__"],
 )
