@@ -53,6 +53,15 @@ This project has adopted the
 see the [Code of Conduct FAQ][code-of-conduct-faq] or contact
 [opencode@microsoft.com][opencode-email] with questions or comments.
 
+## Trademarks
+
+This project may contain trademarks or logos for projects, products, or
+services. Authorized use of Microsoft trademarks or logos is subject to and must
+follow [Microsoft’s Trademark & Brand Guidelines][trademark-brand-guidelines].
+Use of Microsoft trademarks or logos in modified versions of this project must
+not cause confusion or imply Microsoft sponsorship. Any use of third-party
+trademarks or logos are subject to those third-party’s policies.
+
 [code-of-conduct-faq]: https://opensource.microsoft.com/codeofconduct/faq/
 [code-of-conduct]: https://opensource.microsoft.com/codeofconduct/
 [development-setup]: development-setup.md
@@ -63,3 +72,4 @@ see the [Code of Conduct FAQ][code-of-conduct-faq] or contact
 [msrc-create-report]: https://msrc.microsoft.com/create-report
 [opencode-email]: mailto:opencode@microsoft.com
 [style-guide]: style-guide.md
+[trademark-brand-guidelines]: https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks

@@ -40,6 +40,15 @@ see the [Code of Conduct FAQ][code-of-conduct-faq] or contact
 [opencode@microsoft.com][opencode-email] with any additional questions or
 comments.
 
+## Trademarks
+
+This project may contain trademarks or logos for projects, products, or
+services. Authorized use of Microsoft trademarks or logos is subject to and must
+follow [Microsoft’s Trademark & Brand Guidelines][trademark-brand-guidelines].
+Use of Microsoft trademarks or logos in modified versions of this project must
+not cause confusion or imply Microsoft sponsorship. Any use of third-party
+trademarks or logos are subject to those third-party’s policies.
+
 [build-status-badge]: https://github.com/microsoft/spoor/actions/workflows/build-and-test.yml/badge.svg?branch=master
 [build-status]: https://github.com/microsoft/spoor/actions/workflows/build-and-test.yml
 [code-of-conduct-faq]: https://opensource.microsoft.com/codeofconduct/faq/
@@ -51,4 +60,5 @@ comments.
 [site-runtime]: https://www.spoor.dev/reference/runtime
 [site]: https://www.spoor.dev
 [spoor-website-screenshot]: docs/spoor-website-screenshot.png
+[trademark-brand-guidelines]: https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks
 [wikipedia-trace-png]: docs/wikipedia-ios-boot-trace.png
