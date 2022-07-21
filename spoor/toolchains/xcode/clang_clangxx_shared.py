@@ -154,7 +154,19 @@ def _compile(args, target, output_file, build_tools, frontend_clang_clangxx):
                           env=spoor_opt_env,
                           stdin=frontend.stdout,
                           stdout=subprocess.PIPE) as spoor_opt:
-      subprocess.run(backend_args, stdin=spoor_opt.stdout, check=True)
+      frontend.stdout.close()
+      frontend.wait()
+      if frontend.returncode != os.EX_OK:
+        raise subprocess.CalledProcessError(frontend.returncode, frontend_args)
+      with subprocess.Popen(backend_args, stdin=spoor_opt.stdout) as backend:
+        spoor_opt.stdout.close()
+        spoor_opt.wait()
+        if spoor_opt.returncode != os.EX_OK:
+          raise subprocess.CalledProcessError(spoor_opt.returncode,
+                                              spoor_opt_args)
+        backend.wait()
+        if backend.returncode != os.EX_OK:
+          raise subprocess.CalledProcessError(backend.returncode, backend_args)
 
 
 def _link(args, runtime_framework, frontend_clang_clangxx):

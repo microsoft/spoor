@@ -41,17 +41,22 @@ def test_compile_supported_target(run_mock, popen_mock, open_mock):
     +- 4: assembler, {{3}}, object
     5: bind-arch, "{target.architecture}", {{4}}, object
   '''.encode())
-  run_backend_handle = MagicMock()
-  run_mock.side_effect = [run_print_phases_handle, run_backend_handle]
+  run_mock.side_effect = [run_print_phases_handle]
 
   run_frontend_handle = MagicMock()
+  run_frontend_handle.__enter__.return_value.returncode = os.EX_OK
   run_spoor_opt_handle = MagicMock()
-  popen_mock.side_effect = [run_frontend_handle, run_spoor_opt_handle]
+  run_spoor_opt_handle.__enter__.return_value.returncode = os.EX_OK
+  run_backend_handle = MagicMock()
+  run_backend_handle.__enter__.return_value.returncode = os.EX_OK
+  popen_mock.side_effect = [
+      run_frontend_handle, run_spoor_opt_handle, run_backend_handle
+  ]
 
   main(input_args, build_tools, build_tools.clangxx)
 
-  print_phases_call, backend_call = run_mock.call_args_list
-  frontend_call, spoor_opt_call = popen_mock.call_args_list
+  print_phases_call = run_mock.call_args_list[0]
+  frontend_call, spoor_opt_call, backend_call = popen_mock.call_args_list
 
   open_mock.assert_called_once_with(os.path.join(
       build_tools.spoor_frameworks_path, 'SpoorRuntime.xcframework/Info.plist'),
@@ -102,8 +107,7 @@ def test_compile_supported_target(run_mock, popen_mock, open_mock):
           '-o',
           output_file,
       ],
-      stdin=run_spoor_opt_handle.__enter__.return_value.stdout,
-      check=True)
+      stdin=run_spoor_opt_handle.__enter__.return_value.stdout)
   assert backend_call == expected_backend_call
 
 
@@ -141,17 +145,22 @@ def test_compile_supported_target_env_override(run_mock, popen_mock, open_mock):
     +- 4: assembler, {{3}}, object
     5: bind-arch, "{target.architecture}", {{4}}, object
   '''.encode())
-  run_backend_handle = MagicMock()
-  run_mock.side_effect = [run_print_phases_handle, run_backend_handle]
+  run_mock.side_effect = [run_print_phases_handle]
 
   run_frontend_handle = MagicMock()
+  run_frontend_handle.__enter__.return_value.returncode = os.EX_OK
   run_spoor_opt_handle = MagicMock()
-  popen_mock.side_effect = [run_frontend_handle, run_spoor_opt_handle]
+  run_spoor_opt_handle.__enter__.return_value.returncode = os.EX_OK
+  run_backend_handle = MagicMock()
+  run_backend_handle.__enter__.return_value.returncode = os.EX_OK
+  popen_mock.side_effect = [
+      run_frontend_handle, run_spoor_opt_handle, run_backend_handle
+  ]
 
   main(input_args, build_tools, build_tools.clangxx)
 
-  print_phases_call, backend_call = run_mock.call_args_list
-  frontend_call, spoor_opt_call = popen_mock.call_args_list
+  print_phases_call = run_mock.call_args_list[0]
+  frontend_call, spoor_opt_call, backend_call = popen_mock.call_args_list
 
   open_mock.assert_called_once_with(os.path.join(
       build_tools.spoor_frameworks_path, 'SpoorRuntime.xcframework/Info.plist'),
@@ -205,8 +214,298 @@ def test_compile_supported_target_env_override(run_mock, popen_mock, open_mock):
           '-o',
           output_file,
       ],
-      stdin=run_spoor_opt_handle.__enter__.return_value.stdout,
-      check=True)
+      stdin=run_spoor_opt_handle.__enter__.return_value.stdout)
+  assert backend_call == expected_backend_call
+
+
+@patch('builtins.open',
+       new_callable=mock_open,
+       read_data=plist_fixture('xcframework_info.plist'))
+@patch.dict('os.environ', {}, clear=True)
+@patch('subprocess.Popen')
+@patch('subprocess.run')
+def test_raises_exception_on_frontend_failure(run_mock, popen_mock, open_mock):
+  build_tools = MOCK_BUILD_TOOLS
+  target = Target('arm64-apple-ios15.0')
+  input_file = 'input.cc'
+  output_file = 'output.o'
+  input_args = [
+      build_tools.clangxx,
+      '-target',
+      target.string,
+      '-c',
+      input_file,
+      '-o',
+      output_file,
+  ]
+
+  run_print_phases_handle = MagicMock(stderr=f'''
+                +- 0: input, "{input_file}", c++
+             +- 1: preprocessor, {{0}}, c++-cpp-output
+          +- 2: compiler, {{1}}, ir
+       +- 3: backend, {{2}}, assembler
+    +- 4: assembler, {{3}}, object
+    5: bind-arch, "{target.architecture}", {{4}}, object
+  '''.encode())
+  run_mock.side_effect = [run_print_phases_handle]
+
+  run_frontend_handle = MagicMock()
+  run_frontend_handle.__enter__.return_value.returncode = os.EX_SOFTWARE
+  run_spoor_opt_handle = MagicMock()
+  popen_mock.side_effect = [run_frontend_handle, run_spoor_opt_handle]
+
+  with pytest.raises(subprocess.CalledProcessError) as error:
+    main(input_args, build_tools, build_tools.clangxx)
+  assert error.value.returncode == os.EX_SOFTWARE
+
+  expected_frontend_call_args = [
+      build_tools.clangxx,
+      '-target',
+      target.string,
+      '-c',
+      input_file,
+      '-o',
+      '/dev/stdout',
+      '-DSPOOR_INSTRUMENTATION_ENABLE_RUNTIME=1',
+      '-DSPOOR_INSTRUMENTATION_INITIALIZE_RUNTIME=1',
+      '-DSPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION=1',
+      '-D__SPOOR__=1',
+      '-emit-llvm',
+  ]
+  assert error.value.cmd == expected_frontend_call_args
+
+  print_phases_call = run_mock.call_args_list[0]
+  frontend_call, spoor_opt_call = popen_mock.call_args_list
+
+  open_mock.assert_called_once_with(os.path.join(
+      build_tools.spoor_frameworks_path, 'SpoorRuntime.xcframework/Info.plist'),
+                                    mode='rb')
+
+  expected_print_phases_call = call([build_tools.clangxx, '-ccc-print-phases'] +
+                                    input_args[1:],
+                                    check=True,
+                                    capture_output=True)
+  assert print_phases_call == expected_print_phases_call
+
+  expected_frontend_call = call(expected_frontend_call_args,
+                                stdout=subprocess.PIPE)
+  assert frontend_call == expected_frontend_call
+
+  expected_spoor_opt_call = call(
+      [build_tools.spoor_opt],
+      env={
+          'SPOOR_INSTRUMENTATION_MODULE_ID': 'output.bc',
+          'SPOOR_INSTRUMENTATION_OUTPUT_SYMBOLS_FILE': 'output.spoor_symbols',
+      },
+      stdin=run_frontend_handle.__enter__.return_value.stdout,
+      stdout=subprocess.PIPE)
+  assert expected_spoor_opt_call == spoor_opt_call
+
+
+@patch('builtins.open',
+       new_callable=mock_open,
+       read_data=plist_fixture('xcframework_info.plist'))
+@patch.dict('os.environ', {}, clear=True)
+@patch('subprocess.Popen')
+@patch('subprocess.run')
+def test_raises_exception_on_spoor_opt_failure(run_mock, popen_mock, open_mock):
+  build_tools = MOCK_BUILD_TOOLS
+  target = Target('arm64-apple-ios15.0')
+  input_file = 'input.cc'
+  output_file = 'output.o'
+  input_args = [
+      build_tools.clangxx,
+      '-target',
+      target.string,
+      '-c',
+      input_file,
+      '-o',
+      output_file,
+  ]
+
+  run_print_phases_handle = MagicMock(stderr=f'''
+                +- 0: input, "{input_file}", c++
+             +- 1: preprocessor, {{0}}, c++-cpp-output
+          +- 2: compiler, {{1}}, ir
+       +- 3: backend, {{2}}, assembler
+    +- 4: assembler, {{3}}, object
+    5: bind-arch, "{target.architecture}", {{4}}, object
+  '''.encode())
+  run_mock.side_effect = [run_print_phases_handle]
+
+  run_frontend_handle = MagicMock()
+  run_frontend_handle.__enter__.return_value.returncode = os.EX_OK
+  run_spoor_opt_handle = MagicMock()
+  run_spoor_opt_handle.__enter__.return_value.returncode = os.EX_SOFTWARE
+  run_backend_handle = MagicMock()
+  popen_mock.side_effect = [
+      run_frontend_handle, run_spoor_opt_handle, run_backend_handle
+  ]
+
+  with pytest.raises(subprocess.CalledProcessError) as error:
+    main(input_args, build_tools, build_tools.clangxx)
+  assert error.value.returncode == os.EX_SOFTWARE
+
+  expected_spoor_opt_call_args = [build_tools.spoor_opt]
+  assert error.value.cmd == expected_spoor_opt_call_args
+
+  print_phases_call = run_mock.call_args_list[0]
+  frontend_call, spoor_opt_call, backend_call = popen_mock.call_args_list
+
+  open_mock.assert_called_once_with(os.path.join(
+      build_tools.spoor_frameworks_path, 'SpoorRuntime.xcframework/Info.plist'),
+                                    mode='rb')
+
+  expected_print_phases_call = call([build_tools.clangxx, '-ccc-print-phases'] +
+                                    input_args[1:],
+                                    check=True,
+                                    capture_output=True)
+  assert print_phases_call == expected_print_phases_call
+
+  expected_frontend_call = call([
+      build_tools.clangxx,
+      '-target',
+      target.string,
+      '-c',
+      input_file,
+      '-o',
+      '/dev/stdout',
+      '-DSPOOR_INSTRUMENTATION_ENABLE_RUNTIME=1',
+      '-DSPOOR_INSTRUMENTATION_INITIALIZE_RUNTIME=1',
+      '-DSPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION=1',
+      '-D__SPOOR__=1',
+      '-emit-llvm',
+  ],
+                                stdout=subprocess.PIPE)
+  assert frontend_call == expected_frontend_call
+
+  expected_spoor_opt_call = call(
+      expected_spoor_opt_call_args,
+      env={
+          'SPOOR_INSTRUMENTATION_MODULE_ID': 'output.bc',
+          'SPOOR_INSTRUMENTATION_OUTPUT_SYMBOLS_FILE': 'output.spoor_symbols',
+      },
+      stdin=run_frontend_handle.__enter__.return_value.stdout,
+      stdout=subprocess.PIPE)
+  assert expected_spoor_opt_call == spoor_opt_call
+
+  expected_backend_call = call(
+      [
+          build_tools.clangxx,
+          '-x',
+          'ir',
+          '-',
+          '-c',
+          '-target',
+          target.string,
+          '-o',
+          output_file,
+      ],
+      stdin=run_spoor_opt_handle.__enter__.return_value.stdout)
+  assert backend_call == expected_backend_call
+
+
+@patch('builtins.open',
+       new_callable=mock_open,
+       read_data=plist_fixture('xcframework_info.plist'))
+@patch.dict('os.environ', {}, clear=True)
+@patch('subprocess.Popen')
+@patch('subprocess.run')
+def test_raises_exception_on_backend_failure(run_mock, popen_mock, open_mock):
+  build_tools = MOCK_BUILD_TOOLS
+  target = Target('arm64-apple-ios15.0')
+  input_file = 'input.cc'
+  output_file = 'output.o'
+  input_args = [
+      build_tools.clangxx,
+      '-target',
+      target.string,
+      '-c',
+      input_file,
+      '-o',
+      output_file,
+  ]
+
+  run_print_phases_handle = MagicMock(stderr=f'''
+                +- 0: input, "{input_file}", c++
+             +- 1: preprocessor, {{0}}, c++-cpp-output
+          +- 2: compiler, {{1}}, ir
+       +- 3: backend, {{2}}, assembler
+    +- 4: assembler, {{3}}, object
+    5: bind-arch, "{target.architecture}", {{4}}, object
+  '''.encode())
+  run_mock.side_effect = [run_print_phases_handle]
+
+  run_frontend_handle = MagicMock()
+  run_frontend_handle.__enter__.return_value.returncode = os.EX_OK
+  run_spoor_opt_handle = MagicMock()
+  run_spoor_opt_handle.__enter__.return_value.returncode = os.EX_OK
+  run_backend_handle = MagicMock()
+  run_backend_handle.__enter__.return_value.returncode = os.EX_SOFTWARE
+  popen_mock.side_effect = [
+      run_frontend_handle, run_spoor_opt_handle, run_backend_handle
+  ]
+
+  with pytest.raises(subprocess.CalledProcessError) as error:
+    main(input_args, build_tools, build_tools.clangxx)
+  assert error.value.returncode == os.EX_SOFTWARE
+
+  expected_backend_call_args = [
+      build_tools.clangxx,
+      '-x',
+      'ir',
+      '-',
+      '-c',
+      '-target',
+      target.string,
+      '-o',
+      output_file,
+  ]
+  assert error.value.cmd == expected_backend_call_args
+
+  print_phases_call = run_mock.call_args_list[0]
+  frontend_call, spoor_opt_call, backend_call = popen_mock.call_args_list
+
+  open_mock.assert_called_once_with(os.path.join(
+      build_tools.spoor_frameworks_path, 'SpoorRuntime.xcframework/Info.plist'),
+                                    mode='rb')
+
+  expected_print_phases_call = call([build_tools.clangxx, '-ccc-print-phases'] +
+                                    input_args[1:],
+                                    check=True,
+                                    capture_output=True)
+  assert print_phases_call == expected_print_phases_call
+
+  expected_frontend_call = call([
+      build_tools.clangxx,
+      '-target',
+      target.string,
+      '-c',
+      input_file,
+      '-o',
+      '/dev/stdout',
+      '-DSPOOR_INSTRUMENTATION_ENABLE_RUNTIME=1',
+      '-DSPOOR_INSTRUMENTATION_INITIALIZE_RUNTIME=1',
+      '-DSPOOR_INSTRUMENTATION_INJECT_INSTRUMENTATION=1',
+      '-D__SPOOR__=1',
+      '-emit-llvm',
+  ],
+                                stdout=subprocess.PIPE)
+  assert frontend_call == expected_frontend_call
+
+  expected_spoor_opt_call = call(
+      [build_tools.spoor_opt],
+      env={
+          'SPOOR_INSTRUMENTATION_MODULE_ID': 'output.bc',
+          'SPOOR_INSTRUMENTATION_OUTPUT_SYMBOLS_FILE': 'output.spoor_symbols',
+      },
+      stdin=run_frontend_handle.__enter__.return_value.stdout,
+      stdout=subprocess.PIPE)
+  assert expected_spoor_opt_call == spoor_opt_call
+
+  expected_backend_call = call(
+      expected_backend_call_args,
+      stdin=run_spoor_opt_handle.__enter__.return_value.stdout)
   assert backend_call == expected_backend_call
 
 
