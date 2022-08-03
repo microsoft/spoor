@@ -40,6 +40,12 @@ see the [Code of Conduct FAQ][code-of-conduct-faq] or contact
 [opencode@microsoft.com][opencode-email] with any additional questions or
 comments.
 
+## Security
+
+Please do not report security vulnerabilities through public GitHub issues.
+Instead, report them to the Microsoft Security Response Center.
+[Details][security].
+
 ## Trademarks
 
 This project may contain trademarks or logos for projects, products, or
@@ -55,6 +61,7 @@ trademarks or logos are subject to those third-party’s policies.
 [code-of-conduct]: https://opensource.microsoft.com/codeofconduct/
 [microsoft-cla]: https://cla.opensource.microsoft.com
 [opencode-email]: mailto:opencode@microsoft.com
+[security]: SECURITY.md
 [site-instrumentation]: https://www.spoor.dev/reference/instrumentation
 [site-postprocessing]: https://www.spoor.dev/reference/postprocessing
 [site-runtime]: https://www.spoor.dev/reference/runtime

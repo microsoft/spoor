@@ -15,8 +15,8 @@ improve. For example:
 ### Security
 
 Please do _not_ report security vulnerabilities through public GitHub issues.
-Instead, report them to the Microsoft Security Response Center at
-[msrc.microsoft.com/create-report][msrc-create-report].
+Instead, report them to the Microsoft Security Response Center.
+[Details][security].
 
 ## Contribute code
 
@@ -69,7 +69,7 @@ trademarks or logos are subject to those third-party’s policies.
 [github-pr]: https://github.com/microsoft/spoor/issues
 [github]: https://github.com/microsoft/spoor
 [microsoft-cla]: https://cla.opensource.microsoft.com
-[msrc-create-report]: https://msrc.microsoft.com/create-report
 [opencode-email]: mailto:opencode@microsoft.com
+[security]: security.md
 [style-guide]: style-guide.md
 [trademark-brand-guidelines]: https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks
