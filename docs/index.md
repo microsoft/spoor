@@ -20,11 +20,8 @@ nanosecond precision and includes:
 <br />
 
 !!! warning "Project status"
-    Microsoft's Outlook team uses Spoor internally to identify logical and
-    performance problems on its iOS client.
-    
-    However, the project is still in its infancy and should be considered
-    alpha-quality software. Please anticipate breaking changes,
+    Spoor is still in its infancy and should be considered alpha-quality
+    software. Please anticipate breaking changes,
     [report bugs][provide-feedback] that you encounter, and consider
     [contributing code][contribute-code] to support Spoor's development.
 
