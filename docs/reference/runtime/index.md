@@ -49,18 +49,18 @@ manually, when a thread is relinquished, when the buffer pool reaches capacity,
 or when the runtime is deinitialized.
 
 
-## Circular buffer
+### Circular buffer
 
 In circular buffer mode, new events on a thread override old events when the
 thread's circular buffer reaches capacity. When a thread is relinquished, the
-flush queue retains the threa'ds events for a
+flush queue retains the thread's events for a
 [configurable][buffer-retention-config] duration in anticipation of a manual
 flush event. Buffered events are flushed to disk when you issue a manual flush
 event.
 
 ## Trace
 
-Trace files are composed of a header followed by n events.
+Trace files are composed of a header followed by `n` events.
 
 ### Source code
 
