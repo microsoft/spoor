@@ -895,7 +895,7 @@ and visualize the trace with Perfetto.
 
 !!! tip "Closed-form solution"
     There's an even more optimal, closed-form, constant-time solution, but a
-    single function call doesn't look very intersting in the trace.
+    single function call doesn't look very interesting in the trace.
 
     $$
     F_n = \frac{\left(\frac{1 + \sqrt{5}}{2}\right)^n -
