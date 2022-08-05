@@ -1,0 +1,2362 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Spoor documentation and reference.">
+      
+      
+        <meta name="author" content="Microsoft Corporation">
+      
+      
+        <link rel="canonical" href="https://www.spoor.dev/tutorials/fibonacci/">
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.3.1, mkdocs-material-8.3.9">
+    
+    
+      
+        <title>Fibonacci - Spoor</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.1d29e8d0.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.cbb835fc.min.css">
+        
+          
+          
+          <meta name="theme-color" content="#546d78">
+        
+      
+      
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#fibonacci" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Spoor" class="md-header__button md-logo" aria-label="Spoor" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M256 224c-79.37 0-191.1 122.7-191.1 200.2-.88 34.9 25.86 55.8 70.9 55.8 48.8 0 81.1-25.1 120.2-25.1 39.5 0 71.9 25.1 120.2 25.1 44.1 0 71.74-20.88 71.74-55.75C447.1 346.8 335.4 224 256 224zm-147.2-12.6c-10.37-34.62-42.5-57.12-71.62-50.12S-7.104 202 3.27 236.6c10.37 34.7 42.5 57.2 71.62 50.2s44.21-40.8 33.91-75.4zm84.7-20.8c30.87-8.125 46.37-49.1 34.5-93.37s-46.5-71.1-77.49-63.87c-30.87 8.125-46.37 49.1-34.5 93.37 11.89 43.37 46.49 72.07 77.49 63.87zm281.4-29.3c-29.12-6.1-61.25 15.5-71.62 50.12-10.37 34.63 4.75 68.37 33.87 75.37 29.12 6.1 61.12-15.5 71.62-50.12C519.1 202 503.1 168.3 474.9 161.3zm-156.4 29.3c30.1 8.125 65.62-20.5 77.49-63.87 11.87-43.37-3.625-85.25-34.5-93.37-30.1-8.125-65.62 20.5-77.49 63.87-11.9 43.37 3.6 85.27 34.5 93.37z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Spoor
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Fibonacci
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/microsoft/spoor" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    microsoft/spoor
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../.." class="md-tabs__link">
+      Home
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../get-started/" class="md-tabs__link">
+        Get Started
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../reference/" class="md-tabs__link">
+        Reference
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../" class="md-tabs__link md-tabs__link--active">
+        Tutorials
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../contributing/" class="md-tabs__link">
+        Contributing
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Spoor" class="md-nav__button md-logo" aria-label="Spoor" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M256 224c-79.37 0-191.1 122.7-191.1 200.2-.88 34.9 25.86 55.8 70.9 55.8 48.8 0 81.1-25.1 120.2-25.1 39.5 0 71.9 25.1 120.2 25.1 44.1 0 71.74-20.88 71.74-55.75C447.1 346.8 335.4 224 256 224zm-147.2-12.6c-10.37-34.62-42.5-57.12-71.62-50.12S-7.104 202 3.27 236.6c10.37 34.7 42.5 57.2 71.62 50.2s44.21-40.8 33.91-75.4zm84.7-20.8c30.87-8.125 46.37-49.1 34.5-93.37s-46.5-71.1-77.49-63.87c-30.87 8.125-46.37 49.1-34.5 93.37 11.89 43.37 46.49 72.07 77.49 63.87zm281.4-29.3c-29.12-6.1-61.25 15.5-71.62 50.12-10.37 34.63 4.75 68.37 33.87 75.37 29.12 6.1 61.12-15.5 71.62-50.12C519.1 202 503.1 168.3 474.9 161.3zm-156.4 29.3c30.1 8.125 65.62-20.5 77.49-63.87 11.87-43.37-3.625-85.25-34.5-93.37-30.1-8.125-65.62 20.5-77.49 63.87-11.9 43.37 3.6 85.27 34.5 93.37z"/></svg>
+
+    </a>
+    Spoor
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/microsoft/spoor" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    microsoft/spoor
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2">
+          Get Started
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Get Started" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Get Started
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/" class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/xcode-toolchain/" class="md-nav__link">
+        Xcode Toolchain
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          Reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Reference" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/" class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_2" type="checkbox" id="__nav_3_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_2">
+          Instrumentation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Instrumentation" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_2">
+          <span class="md-nav__icon md-icon"></span>
+          Instrumentation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/instrumentation/" class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/instrumentation/configuration/" class="md-nav__link">
+        Configuration
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_3" type="checkbox" id="__nav_3_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_3">
+          Runtime
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Runtime" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_3">
+          <span class="md-nav__icon md-icon"></span>
+          Runtime
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/runtime/" class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/runtime/configuration/" class="md-nav__link">
+        Configuration
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_4" type="checkbox" id="__nav_3_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_4">
+          Postprocessing
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Postprocessing" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_4">
+          <span class="md-nav__icon md-icon"></span>
+          Postprocessing
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/postprocessing/" class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4">
+          Tutorials
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Tutorials" data-md-level="1">
+        <label class="md-nav__title" for="__nav_4">
+          <span class="md-nav__icon md-icon"></span>
+          Tutorials
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Fibonacci
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Fibonacci
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#0-prerequisites" class="md-nav__link">
+    0. Prerequisites
+  </a>
+  
+    <nav class="md-nav" aria-label="0. Prerequisites">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#01-setup-and-dependencies" class="md-nav__link">
+    0.1 Setup and dependencies
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#02-write-your-code" class="md-nav__link">
+    0.2 Write your code
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-instrument-your-code" class="md-nav__link">
+    1. Instrument your code
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Instrument your code">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-emit-ir" class="md-nav__link">
+    1.1 Emit IR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-inject-instrumentation" class="md-nav__link">
+    1.2 Inject instrumentation
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-compile-and-run" class="md-nav__link">
+    2. Compile and run
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Compile and run">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-compile-the-ir" class="md-nav__link">
+    2.1 Compile the IR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-run-the-instrumented-binary" class="md-nav__link">
+    2.2 Run the instrumented binary
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-process-and-analyze-the-trace" class="md-nav__link">
+    3. Process and analyze the trace
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Process and analyze the trace">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-parse-and-symbolize-the-trace" class="md-nav__link">
+    3.1 Parse and symbolize the trace
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-visualize-the-trace" class="md-nav__link">
+    3.2 Visualize the trace
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-query-the-trace" class="md-nav__link">
+    3.3 Query the trace
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#going-further" class="md-nav__link">
+    Going further
+  </a>
+  
+    <nav class="md-nav" aria-label="Going further">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#optimize-the-code" class="md-nav__link">
+    Optimize the code
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#visualize-the-optimized-code" class="md-nav__link">
+    Visualize the optimized code
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query-the-optimized-code" class="md-nav__link">
+    Query the optimized code
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    Conclusion
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../wikipedia-ios/" class="md-nav__link">
+        Wikipedia iOS
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" type="checkbox" id="__nav_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5">
+          Contributing
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Contributing" data-md-level="1">
+        <label class="md-nav__title" for="__nav_5">
+          <span class="md-nav__icon md-icon"></span>
+          Contributing
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/development-setup/" class="md-nav__link">
+        Development Setup
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/style-guide/" class="md-nav__link">
+        Style Guide
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/code-of-conduct/" class="md-nav__link">
+        Code of Conduct
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/security/" class="md-nav__link">
+        Security
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/license/" class="md-nav__link">
+        License
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#0-prerequisites" class="md-nav__link">
+    0. Prerequisites
+  </a>
+  
+    <nav class="md-nav" aria-label="0. Prerequisites">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#01-setup-and-dependencies" class="md-nav__link">
+    0.1 Setup and dependencies
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#02-write-your-code" class="md-nav__link">
+    0.2 Write your code
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-instrument-your-code" class="md-nav__link">
+    1. Instrument your code
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Instrument your code">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-emit-ir" class="md-nav__link">
+    1.1 Emit IR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-inject-instrumentation" class="md-nav__link">
+    1.2 Inject instrumentation
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-compile-and-run" class="md-nav__link">
+    2. Compile and run
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Compile and run">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-compile-the-ir" class="md-nav__link">
+    2.1 Compile the IR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-run-the-instrumented-binary" class="md-nav__link">
+    2.2 Run the instrumented binary
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-process-and-analyze-the-trace" class="md-nav__link">
+    3. Process and analyze the trace
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Process and analyze the trace">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-parse-and-symbolize-the-trace" class="md-nav__link">
+    3.1 Parse and symbolize the trace
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-visualize-the-trace" class="md-nav__link">
+    3.2 Visualize the trace
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-query-the-trace" class="md-nav__link">
+    3.3 Query the trace
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#going-further" class="md-nav__link">
+    Going further
+  </a>
+  
+    <nav class="md-nav" aria-label="Going further">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#optimize-the-code" class="md-nav__link">
+    Optimize the code
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#visualize-the-optimized-code" class="md-nav__link">
+    Visualize the optimized code
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query-the-optimized-code" class="md-nav__link">
+    Query the optimized code
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    Conclusion
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+  <a href="https://github.com/microsoft/spoor/edit/master/docs/tutorials/fibonacci.md" title="Edit this page" class="md-content__button md-icon">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
+  </a>
+
+
+
+<h1 id="fibonacci">Fibonacci</h1>
+<p>This tutorial uses Spoor to instrument a program that calculates
+<a href="https://en.wikipedia.org/wiki/Fibonacci_number">Fibonacci numbers</a>.</p>
+<p>You'll learn Spoor's pipeline to automatically inject instrumentation into your
+source code, build and run your Spoor-instrumented program, symbolize the trace,
+and visualize and analyze your symbolized trace using Perfetto.</p>
+<p><img alt="Visualization computing the tenth Fibonacci number" src="../fib-visualization.png" /></p>
+<hr />
+<h2 id="0-prerequisites">0. Prerequisites</h2>
+<h3 id="01-setup-and-dependencies">0.1 Setup and dependencies</h3>
+<p>You will need:</p>
+<ul>
+<li>Spoor's toolchain including<ul>
+<li><code>spoor_opt</code>: Compiler instrumentation</li>
+<li><code>libspoor_runtime.a</code>: Runtime library</li>
+<li><code>libspoor_runtime_default_config.a</code>: Runtime library default configuration</li>
+<li><code>spoor</code>: Postprocessing tool</li>
+</ul>
+</li>
+<li><code>clang++</code>, <code>rustc</code>, <code>swiftc</code>, or another LLVM-based compiler of your choice.</li>
+<li><code>clang++</code> to assemble the IR and link in the standard library.</li>
+<li>A hop, a skip, and a can-do attitude.</li>
+</ul>
+<div class="admonition info">
+<p class="admonition-title">Version</p>
+<p>This tutorial uses the following tools. Your mileage may vary with newer
+or older versions.</p>
+<p><strong>spoor_opt</strong></p>
+<div class="highlight"><pre><span></span><code>spoor_opt --version
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>spoor_opt 0.0.0
+Based on LLVM 13.0.1
+</code></pre></div>
+<p><strong>libspoor_runtime</strong></p>
+<div class="highlight"><pre><span></span><code>0.0.0
+</code></pre></div>
+<p><strong>spoor</strong></p>
+<div class="highlight"><pre><span></span><code>spoor --version
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>spoor 0.0.0
+</code></pre></div>
+<p><strong>clang++</strong></p>
+<div class="highlight"><pre><span></span><code>clang++ version
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>clang version 12.0.1
+</code></pre></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">C++</label><label for="__tabbed_1_2">Rust</label><label for="__tabbed_1_3">Swift</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>clang++ version
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>clang version 12.0.1
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>rustc --version
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>rustc 1.55.0
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>swiftc --version
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>swift-driver version: 1.26.9 Apple Swift version 5.5
+</code></pre></div>
+</div>
+</div>
+</div>
+</div>
+<h3 id="02-write-your-code">0.2 Write your code</h3>
+<p>The Fibonacci numbers, denoted <span class="arithmatex">\(F_n\)</span>, form a sequence where each number is the
+sum of the two preceding ones, starting from 0 and 1. That is,</p>
+<div class="arithmatex">\[
+\begin{align}
+F_0 &amp;= 0 \\
+F_1 &amp;= 1 \\
+F_n &amp;= F_{n-1} + F_{n-2}, \quad n &gt; 1
+\end{align}
+\]</div>
+<div class="arithmatex">\[
+0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, \ldots
+\]</div>
+<p>This recursive definition can be implemented as follows:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:3"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><input id="__tabbed_2_3" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">C++</label><label for="__tabbed_2_2">Rust</label><label for="__tabbed_2_3">Swift</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="c1">// fib.cc</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstdio&gt;</span><span class="cp"></span>
+
+<span class="k">auto</span><span class="w"> </span><span class="n">Fib</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">n</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">n</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">Fib</span><span class="p">(</span><span class="n">n</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">Fib</span><span class="p">(</span><span class="n">n</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">2</span><span class="p">);</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+
+<span class="k">auto</span><span class="w"> </span><span class="n">main</span><span class="p">()</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="k">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">46</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Fib</span><span class="p">(</span><span class="n">n</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Fib(%d) = %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">f</span><span class="p">);</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="c1">// fib.rs</span>
+
+<span class="k">fn</span> <span class="nf">fib</span><span class="p">(</span><span class="n">n</span>: <span class="kt">i64</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="kt">i64</span> <span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">n</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">fib</span><span class="p">(</span><span class="n">n</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">fib</span><span class="p">(</span><span class="n">n</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fib</span><span class="p">(</span><span class="n">n</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;Fib({}) = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">f</span><span class="p">);</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="c1">// fib.swift</span>
+<span class="kd">import</span> <span class="nc">Foundation</span>
+
+<span class="kd">func</span> <span class="nf">fib</span><span class="p">(</span><span class="kc">_</span> <span class="n">n</span><span class="p">:</span> <span class="nb">Int</span><span class="p">)</span> <span class="p">-&gt;</span> <span class="nb">Int</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">n</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="n">fib</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">fib</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">let</span> <span class="nv">n</span> <span class="p">=</span> <span class="mi">10</span>
+<span class="kd">let</span> <span class="nv">f</span> <span class="p">=</span> <span class="n">fib</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+<span class="bp">print</span><span class="p">(</span><span class="s">&quot;Fib(</span><span class="si">\(</span><span class="n">n</span><span class="si">)</span><span class="s">) = </span><span class="si">\(</span><span class="n">f</span><span class="si">)</span><span class="s">&quot;</span><span class="p">)</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<div class="admonition check">
+<p class="admonition-title">Sanity test</p>
+<p>Build and run your (uninstrumented) code to make sure that everything works
+as expected.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:3"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><input id="__tabbed_3_3" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">C++</label><label for="__tabbed_3_2">Rust</label><label for="__tabbed_3_3">Swift</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>clang++ fib.cc -o fib <span class="o">&amp;&amp;</span> ./fib
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>rustc fib.rs <span class="o">&amp;&amp;</span> ./fib
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>swiftc fib.swift <span class="o">&amp;&amp;</span> ./fib
+</code></pre></div>
+</div>
+</div>
+</div>
+<div class="highlight"><pre><span></span><code>Fib(10) = 55
+</code></pre></div>
+</div>
+<hr />
+<h2 id="1-instrument-your-code">1. Instrument your code</h2>
+<p>Spoor works by instrumenting <a href="https://llvm.org/docs/LangRef.html#abstract">LLVM IR</a>, a common
+intermediate representation between your high-level source code and machine
+code for LLVM-based languages.</p>
+<h3 id="11-emit-ir">1.1 Emit IR</h3>
+<p>Emit LLVM IR instead of compiling down to an object file.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="4:3"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><input id="__tabbed_4_3" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">C++</label><label for="__tabbed_4_2">Rust</label><label for="__tabbed_4_3">Swift</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>clang++ fib.cc -emit-llvm -S -o fib.ll
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>rustc fib.rs --emit llvm-ir -o fib.ll
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>swiftc fib.swift -emit-ir -o fib.ll
+</code></pre></div>
+</div>
+</div>
+</div>
+<div class="admonition info">
+<p class="admonition-title">Debug data</p>
+<p>Compile with debug data (<code>-g</code>) to include the source file and line number in
+the symbolized trace.</p>
+</div>
+<p>Inspect the file <code>fib.ll</code> to view the (uninstrumented) IR. Each language's
+emitted IR is different due to the nature of the source language and its
+compiler frontend, but they are all functionally equivalent.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="5:3"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><input id="__tabbed_5_3" name="__tabbed_5" type="radio" /><div class="tabbed-labels"><label for="__tabbed_5_1">C++</label><label for="__tabbed_5_2">Rust</label><label for="__tabbed_5_3">Swift</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="c">; fib.ll</span>
+
+<span class="k">define</span><span class="w"> </span><span class="k">dso_local</span><span class="w"> </span><span class="kt">i32</span><span class="w"> </span><span class="vg">@_Z3Fibi</span><span class="p">(</span><span class="kt">i32</span><span class="w"> </span><span class="nv nv-Anonymous">%0</span><span class="p">)</span><span class="w"> </span><span class="vg">#0</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="nv nv-Anonymous">%2</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">alloca</span><span class="w"> </span><span class="kt">i32</span><span class="p">,</span><span class="w"> </span><span class="k">align</span><span class="w"> </span><span class="m">4</span><span class="w"></span>
+<span class="w">  </span><span class="nv nv-Anonymous">%3</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">alloca</span><span class="w"> </span><span class="kt">i32</span><span class="p">,</span><span class="w"> </span><span class="k">align</span><span class="w"> </span><span class="m">4</span><span class="w"></span>
+<span class="w">  </span><span class="k">store</span><span class="w"> </span><span class="kt">i32</span><span class="w"> </span><span class="nv nv-Anonymous">%0</span><span class="p">,</span><span class="w"> </span><span class="kt">i32</span><span class="p">*</span><span class="w"> </span><span class="nv nv-Anonymous">%3</span><span class="p">,</span><span class="w"> </span><span class="k">align</span><span class="w"> </span><span class="m">4</span><span class="w"></span>
+<span class="w">  </span><span class="nv nv-Anonymous">%4</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">load</span><span class="w"> </span><span class="kt">i32</span><span class="p">,</span><span class="w"> </span><span class="kt">i32</span><span class="p">*</span><span class="w"> </span><span class="nv nv-Anonymous">%3</span><span class="p">,</span><span class="w"> </span><span class="k">align</span><span class="w"> </span><span class="m">4</span><span class="w"></span>
+<span class="w">  </span><span class="nv nv-Anonymous">%5</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">icmp</span><span class="w"> </span><span class="k">slt</span><span class="w"> </span><span class="kt">i32</span><span class="w"> </span><span class="nv nv-Anonymous">%4</span><span class="p">,</span><span class="w"> </span><span class="m">2</span><span class="w"></span>
+<span class="w">  </span><span class="k">br</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="nv nv-Anonymous">%5</span><span class="p">,</span><span class="w"> </span><span class="kt">label</span><span class="w"> </span><span class="nv nv-Anonymous">%6</span><span class="p">,</span><span class="w"> </span><span class="kt">label</span><span class="w"> </span><span class="nv nv-Anonymous">%8</span><span class="w"></span>
+
+<span class="nl">6:</span><span class="w">                                                </span><span class="c">; preds = %1</span>
+<span class="w">  </span><span class="nv nv-Anonymous">%7</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">load</span><span class="w"> </span><span class="kt">i32</span><span class="p">,</span><span class="w"> </span><span class="kt">i32</span><span class="p">*</span><span class="w"> </span><span class="nv nv-Anonymous">%3</span><span class="p">,</span><span class="w"> </span><span class="k">align</span><span class="w"> </span><span class="m">4</span><span class="w"></span>
+<span class="w">  </span><span class="k">store</span><span class="w"> </span><span class="kt">i32</span><span class="w"> </span><span class="nv nv-Anonymous">%7</span><span class="p">,</span><span class="w"> </span><span class="kt">i32</span><span class="p">*</span><span class="w"> </span><span class="nv nv-Anonymous">%2</span><span class="p">,</span><span class="w"> </span><span class="k">align</span><span class="w"> </span><span class="m">4</span><span class="w"></span>
+<span class="w">  </span><span class="k">br</span><span class="w"> </span><span class="kt">label</span><span class="w"> </span><span class="nv nv-Anonymous">%16</span><span class="w"></span>
+
+<span class="nl">8:</span><span class="w">                                                </span><span class="c">; preds = %1</span>
+<span class="w">  </span><span class="nv nv-Anonymous">%9</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">load</span><span class="w"> </span><span class="kt">i32</span><span class="p">,</span><span class="w"> </span><span class="kt">i32</span><span class="p">*</span><span class="w"> </span><span class="nv nv-Anonymous">%3</span><span class="p">,</span><span class="w"> </span><span class="k">align</span><span class="w"> </span><span class="m">4</span><span class="w"></span>
+<span class="w">  </span><span class="nv nv-Anonymous">%10</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">sub</span><span class="w"> </span><span class="k">nsw</span><span class="w"> </span><span class="kt">i32</span><span class="w"> </span><span class="nv nv-Anonymous">%9</span><span class="p">,</span><span class="w"> </span><span class="m">1</span><span class="w"></span>
+<span class="w">  </span><span class="nv nv-Anonymous">%11</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">call</span><span class="w"> </span><span class="kt">i32</span><span class="w"> </span><span class="vg">@_Z3Fibi</span><span class="p">(</span><span class="kt">i32</span><span class="w"> </span><span class="nv nv-Anonymous">%10</span><span class="p">)</span><span class="w"></span>
+<span class="w">  </span><span class="nv nv-Anonymous">%12</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">load</span><span class="w"> </span><span class="kt">i32</span><span class="p">,</span><span class="w"> </span><span class="kt">i32</span><span class="p">*</span><span class="w"> </span><span class="nv nv-Anonymous">%3</span><span class="p">,</span><span class="w"> </span><span class="k">align</span><span class="w"> </span><span class="m">4</span><span class="w"></span>
+<span class="w">  </span><span class="nv nv-Anonymous">%13</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">sub</span><span class="w"> </span><span class="k">nsw</span><span class="w"> </span><span class="kt">i32</span><span class="w"> </span><span class="nv nv-Anonymous">%12</span><span class="p">,</span><span class="w"> </span><span class="m">2</span><span class="w"></span>
+<span class="w">  </span><span class="nv nv-Anonymous">%14</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">call</span><span class="w"> </span><span class="kt">i32</span><span class="w"> </span><span class="vg">@_Z3Fibi</span><span class="p">(</span><span class="kt">i32</span><span class="w"> </span><span class="nv nv-Anonymous">%13</span><span class="p">)</span><span class="w"></span>
+<span class="w">  </span><span class="nv nv-Anonymous">%15</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">add</span><span class="w"> </span><span class="k">nsw</span><span class="w"> </span><span class="kt">i32</span><span class="w"> </span><span class="nv nv-Anonymous">%11</span><span class="p">,</span><span class="w"> </span><span class="nv nv-Anonymous">%14</span><span class="w"></span>
+<span class="w">  </span><span class="k">store</span><span class="w"> </span><span class="kt">i32</span><span class="w"> </span><span class="nv nv-Anonymous">%15</span><span class="p">,</span><span class="w"> </span><span class="kt">i32</span><span class="p">*</span><span class="w"> </span><span class="nv nv-Anonymous">%2</span><span class="p">,</span><span class="w"> </span><span class="k">align</span><span class="w"> </span><span class="m">4</span><span class="w"></span>
+<span class="w">  </span><span class="k">br</span><span class="w"> </span><span class="kt">label</span><span class="w"> </span><span class="nv nv-Anonymous">%16</span><span class="w"></span>
+
+<span class="nl">16:</span><span class="w">                                               </span><span class="c">; preds = %8, %6</span>
+<span class="w">  </span><span class="nv nv-Anonymous">%17</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">load</span><span class="w"> </span><span class="kt">i32</span><span class="p">,</span><span class="w"> </span><span class="kt">i32</span><span class="p">*</span><span class="w"> </span><span class="nv nv-Anonymous">%2</span><span class="p">,</span><span class="w"> </span><span class="k">align</span><span class="w"> </span><span class="m">4</span><span class="w"></span>
+<span class="w">  </span><span class="k">ret</span><span class="w"> </span><span class="kt">i32</span><span class="w"> </span><span class="nv nv-Anonymous">%17</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="c">; fib.ll</span>
+
+<span class="k">define</span><span class="w"> </span><span class="k">internal</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="vg">@_ZN3fib3fib17h03330887093d3356E</span><span class="p">(</span><span class="kt">i64</span><span class="w"> </span><span class="nv">%n</span><span class="p">)</span><span class="w"> </span><span class="k">unnamed_addr</span><span class="w"> </span><span class="vg">#1</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="nl">start:</span><span class="w"></span>
+<span class="w">  </span><span class="nv nv-Anonymous">%0</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">alloca</span><span class="w"> </span><span class="kt">i64</span><span class="p">,</span><span class="w"> </span><span class="k">align</span><span class="w"> </span><span class="m">8</span><span class="w"></span>
+<span class="w">  </span><span class="nv">%_2</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">icmp</span><span class="w"> </span><span class="k">slt</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="nv">%n</span><span class="p">,</span><span class="w"> </span><span class="m">2</span><span class="w"></span>
+<span class="w">  </span><span class="k">br</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="nv">%_2</span><span class="p">,</span><span class="w"> </span><span class="kt">label</span><span class="w"> </span><span class="nv">%bb1</span><span class="p">,</span><span class="w"> </span><span class="kt">label</span><span class="w"> </span><span class="nv">%bb2</span><span class="w"></span>
+
+<span class="nl">bb2:</span><span class="w">                                              </span><span class="c">; preds = %start</span>
+<span class="w">  </span><span class="nv nv-Anonymous">%1</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">call</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kt">i64</span><span class="p">,</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="vg">@llvm.ssub.with.overflow.i64</span><span class="p">(</span><span class="kt">i64</span><span class="w"> </span><span class="nv">%n</span><span class="p">,</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="m">1</span><span class="p">)</span><span class="w"></span>
+<span class="w">  </span><span class="nv">%_7.0</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">extractvalue</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kt">i64</span><span class="p">,</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="nv nv-Anonymous">%1</span><span class="p">,</span><span class="w"> </span><span class="m">0</span><span class="w"></span>
+<span class="w">  </span><span class="nv">%_7.1</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">extractvalue</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kt">i64</span><span class="p">,</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="nv nv-Anonymous">%1</span><span class="p">,</span><span class="w"> </span><span class="m">1</span><span class="w"></span>
+<span class="w">  </span><span class="nv nv-Anonymous">%2</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">call</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="vg">@llvm.expect.i1</span><span class="p">(</span><span class="kt">i1</span><span class="w"> </span><span class="nv">%_7.1</span><span class="p">,</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="k">false</span><span class="p">)</span><span class="w"></span>
+<span class="w">  </span><span class="k">br</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="nv nv-Anonymous">%2</span><span class="p">,</span><span class="w"> </span><span class="kt">label</span><span class="w"> </span><span class="nv">%panic</span><span class="p">,</span><span class="w"> </span><span class="kt">label</span><span class="w"> </span><span class="nv">%bb3</span><span class="w"></span>
+
+<span class="nl">bb1:</span><span class="w">                                              </span><span class="c">; preds = %start</span>
+<span class="w">  </span><span class="k">store</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="nv">%n</span><span class="p">,</span><span class="w"> </span><span class="kt">i64</span><span class="p">*</span><span class="w"> </span><span class="nv nv-Anonymous">%0</span><span class="p">,</span><span class="w"> </span><span class="k">align</span><span class="w"> </span><span class="m">8</span><span class="w"></span>
+<span class="w">  </span><span class="k">br</span><span class="w"> </span><span class="kt">label</span><span class="w"> </span><span class="nv">%bb8</span><span class="w"></span>
+
+<span class="nl">bb8:</span><span class="w">                                              </span><span class="c">; preds = %bb7, %bb1</span>
+<span class="w">  </span><span class="nv nv-Anonymous">%3</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">load</span><span class="w"> </span><span class="kt">i64</span><span class="p">,</span><span class="w"> </span><span class="kt">i64</span><span class="p">*</span><span class="w"> </span><span class="nv nv-Anonymous">%0</span><span class="p">,</span><span class="w"> </span><span class="k">align</span><span class="w"> </span><span class="m">8</span><span class="w"></span>
+<span class="w">  </span><span class="k">ret</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="nv nv-Anonymous">%3</span><span class="w"></span>
+
+<span class="nl">bb3:</span><span class="w">                                              </span><span class="c">; preds = %bb2</span>
+<span class="c">; call fib::fib</span>
+<span class="w">  </span><span class="nv">%_4</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">call</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="vg">@_ZN3fib3fib17h03330887093d3356E</span><span class="p">(</span><span class="kt">i64</span><span class="w"> </span><span class="nv">%_7.0</span><span class="p">)</span><span class="w"></span>
+<span class="w">  </span><span class="k">br</span><span class="w"> </span><span class="kt">label</span><span class="w"> </span><span class="nv">%bb4</span><span class="w"></span>
+
+<span class="nl">panic:</span><span class="w">                                            </span><span class="c">; preds = %bb2</span>
+<span class="c">; call core::panicking::panic</span>
+<span class="w">  </span><span class="k">call</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="vg">@_ZN4core9panicking5panic17h2c89bafc52ad2c2fE</span><span class="p">([</span><span class="m">0</span><span class="w"> </span><span class="k">x</span><span class="w"> </span><span class="kt">i8</span><span class="p">]*</span><span class="w"> </span><span class="k">nonnull</span><span class="w"> </span><span class="k">align</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="k">bitcast</span><span class="w"> </span><span class="p">([</span><span class="m">33</span><span class="w"> </span><span class="k">x</span><span class="w"> </span><span class="kt">i8</span><span class="p">]*</span><span class="w"> </span><span class="vg">@str.1</span><span class="w"> </span><span class="k">to</span><span class="w"> </span><span class="p">[</span><span class="m">0</span><span class="w"> </span><span class="k">x</span><span class="w"> </span><span class="kt">i8</span><span class="p">]*),</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="m">33</span><span class="p">,</span><span class="w"> </span><span class="nv">%&quot;std::panic::Location&quot;</span><span class="p">*</span><span class="w"> </span><span class="k">align</span><span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="k">dereferenceable</span><span class="p">(</span><span class="m">24</span><span class="p">)</span><span class="w"> </span><span class="k">bitcast</span><span class="w"> </span><span class="p">(&lt;{</span><span class="w"> </span><span class="kt">i8</span><span class="p">*,</span><span class="w"> </span><span class="p">[</span><span class="m">16</span><span class="w"> </span><span class="k">x</span><span class="w"> </span><span class="kt">i8</span><span class="p">]</span><span class="w"> </span><span class="p">}&gt;*</span><span class="w"> </span><span class="vg">@alloc38</span><span class="w"> </span><span class="k">to</span><span class="w"> </span><span class="nv">%&quot;std::panic::Location&quot;</span><span class="p">*))</span><span class="w"></span>
+<span class="w">  </span><span class="k">unreachable</span><span class="w"></span>
+
+<span class="nl">bb4:</span><span class="w">                                              </span><span class="c">; preds = %bb3</span>
+<span class="w">  </span><span class="nv nv-Anonymous">%4</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">call</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kt">i64</span><span class="p">,</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="vg">@llvm.ssub.with.overflow.i64</span><span class="p">(</span><span class="kt">i64</span><span class="w"> </span><span class="nv">%n</span><span class="p">,</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="m">2</span><span class="p">)</span><span class="w"></span>
+<span class="w">  </span><span class="nv">%_11.0</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">extractvalue</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kt">i64</span><span class="p">,</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="nv nv-Anonymous">%4</span><span class="p">,</span><span class="w"> </span><span class="m">0</span><span class="w"></span>
+<span class="w">  </span><span class="nv">%_11.1</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">extractvalue</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kt">i64</span><span class="p">,</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="nv nv-Anonymous">%4</span><span class="p">,</span><span class="w"> </span><span class="m">1</span><span class="w"></span>
+<span class="w">  </span><span class="nv nv-Anonymous">%5</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">call</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="vg">@llvm.expect.i1</span><span class="p">(</span><span class="kt">i1</span><span class="w"> </span><span class="nv">%_11.1</span><span class="p">,</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="k">false</span><span class="p">)</span><span class="w"></span>
+<span class="w">  </span><span class="k">br</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="nv nv-Anonymous">%5</span><span class="p">,</span><span class="w"> </span><span class="kt">label</span><span class="w"> </span><span class="nv">%panic1</span><span class="p">,</span><span class="w"> </span><span class="kt">label</span><span class="w"> </span><span class="nv">%bb5</span><span class="w"></span>
+
+<span class="nl">bb5:</span><span class="w">                                              </span><span class="c">; preds = %bb4</span>
+<span class="c">; call fib::fib</span>
+<span class="w">  </span><span class="nv">%_8</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">call</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="vg">@_ZN3fib3fib17h03330887093d3356E</span><span class="p">(</span><span class="kt">i64</span><span class="w"> </span><span class="nv">%_11.0</span><span class="p">)</span><span class="w"></span>
+<span class="w">  </span><span class="k">br</span><span class="w"> </span><span class="kt">label</span><span class="w"> </span><span class="nv">%bb6</span><span class="w"></span>
+
+<span class="nl">panic1:</span><span class="w">                                           </span><span class="c">; preds = %bb4</span>
+<span class="c">; call core::panicking::panic</span>
+<span class="w">  </span><span class="k">call</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="vg">@_ZN4core9panicking5panic17h2c89bafc52ad2c2fE</span><span class="p">([</span><span class="m">0</span><span class="w"> </span><span class="k">x</span><span class="w"> </span><span class="kt">i8</span><span class="p">]*</span><span class="w"> </span><span class="k">nonnull</span><span class="w"> </span><span class="k">align</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="k">bitcast</span><span class="w"> </span><span class="p">([</span><span class="m">33</span><span class="w"> </span><span class="k">x</span><span class="w"> </span><span class="kt">i8</span><span class="p">]*</span><span class="w"> </span><span class="vg">@str.1</span><span class="w"> </span><span class="k">to</span><span class="w"> </span><span class="p">[</span><span class="m">0</span><span class="w"> </span><span class="k">x</span><span class="w"> </span><span class="kt">i8</span><span class="p">]*),</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="m">33</span><span class="p">,</span><span class="w"> </span><span class="nv">%&quot;std::panic::Location&quot;</span><span class="p">*</span><span class="w"> </span><span class="k">align</span><span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="k">dereferenceable</span><span class="p">(</span><span class="m">24</span><span class="p">)</span><span class="w"> </span><span class="k">bitcast</span><span class="w"> </span><span class="p">(&lt;{</span><span class="w"> </span><span class="kt">i8</span><span class="p">*,</span><span class="w"> </span><span class="p">[</span><span class="m">16</span><span class="w"> </span><span class="k">x</span><span class="w"> </span><span class="kt">i8</span><span class="p">]</span><span class="w"> </span><span class="p">}&gt;*</span><span class="w"> </span><span class="vg">@alloc40</span><span class="w"> </span><span class="k">to</span><span class="w"> </span><span class="nv">%&quot;std::panic::Location&quot;</span><span class="p">*))</span><span class="w"></span>
+<span class="w">  </span><span class="k">unreachable</span><span class="w"></span>
+
+<span class="nl">bb6:</span><span class="w">                                              </span><span class="c">; preds = %bb5</span>
+<span class="w">  </span><span class="nv nv-Anonymous">%6</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">call</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kt">i64</span><span class="p">,</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="vg">@llvm.sadd.with.overflow.i64</span><span class="p">(</span><span class="kt">i64</span><span class="w"> </span><span class="nv">%_4</span><span class="p">,</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="nv">%_8</span><span class="p">)</span><span class="w"></span>
+<span class="w">  </span><span class="nv">%_12.0</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">extractvalue</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kt">i64</span><span class="p">,</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="nv nv-Anonymous">%6</span><span class="p">,</span><span class="w"> </span><span class="m">0</span><span class="w"></span>
+<span class="w">  </span><span class="nv">%_12.1</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">extractvalue</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kt">i64</span><span class="p">,</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="nv nv-Anonymous">%6</span><span class="p">,</span><span class="w"> </span><span class="m">1</span><span class="w"></span>
+<span class="w">  </span><span class="nv nv-Anonymous">%7</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">call</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="vg">@llvm.expect.i1</span><span class="p">(</span><span class="kt">i1</span><span class="w"> </span><span class="nv">%_12.1</span><span class="p">,</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="k">false</span><span class="p">)</span><span class="w"></span>
+<span class="w">  </span><span class="k">br</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="nv nv-Anonymous">%7</span><span class="p">,</span><span class="w"> </span><span class="kt">label</span><span class="w"> </span><span class="nv">%panic2</span><span class="p">,</span><span class="w"> </span><span class="kt">label</span><span class="w"> </span><span class="nv">%bb7</span><span class="w"></span>
+
+<span class="nl">bb7:</span><span class="w">                                              </span><span class="c">; preds = %bb6</span>
+<span class="w">  </span><span class="k">store</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="nv">%_12.0</span><span class="p">,</span><span class="w"> </span><span class="kt">i64</span><span class="p">*</span><span class="w"> </span><span class="nv nv-Anonymous">%0</span><span class="p">,</span><span class="w"> </span><span class="k">align</span><span class="w"> </span><span class="m">8</span><span class="w"></span>
+<span class="w">  </span><span class="k">br</span><span class="w"> </span><span class="kt">label</span><span class="w"> </span><span class="nv">%bb8</span><span class="w"></span>
+
+<span class="nl">panic2:</span><span class="w">                                           </span><span class="c">; preds = %bb6</span>
+<span class="c">; call core::panicking::panic</span>
+<span class="w">  </span><span class="k">call</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="vg">@_ZN4core9panicking5panic17h2c89bafc52ad2c2fE</span><span class="p">([</span><span class="m">0</span><span class="w"> </span><span class="k">x</span><span class="w"> </span><span class="kt">i8</span><span class="p">]*</span><span class="w"> </span><span class="k">nonnull</span><span class="w"> </span><span class="k">align</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="k">bitcast</span><span class="w"> </span><span class="p">([</span><span class="m">28</span><span class="w"> </span><span class="k">x</span><span class="w"> </span><span class="kt">i8</span><span class="p">]*</span><span class="w"> </span><span class="vg">@str.2</span><span class="w"> </span><span class="k">to</span><span class="w"> </span><span class="p">[</span><span class="m">0</span><span class="w"> </span><span class="k">x</span><span class="w"> </span><span class="kt">i8</span><span class="p">]*),</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="m">28</span><span class="p">,</span><span class="w"> </span><span class="nv">%&quot;std::panic::Location&quot;</span><span class="p">*</span><span class="w"> </span><span class="k">align</span><span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="k">dereferenceable</span><span class="p">(</span><span class="m">24</span><span class="p">)</span><span class="w"> </span><span class="k">bitcast</span><span class="w"> </span><span class="p">(&lt;{</span><span class="w"> </span><span class="kt">i8</span><span class="p">*,</span><span class="w"> </span><span class="p">[</span><span class="m">16</span><span class="w"> </span><span class="k">x</span><span class="w"> </span><span class="kt">i8</span><span class="p">]</span><span class="w"> </span><span class="p">}&gt;*</span><span class="w"> </span><span class="vg">@alloc42</span><span class="w"> </span><span class="k">to</span><span class="w"> </span><span class="nv">%&quot;std::panic::Location&quot;</span><span class="p">*))</span><span class="w"></span>
+<span class="w">  </span><span class="k">unreachable</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="c">; fib.ll</span>
+
+<span class="k">define</span><span class="w"> </span><span class="k">hidden</span><span class="w"> </span><span class="k">swiftcc</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="vg">@&quot;$s3fibAAyS2iF&quot;</span><span class="p">(</span><span class="kt">i64</span><span class="w"> </span><span class="nv nv-Anonymous">%0</span><span class="p">)</span><span class="w"> </span><span class="vg">#0</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="nl">entry:</span><span class="w"></span>
+<span class="w">  </span><span class="nv">%n.debug</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">alloca</span><span class="w"> </span><span class="kt">i64</span><span class="p">,</span><span class="w"> </span><span class="k">align</span><span class="w"> </span><span class="m">8</span><span class="w"></span>
+<span class="w">  </span><span class="nv nv-Anonymous">%1</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">bitcast</span><span class="w"> </span><span class="kt">i64</span><span class="p">*</span><span class="w"> </span><span class="nv">%n.debug</span><span class="w"> </span><span class="k">to</span><span class="w"> </span><span class="kt">i8</span><span class="p">*</span><span class="w"></span>
+<span class="w">  </span><span class="k">call</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="vg">@llvm.memset.p0i8.i64</span><span class="p">(</span><span class="kt">i8</span><span class="p">*</span><span class="w"> </span><span class="k">align</span><span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="nv nv-Anonymous">%1</span><span class="p">,</span><span class="w"> </span><span class="kt">i8</span><span class="w"> </span><span class="m">0</span><span class="p">,</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="m">8</span><span class="p">,</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="k">false</span><span class="p">)</span><span class="w"></span>
+<span class="w">  </span><span class="k">store</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="nv nv-Anonymous">%0</span><span class="p">,</span><span class="w"> </span><span class="kt">i64</span><span class="p">*</span><span class="w"> </span><span class="nv">%n.debug</span><span class="p">,</span><span class="w"> </span><span class="k">align</span><span class="w"> </span><span class="m">8</span><span class="w"></span>
+<span class="w">  </span><span class="nv nv-Anonymous">%2</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">icmp</span><span class="w"> </span><span class="k">slt</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="nv nv-Anonymous">%0</span><span class="p">,</span><span class="w"> </span><span class="m">2</span><span class="w"></span>
+<span class="w">  </span><span class="k">br</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="nv nv-Anonymous">%2</span><span class="p">,</span><span class="w"> </span><span class="kt">label</span><span class="w"> </span><span class="nv nv-Anonymous">%3</span><span class="p">,</span><span class="w"> </span><span class="kt">label</span><span class="w"> </span><span class="nv nv-Anonymous">%4</span><span class="w"></span>
+
+<span class="nl">3:</span><span class="w">                                                </span><span class="c">; preds = %entry</span>
+<span class="w">  </span><span class="k">br</span><span class="w"> </span><span class="kt">label</span><span class="w"> </span><span class="nv nv-Anonymous">%22</span><span class="w"></span>
+
+<span class="nl">4:</span><span class="w">                                                </span><span class="c">; preds = %entry</span>
+<span class="w">  </span><span class="nv nv-Anonymous">%5</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">call</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kt">i64</span><span class="p">,</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="vg">@llvm.ssub.with.overflow.i64</span><span class="p">(</span><span class="kt">i64</span><span class="w"> </span><span class="nv nv-Anonymous">%0</span><span class="p">,</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="m">1</span><span class="p">)</span><span class="w"></span>
+<span class="w">  </span><span class="nv nv-Anonymous">%6</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">extractvalue</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kt">i64</span><span class="p">,</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="nv nv-Anonymous">%5</span><span class="p">,</span><span class="w"> </span><span class="m">0</span><span class="w"></span>
+<span class="w">  </span><span class="nv nv-Anonymous">%7</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">extractvalue</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kt">i64</span><span class="p">,</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="nv nv-Anonymous">%5</span><span class="p">,</span><span class="w"> </span><span class="m">1</span><span class="w"></span>
+<span class="w">  </span><span class="nv nv-Anonymous">%8</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">call</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="vg">@llvm.expect.i1</span><span class="p">(</span><span class="kt">i1</span><span class="w"> </span><span class="nv nv-Anonymous">%7</span><span class="p">,</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="k">false</span><span class="p">)</span><span class="w"></span>
+<span class="w">  </span><span class="k">br</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="nv nv-Anonymous">%8</span><span class="p">,</span><span class="w"> </span><span class="kt">label</span><span class="w"> </span><span class="nv nv-Anonymous">%24</span><span class="p">,</span><span class="w"> </span><span class="kt">label</span><span class="w"> </span><span class="nv nv-Anonymous">%9</span><span class="w"></span>
+
+<span class="nl">9:</span><span class="w">                                                </span><span class="c">; preds = %4</span>
+<span class="w">  </span><span class="nv nv-Anonymous">%10</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">call</span><span class="w"> </span><span class="k">swiftcc</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="vg">@&quot;$s3fibAAyS2iF&quot;</span><span class="p">(</span><span class="kt">i64</span><span class="w"> </span><span class="nv nv-Anonymous">%6</span><span class="p">)</span><span class="w"></span>
+<span class="w">  </span><span class="nv nv-Anonymous">%11</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">call</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kt">i64</span><span class="p">,</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="vg">@llvm.ssub.with.overflow.i64</span><span class="p">(</span><span class="kt">i64</span><span class="w"> </span><span class="nv nv-Anonymous">%0</span><span class="p">,</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="m">2</span><span class="p">)</span><span class="w"></span>
+<span class="w">  </span><span class="nv nv-Anonymous">%12</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">extractvalue</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kt">i64</span><span class="p">,</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="nv nv-Anonymous">%11</span><span class="p">,</span><span class="w"> </span><span class="m">0</span><span class="w"></span>
+<span class="w">  </span><span class="nv nv-Anonymous">%13</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">extractvalue</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kt">i64</span><span class="p">,</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="nv nv-Anonymous">%11</span><span class="p">,</span><span class="w"> </span><span class="m">1</span><span class="w"></span>
+<span class="w">  </span><span class="nv nv-Anonymous">%14</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">call</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="vg">@llvm.expect.i1</span><span class="p">(</span><span class="kt">i1</span><span class="w"> </span><span class="nv nv-Anonymous">%13</span><span class="p">,</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="k">false</span><span class="p">)</span><span class="w"></span>
+<span class="w">  </span><span class="k">br</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="nv nv-Anonymous">%14</span><span class="p">,</span><span class="w"> </span><span class="kt">label</span><span class="w"> </span><span class="nv nv-Anonymous">%25</span><span class="p">,</span><span class="w"> </span><span class="kt">label</span><span class="w"> </span><span class="nv nv-Anonymous">%15</span><span class="w"></span>
+
+<span class="nl">15:</span><span class="w">                                               </span><span class="c">; preds = %9</span>
+<span class="w">  </span><span class="nv nv-Anonymous">%16</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">call</span><span class="w"> </span><span class="k">swiftcc</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="vg">@&quot;$s3fibAAyS2iF&quot;</span><span class="p">(</span><span class="kt">i64</span><span class="w"> </span><span class="nv nv-Anonymous">%12</span><span class="p">)</span><span class="w"></span>
+<span class="w">  </span><span class="nv nv-Anonymous">%17</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">call</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kt">i64</span><span class="p">,</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="vg">@llvm.sadd.with.overflow.i64</span><span class="p">(</span><span class="kt">i64</span><span class="w"> </span><span class="nv nv-Anonymous">%10</span><span class="p">,</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="nv nv-Anonymous">%16</span><span class="p">)</span><span class="w"></span>
+<span class="w">  </span><span class="nv nv-Anonymous">%18</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">extractvalue</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kt">i64</span><span class="p">,</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="nv nv-Anonymous">%17</span><span class="p">,</span><span class="w"> </span><span class="m">0</span><span class="w"></span>
+<span class="w">  </span><span class="nv nv-Anonymous">%19</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">extractvalue</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kt">i64</span><span class="p">,</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="nv nv-Anonymous">%17</span><span class="p">,</span><span class="w"> </span><span class="m">1</span><span class="w"></span>
+<span class="w">  </span><span class="nv nv-Anonymous">%20</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">call</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="vg">@llvm.expect.i1</span><span class="p">(</span><span class="kt">i1</span><span class="w"> </span><span class="nv nv-Anonymous">%19</span><span class="p">,</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="k">false</span><span class="p">)</span><span class="w"></span>
+<span class="w">  </span><span class="k">br</span><span class="w"> </span><span class="kt">i1</span><span class="w"> </span><span class="nv nv-Anonymous">%20</span><span class="p">,</span><span class="w"> </span><span class="kt">label</span><span class="w"> </span><span class="nv nv-Anonymous">%26</span><span class="p">,</span><span class="w"> </span><span class="kt">label</span><span class="w"> </span><span class="nv nv-Anonymous">%21</span><span class="w"></span>
+
+<span class="nl">21:</span><span class="w">                                               </span><span class="c">; preds = %15</span>
+<span class="w">  </span><span class="k">br</span><span class="w"> </span><span class="kt">label</span><span class="w"> </span><span class="nv nv-Anonymous">%22</span><span class="w"></span>
+
+<span class="nl">22:</span><span class="w">                                               </span><span class="c">; preds = %3, %21</span>
+<span class="w">  </span><span class="nv nv-Anonymous">%23</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="k">phi</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="nv nv-Anonymous">%18</span><span class="p">,</span><span class="w"> </span><span class="nv nv-Anonymous">%21</span><span class="w"> </span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="nv nv-Anonymous">%0</span><span class="p">,</span><span class="w"> </span><span class="nv nv-Anonymous">%3</span><span class="w"> </span><span class="p">]</span><span class="w"></span>
+<span class="w">  </span><span class="k">ret</span><span class="w"> </span><span class="kt">i64</span><span class="w"> </span><span class="nv nv-Anonymous">%23</span><span class="w"></span>
+
+<span class="nl">24:</span><span class="w">                                               </span><span class="c">; preds = %4</span>
+<span class="w">  </span><span class="k">call</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="vg">@llvm.trap</span><span class="p">()</span><span class="w"></span>
+<span class="w">  </span><span class="k">unreachable</span><span class="w"></span>
+
+<span class="nl">25:</span><span class="w">                                               </span><span class="c">; preds = %9</span>
+<span class="w">  </span><span class="k">call</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="vg">@llvm.trap</span><span class="p">()</span><span class="w"></span>
+<span class="w">  </span><span class="k">unreachable</span><span class="w"></span>
+
+<span class="nl">26:</span><span class="w">                                               </span><span class="c">; preds = %15</span>
+<span class="w">  </span><span class="k">call</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="vg">@llvm.trap</span><span class="p">()</span><span class="w"></span>
+<span class="w">  </span><span class="k">unreachable</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<div class="admonition question">
+<p class="admonition-title">Exercise</p>
+<p>Identify the Fibonacci function's base case and recursive call in the LLVM
+IR.</p>
+</div>
+<h3 id="12-inject-instrumentation">1.2 Inject instrumentation</h3>
+<p>Pass <code>fib.ll</code> to <code>spoor_opt</code> to inject instrumentation into the IR.</p>
+<div class="highlight"><pre><span></span><code>spoor_opt <span class="se">\</span>
+  fib.ll <span class="se">\</span>
+  --output_file<span class="o">=</span>fib_instrumented.ll <span class="se">\</span>
+  --output_symbols_file<span class="o">=</span>fib.spoor_symbols <span class="se">\</span>
+  --output_language<span class="o">=</span>ir
+</code></pre></div>
+<p>Spoor injects a call to <code>_spoor_runtime_LogFunctionEntry</code> at the start of every
+function and a call to <code>_spoor_runtime_LogFunctionExit</code> before each function
+return.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="6:3"><input checked="checked" id="__tabbed_6_1" name="__tabbed_6" type="radio" /><input id="__tabbed_6_2" name="__tabbed_6" type="radio" /><input id="__tabbed_6_3" name="__tabbed_6" type="radio" /><div class="tabbed-labels"><label for="__tabbed_6_1">C++</label><label for="__tabbed_6_2">Rust</label><label for="__tabbed_6_3">Swift</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="w"> </span> ; fib_instrumented.ll<span class="w"></span>
+
+<span class="w"> </span> define dso_local i32 @_Z3Fibi(i32 %0) #0 {<span class="w"></span>
+<span class="gi">+   call void @_spoor_runtime_LogFunctionEntry(i64 6838069263626928128)</span><span class="w"></span>
+<span class="w"> </span>   %2 = alloca i32, align 4<span class="w"></span>
+<span class="w"> </span>   %3 = alloca i32, align 4<span class="w"></span>
+<span class="w"> </span>   store i32 %0, i32* %3, align 4<span class="w"></span>
+<span class="w"> </span>   %4 = load i32, i32* %3, align 4<span class="w"></span>
+<span class="w"> </span>   %5 = icmp slt i32 %4, 2<span class="w"></span>
+<span class="w"> </span>   br i1 %5, label %6, label %8<span class="w"></span>
+
+<span class="w"> </span> 6:                                                ; preds = %1<span class="w"></span>
+<span class="w"> </span>   %7 = load i32, i32* %3, align 4<span class="w"></span>
+<span class="w"> </span>   store i32 %7, i32* %2, align 4<span class="w"></span>
+<span class="w"> </span>   br label %16<span class="w"></span>
+
+<span class="w"> </span> 8:                                                ; preds = %1<span class="w"></span>
+<span class="w"> </span>   %9 = load i32, i32* %3, align 4<span class="w"></span>
+<span class="w"> </span>   %10 = sub nsw i32 %9, 1<span class="w"></span>
+<span class="w"> </span>   %11 = call i32 @_Z3Fibi(i32 %10)<span class="w"></span>
+<span class="w"> </span>   %12 = load i32, i32* %3, align 4<span class="w"></span>
+<span class="w"> </span>   %13 = sub nsw i32 %12, 2<span class="w"></span>
+<span class="w"> </span>   %14 = call i32 @_Z3Fibi(i32 %13)<span class="w"></span>
+<span class="w"> </span>   %15 = add nsw i32 %11, %14<span class="w"></span>
+<span class="w"> </span>   store i32 %15, i32* %2, align 4<span class="w"></span>
+<span class="w"> </span>   br label %16<span class="w"></span>
+
+<span class="w"> </span> 16:                                               ; preds = %8, %6<span class="w"></span>
+<span class="w"> </span>   %17 = load i32, i32* %2, align 4<span class="w"></span>
+<span class="gi">+   call void @_spoor_runtime_LogFunctionExit(i64 6838069263626928128)</span><span class="w"></span>
+<span class="w"> </span>   ret i32 %17<span class="w"></span>
+<span class="w"> </span> }<span class="w"></span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="w"> </span> ; fib_instrumented.ll<span class="w"></span>
+
+<span class="w"> </span> define internal i64 @_ZN3fib3fib17h03330887093d3356E(i64 %n) unnamed_addr #1 {<span class="w"></span>
+<span class="w"> </span> start:<span class="w"></span>
+<span class="gi">+   call void @_spoor_runtime_LogFunctionEntry(i64 1161011135638405136)</span><span class="w"></span>
+<span class="w"> </span>   %0 = alloca i64, align 8<span class="w"></span>
+<span class="w"> </span>   %_2 = icmp slt i64 %n, 2<span class="w"></span>
+<span class="w"> </span>   br i1 %_2, label %bb1, label %bb2<span class="w"></span>
+
+<span class="w"> </span> bb2:                                              ; preds = %start<span class="w"></span>
+<span class="w"> </span>   %1 = call { i64, i1 } @llvm.ssub.with.overflow.i64(i64 %n, i64 1)<span class="w"></span>
+<span class="w"> </span>   %_7.0 = extractvalue { i64, i1 } %1, 0<span class="w"></span>
+<span class="w"> </span>   %_7.1 = extractvalue { i64, i1 } %1, 1<span class="w"></span>
+<span class="w"> </span>   %2 = call i1 @llvm.expect.i1(i1 %_7.1, i1 false)<span class="w"></span>
+<span class="w"> </span>   br i1 %2, label %panic, label %bb3<span class="w"></span>
+
+<span class="w"> </span> bb1:                                              ; preds = %start<span class="w"></span>
+<span class="w"> </span>   store i64 %n, i64* %0, align 8<span class="w"></span>
+<span class="w"> </span>   br label %bb8<span class="w"></span>
+
+<span class="w"> </span> bb8:                                              ; preds = %bb7, %bb1<span class="w"></span>
+<span class="w"> </span>   %3 = load i64, i64* %0, align 8<span class="w"></span>
+<span class="gi">+   call void @_spoor_runtime_LogFunctionExit(i64 1161011135638405136)</span><span class="w"></span>
+<span class="w"> </span>   ret i64 %3<span class="w"></span>
+
+<span class="w"> </span> bb3:                                              ; preds = %bb2<span class="w"></span>
+<span class="w"> </span>   %_4 = call i64 @_ZN3fib3fib17h03330887093d3356E(i64 %_7.0)<span class="w"></span>
+<span class="w"> </span>   br label %bb4<span class="w"></span>
+
+<span class="w"> </span> panic:                                            ; preds = %bb2<span class="w"></span>
+<span class="w"> </span>   call void @_ZN4core9panicking5panic17h2c89bafc52ad2c2fE([0 x i8]* nonnull align 1 bitcast ([33 x i8]* @str.1 to [0 x i8]*), i64 33, %&quot;std::panic::Location&quot;* align 8 dereferenceable(24) bitcast (&lt;{ i8*, [16 x i8] }&gt;* @alloc38 to %&quot;std::panic::Location&quot;*))<span class="w"></span>
+<span class="w"> </span>   unreachable<span class="w"></span>
+
+<span class="w"> </span> bb4:                                              ; preds = %bb3<span class="w"></span>
+<span class="w"> </span>   %4 = call { i64, i1 } @llvm.ssub.with.overflow.i64(i64 %n, i64 2)<span class="w"></span>
+<span class="w"> </span>   %_11.0 = extractvalue { i64, i1 } %4, 0<span class="w"></span>
+<span class="w"> </span>   %_11.1 = extractvalue { i64, i1 } %4, 1<span class="w"></span>
+<span class="w"> </span>   %5 = call i1 @llvm.expect.i1(i1 %_11.1, i1 false)<span class="w"></span>
+<span class="w"> </span>   br i1 %5, label %panic1, label %bb5<span class="w"></span>
+
+<span class="w"> </span> bb5:                                              ; preds = %bb4<span class="w"></span>
+<span class="w"> </span>   %_8 = call i64 @_ZN3fib3fib17h03330887093d3356E(i64 %_11.0)<span class="w"></span>
+<span class="w"> </span>   br label %bb6<span class="w"></span>
+
+<span class="w"> </span> panic1:                                           ; preds = %bb4<span class="w"></span>
+<span class="w"> </span>   call void @_ZN4core9panicking5panic17h2c89bafc52ad2c2fE([0 x i8]* nonnull align 1 bitcast ([33 x i8]* @str.1 to [0 x i8]*), i64 33, %&quot;std::panic::Location&quot;* align 8 dereferenceable(24) bitcast (&lt;{ i8*, [16 x i8] }&gt;* @alloc40 to %&quot;std::panic::Location&quot;*))<span class="w"></span>
+<span class="w"> </span>   unreachable<span class="w"></span>
+
+<span class="w"> </span> bb6:                                              ; preds = %bb5<span class="w"></span>
+<span class="w"> </span>   %6 = call { i64, i1 } @llvm.sadd.with.overflow.i64(i64 %_4, i64 %_8)<span class="w"></span>
+<span class="w"> </span>   %_12.0 = extractvalue { i64, i1 } %6, 0<span class="w"></span>
+<span class="w"> </span>   %_12.1 = extractvalue { i64, i1 } %6, 1<span class="w"></span>
+<span class="w"> </span>   %7 = call i1 @llvm.expect.i1(i1 %_12.1, i1 false)<span class="w"></span>
+<span class="w"> </span>   br i1 %7, label %panic2, label %bb7<span class="w"></span>
+
+<span class="w"> </span> bb7:                                              ; preds = %bb6<span class="w"></span>
+<span class="w"> </span>   store i64 %_12.0, i64* %0, align 8<span class="w"></span>
+<span class="w"> </span>   br label %bb8<span class="w"></span>
+
+<span class="w"> </span> panic2:                                           ; preds = %bb6<span class="w"></span>
+<span class="w"> </span>   call void @_ZN4core9panicking5panic17h2c89bafc52ad2c2fE([0 x i8]* nonnull align 1 bitcast ([28 x i8]* @str.2 to [0 x i8]*), i64 28, %&quot;std::panic::Location&quot;* align 8 dereferenceable(24) bitcast (&lt;{ i8*, [16 x i8] }&gt;* @alloc42 to %&quot;std::panic::Location&quot;*))<span class="w"></span>
+<span class="w"> </span>   unreachable<span class="w"></span>
+<span class="w"> </span> }<span class="w"></span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="w"> </span> define hidden swiftcc i64 @&quot;$s3fibAAyS2iF&quot;(i64 %0) #0 {<span class="w"></span>
+<span class="w"> </span> entry:<span class="w"></span>
+<span class="gi">+   call void @_spoor_runtime_LogFunctionEntry(i64 -5425404140006146047)</span><span class="w"></span>
+<span class="w"> </span>   %n.debug = alloca i64, align 8<span class="w"></span>
+<span class="w"> </span>   %1 = bitcast i64* %n.debug to i8*<span class="w"></span>
+<span class="w"> </span>   call void @llvm.memset.p0i8.i64(i8* align 8 %1, i8 0, i64 8, i1 false)<span class="w"></span>
+<span class="w"> </span>   store i64 %0, i64* %n.debug, align 8<span class="w"></span>
+<span class="w"> </span>   %2 = icmp slt i64 %0, 2<span class="w"></span>
+<span class="w"> </span>   br i1 %2, label %3, label %4<span class="w"></span>
+
+<span class="w"> </span> 3:                                                ; preds = %entry<span class="w"></span>
+<span class="w"> </span>   br label %22<span class="w"></span>
+
+<span class="w"> </span> 4:                                                ; preds = %entry<span class="w"></span>
+<span class="w"> </span>   %5 = call { i64, i1 } @llvm.ssub.with.overflow.i64(i64 %0, i64 1)<span class="w"></span>
+<span class="w"> </span>   %6 = extractvalue { i64, i1 } %5, 0<span class="w"></span>
+<span class="w"> </span>   %7 = extractvalue { i64, i1 } %5, 1<span class="w"></span>
+<span class="w"> </span>   %8 = call i1 @llvm.expect.i1(i1 %7, i1 false)<span class="w"></span>
+<span class="w"> </span>   br i1 %8, label %24, label %9<span class="w"></span>
+
+<span class="w"> </span> 9:                                                ; preds = %4<span class="w"></span>
+<span class="w"> </span>   %10 = call swiftcc i64 @&quot;$s3fibAAyS2iF&quot;(i64 %6)<span class="w"></span>
+<span class="w"> </span>   %11 = call { i64, i1 } @llvm.ssub.with.overflow.i64(i64 %0, i64 2)<span class="w"></span>
+<span class="w"> </span>   %12 = extractvalue { i64, i1 } %11, 0<span class="w"></span>
+<span class="w"> </span>   %13 = extractvalue { i64, i1 } %11, 1<span class="w"></span>
+<span class="w"> </span>   %14 = call i1 @llvm.expect.i1(i1 %13, i1 false)<span class="w"></span>
+<span class="w"> </span>   br i1 %14, label %25, label %15<span class="w"></span>
+
+<span class="w"> </span> 15:                                               ; preds = %9<span class="w"></span>
+<span class="w"> </span>   %16 = call swiftcc i64 @&quot;$s3fibAAyS2iF&quot;(i64 %12)<span class="w"></span>
+<span class="w"> </span>   %17 = call { i64, i1 } @llvm.sadd.with.overflow.i64(i64 %10, i64 %16)<span class="w"></span>
+<span class="w"> </span>   %18 = extractvalue { i64, i1 } %17, 0<span class="w"></span>
+<span class="w"> </span>   %19 = extractvalue { i64, i1 } %17, 1<span class="w"></span>
+<span class="w"> </span>   %20 = call i1 @llvm.expect.i1(i1 %19, i1 false)<span class="w"></span>
+<span class="w"> </span>   br i1 %20, label %26, label %21<span class="w"></span>
+
+<span class="w"> </span> 21:                                               ; preds = %15<span class="w"></span>
+<span class="w"> </span>   br label %22<span class="w"></span>
+
+<span class="w"> </span> 22:                                               ; preds = %21, %3<span class="w"></span>
+<span class="w"> </span>   %23 = phi i64 [ %18, %21 ], [ %0, %3 ]<span class="w"></span>
+<span class="gi">+   call void @_spoor_runtime_LogFunctionExit(i64 -5425404140006146047)</span><span class="w"></span>
+<span class="w"> </span>   ret i64 %23<span class="w"></span>
+
+<span class="w"> </span> 24:                                               ; preds = %4<span class="w"></span>
+<span class="w"> </span>   call void @llvm.trap()<span class="w"></span>
+<span class="w"> </span>   unreachable<span class="w"></span>
+
+<span class="w"> </span> 25:                                               ; preds = %9<span class="w"></span>
+<span class="w"> </span>   call void @llvm.trap()<span class="w"></span>
+<span class="w"> </span>   unreachable<span class="w"></span>
+
+<span class="w"> </span> 26:                                               ; preds = %15<span class="w"></span>
+<span class="w"> </span>   call void @llvm.trap()<span class="w"></span>
+<span class="w"> </span>   unreachable<span class="w"></span>
+<span class="w"> </span> }<span class="w"></span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>Additionally, Spoor automatically initializes and enables the runtime in <code>main</code>.
+This behavior is <a href="/configuration/instrumentation">configurable</a>.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="7:3"><input checked="checked" id="__tabbed_7_1" name="__tabbed_7" type="radio" /><input id="__tabbed_7_2" name="__tabbed_7" type="radio" /><input id="__tabbed_7_3" name="__tabbed_7" type="radio" /><div class="tabbed-labels"><label for="__tabbed_7_1">C++</label><label for="__tabbed_7_2">Rust</label><label for="__tabbed_7_3">Swift</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="w"> </span> ; fib_instrumented.ll<span class="w"></span>
+
+<span class="w"> </span> define dso_local i32 @main() #1 {<span class="w"></span>
+<span class="gi">+   call void @_spoor_runtime_Initialize()</span><span class="w"></span>
+<span class="gi">+   call void @_spoor_runtime_Enable()</span><span class="w"></span>
+<span class="gi">+   call void @_spoor_runtime_LogFunctionEntry(i64 6838069263626928129)</span><span class="w"></span>
+<span class="w"> </span>   %1 = alloca i32, align 4<span class="w"></span>
+<span class="w"> </span>   %2 = alloca i32, align 4<span class="w"></span>
+<span class="w"> </span>   store i32 10, i32* %1, align 4<span class="w"></span>
+<span class="w"> </span>   %3 = call i32 @_Z3Fibi(i32 10)<span class="w"></span>
+<span class="w"> </span>   store i32 %3, i32* %2, align 4<span class="w"></span>
+<span class="w"> </span>   %4 = load i32, i32* %2, align 4<span class="w"></span>
+<span class="w"> </span>   %5 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([14 x i8], [14 x i8]* @.str, i64 0, i64 0), i32 10, i32 %4)<span class="w"></span>
+<span class="gi">+   call void @_spoor_runtime_LogFunctionExit(i64 6838069263626928129)</span><span class="w"></span>
+<span class="gi">+   call void @_spoor_runtime_Deinitialize()</span><span class="w"></span>
+<span class="w"> </span>   ret i32 0<span class="w"></span>
+<span class="w"> </span> }<span class="w"></span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="w"> </span> ; fib_instrumented.ll<span class="w"></span>
+
+<span class="w"> </span> define i32 @main(i32 %0, i8** %1) unnamed_addr #9 {<span class="w"></span>
+<span class="gi">+   call void @_spoor_runtime_Initialize()</span><span class="w"></span>
+<span class="gi">+   call void @_spoor_runtime_Enable()</span><span class="w"></span>
+<span class="gi">+   call void @_spoor_runtime_LogFunctionEntry(i64 1161011135638405138)</span><span class="w"></span>
+<span class="w"> </span>   %2 = sext i32 %0 to i64<span class="w"></span>
+<span class="w"> </span>   %3 = call i64 @_ZN3std2rt10lang_start17h11fbc72de187ccfcE(void ()* @_ZN3fib4main17h169520592592741fE, i64 %2, i8** %1)<span class="w"></span>
+<span class="w"> </span>   %4 = trunc i64 %3 to i32<span class="w"></span>
+<span class="gi">+   call void @_spoor_runtime_LogFunctionExit(i64 1161011135638405138)</span><span class="w"></span>
+<span class="gi">+   call void @_spoor_runtime_Deinitialize()</span><span class="w"></span>
+<span class="w"> </span>   ret i32 %4<span class="w"></span>
+<span class="w"> </span> }<span class="w"></span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="w"> </span> ; fib_instrumented.ll<span class="w"></span>
+
+<span class="w"> </span> define i32 @main(i32 %0, i8** %1) #0 {<span class="w"></span>
+<span class="w"> </span> entry:<span class="w"></span>
+<span class="gi">+   call void @_spoor_runtime_Initialize()</span><span class="w"></span>
+<span class="gi">+   call void @_spoor_runtime_Enable()</span><span class="w"></span>
+<span class="gi">+   call void @_spoor_runtime_LogFunctionEntry(i64 -5425404140006146048)</span><span class="w"></span>
+<span class="w"> </span>   %2 = alloca %Ts26DefaultStringInterpolationV, align 8<span class="w"></span>
+<span class="w"> </span>   %3 = bitcast %Ts26DefaultStringInterpolationV* %2 to i8*<span class="w"></span>
+<span class="w"> </span>   call void @llvm.memset.p0i8.i64(i8* align 8 %3, i8 0, i64 16, i1 false)<span class="w"></span>
+<span class="w"> </span>   %4 = alloca %TSi, align 8<span class="w"></span>
+<span class="w"> </span>   %5 = alloca %TSi, align 8<span class="w"></span>
+<span class="w"> </span>   %6 = bitcast i8** %1 to i8*<span class="w"></span>
+<span class="w"> </span>   store i64 10, i64* getelementptr inbounds (%TSi, %TSi* @&quot;$s3fib1nSivp&quot;, i32 0, i32 0), align 8<span class="w"></span>
+<span class="w"> </span>   %7 = load i64, i64* getelementptr inbounds (%TSi, %TSi* @&quot;$s3fib1nSivp&quot;, i32 0, i32 0), align 8<span class="w"></span>
+<span class="w"> </span>   %8 = call swiftcc i64 @&quot;$s3fibAAyS2iF&quot;(i64 %7)<span class="w"></span>
+<span class="w"> </span>   store i64 %8, i64* getelementptr inbounds (%TSi, %TSi* @&quot;$s3fib1fSivp&quot;, i32 0, i32 0), align 8<span class="w"></span>
+<span class="w"> </span>   %9 = call swiftcc { %swift.bridge*, i8* } @&quot;$ss27_allocateUninitializedArrayySayxG_BptBwlF&quot;(i64 1, %swift.type* getelementptr inbounds (%swift.full_type, %swift.full_type* @&quot;$sypN&quot;, i32 0, i32 1))<span class="w"></span>
+<span class="w"> </span>   %10 = extractvalue { %swift.bridge*, i8* } %9, 0<span class="w"></span>
+<span class="w"> </span>   %11 = extractvalue { %swift.bridge*, i8* } %9, 1<span class="w"></span>
+<span class="w"> </span>   %12 = bitcast i8* %11 to %Any*<span class="w"></span>
+<span class="w"> </span>   %13 = bitcast %Ts26DefaultStringInterpolationV* %2 to i8*<span class="w"></span>
+<span class="w"> </span>   call void @llvm.lifetime.start.p0i8(i64 16, i8* %13)<span class="w"></span>
+<span class="w"> </span>   %14 = call swiftcc { i64, %swift.bridge* } @&quot;$ss26DefaultStringInterpolationV15literalCapacity18interpolationCountABSi_SitcfC&quot;(i64 8, i64 2)<span class="w"></span>
+<span class="w"> </span>   %15 = extractvalue { i64, %swift.bridge* } %14, 0<span class="w"></span>
+<span class="w"> </span>   %16 = extractvalue { i64, %swift.bridge* } %14, 1<span class="w"></span>
+<span class="w"> </span>   %._storage = getelementptr inbounds %Ts26DefaultStringInterpolationV, %Ts26DefaultStringInterpolationV* %2, i32 0, i32 0<span class="w"></span>
+<span class="w"> </span>   %._storage._guts = getelementptr inbounds %TSS, %TSS* %._storage, i32 0, i32 0<span class="w"></span>
+<span class="w"> </span>   %._storage._guts._object = getelementptr inbounds %Ts11_StringGutsV, %Ts11_StringGutsV* %._storage._guts, i32 0, i32 0<span class="w"></span>
+<span class="w"> </span>   %._storage._guts._object._countAndFlagsBits = getelementptr inbounds %Ts13_StringObjectV, %Ts13_StringObjectV* %._storage._guts._object, i32 0, i32 0<span class="w"></span>
+<span class="w"> </span>   %._storage._guts._object._countAndFlagsBits._value = getelementptr inbounds %Ts6UInt64V, %Ts6UInt64V* %._storage._guts._object._countAndFlagsBits, i32 0, i32 0<span class="w"></span>
+<span class="w"> </span>   store i64 %15, i64* %._storage._guts._object._countAndFlagsBits._value, align 8<span class="w"></span>
+<span class="w"> </span>   %._storage._guts._object._object = getelementptr inbounds %Ts13_StringObjectV, %Ts13_StringObjectV* %._storage._guts._object, i32 0, i32 1<span class="w"></span>
+<span class="w"> </span>   store %swift.bridge* %16, %swift.bridge** %._storage._guts._object._object, align 8<span class="w"></span>
+<span class="w"> </span>   %17 = call swiftcc { i64, %swift.bridge* } @&quot;$sSS21_builtinStringLiteral17utf8CodeUnitCount7isASCIISSBp_BwBi1_tcfC&quot;(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @0, i64 0, i64 0), i64 4, i1 true)<span class="w"></span>
+<span class="w"> </span>   %18 = extractvalue { i64, %swift.bridge* } %17, 0<span class="w"></span>
+<span class="w"> </span>   %19 = extractvalue { i64, %swift.bridge* } %17, 1<span class="w"></span>
+<span class="w"> </span>   call swiftcc void @&quot;$ss26DefaultStringInterpolationV13appendLiteralyySSF&quot;(i64 %18, %swift.bridge* %19, %Ts26DefaultStringInterpolationV* nocapture swiftself dereferenceable(16) %2)<span class="w"></span>
+<span class="w"> </span>   call void @swift_bridgeObjectRelease(%swift.bridge* %19) #3<span class="w"></span>
+<span class="w"> </span>   %20 = load i64, i64* getelementptr inbounds (%TSi, %TSi* @&quot;$s3fib1nSivp&quot;, i32 0, i32 0), align 8<span class="w"></span>
+<span class="w"> </span>   %21 = bitcast %TSi* %4 to i8*<span class="w"></span>
+<span class="w"> </span>   call void @llvm.lifetime.start.p0i8(i64 8, i8* %21)<span class="w"></span>
+<span class="w"> </span>   %._value = getelementptr inbounds %TSi, %TSi* %4, i32 0, i32 0<span class="w"></span>
+<span class="w"> </span>   store i64 %20, i64* %._value, align 8<span class="w"></span>
+<span class="w"> </span>   %22 = bitcast %TSi* %4 to %swift.opaque*<span class="w"></span>
+<span class="w"> </span>   call swiftcc void @&quot;$ss26DefaultStringInterpolationV06appendC0yyxs06CustomB11ConvertibleRzlF&quot;(%swift.opaque* noalias nocapture %22, %swift.type* @&quot;$sSiN&quot;, i8** @&quot;$sSis23CustomStringConvertiblesWP&quot;, %Ts26DefaultStringInterpolationV* nocapture swiftself dereferenceable(16) %2)<span class="w"></span>
+<span class="w"> </span>   %23 = bitcast %TSi* %4 to i8*<span class="w"></span>
+<span class="w"> </span>   call void @llvm.lifetime.end.p0i8(i64 8, i8* %23)<span class="w"></span>
+<span class="w"> </span>   %24 = call swiftcc { i64, %swift.bridge* } @&quot;$sSS21_builtinStringLiteral17utf8CodeUnitCount7isASCIISSBp_BwBi1_tcfC&quot;(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @1, i64 0, i64 0), i64 4, i1 true)<span class="w"></span>
+<span class="w"> </span>   %25 = extractvalue { i64, %swift.bridge* } %24, 0<span class="w"></span>
+<span class="w"> </span>   %26 = extractvalue { i64, %swift.bridge* } %24, 1<span class="w"></span>
+<span class="w"> </span>   call swiftcc void @&quot;$ss26DefaultStringInterpolationV13appendLiteralyySSF&quot;(i64 %25, %swift.bridge* %26, %Ts26DefaultStringInterpolationV* nocapture swiftself dereferenceable(16) %2)<span class="w"></span>
+<span class="w"> </span>   call void @swift_bridgeObjectRelease(%swift.bridge* %26) #3<span class="w"></span>
+<span class="w"> </span>   %27 = load i64, i64* getelementptr inbounds (%TSi, %TSi* @&quot;$s3fib1fSivp&quot;, i32 0, i32 0), align 8<span class="w"></span>
+<span class="w"> </span>   %28 = bitcast %TSi* %5 to i8*<span class="w"></span>
+<span class="w"> </span>   call void @llvm.lifetime.start.p0i8(i64 8, i8* %28)<span class="w"></span>
+<span class="w"> </span>   %._value1 = getelementptr inbounds %TSi, %TSi* %5, i32 0, i32 0<span class="w"></span>
+<span class="w"> </span>   store i64 %27, i64* %._value1, align 8<span class="w"></span>
+<span class="w"> </span>   %29 = bitcast %TSi* %5 to %swift.opaque*<span class="w"></span>
+<span class="w"> </span>   call swiftcc void @&quot;$ss26DefaultStringInterpolationV06appendC0yyxs06CustomB11ConvertibleRzlF&quot;(%swift.opaque* noalias nocapture %29, %swift.type* @&quot;$sSiN&quot;, i8** @&quot;$sSis23CustomStringConvertiblesWP&quot;, %Ts26DefaultStringInterpolationV* nocapture swiftself dereferenceable(16) %2)<span class="w"></span>
+<span class="w"> </span>   %30 = bitcast %TSi* %5 to i8*<span class="w"></span>
+<span class="w"> </span>   call void @llvm.lifetime.end.p0i8(i64 8, i8* %30)<span class="w"></span>
+<span class="w"> </span>   %31 = call swiftcc { i64, %swift.bridge* } @&quot;$sSS21_builtinStringLiteral17utf8CodeUnitCount7isASCIISSBp_BwBi1_tcfC&quot;(i8* getelementptr inbounds ([1 x i8], [1 x i8]* @2, i64 0, i64 0), i64 0, i1 true)<span class="w"></span>
+<span class="w"> </span>   %32 = extractvalue { i64, %swift.bridge* } %31, 0<span class="w"></span>
+<span class="w"> </span>   %33 = extractvalue { i64, %swift.bridge* } %31, 1<span class="w"></span>
+<span class="w"> </span>   call swiftcc void @&quot;$ss26DefaultStringInterpolationV13appendLiteralyySSF&quot;(i64 %32, %swift.bridge* %33, %Ts26DefaultStringInterpolationV* nocapture swiftself dereferenceable(16) %2)<span class="w"></span>
+<span class="w"> </span>   call void @swift_bridgeObjectRelease(%swift.bridge* %33) #3<span class="w"></span>
+<span class="w"> </span>   %._storage2 = getelementptr inbounds %Ts26DefaultStringInterpolationV, %Ts26DefaultStringInterpolationV* %2, i32 0, i32 0<span class="w"></span>
+<span class="w"> </span>   %._storage2._guts = getelementptr inbounds %TSS, %TSS* %._storage2, i32 0, i32 0<span class="w"></span>
+<span class="w"> </span>   %._storage2._guts._object = getelementptr inbounds %Ts11_StringGutsV, %Ts11_StringGutsV* %._storage2._guts, i32 0, i32 0<span class="w"></span>
+<span class="w"> </span>   %._storage2._guts._object._countAndFlagsBits = getelementptr inbounds %Ts13_StringObjectV, %Ts13_StringObjectV* %._storage2._guts._object, i32 0, i32 0<span class="w"></span>
+<span class="w"> </span>   %._storage2._guts._object._countAndFlagsBits._value = getelementptr inbounds %Ts6UInt64V, %Ts6UInt64V* %._storage2._guts._object._countAndFlagsBits, i32 0, i32 0<span class="w"></span>
+<span class="w"> </span>   %34 = load i64, i64* %._storage2._guts._object._countAndFlagsBits._value, align 8<span class="w"></span>
+<span class="w"> </span>   %._storage2._guts._object._object = getelementptr inbounds %Ts13_StringObjectV, %Ts13_StringObjectV* %._storage2._guts._object, i32 0, i32 1<span class="w"></span>
+<span class="w"> </span>   %35 = load %swift.bridge*, %swift.bridge** %._storage2._guts._object._object, align 8<span class="w"></span>
+<span class="w"> </span>   %36 = call %swift.bridge* @swift_bridgeObjectRetain(%swift.bridge* returned %35) #3<span class="w"></span>
+<span class="w"> </span>   %37 = call %Ts26DefaultStringInterpolationV* @&quot;$ss26DefaultStringInterpolationVWOh&quot;(%Ts26DefaultStringInterpolationV* %2)<span class="w"></span>
+<span class="w"> </span>   %38 = bitcast %Ts26DefaultStringInterpolationV* %2 to i8*<span class="w"></span>
+<span class="w"> </span>   call void @llvm.lifetime.end.p0i8(i64 16, i8* %38)<span class="w"></span>
+<span class="w"> </span>   %39 = call swiftcc { i64, %swift.bridge* } @&quot;$sSS19stringInterpolationSSs013DefaultStringB0V_tcfC&quot;(i64 %34, %swift.bridge* %35)<span class="w"></span>
+<span class="w"> </span>   %40 = extractvalue { i64, %swift.bridge* } %39, 0<span class="w"></span>
+<span class="w"> </span>   %41 = extractvalue { i64, %swift.bridge* } %39, 1<span class="w"></span>
+<span class="w"> </span>   %42 = getelementptr inbounds %Any, %Any* %12, i32 0, i32 1<span class="w"></span>
+<span class="w"> </span>   store %swift.type* @&quot;$sSSN&quot;, %swift.type** %42, align 8<span class="w"></span>
+<span class="w"> </span>   %43 = getelementptr inbounds %Any, %Any* %12, i32 0, i32 0<span class="w"></span>
+<span class="w"> </span>   %44 = getelementptr inbounds %Any, %Any* %12, i32 0, i32 0<span class="w"></span>
+<span class="w"> </span>   %45 = bitcast [24 x i8]* %44 to %TSS*<span class="w"></span>
+<span class="w"> </span>   %._guts = getelementptr inbounds %TSS, %TSS* %45, i32 0, i32 0<span class="w"></span>
+<span class="w"> </span>   %._guts._object = getelementptr inbounds %Ts11_StringGutsV, %Ts11_StringGutsV* %._guts, i32 0, i32 0<span class="w"></span>
+<span class="w"> </span>   %._guts._object._countAndFlagsBits = getelementptr inbounds %Ts13_StringObjectV, %Ts13_StringObjectV* %._guts._object, i32 0, i32 0<span class="w"></span>
+<span class="w"> </span>   %._guts._object._countAndFlagsBits._value = getelementptr inbounds %Ts6UInt64V, %Ts6UInt64V* %._guts._object._countAndFlagsBits, i32 0, i32 0<span class="w"></span>
+<span class="w"> </span>   store i64 %40, i64* %._guts._object._countAndFlagsBits._value, align 8<span class="w"></span>
+<span class="w"> </span>   %._guts._object._object = getelementptr inbounds %Ts13_StringObjectV, %Ts13_StringObjectV* %._guts._object, i32 0, i32 1<span class="w"></span>
+<span class="w"> </span>   store %swift.bridge* %41, %swift.bridge** %._guts._object._object, align 8<span class="w"></span>
+<span class="w"> </span>   %46 = call swiftcc %swift.bridge* @&quot;$ss27_finalizeUninitializedArrayySayxGABnlF&quot;(%swift.bridge* %10, %swift.type* getelementptr inbounds (%swift.full_type, %swift.full_type* @&quot;$sypN&quot;, i32 0, i32 1))<span class="w"></span>
+<span class="w"> </span>   %47 = call swiftcc { i64, %swift.bridge* } @&quot;$ss5print_9separator10terminatoryypd_S2StFfA0_&quot;()<span class="w"></span>
+<span class="w"> </span>   %48 = extractvalue { i64, %swift.bridge* } %47, 0<span class="w"></span>
+<span class="w"> </span>   %49 = extractvalue { i64, %swift.bridge* } %47, 1<span class="w"></span>
+<span class="w"> </span>   %50 = call swiftcc { i64, %swift.bridge* } @&quot;$ss5print_9separator10terminatoryypd_S2StFfA1_&quot;()<span class="w"></span>
+<span class="w"> </span>   %51 = extractvalue { i64, %swift.bridge* } %50, 0<span class="w"></span>
+<span class="w"> </span>   %52 = extractvalue { i64, %swift.bridge* } %50, 1<span class="w"></span>
+<span class="w"> </span>   call swiftcc void @&quot;$ss5print_9separator10terminatoryypd_S2StF&quot;(%swift.bridge* %46, i64 %48, %swift.bridge* %49, i64 %51, %swift.bridge* %52)<span class="w"></span>
+<span class="w"> </span>   call void @swift_bridgeObjectRelease(%swift.bridge* %52) #3<span class="w"></span>
+<span class="w"> </span>   call void @swift_bridgeObjectRelease(%swift.bridge* %49) #3<span class="w"></span>
+<span class="w"> </span>   call void @swift_bridgeObjectRelease(%swift.bridge* %46) #3<span class="w"></span>
+<span class="gi">+   call void @_spoor_runtime_LogFunctionExit(i64 -5425404140006146048)</span><span class="w"></span>
+<span class="gi">+   call void @_spoor_runtime_Deinitialize()</span><span class="w"></span>
+<span class="w"> </span>   ret i32 0<span class="w"></span>
+<span class="w"> </span> }<span class="w"></span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>Each call to <code>LogFunctionEntry</code> and <code>LogFunctionExit</code> contains a single numeric
+argument. This number uniquely identifies the function in your program and is
+logged in the trace at runtime. <code>fib.spoor_symbols</code> maps these numbers to debug
+data to symbolize the trace offline.</p>
+<p>The easiest way to inspect the symbols file is by converting it to a <code>csv</code>.</p>
+<div class="highlight"><pre><span></span><code>spoor fib.spoor_symbols --output_file<span class="o">=</span>fib_symbols.csv
+</code></pre></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="8:3"><input checked="checked" id="__tabbed_8_1" name="__tabbed_8" type="radio" /><input id="__tabbed_8_2" name="__tabbed_8" type="radio" /><input id="__tabbed_8_3" name="__tabbed_8" type="radio" /><div class="tabbed-labels"><label for="__tabbed_8_1">C++</label><label for="__tabbed_8_2">Rust</label><label for="__tabbed_8_3">Swift</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<table>
+<thead>
+<tr>
+<th>Function ID</th>
+<th>Linkage name</th>
+<th>Demangled name</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>0x5ee5b3c400000000</code></td>
+<td><code>_Z3Fibi</code></td>
+<td><code>Fib(int)</code></td>
+</tr>
+<tr>
+<td><code>0x5ee5b3c400000001</code></td>
+<td><code>main</code></td>
+<td><code>main</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="tabbed-block">
+<table>
+<thead>
+<tr>
+<th>Function ID</th>
+<th>Linkage name</th>
+<th>Demangled name</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>0x101cbd7a00001300</code></td>
+<td><code>_ZN3fib3fib17h03330887093d3356E</code></td>
+<td><code>fib::fib::h03330887093d3356</code></td>
+</tr>
+<tr>
+<td><code>0x101cbd7a00001300</code></td>
+<td><code>_zn3fib4main17h169520592592741fE</code></td>
+<td><code>fib::main::h169520592592741f</code></td>
+</tr>
+<tr>
+<td><code>0x101cbd7a00001300</code></td>
+<td><code>main</code></td>
+<td><code>main</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="tabbed-block">
+<table>
+<thead>
+<tr>
+<th>Function ID</th>
+<th>Linkage name</th>
+<th>Demangled name</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>0xb4b517ae00000000</code></td>
+<td><code>main</code></td>
+<td><code>main</code></td>
+</tr>
+<tr>
+<td><code>0xb4b517ae00000001</code></td>
+<td><code>$s3fibAAyS2iF</code></td>
+<td><code>fib.fib(Swift.Int) -&gt; Swift.Int</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<hr />
+<h2 id="2-compile-and-run">2. Compile and run</h2>
+<h3 id="21-compile-the-ir">2.1 Compile the IR</h3>
+<p>Compile the instrumented IR using <code>clang++</code> and link in the runtime library.</p>
+<p>The runtime library is responsible for efficiently handling incoming
+instrumentation events (e.g., function entries and exists) by buffering them
+in-memory and flushing them to disk.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="9:3"><input checked="checked" id="__tabbed_9_1" name="__tabbed_9" type="radio" /><input id="__tabbed_9_2" name="__tabbed_9" type="radio" /><input id="__tabbed_9_3" name="__tabbed_9" type="radio" /><div class="tabbed-labels"><label for="__tabbed_9_1">C++</label><label for="__tabbed_9_2">Rust</label><label for="__tabbed_9_3">Swift</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>clang++ <span class="se">\</span>
+  fib_instrumented.ll <span class="se">\</span>
+  -o fib_instrumented <span class="se">\</span>
+  -L/path/to/spoor/libraries <span class="se">\</span>
+  -lspoor_runtime <span class="se">\</span>
+  -lspoor_runtime_default_config
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>clang++ <span class="se">\</span>
+  fib_instrumented.ll <span class="se">\</span>
+  -o fib_instrumented <span class="se">\</span>
+  -L/path/to/spoor/libraries <span class="se">\</span>
+  -lspoor_runtime <span class="se">\</span>
+  -lspoor_runtime_default_config <span class="se">\</span>
+  -L/path/to/.rustup/toolchains/stable-target/lib <span class="se">\</span>
+  -lstd-xxxxxxxxxxxxxxxx <span class="se">\</span>
+  -Wl,-rpath,/path/to/.rustup/toolchains/stable-target/lib
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>clang++ <span class="se">\</span>
+  fib_instrumented.ll <span class="se">\</span>
+  -o fib_instrumented <span class="se">\</span>
+  -L/path/to/libspoor_runtime <span class="se">\</span>
+  -lspoor_runtime <span class="se">\</span>
+  -lspoor_runtime_default_config <span class="se">\</span>
+  -L/usr/lib/swift
+</code></pre></div>
+</div>
+</div>
+</div>
+<h3 id="22-run-the-instrumented-binary">2.2 Run the instrumented binary</h3>
+<p>Run the instrumented binary.</p>
+<div class="highlight"><pre><span></span><code>./fib_instrumented
+</code></pre></div>
+<p>Your program prints the tenth Fibonacci number to stdout as before.</p>
+<div class="highlight"><pre><span></span><code>Fib(10) = 55
+</code></pre></div>
+<p>Additionally, your program emits one or more binary <code>.spoor_trace</code> files which
+efficiently store the trace data for that execution. By default, Spoor's runtime
+saves trace files in the current directory.</p>
+<div class="highlight"><pre><span></span><code>find . -name <span class="s2">&quot;*.spoor_trace&quot;</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>xxxxxxxxxxxxxxxx-xxxxxxxxxxxxxxxx-xxxxxxxxxxxxxxxx.spoor_trace
+</code></pre></div>
+<hr />
+<h2 id="3-process-and-analyze-the-trace">3. Process and analyze the trace</h2>
+<p>Finally, parse and symbolize the trace data to view it in
+<a href="https://perfetto.dev/#viewer">Perfetto's trace viewer</a>.</p>
+<h3 id="31-parse-and-symbolize-the-trace">3.1 Parse and symbolize the trace</h3>
+<p>Use <code>spoor</code>, Spoor's postprocessing tool, to parse the <code>.spoor_trace</code> file(s),
+symbolize the trace with the <code>.spoor_symbols</code> file(s), and output a
+Perfetto-compatible trace.</p>
+<div class="highlight"><pre><span></span><code>spoor <span class="se">\</span>
+  xxxxxxxxxxxxxxxx-yyyyyyyyyyyyyyyy-zzzzzzzzzzzzzzzz.spoor_trace <span class="se">\</span>
+  fib.spoor_symbols <span class="se">\</span>
+  --output_file<span class="o">=</span>fib.perfetto
+</code></pre></div>
+<h3 id="32-visualize-the-trace">3.2 Visualize the trace</h3>
+<p>Open <code>fib.perfetto</code> in <a href="https://ui.perfetto.dev/">ui.perfetto.dev</a>, Perfetto's trace viewer.</p>
+<p>The flame graph timeline visualization shows the stack trace of your program
+over time. Notice the tree-like structure formed by the exponential calls.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="10:3"><input checked="checked" id="__tabbed_10_1" name="__tabbed_10" type="radio" /><input id="__tabbed_10_2" name="__tabbed_10" type="radio" /><input id="__tabbed_10_3" name="__tabbed_10" type="radio" /><div class="tabbed-labels"><label for="__tabbed_10_1">C++</label><label for="__tabbed_10_2">Rust</label><label for="__tabbed_10_3">Swift</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p><img alt="fib.cc visualization" src="../fib-cc-visualization.png" /></p>
+</div>
+<div class="tabbed-block">
+<p><img alt="fib.rs visualization" src="../fib-rs-visualization.png" /></p>
+</div>
+<div class="tabbed-block">
+<p><img alt="fib.swift visualization" src="../fib-swift-visualization.png" /></p>
+</div>
+</div>
+</div>
+<h3 id="33-query-the-trace">3.3 Query the trace</h3>
+<p>Perfetto's supports querying the trace with SQL.</p>
+<p><img alt="Perfetto trace query" src="../fib-cc-query.png" /></p>
+<p><em>What data does the slice table contain?</em></p>
+<div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"></span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">slice</span><span class="p">;</span><span class="w"></span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th>type</th>
+<th>ts</th>
+<th>dur</th>
+<th>track_id</th>
+<th>category</th>
+<th>name</th>
+<th>depth</th>
+<th>stack_id</th>
+<th>parent_stack_id</th>
+<th>parent_id</th>
+<th>arg_set_id</th>
+<th>cat</th>
+<th>slice_id</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>thread_slice</td>
+<td>1634680417099962600</td>
+<td>264152</td>
+<td>0</td>
+<td>NULL</td>
+<td>main</td>
+<td>0</td>
+<td></td>
+<td>6833849221975760</td>
+<td>0</td>
+<td>NULL</td>
+<td>2</td>
+<td>NULL</td>
+</tr>
+<tr>
+<td>1</td>
+<td>thread_slice</td>
+<td>1634680417100002800</td>
+<td>194521</td>
+<td>0</td>
+<td>NULL</td>
+<td>Fib(int)</td>
+<td>1</td>
+<td>1089519434040343</td>
+<td>6833849221975760</td>
+<td>0</td>
+<td>3</td>
+<td>NULL</td>
+<td>1</td>
+</tr>
+<tr>
+<td>2</td>
+<td>thread_slice</td>
+<td>1634680417100003600</td>
+<td>130467</td>
+<td>0</td>
+<td>NULL</td>
+<td>Fib(int)</td>
+<td>2</td>
+<td>1009479496053168</td>
+<td>1089519434040343</td>
+<td>1</td>
+<td>3</td>
+<td>NULL</td>
+<td>2</td>
+</tr>
+</tbody>
+</table>
+<p><em>How many times was <code>Fib</code> called?</em></p>
+<div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"></span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">slice</span><span class="w"></span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="k">LIKE</span><span class="w"> </span><span class="s1">&#39;fib%&#39;</span><span class="p">;</span><span class="w"></span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>177
+</code></pre></div>
+<p><em>What's the deepest stack?</em></p>
+<div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="k">MAX</span><span class="p">(</span><span class="n">depth</span><span class="p">)</span><span class="w"></span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">slice</span><span class="w"></span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="k">LIKE</span><span class="w"> </span><span class="s1">&#39;fib%&#39;</span><span class="p">;</span><span class="w"></span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>10
+</code></pre></div>
+<h2 id="going-further">Going further</h2>
+<p>The time complexity of this Fibonacci implementation is <em>exponential</em> &ndash; a
+suboptimal algorithm. Optimize the runtime of your Fibonacci program by caching
+already-computed values (i.e., dynamic programming), instrument your new code,
+and visualize the trace with Perfetto.</p>
+<div class="admonition tip">
+<p class="admonition-title">Closed-form solution</p>
+<p>There's an even more optimal, closed-form, constant-time solution, but a
+single function call doesn't look very interesting in the trace.</p>
+<div class="arithmatex">\[
+F_n = \frac{\left(\frac{1 + \sqrt{5}}{2}\right)^n -
+  \left(\frac{1 - \sqrt{5}}{2}\right)^n}{\sqrt{5}}
+\]</div>
+</div>
+<h3 id="optimize-the-code">Optimize the code</h3>
+<div class="tabbed-set tabbed-alternate" data-tabs="11:3"><input checked="checked" id="__tabbed_11_1" name="__tabbed_11" type="radio" /><input id="__tabbed_11_2" name="__tabbed_11" type="radio" /><input id="__tabbed_11_3" name="__tabbed_11" type="radio" /><div class="tabbed-labels"><label for="__tabbed_11_1">C++</label><label for="__tabbed_11_2">Rust</label><label for="__tabbed_11_3">Swift</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="c1">// fib.cc</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstdio&gt;</span><span class="cp"></span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;unordered_map&gt;</span><span class="cp"></span>
+
+<span class="k">auto</span><span class="w"> </span><span class="n">Fib</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">unordered_map</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="o">&gt;*</span><span class="w"> </span><span class="n">cache</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">n</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">n</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">cache</span><span class="o">-&gt;</span><span class="n">find</span><span class="p">(</span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">cache</span><span class="o">-&gt;</span><span class="n">cend</span><span class="p">())</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">cache</span><span class="o">-&gt;</span><span class="n">at</span><span class="p">(</span><span class="n">n</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Fib</span><span class="p">(</span><span class="n">n</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">cache</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">Fib</span><span class="p">(</span><span class="n">n</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="n">cache</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">cache</span><span class="o">-&gt;</span><span class="n">emplace</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">result</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">result</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+
+<span class="k">auto</span><span class="w"> </span><span class="n">main</span><span class="p">()</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="k">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">unordered_map</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="n">cache</span><span class="p">{};</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Fib</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">cache</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Fib(%d) = %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">f</span><span class="p">);</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="c1">// fib.rs</span>
+<span class="k">use</span><span class="w"> </span><span class="n">std</span>::<span class="n">collections</span>::<span class="n">HashMap</span><span class="p">;</span><span class="w"></span>
+
+<span class="k">fn</span> <span class="nf">fib</span><span class="p">(</span><span class="n">n</span>: <span class="kt">i64</span><span class="p">,</span><span class="w"> </span><span class="n">cache</span>: <span class="kp">&amp;</span><span class="nc">mut</span><span class="w"> </span><span class="n">HashMap</span><span class="o">&lt;</span><span class="kt">i64</span><span class="p">,</span><span class="w"> </span><span class="kt">i64</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="kt">i64</span> <span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">n</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="nb">Some</span><span class="p">(</span><span class="n">result</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cache</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="o">&amp;</span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="o">*</span><span class="n">result</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fib</span><span class="p">(</span><span class="n">n</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">cache</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">fib</span><span class="p">(</span><span class="n">n</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="n">cache</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">cache</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">result</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">result</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+
+<span class="k">pub</span><span class="w"> </span><span class="k">fn</span> <span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">cache</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">HashMap</span>::<span class="n">new</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fib</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">cache</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="fm">println!</span><span class="p">(</span><span class="s">&quot;Fib({}) = {}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">f</span><span class="p">);</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="c1">// fib.swift</span>
+<span class="kd">import</span> <span class="nc">Foundation</span>
+
+<span class="kd">func</span> <span class="nf">fib</span><span class="p">(</span><span class="kc">_</span> <span class="n">n</span><span class="p">:</span> <span class="nb">Int</span><span class="p">,</span> <span class="kc">_</span> <span class="n">cache</span><span class="p">:</span> <span class="kr">inout</span> <span class="p">[</span><span class="nb">Int</span><span class="p">:</span> <span class="nb">Int</span><span class="p">])</span> <span class="p">-&gt;</span> <span class="nb">Int</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">n</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="kd">let</span> <span class="nv">result</span> <span class="p">=</span> <span class="n">cache</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">result</span>
+  <span class="p">}</span>
+  <span class="kd">let</span> <span class="nv">result</span> <span class="p">=</span> <span class="n">fib</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="p">&amp;</span><span class="n">cache</span><span class="p">)</span> <span class="o">+</span> <span class="n">fib</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">2</span><span class="p">,</span> <span class="p">&amp;</span><span class="n">cache</span><span class="p">)</span>
+  <span class="n">cache</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="p">=</span> <span class="n">result</span>
+  <span class="k">return</span> <span class="n">result</span>
+<span class="p">}</span>
+
+<span class="kd">let</span> <span class="nv">n</span> <span class="p">=</span> <span class="mi">10</span>
+<span class="kd">var</span> <span class="nv">cache</span> <span class="p">=</span> <span class="p">[</span><span class="nb">Int</span><span class="p">:</span> <span class="nb">Int</span><span class="p">]()</span>
+<span class="kd">let</span> <span class="nv">f</span> <span class="p">=</span> <span class="n">fib</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="p">&amp;</span><span class="n">cache</span><span class="p">)</span>
+<span class="bp">print</span><span class="p">(</span><span class="s">&quot;Fib(</span><span class="si">\(</span><span class="n">n</span><span class="si">)</span><span class="s">) = </span><span class="si">\(</span><span class="n">f</span><span class="si">)</span><span class="s">&quot;</span><span class="p">)</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<h3 id="visualize-the-optimized-code">Visualize the optimized code</h3>
+<div class="tabbed-set tabbed-alternate" data-tabs="12:3"><input checked="checked" id="__tabbed_12_1" name="__tabbed_12" type="radio" /><input id="__tabbed_12_2" name="__tabbed_12" type="radio" /><input id="__tabbed_12_3" name="__tabbed_12" type="radio" /><div class="tabbed-labels"><label for="__tabbed_12_1">C++</label><label for="__tabbed_12_2">Rust</label><label for="__tabbed_12_3">Swift</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p><img alt="fib.cc with caching visualization" src="../fib-cached-cc-visualized.png" /></p>
+</div>
+<div class="tabbed-block">
+<p><img alt="fib.rs with caching visualization" src="../fib-cached-rs-visualized.png" /></p>
+</div>
+<div class="tabbed-block">
+<p><img alt="fib.swift with caching visualization" src="../fib-cached-swift-visualized.png" /></p>
+</div>
+</div>
+</div>
+<p>By default, Spoor instruments all source code it compiles from source. This
+includes C++'s (header-only) standard template library but not Swift's
+(precompiled) Foundations library. Therefore, calls to C++'s
+<code>std::unordered_map</code> appear in the trace but calls to Swift's <code>Dictionary</code> do
+not.</p>
+<div class="admonition tip">
+<p class="admonition-title">Filters file</p>
+<p>Filter unwanted functions from the trace by configuring <code>spoor_opt</code> with a
+<a href="/configuration/instrumentation/#filters-file">filters file</a>.</p>
+</div>
+<h3 id="query-the-optimized-code">Query the optimized code</h3>
+<p><em>How many times was <code>Fib</code> called?</em></p>
+<div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"></span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">slice</span><span class="w"></span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="k">LIKE</span><span class="w"> </span><span class="s1">&#39;fib%&#39;</span><span class="p">;</span><span class="w"></span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>19
+</code></pre></div>
+<p>Recall that original implementation (without caching) made 177 function calls to
+<code>Fib</code> &ndash; strong evidence that caching reduced unnecessary recursive calls.</p>
+<p><em>What's the deepest stack?</em></p>
+<div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="k">MAX</span><span class="p">(</span><span class="n">depth</span><span class="p">)</span><span class="w"></span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">slice</span><span class="w"></span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="k">LIKE</span><span class="w"> </span><span class="s1">&#39;fib%&#39;</span><span class="p">;</span><span class="w"></span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>10
+</code></pre></div>
+<h2 id="conclusion">Conclusion</h2>
+<p>Spoor is a toolchain to instrumented source code, efficiently handle incoming
+events, and parse the generated trace files for offline analysis using tools
+such as Perfetto's visualizer.</p>
+<p><img alt="Fibonacci spiral" src="../fibonacci_spiral.svg" /></p>
+
+              
+            </article>
+            
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" hidden>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"/></svg>
+            Back to top
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+    <nav class="md-footer__inner md-grid" aria-label="Footer" >
+      
+        
+        <a href="../" class="md-footer__link md-footer__link--prev" aria-label="Previous: Overview" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Overview
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../wikipedia-ios/" class="md-footer__link md-footer__link--next" aria-label="Next: Wikipedia iOS" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Wikipedia iOS
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; Microsoft Corporation
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+      
+      
+    
+    <a href="https://github.com/microsoft/spoor" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.tabs", "navigation.top"], "search": "../../assets/javascripts/workers/search.b97dbffb.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.6c7ad80a.min.js"></script>
+      
+        <script src="../../js/mathjax.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
