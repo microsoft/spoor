@@ -154,28 +154,28 @@ TEST(Result, ErrRvalue) {  // NOLINT
 
 TEST(Result, OkOrLvalue) {  // NOLINT
   constexpr Result<int64, ErrType> result{ErrType::kErr};
-  constexpr auto x = result.OkOr(42);
-  ASSERT_EQ(x, 42);
+  constexpr auto value = result.OkOr(42);
+  ASSERT_EQ(value, 42);
 }
 
 TEST(Result, OkOrRvalue) {  // NOLINT
   Result<int64, ErrType> result{ErrType::kErr};
   // NOLINTNEXTLINE(performance-move-const-arg)
-  const auto x = std::move(result).OkOr(42);
-  ASSERT_EQ(x, 42);
+  const auto value = std::move(result).OkOr(42);
+  ASSERT_EQ(value, 42);
 }
 
 TEST(Result, ErrOrLvalue) {  // NOLINT
   constexpr Result<OkType, int64> result{OkType::kOk};
-  constexpr auto x = result.ErrOr(42);
-  ASSERT_EQ(x, 42);
+  constexpr auto value = result.ErrOr(42);
+  ASSERT_EQ(value, 42);
 }
 
 TEST(Result, ErrOrRvalue) {  // NOLINT
   Result<OkType, int64> result{OkType::kOk};
   // NOLINTNEXTLINE(performance-move-const-arg)
-  const auto x = std::move(result).ErrOr(42);
-  ASSERT_EQ(x, 42);
+  const auto value = std::move(result).ErrOr(42);
+  ASSERT_EQ(value, 42);
 }
 
 TEST(Result, EqualityOperator) {  // NOLINT

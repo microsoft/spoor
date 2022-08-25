@@ -7,8 +7,8 @@
 
 set -eu
 
-if command -v clang-tidy-12 &> /dev/null; then
-  CLANG_TIDY="clang-tidy-12"
+if command -v clang-tidy-14 &> /dev/null; then
+  CLANG_TIDY="clang-tidy-14"
 elif command -v clang-tidy &> /dev/null; then
   CLANG_TIDY="clang-tidy"
 else

@@ -18,10 +18,10 @@ TEST(Optional, DefaultConstructor) {  // NOLINT
 }
 
 TEST(Optional, LvalueConstructor) {  // NOLINT
-  constexpr int64 x{42};
-  constexpr Optional optional{x};
+  constexpr int64 value{42};
+  constexpr Optional optional{value};
   ASSERT_TRUE(optional.HasValue());
-  ASSERT_EQ(optional.Value(), x);
+  ASSERT_EQ(optional.Value(), value);
 }
 
 TEST(Optional, RvalueConstructor) {  // NOLINT
@@ -54,31 +54,31 @@ TEST(Optional, HasValue) {  // NOLINT
 }
 
 TEST(Optional, ValueConstLvalue) {  // NOLINT
-  constexpr int64 x{42};
-  constexpr Optional optional{x};
-  ASSERT_EQ(optional.Value(), x);
+  constexpr int64 value{42};
+  constexpr Optional optional{value};
+  ASSERT_EQ(optional.Value(), value);
 }
 
 TEST(Optional, ValueLvalue) {  // NOLINT
-  constexpr int64 x{42};
-  Optional optional{x};
-  ASSERT_EQ(optional.Value(), x);
+  constexpr int64 value{42};
+  Optional optional{value};
+  ASSERT_EQ(optional.Value(), value);
   optional.Value() += 1;
-  ASSERT_EQ(optional.Value(), x + 1);
+  ASSERT_EQ(optional.Value(), value + 1);
 }
 
 TEST(Optional, ValueConstRvalue) {  // NOLINT
-  constexpr int64 x{42};
-  constexpr Optional optional{x};
+  constexpr int64 value{42};
+  constexpr Optional optional{value};
   // NOLINTNEXTLINE(performance-move-const-arg)
-  ASSERT_EQ(std::move(optional).Value(), x);
+  ASSERT_EQ(std::move(optional).Value(), value);
 }
 
 TEST(Optional, ValueRvalue) {  // NOLINT
-  constexpr int64 x{42};
-  Optional optional{x};
+  constexpr int64 value{42};
+  Optional optional{value};
   // NOLINTNEXTLINE(performance-move-const-arg)
-  ASSERT_EQ(std::move(optional).Value(), x);
+  ASSERT_EQ(std::move(optional).Value(), value);
 }
 
 TEST(Optional, ValueOrLvalue) {  // NOLINT
@@ -116,10 +116,10 @@ TEST(Optional, StdOptional) {  // NOLINT
     ASSERT_EQ(std_optional, std::optional<int64>{});
   }
   {
-    constexpr int64 x{42};
-    constexpr Optional optional{x};
+    constexpr int64 value{42};
+    constexpr Optional optional{value};
     const auto std_optional = optional.StdOptional();
-    ASSERT_EQ(std_optional, std::optional<int64>{x});
+    ASSERT_EQ(std_optional, std::optional<int64>{value});
   }
 }
 

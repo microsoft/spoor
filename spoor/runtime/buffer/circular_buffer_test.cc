@@ -68,7 +68,7 @@ TEST(CircularBuffer, PushCopyValue) {  // NOLINT
         std::transform(std::cbegin(expected_chunk_numbers),
                        std::cend(expected_chunk_numbers),
                        std::back_inserter(expected_chunk),
-                       [](const auto i) { return std::to_string(i); });
+                       [](const auto num) { return std::to_string(num); });
         const auto& chunk = chunks.front();
         ASSERT_EQ(chunk.size(), expected_chunk.size());
         ASSERT_TRUE(std::equal(std::cbegin(chunk), std::cend(chunk),

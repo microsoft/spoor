@@ -43,47 +43,41 @@ http_archive(
     url = "https://github.com/bazelbuild/bazel-skylib/releases/download/1.2.1/bazel-skylib-1.2.1.tar.gz",
 )
 
-_LLVM_VERSION = "13.0.1"
+_LLVM_VERSION = "14.0.6"
 
-_LLVM_SHA256 = "09c50d558bd975c41157364421820228df66632802a4a6a7c9c17f86a7340802"
+_LLVM_SHA256 = "98f15f842700bdb7220a166c8d2739a03a72e775b67031205078f39dd756a055"
 
 http_archive(
     name = "org_llvm_llvm_project_raw",
     build_file_content = "# empty",
-    patch_cmds = [
-        """
-        if [[ "$OSTYPE" == "darwin"* ]]; then
-          sed -i '' 's|Locs\\[Idx\\].Value.RegNo == Reg|false|g' llvm/lib/CodeGen/LiveDebugValues/VarLocBasedImpl.cpp
-        else
-          sed -i 's|Locs\\[Idx\\].Value.RegNo == Reg|false|g' llvm/lib/CodeGen/LiveDebugValues/VarLocBasedImpl.cpp
-        fi
-        """,
-    ],
     sha256 = _LLVM_SHA256,
     strip_prefix = "llvm-project-llvmorg-{version}".format(version = _LLVM_VERSION),
     url = "https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-{version}.tar.gz".format(version = _LLVM_VERSION),
 )
 
-http_archive(
-    name = "org_llvm_llvm_project_bazel",
-    sha256 = _LLVM_SHA256,
-    strip_prefix = "llvm-project-llvmorg-{version}/utils/bazel".format(version = _LLVM_VERSION),
-    url = "https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-{version}.tar.gz".format(version = _LLVM_VERSION),
-)
-
 load(
-    "@org_llvm_llvm_project_bazel//:configure.bzl",
+    "@org_llvm_llvm_project_raw//utils/bazel:configure.bzl",
     "llvm_configure",
     "llvm_disable_optional_support_deps",
 )
 
-llvm_configure(
-    name = "llvm-project",
-    src_path = ".",
-    src_workspace = "@org_llvm_llvm_project_raw//:WORKSPACE",
-)
+llvm_configure(name = "llvm-project")
 
 llvm_disable_optional_support_deps()
+
+http_archive(
+    name = "rules_foreign_cc",
+    sha256 = "b8db5586c275336930491dba0eead4b3e53b644b1a8e16044aa88de04de27d91",
+    strip_prefix = "rules_foreign_cc-0.8.0",
+    url = "https://github.com/bazelbuild/rules_foreign_cc/archive/refs/tags/0.8.0.zip",
+)
+
+load(
+    "@rules_foreign_cc//foreign_cc:repositories.bzl",
+    "rules_foreign_cc_dependencies",
+)
+
+rules_foreign_cc_dependencies()
 
 http_archive(
     name = "com_apple_swift",
@@ -92,15 +86,16 @@ http_archive(
         "cat /dev/null > include/swift/Runtime/Config.h",
         """
         if [[ "$OSTYPE" == "darwin"* ]]; then
-          sed -i '' 's/SWIFT_RUNTIME_EXPORT//g' include/swift/Demangling/Demangle.h
+          sed -i '' 's|#include "../../../stdlib/public/|#include "stdlib/public/|g' include/swift/Demangling/Errors.h
         else
-          sed -i 's/SWIFT_RUNTIME_EXPORT//g' include/swift/Demangling/Demangle.h
+          sed -i 's|#include "../../../stdlib/public/|#include "stdlib/public/|g' include/swift/Demangling/Errors.h
         fi
         """,
     ],
-    sha256 = "0046ecab640475441251b1cceb3dd167a4c7729852104d7675bdbd75fced6b82",
-    strip_prefix = "swift-swift-5.5.2-RELEASE",
-    url = "https://github.com/apple/swift/archive/swift-5.5.2-RELEASE.tar.gz",
+    sha256 = "5e333bfa9db84080d496ea809ae43b8de3868da3e312285265b6a9aa888dc2b0",
+    strip_prefix = "swift-4eae6538a9ac141dfc691893d874f3b70e8bcd5a",
+    # `release/5.7` branch on 2022-07-06.
+    url = "https://github.com/apple/swift/archive/4eae6538a9ac141dfc691893d874f3b70e8bcd5a.tar.gz",
 )
 
 http_archive(

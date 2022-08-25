@@ -13,8 +13,8 @@ OUTPUT_EXECUTABLE_FILE="fib"
 OUTPUT_PERFETTO_FILE="trace.perfetto"
 TRACE_PROCESSOR_QUERY_FILE="query_result.txt"
 
-if command -v clang++-13 &> /dev/null; then
-  CLANGXX="clang++-13"
+if command -v clang++-14 &> /dev/null; then
+  CLANGXX="clang++-14"
 elif command -v clang++ &> /dev/null; then
   CLANGXX="clang++"
 else
