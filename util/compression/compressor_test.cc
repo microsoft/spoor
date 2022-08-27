@@ -82,9 +82,9 @@ TEST(SnappyCompressor, CompressesData) {  // NOLINT
   // NOTE: Compressed Snappy data might be larger than the original. The test
   // cases below are cherry-picked examples that are known to work.
   constexpr std::string_view abc{"abcabcabcabcabcabcabcabcabcabcabcabc"};
-  constexpr std::string_view x{"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"};
+  constexpr std::string_view xxx{"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"};
   SnappyCompressor compressor{0};
-  for (const auto& original_data : {abc, x}) {
+  for (const auto& original_data : {abc, xxx}) {
     const auto compressed_result =
         compressor.Compress({original_data.data(), original_data.size()});
     ASSERT_TRUE(compressed_result.IsOk());

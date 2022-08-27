@@ -37,6 +37,7 @@ using spoor::runtime::trace::kTraceFileVersion;
 using spoor::runtime::trace::TimestampNanoseconds;
 using spoor::runtime::trace::TraceWriter;
 using spoor::runtime::trace::testing::TraceWriterMock;
+// False positive. NOLINTNEXTLINE(misc-unused-using-decls)
 using std::literals::chrono_literals::operator""ns;
 using testing::_;
 using testing::InSequence;

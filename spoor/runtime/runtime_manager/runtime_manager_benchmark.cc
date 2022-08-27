@@ -57,10 +57,10 @@ auto FibonacciInstrumented(const uint64 n,
 // our needs. A floating point closed-form solution also exists, as do
 // techniques to do the computation at compile-time.
 auto FibonacciEfficient(const uint64 n) -> uint64 {
-  uint64 a{1};
-  uint64 b{1};
+  uint64 a{1};  // NOLINT(readability-identifier-length)
+  uint64 b{1};  // NOLINT(readability-identifier-length)
   for (uint64 i{1}; i < n; ++i) {
-    const auto c = a + b;
+    const auto c = a + b;  // NOLINT(readability-identifier-length)
     a = b;
     b = c;
   }
@@ -102,8 +102,8 @@ auto FibonacciRecursiveCallCount(const uint64 n) -> uint64 {
 auto Run(const std::function<uint64(const uint64,
                                     gsl::not_null<RuntimeManager*>)>& fibonacci,
          const bool enable, gsl::not_null<benchmark::State*> state) -> void {
-  const auto n = state->range(0);
-  const auto fibonacci_function_calls = FibonacciRecursiveCallCount(n);
+  const auto count = state->range(0);
+  const auto fibonacci_function_calls = FibonacciRecursiveCallCount(count);
   const auto event_count_per_thread = 2 * fibonacci_function_calls;
   const auto thread_count = state->range(1);
   util::time::SteadyClock steady_clock{};
@@ -125,7 +125,7 @@ auto Run(const std::function<uint64(const uint64,
   threads.reserve(thread_count);
   for (auto _ : *state) {  // NOLINT(clang-analyzer-deadcode.DeadStores)
     for (auto thread{0}; thread < thread_count; ++thread) {
-      threads.emplace_back(fibonacci, n, &runtime_manager);
+      threads.emplace_back(fibonacci, count, &runtime_manager);
     }
     std::for_each(std::begin(threads), std::end(threads), [](auto& thread) {
       if (thread.joinable()) thread.join();
@@ -137,8 +137,7 @@ auto Run(const std::function<uint64(const uint64,
 
 // NOLINTNEXTLINE(google-runtime-references)
 auto BenchmarkThreadCreation(benchmark::State& state) -> void {
-  constexpr uint64 n{0};
-  const auto fibonacci_function_calls = FibonacciRecursiveCallCount(n);
+  const auto fibonacci_function_calls = FibonacciRecursiveCallCount(0);
   const auto event_count_per_thread = 2 * fibonacci_function_calls;
   const auto thread_count = state.range(0);
   util::time::SteadyClock steady_clock{};
